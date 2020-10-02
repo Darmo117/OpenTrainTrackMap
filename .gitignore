@@ -1,2 +1,4 @@
-# Project exclude paths
+/.idea/
 /venv/
+*.sqlite3
+*.uxf
