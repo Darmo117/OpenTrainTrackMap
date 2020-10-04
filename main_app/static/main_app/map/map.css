@@ -1,0 +1,11 @@
+#map {
+  overflow: hidden;
+  position: absolute;
+  top: 56px;
+  bottom: 0;
+  width: 100%;
+}
+
+.leaflet-control-geocoder {
+  background-color: white;
+}

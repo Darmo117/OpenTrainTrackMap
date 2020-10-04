@@ -1,0 +1,8 @@
+{% extends 'main_app/base.html' %}
+
+{% block page-content %}
+  <div class="container">
+    <h1>{{ context.title }}</h1>
+    {% block container-content %}{% endblock %}
+  </div>
+{% endblock %}

@@ -1,13 +1,81 @@
+{% load static %}
+{% load ottm %}
 <!DOCTYPE html>
-<html lang="{{ context.lang.code }}">
+<html lang="{{ context.lang.code }}" dir="{{ context.lang.writing_direction }}">
 <head>
   <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
   {% if context.noindex %}
     <meta name="robots" content="noindex"/>
   {% endif %}
-  <title>{{ context.title }} &mdash; {{ context.site_name }}</title>
+
+  <title>{% if context.tab_title %}{{ context.tab_title }} &mdash; {% endif %}{{ context.site_name }}</title>
+
+  {# https://fontawesome.com/kits/e2b5a9cf6c/use #}
+  <script src="https://kit.fontawesome.com/e2b5a9cf6c.js" crossorigin="anonymous"></script>
+  <link href="{% static 'main_app/bootstrap-4.5.2-dist/css/bootstrap.min.css' %}" rel="stylesheet"/>
+  <link href="{% static 'main_app/style.css' %}" rel="stylesheet"/>
 </head>
 <body>
-  {# TODO #}
+  <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <a id="nav-main-link" class="navbar-brand" href="{% url 'map' %}">{{ context.site_name }}</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item"
+            {% if not context.user.is_logged_in %}title="{% ottm_translate 'navbar.edit.signup_title' %}"{% endif %}>
+          <a id="nav-edit-link" class="nav-link{% if not context.user.is_logged_in %} disabled{% endif %}"
+             href="{% url 'edit' %}" {% if not context.user.is_logged_in %}tabindex="-1"
+             aria-disabled="true" {% endif %}><i class="fas fa-edit"></i>
+            {% ottm_translate 'navbar.edit.label' %}</a>
+        </li>
+        <li class="nav-item">
+          <a id="nav-history-link" class="nav-link"
+             href="{% url 'history' %}"><i class="fas fa-history"></i>
+            {% ottm_translate 'navbar.history.label' %}</a>
+        </li>
+      </ul>
+      <ul class="navbar-nav ml-auto">
+        <li class="nav-item">
+          <a id="nav-help-link" class="nav-link" href="{% url 'help' %}"><i class="fas fa-question-circle"></i>
+            {% ottm_translate 'navbar.help.label' %}</a>
+        </li>
+        <li class="nav-item">
+          <a id="nav-about-link" class="nav-link" href="{% url 'about' %}"><i class="fas fa-info-circle"></i>
+            {% ottm_translate 'navbar.about.label' %}</a>
+        </li>
+        <li class="nav-item">
+          <a id="nav-copyright-link" class="nav-link"
+             href="{% url 'copyright' %}"><i class="fas fa-copyright"></i>
+            {% ottm_translate 'navbar.copyright.label' %}</a>
+        </li>
+        <li class="nav-item">
+          <a id="nav-login-link" class="nav-link"
+             href="{% url 'log_in' %}"><i class="fas fa-sign-in-alt"></i>
+            {% ottm_translate 'navbar.log_in.label' %}</a>
+        </li>
+        <li class="nav-item">
+          <a id="nav-signup-link" class="nav-link"
+             href="{% url 'sign_up' %}"><i class="fas fa-user-plus"></i>
+            {% ottm_translate 'navbar.sign_up.label' %}</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  {% block page-content %}{% endblock %}
+
+  <script src="{% static 'main_app/jquery-3.5.1.min.js' %}"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"
+          integrity="sha384-9/reFTGAW83EW2RDu2S0VKaIzap3H66lZH81PoYlFhbGU+6BZp6G7niu735Sk7lN"
+          crossorigin="anonymous"></script>
+  <script src="{% static 'main_app/bootstrap-4.5.2-dist/js/bootstrap.min.js' %}"></script>
+  <script src="{% static 'main_app/main.js' %}"></script>
+  {% block page-scripts %}{% endblock %}
+  <script>ottm.setReferer();</script>
 </body>
 </html>

@@ -23,8 +23,8 @@ class Language:
     def writing_direction(self) -> str:
         return self.__writing_direction
 
-    def translate(self, key: str, default: str = '') -> str:
-        return self.__mappings.get(key, default)
+    def translate(self, key: str, default: str = None) -> str:
+        return self.__mappings.get(key, default if default is not None else key)
 
 
 SITE_NAME = 'OpenTrainTrackMap'
