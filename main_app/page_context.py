@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 import typing as typ
 
-from . import models
+from . import models, forms, settings
 
 
 @dataclasses.dataclass
@@ -16,6 +16,7 @@ class PageContext:
 
     def __post_init__(self):
         self._context = None
+        self.lang = self.user.prefered_language
 
     def __getattr__(self, item):
         if self._context:
@@ -43,28 +44,17 @@ class MapPageContext(PageContext):
 
 @dataclasses.dataclass(init=False)
 class LoginPageContext(PageContext):
-    login_invalid_credentials: bool
-    login_username: str
+    log_in_form: forms.LogInForm
 
-    def __init__(self, context: PageContext, /, invalid_credentials: bool, username: str):
+    def __init__(self, context: PageContext, /, form: forms.LogInForm):
         self._context = context
-        self.login_invalid_credentials = invalid_credentials
-        self.login_username = username
+        self.log_in_form = form
 
 
 @dataclasses.dataclass(init=False)
 class SignUpPageContext(PageContext):
-    sign_up_invalid_username: bool
-    sign_up_invalid_password: bool
-    sign_up_invalid_email: bool
-    sign_up_username: str
-    sign_up_email: str
+    sign_up_form: forms.SignUpForm
 
-    def __init__(self, context: PageContext, /, invalid_username: bool, invalid_password: bool, invalid_email: bool,
-                 username: str, email: str):
+    def __init__(self, context: PageContext, /, form: forms.SignUpForm):
         self._context = context
-        self.sign_up_invalid_username = invalid_username
-        self.sign_up_invalid_password = invalid_password
-        self.sign_up_invalid_email = invalid_email
-        self.sign_up_username = username
-        self.sign_up_email = email
+        self.sign_up_form = form

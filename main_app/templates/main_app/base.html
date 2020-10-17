@@ -18,7 +18,7 @@
 </head>
 <body>
   <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a id="nav-main-link" class="navbar-brand" href="{% url 'map' %}">{{ context.site_name }}</a>
+    <a id="nav-main-link" class="navbar-brand" href="{% url 'main_app:map' %}">{{ context.site_name }}</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
@@ -29,40 +29,53 @@
         <li class="nav-item"
             {% if not context.user.is_logged_in %}title="{% ottm_translate 'navbar.edit.signup_title' %}"{% endif %}>
           <a id="nav-edit-link" class="nav-link{% if not context.user.is_logged_in %} disabled{% endif %}"
-             href="{% url 'edit' %}" {% if not context.user.is_logged_in %}tabindex="-1"
+             href="{% url 'main_app:edit' %}" {% if not context.user.is_logged_in %}tabindex="-1"
              aria-disabled="true" {% endif %}><i class="fas fa-edit"></i>
             {% ottm_translate 'navbar.edit.label' %}</a>
         </li>
         <li class="nav-item">
           <a id="nav-history-link" class="nav-link"
-             href="{% url 'history' %}"><i class="fas fa-history"></i>
+             href="{% url 'main_app:history' %}"><i class="fas fa-history"></i>
             {% ottm_translate 'navbar.history.label' %}</a>
         </li>
       </ul>
       <ul class="navbar-nav ml-auto">
         <li class="nav-item">
-          <a id="nav-help-link" class="nav-link" href="{% url 'help' %}"><i class="fas fa-question-circle"></i>
+          <a id="nav-help-link" class="nav-link" href="{% url 'main_app:help' %}"><i class="fas fa-question-circle"></i>
             {% ottm_translate 'navbar.help.label' %}</a>
         </li>
         <li class="nav-item">
-          <a id="nav-about-link" class="nav-link" href="{% url 'about' %}"><i class="fas fa-info-circle"></i>
+          <a id="nav-about-link" class="nav-link" href="{% url 'main_app:about' %}"><i class="fas fa-info-circle"></i>
             {% ottm_translate 'navbar.about.label' %}</a>
         </li>
         <li class="nav-item">
           <a id="nav-copyright-link" class="nav-link"
-             href="{% url 'copyright' %}"><i class="fas fa-copyright"></i>
+             href="{% url 'main_app:copyright' %}"><i class="fas fa-copyright"></i>
             {% ottm_translate 'navbar.copyright.label' %}</a>
         </li>
-        <li class="nav-item">
-          <a id="nav-login-link" class="nav-link"
-             href="{% url 'log_in' %}"><i class="fas fa-sign-in-alt"></i>
-            {% ottm_translate 'navbar.log_in.label' %}</a>
-        </li>
-        <li class="nav-item">
-          <a id="nav-signup-link" class="nav-link"
-             href="{% url 'sign_up' %}"><i class="fas fa-user-plus"></i>
-            {% ottm_translate 'navbar.sign_up.label' %}</a>
-        </li>
+        {% if context.user.is_logged_in %}
+          <li class="nav-item">
+            <a id="nav-user-link" class="nav-link"
+               href="{% url 'main_app:user_profile' username=context.user.username %}"><i class="fas fa-user"></i>
+              {{ context.user.username }}</a>
+          </li>
+          <li class="nav-item">
+            <a id="nav-logout-link" class="nav-link"
+               href="{% url 'main_app:log_out' %}"><i class="fas fa-sign-out-alt"></i>
+              {% ottm_translate 'navbar.log_out.label' %}</a>
+          </li>
+        {% else %}
+          <li class="nav-item">
+            <a id="nav-login-link" class="nav-link"
+               href="{% url 'main_app:log_in' %}"><i class="fas fa-sign-in-alt"></i>
+              {% ottm_translate 'navbar.log_in.label' %}</a>
+          </li>
+          <li class="nav-item">
+            <a id="nav-signup-link" class="nav-link"
+               href="{% url 'main_app:sign_up' %}"><i class="fas fa-user-plus"></i>
+              {% ottm_translate 'navbar.sign_up.label' %}</a>
+          </li>
+        {% endif %}
       </ul>
     </div>
   </nav>

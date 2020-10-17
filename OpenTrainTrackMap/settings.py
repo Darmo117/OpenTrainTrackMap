@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from pathlib import Path
 
+import WikiPy_app.settings as wpy_settings
 import main_app.settings as main_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -32,7 +33,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
-    'main_app',
+    'main_app.apps.MainAppConfig',
+    'WikiPy_app.apps.WikiPyAppConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -101,10 +103,6 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
 USE_I18N = True
 
 USE_L10N = True
@@ -120,7 +118,23 @@ STATICFILES_DIRS = [
 STATIC_URL = '/static/'
 
 #################
+# Wiki settings #
+#################
+
+AUTH_USER_MODEL = 'WikiPy_app.CustomUser'
+
+wpy_settings.init(BASE_DIR)
+
+LANGUAGE_CODE = wpy_settings.LANGUAGE_CODE
+TIME_ZONE = wpy_settings.TIME_ZONE
+EMAIL_HOST_USER = wpy_settings.EMAIL_HOST_USER
+EMAIL_HOST_PASSWORD = wpy_settings.EMAIL_HOST_PASSWORD
+
+#################
 # Site settings #
 #################
 
 main_settings.init(BASE_DIR)
+
+if DEBUG:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

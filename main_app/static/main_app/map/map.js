@@ -16,8 +16,8 @@
       let link = L.DomUtil.create("a");
 
       if (this.options.icon) {
-        link.style.width = "40px";
-        link.style.height = "40px";
+        link.style.width = "30px";
+        link.style.height = "30px";
         link.style.backgroundImage = `url("${this.options.icon}")`;
       } else {
         link.innerHTML = this.options.label;
@@ -38,6 +38,30 @@
   L.control.button = function (options) {
     return new L.Control.Button(options);
   }
+
+  L.EditControl = L.Control.extend({
+    options: {
+      position: "topleft",
+      callback: null,
+      kind: "",
+      html: ""
+    },
+
+    onAdd: function (map) {
+      let container = L.DomUtil.create("div", "leaflet-control leaflet-bar");
+      let link = L.DomUtil.create("a", "", container);
+
+      link.href = "#";
+      link.title = OTTM_CONFIG["trans"][`map.controls.edit.${this.options.kind}.tooltip`];
+      link.innerHTML = this.options.html;
+      L.DomEvent.on(link, "click", L.DomEvent.stop)
+          .on(link, "click", function () {
+            window.LAYER = this.options.callback.call(map.editTools);
+          }, this);
+
+      return container;
+    }
+  });
 
   class Map {
     /**
@@ -63,10 +87,19 @@
     _updatingHash = false;
     _updatingView = false;
 
-    constructor(mapId) {
+    _markers = [];
+    _lines = [];
+    _polygons = [];
+
+    /**
+     * Creates the map wrapper object.
+     * @param mapId {string} Map HTML tag ID.
+     * @param editMode {boolean} Whether the map should be editable.
+     */
+    constructor(mapId, editMode) {
       let map = L.map(mapId, {
         zoomControl: false, // Remove default zoom control
-        editable: true,
+        editable: editMode,
       }).setView([0, 0], 2);
 
       map.on("zoomend", this.updateUrl.bind(this));
@@ -122,7 +155,7 @@
 
       L.control.button({
         tooltip: OTTM_CONFIG["trans"]["map.controls.google_maps_button.tooltip"],
-        icon: OTTM_CONFIG["static_path"] + "main_app/images/22px-Google_Maps_icon.webp",
+        icon: OTTM_CONFIG["static_path"] + "main_app/images/Google_Maps_icon.svg.png",
         action: function (map) {
           openMapInTab(map, "https://www.google.com/maps/@{lat},{long},{zoom}z");
         },
@@ -145,30 +178,40 @@
         collapseAfterResult: false,
       }).addTo(map);
 
-      // let editableLayers = (new L.FeatureGroup()).addTo(map);
-      // (new L.Control.Draw({
-      //   position: 'topleft',
-      //   edit: {
-      //     featureGroup: editableLayers,
-      //     remove: true,
-      //   },
-      // })).addTo(map);
-      //
-      // map.on(L.Draw.Event.CREATED, function (e) {
-      //   let type = e.layerType,
-      //       layer = e.layer;
-      //
-      //   if (type === "marker") {
-      //     layer.bindPopup("A popup!");
-      //   }
-      //
-      //   editableLayers.addLayer(layer);
-      // });
+      if (editMode) {
+        L.NewLineControl = L.EditControl.extend({
+          options: {
+            position: "topleft",
+            callback: map.editTools.startPolyline,
+            kind: "new_line",
+            html: '<i class="fas fa-project-diagram"></i>',
+          }
+        });
 
-      // map.locate({setView: true, maxZoom: 16}); // TODO
+        L.NewPolygonControl = L.EditControl.extend({
+          options: {
+            position: "topleft",
+            callback: map.editTools.startPolygon,
+            kind: "new_polygon",
+            html: '<i class="fas fa-vector-square"></i>',
+          }
+        });
 
-      let polyline = L.polyline([[43.1, 1.2], [43.2, 1.3], [43.3, 1.2]]).addTo(map);
-      polyline.enableEdit();
+        L.NewMarkerControl = L.EditControl.extend({
+          options: {
+            position: "topleft",
+            callback: map.editTools.startMarker,
+            kind: "new_marker",
+            html: '<i class="fas fa-map-marker-alt"></i>',
+          }
+        });
+
+        map.addControl(new L.NewMarkerControl());
+        map.addControl(new L.NewLineControl());
+        map.addControl(new L.NewPolygonControl());
+      }
+
+      // map.locate({setView: true, maxZoom: 16}); // TODO ?
 
       this._map = map;
       this.centerViewFromUrl();
@@ -227,6 +270,6 @@
     }
   }
 
-  window.ottm.map = new Map("map");
+  window.ottm.map = new Map("map", OTTM_CONFIG["edit"]);
   window.ottm.Map = Map;
 })();

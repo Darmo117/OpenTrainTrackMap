@@ -29,7 +29,7 @@ class Language:
 
 SITE_NAME = 'OpenTrainTrackMap'
 
-DEFAULT_LANGUAGE: str = 'en'
+DEFAULT_LANGUAGE: str = 'en-US'
 LANGUAGES: _typ.Dict[str, Language] = {}
 
 

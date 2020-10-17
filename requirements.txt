@@ -6,4 +6,5 @@ pytz==2020.1
 rdflib==5.0.0
 rdflib-django3==0.3.3
 six==1.15.0
+slimit==0.8.1
 sqlparse==0.3.1

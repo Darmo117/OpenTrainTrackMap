@@ -1,53 +1,63 @@
 import logging
-import re
 import typing as typ
 
 import django.contrib.auth as dj_auth
-import django.contrib.auth.models as dj_models
+import django.core.exceptions as dj_exc
+import django.core.handlers.wsgi as dj_wsgi
 
+import WikiPy_app.forms as wpy_forms
 from . import _errors
-from .. import models
-
+from .. import models, settings
 
 #########
 # Users #
 #########
 
+username_validator = wpy_forms.username_validator
+
+email_validator = wpy_forms.email_validator
+
+
+def log_in_username_validator(value):
+    if not user_exists(value):
+        raise dj_exc.ValidationError('Username does not exist.', code='not_exists')
+
 
 def create_user(username: str, email: str = None, password: str = None, ignore_email: bool = False,
-                lang_code: str = 'en', is_admin: bool = False) -> models.User:
+                lang_code: str = settings.DEFAULT_LANGUAGE, is_admin: bool = False) -> models.User:
     username = username.strip()
-
-    # TODO disable usernames that are equal without considering case
-    if username == '':
-        raise _errors.InvalidUsernameError(username)
-    if get_user_from_name(username):
-        raise _errors.DuplicateUsernameError(username)
-
-    if not ignore_email and not re.fullmatch(r'\w+([.-]\w+)*@\w+([.-]\w+)+', email):
-        raise _errors.InvalidEmailError(email)
-    elif password is None or password.strip() == '':
-        raise _errors.InvalidPasswordError(password)
-
     if password is not None:
         password = password.strip()
 
-    dj_user = dj_models.User.objects.create_user(username, email=email, password=password)
+    try:
+        username_validator(username)
+    except dj_exc.ValidationError as e:
+        if e.code == 'invalid':
+            raise _errors.InvalidUsernameError(username)
+        elif e.code == 'duplicate':
+            raise _errors.DuplicateUsernameError(username)
+        else:  # Should not occur
+            raise ValueError(e)
+
+    if not ignore_email:
+        try:
+            email_validator(email)
+        except dj_exc.ValidationError:
+            raise _errors.InvalidEmailError(email)
+    elif password is None or password == '':
+        raise _errors.InvalidPasswordError(password)
+
+    dj_user = dj_auth.get_user_model().objects.create_user(username, email=email, password=password)
     dj_user.save()
 
-    data = models.UserData(
-        user=dj_user,
-        lang_code=lang_code,
-        is_admin=is_admin
-    )
-    data.save()
+    data = _create_user_info(dj_user, lang_code, is_admin)
     user = models.User(dj_user, data)
     logging.info(f'Created user {username}')
 
     return user
 
 
-def log_in(request, username: str, password: str) -> bool:
+def log_in(request: dj_wsgi.WSGIRequest, username: str, password: str) -> bool:
     user = dj_auth.authenticate(request, username=username, password=password)
     if user is not None:
         dj_auth.login(request, user)
@@ -55,15 +65,15 @@ def log_in(request, username: str, password: str) -> bool:
     return False
 
 
-def log_out(request):
+def log_out(request: dj_wsgi.WSGIRequest):
     dj_auth.logout(request)
 
 
-def get_user_from_request(request) -> models.User:
+def get_user_from_request(request: dj_wsgi.WSGIRequest) -> models.User:
     dj_user = dj_auth.get_user(request)
 
     if not dj_user.is_anonymous:
-        user_data = models.UserData.objects.get(user=dj_user)
+        user_data = _get_user_info(dj_user)
     else:
         user_data = None
 
@@ -72,12 +82,29 @@ def get_user_from_request(request) -> models.User:
 
 def get_user_from_name(username: str) -> typ.Optional[models.User]:
     try:
-        dj_user = dj_models.User.objects.get(username__iexact=username)
-        user_data = models.UserData.objects.get(user=dj_user)
+        dj_user = dj_auth.get_user_model().objects.get(username__iexact=username)
+        user_data = _get_user_info(dj_user)
         return models.User(dj_user, user_data)
-    except dj_models.User.DoesNotExist:
+    except dj_auth.get_user_model().DoesNotExist:
         return None
 
 
 def user_exists(username: str) -> bool:
-    return dj_models.User.objects.filter(username=username).count() != 0
+    return dj_auth.get_user_model().objects.filter(username=username).count() != 0
+
+
+def _create_user_info(user, lang_code: str = settings.DEFAULT_LANGUAGE, is_admin: bool = False):
+    data = models.UserInfo(
+        user=user,
+        lang_code=lang_code,
+        is_admin=is_admin
+    )
+    data.save()
+    return data
+
+
+def _get_user_info(user):
+    try:
+        return models.UserInfo.objects.get(user=user)
+    except models.UserInfo.DoesNotExist:
+        return _create_user_info(user)

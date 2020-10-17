@@ -14,16 +14,17 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path, include
+from django.views.generic.base import RedirectView
 
+from WikiPy_app import apps as wiki_apps
 from main_app import apps
 
 urlpatterns = [
     path('', include(apps.MainAppConfig.name + '.urls')),
-    # TODO install WikiPy when available and stable
-    # path('wiki', RedirectView.as_view(url='wiki/', permanent=True)),
-    # path('wiki/', include('wiki urls.py file')),
-    # path('api', RedirectView.as_view(url='api/', permanent=True)),
-    # path('api/', include('wiki urls.py file')),
+    path('wiki', RedirectView.as_view(url='wiki/', permanent=True)),
+    path('wiki/', include(wiki_apps.WikiPyAppConfig.name + '.urls')),
+    path('wiki-api', RedirectView.as_view(url='wiki-api/', permanent=True)),
+    path('wiki-api/', include(wiki_apps.WikiPyAppConfig.name + '.urls_api')),
 ]
 
 handler404 = apps.MainAppConfig.name + '.views.handle404'

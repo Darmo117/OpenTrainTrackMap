@@ -2,6 +2,38 @@ html, body {
   height: 100%;
 }
 
+.container h2 {
+  margin-top: 50px;
+}
+
 #navbar {
   z-index: 9999;
+}
+
+#page-title {
+  background-color: #dbdbdb;
+  text-align: center;
+  padding: 10px 0 20px;
+}
+
+.alert p:last-child {
+  margin-bottom: 0;
+}
+
+#icons-list {
+  margin-bottom: 0;
+}
+
+#icons-list li {
+  line-height: 30px;
+  padding: 10px 0;
+}
+
+#icons-list li span, #icons-list li i.fas {
+  vertical-align: middle;
+}
+
+#icons-list li i.fas {
+  font-size: 200%;
+  margin-right: 10px;
 }
