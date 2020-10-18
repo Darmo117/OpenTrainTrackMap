@@ -2,6 +2,7 @@
   "code": "en-US",
   "name": "English (USA)",
   "writing_direction": "ltr",
+  "date_format": "M j, Y",
   "mappings": {
     "page": {
       "edit": {
@@ -33,6 +34,31 @@
       "sign_up": {
         "title": "Create a new account",
         "tab_title": "Sign up"
+      },
+      "user_profile": {
+        "title": "",
+        "tab_title": "{username}’s profile",
+        "subtitle": {
+          "notes": "Notes",
+          "contributions": "Contributions",
+          "wiki_contributions": "Wiki contributions",
+          "settings": "Settings"
+        },
+        "statistics": {
+          "title": "Statistics",
+          "admin_label": "Administrator",
+          "account_creation_date_label": "Rail mapper since",
+          "notes_count_label": "Number of notes",
+          "edits_count_label": "Number of edits",
+          "wiki_edits_count_label": "Number of wiki edits"
+        }
+      },
+      "user_settings": {
+        "title": "Account settings",
+        "tab_title": "Account settings",
+        "subtitle": {
+          "profile": "Return to profile"
+        }
       }
     },
     "navbar": {
@@ -101,7 +127,8 @@
           }
         },
         "password_confirm": {
-          "label": "Confirm password"
+          "label": "Confirm password",
+          "help": "Required."
         },
         "submit": {
           "label": "Create account"

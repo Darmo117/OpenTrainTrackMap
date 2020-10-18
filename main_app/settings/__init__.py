@@ -5,10 +5,11 @@ import typing as _typ
 
 
 class Language:
-    def __init__(self, code: str, name: str, writing_direction: str, mappings: _typ.Dict[str, str]):
+    def __init__(self, code: str, name: str, writing_direction: str, date_format: str, mappings: _typ.Dict[str, str]):
         self.__code = code
         self.__name = name
         self.__writing_direction = writing_direction
+        self.__date_format = date_format
         self.__mappings = mappings
 
     @property
@@ -22,6 +23,10 @@ class Language:
     @property
     def writing_direction(self) -> str:
         return self.__writing_direction
+
+    @property
+    def date_format(self) -> str:
+        return self.__date_format
 
     def translate(self, key: str, default: str = None) -> str:
         return self.__mappings.get(key, default if default is not None else key)
@@ -43,8 +48,9 @@ def init(base_dir: str):
             lang_name = json_obj["name"]
             lang_code = json_obj["code"]
             writing_direction = json_obj["writing_direction"]
+            date_format = json_obj["date_format"]
             mappings = _build_mapping(None, json_obj["mappings"])
-            LANGUAGES[lang_code] = Language(lang_code, lang_name, writing_direction, mappings)
+            LANGUAGES[lang_code] = Language(lang_code, lang_name, writing_direction, date_format, mappings)
 
 
 def _build_mapping(root: _typ.Optional[str], json_object: _typ.Mapping[str, _typ.Union[str, _typ.Mapping]]) \

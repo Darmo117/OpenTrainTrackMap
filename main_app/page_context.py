@@ -3,7 +3,7 @@ from __future__ import annotations
 import dataclasses
 import typing as typ
 
-from . import models, forms, settings
+from . import models, forms
 
 
 @dataclasses.dataclass
@@ -45,16 +45,18 @@ class MapPageContext(PageContext):
 @dataclasses.dataclass(init=False)
 class LoginPageContext(PageContext):
     log_in_form: forms.LogInForm
+    global_errors: typ.List[str]
 
-    def __init__(self, context: PageContext, /, form: forms.LogInForm):
+    def __init__(self, context: PageContext, /, form: forms.LogInForm, global_errors: typ.List[str]):
         self._context = context
         self.log_in_form = form
+        self.global_errors = global_errors
 
 
 @dataclasses.dataclass(init=False)
-class SignUpPageContext(PageContext):
-    sign_up_form: forms.SignUpForm
+class UserPageContext(PageContext):
+    target_user: models.User
 
-    def __init__(self, context: PageContext, /, form: forms.SignUpForm):
+    def __init__(self, context: PageContext, /, target_user: models.User):
         self._context = context
-        self.sign_up_form = form
+        self.target_user = target_user

@@ -1,4 +1,5 @@
-from . import SpecialPage, RedirectPageContext
+from . import SpecialPage
+from .. import page_context
 
 
 def load_special_page(settings) -> SpecialPage:
@@ -8,7 +9,7 @@ def load_special_page(settings) -> SpecialPage:
 
         def _get_data_impl(self, api, sub_title, base_context, request, **kwargs):
             user = api.get_user_from_request(request)
-            context = RedirectPageContext(base_context, to=api.get_full_page_title(6, user.username))
+            context = page_context.RedirectPageContext(base_context, to=api.get_full_page_title(6, user.username))
             return context, [], None
 
     return MyPage()

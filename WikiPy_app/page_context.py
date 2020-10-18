@@ -51,6 +51,17 @@ class PageContext:
 
 
 @dataclasses.dataclass(init=False)
+class RedirectPageContext(PageContext):
+    redirect: str
+    is_path: bool
+
+    def __init__(self, context: PageContext, /, to: str, is_path: bool = False):
+        self._context = context
+        self.redirect = to
+        self.is_path = is_path
+
+
+@dataclasses.dataclass(init=False)
 class RevisionPageContext(PageContext):
     wikicode: str
     revision: typ.Optional[typ.Any]  # FIXME annotate correctly

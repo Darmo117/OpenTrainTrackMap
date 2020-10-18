@@ -12,7 +12,13 @@ class _CustomForm(dj_forms.Form):
             visible.field.widget.attrs['class'] = 'form-control'
 
 
-class SignUpForm(_CustomForm):
+class ConfirmPasswordForm:
+    def passwords_match(self) -> bool:
+        cleaned_data = getattr(self, 'cleaned_data')
+        return cleaned_data['password'] == cleaned_data['password_confirm']
+
+
+class SignUpForm(_CustomForm, ConfirmPasswordForm):
     username = dj_forms.CharField(
         label='username',
         min_length=1,
@@ -34,6 +40,44 @@ class SignUpForm(_CustomForm):
         max_length=dj_auth.User._meta.get_field('password').max_length,
         help_text=True,
         required=True,
+        widget=dj_forms.PasswordInput()
+    )
+    password_confirm = dj_forms.CharField(
+        label='password_confirm',
+        min_length=1,
+        max_length=dj_auth.User._meta.get_field('password').max_length,
+        help_text=True,
+        required=True,
+        widget=dj_forms.PasswordInput()
+    )
+
+
+class SettingsForm(_CustomForm, ConfirmPasswordForm):
+    username = dj_forms.CharField(
+        label='username',
+        min_length=1,
+        max_length=dj_auth.User._meta.get_field('username').max_length,
+        validators=[api.username_validator]
+    )
+    current_email = dj_forms.CharField(
+        label='current_email',
+        widget=dj_forms.EmailInput
+    )
+    new_email = dj_forms.CharField(
+        label='new_email',
+        widget=dj_forms.EmailInput,
+        validators=[api.email_validator]
+    )
+    password = dj_forms.CharField(
+        label='password',
+        min_length=1,
+        max_length=dj_auth.User._meta.get_field('password').max_length,
+        widget=dj_forms.PasswordInput()
+    )
+    password_confirm = dj_forms.CharField(
+        label='password_confirm',
+        min_length=1,
+        max_length=dj_auth.User._meta.get_field('password').max_length,
         widget=dj_forms.PasswordInput()
     )
 

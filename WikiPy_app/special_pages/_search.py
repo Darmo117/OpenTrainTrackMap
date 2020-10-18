@@ -1,7 +1,7 @@
 import dataclasses
 import typing as typ
 
-from . import SpecialPage, RedirectPageContext
+from . import SpecialPage
 from .. import page_context
 
 
@@ -47,7 +47,7 @@ def load_special_page(settings) -> SpecialPage:
             if len(results) == 1 and search_bar:
                 ns = results[0].namespace_id
                 title = results[0].title
-                context = RedirectPageContext(context, to=api.get_full_page_title(ns, title))
+                context = page_context.RedirectPageContext(context, to=api.get_full_page_title(ns, title))
             else:
                 context = SearchPageContext(
                     context,

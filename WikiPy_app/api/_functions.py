@@ -135,7 +135,7 @@ def get_user_contributions(current_user: models.User, username: str, namespace: 
                            only_hidden_revisions: bool = False, only_last_edits: bool = False,
                            only_page_creations: bool = False, hide_minor: bool = False, from_date: dt.date = None,
                            to_date: dt.date = None) \
-        -> typ.Iterable[models.PageRevision]:
+        -> typ.Sequence[models.PageRevision]:
     if user_exists(username):
         kwargs = {
             'author__username': username,

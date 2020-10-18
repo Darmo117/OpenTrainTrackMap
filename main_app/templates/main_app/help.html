@@ -1,4 +1,5 @@
 {% extends 'main_app/not-map.html' %}
+{% load wpy_tags %}
 
 {% block container-content %}
   <p>
@@ -20,7 +21,9 @@
       <div class="card h-100">
         <div class="card-body">
           <h5 class="card-title">
-            <a href="{% url 'wikipy:page' raw_page_title='Guide:Beginners' %}">Beginner’s guide</a>
+            <a href="{% url 'wikipy:page' raw_page_title='Beginners'|wpy_page_title:100|wpy_encode_url %}">
+              Beginner’s guide
+            </a>
           </h5>
           <div class="card-text">
             A guide for quickly learning the basics of editing.

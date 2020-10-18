@@ -6,3 +6,7 @@ $("form div.form-group").each(function () {
     $e.find("input").addClass("is-invalid");
   }
 });
+
+$("form #form-password").each(function () {
+
+});

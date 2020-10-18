@@ -3,7 +3,7 @@ import typing as typ
 
 import django.utils.safestring as dj_safe
 
-from . import SpecialPage, ReturnToPageContext, RedirectPageContext
+from . import SpecialPage, ReturnToPageContext
 from .. import page_context
 
 
@@ -31,8 +31,9 @@ def load_special_page(settings) -> SpecialPage:
         def _get_data_impl(self, api, sub_title, base_context, request, **kwargs):
             get_params = request.GET
             return_to = api.get_param(get_params, 'return_to')
+            return_to_path = api.get_param(get_params, 'is_path', default=False, expected_type=bool)
 
-            context = ReturnToPageContext(base_context, to=return_to)
+            context = ReturnToPageContext(base_context, to=return_to, is_path=return_to_path)
 
             if api.get_param(get_params, 'action') == 'login':
                 context = self.__login(api, context, request)
@@ -72,13 +73,14 @@ def load_special_page(settings) -> SpecialPage:
             username = api.get_param(post_params, 'wpy-login-username')
             password = api.get_param(post_params, 'wpy-login-password')
             return_to = api.get_param(post_params, 'wpy-login-returnto', default=main_page_title)
+            is_path = api.get_param(post_params, 'wpy-login-returntopath', expected_type=bool, default=False)
 
             success = api.log_in(request, username, password)
 
             context = LoginPageContext(base_context, login_notice=None, login_warning=None, login_error=not success,
                                        login_username=username)
             if success and return_to:
-                context = RedirectPageContext(context, to=return_to)
+                context = page_context.RedirectPageContext(context, to=return_to, is_path=is_path)
 
             return context
 

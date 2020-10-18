@@ -1,11 +1,15 @@
 #map {
   overflow: hidden;
   position: absolute;
-  top: 56px;
+  top: 61px;
   bottom: 0;
   width: 100%;
 }
 
 .leaflet-control-geocoder {
   background-color: white;
+}
+
+.leaflet-control a .mdi {
+  font-size: 26px;
 }

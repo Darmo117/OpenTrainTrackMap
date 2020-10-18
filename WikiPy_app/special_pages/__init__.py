@@ -37,21 +37,14 @@ class SpecialPageContext(_page_context.PageContext):
 
 
 @dataclasses.dataclass(init=False)
-class RedirectPageContext(_page_context.PageContext):
-    redirect: str
-
-    def __init__(self, context: _page_context.PageContext, /, to: str):
-        self._context = context
-        self.redirect = to
-
-
-@dataclasses.dataclass(init=False)
 class ReturnToPageContext(_page_context.PageContext):
     return_to: str
+    return_to_path: bool
 
-    def __init__(self, context: _page_context.PageContext, /, to: str):
+    def __init__(self, context: _page_context.PageContext, /, to: str, is_path: bool = False):
         self._context = context
         self.return_to = to
+        self.return_to_path = is_path
 
 
 class SpecialPage(_abc.ABC):

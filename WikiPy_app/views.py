@@ -103,8 +103,12 @@ def _get_page(request, page_title: str, action: str, user) -> dj_http.HttpRespon
                                          redirect_enabled=redirect_enabled)
 
     # Handle redirection pages
-    if isinstance(context, str):
-        return _redirect('page', context)
+    if hasattr(context, 'redirect'):
+        path = getattr(context, 'redirect')
+        if not getattr(context, 'is_path', False):
+            return _redirect('page', path)
+        else:
+            return dj_scut.HttpResponseRedirect(path)
 
     if action == 'raw' and context.namespace_id != -1:
         return _get_raw(request, context, status)

@@ -9,14 +9,16 @@ urlpatterns = [
     path('edit', views.edit_page, name='edit'),
     path('log-in', views.login_page, name='log_in'),
     path('log-out', views.logout_page, name='log_out'),
-    path('sign-up', views.sign_up_page, name='sign_up'),
     path('copyright', views.page_handler('copyright'), name='copyright'),
     path('help', views.page_handler('help'), name='help'),
     path('about', views.page_handler('about'), name='about'),
     path('basics', views.page_handler('basics'), name='basics'),
-    path('user/<str:username>', include([
-        path('', views.user_profile, name='user_profile'),
-        path('contributions', views.user_profile, name='user_contributions'),
-        path('settings', views.user_profile, name='user_settings'),
+    path('user/', include([
+        path('<str:username>/', include([
+            path('', views.user_profile, name='user_profile'),
+            path('contributions', views.user_contributions, name='user_contributions'),
+            path('notes', views.user_notes, name='user_notes'),
+        ])),
+        path('settings', views.user_settings, name='user_settings'),
     ])),
 ]

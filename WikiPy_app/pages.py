@@ -26,7 +26,7 @@ def get_setup_page(user: models.User) -> page_context.PageContext:
 
 
 def get_page(request, namespace_id: int, title: str, user: models.User, *, action: str = None,
-             redirect_enabled: bool = True) -> typ.Tuple[typ.Union[page_context.PageContext, str], int]:
+             redirect_enabled: bool = True) -> typ.Tuple[page_context.PageContext, int]:
     if namespace_id != -1:
         page_exists = api.page_exists(namespace_id, title)
         can_edit = api.can_edit_page(user, namespace_id, title)
@@ -44,7 +44,7 @@ def get_page(request, namespace_id: int, title: str, user: models.User, *, actio
 
 
 def _get_special_page(title: str, user: models.User, page_exists: bool, request, **kwargs) \
-        -> typ.Tuple[typ.Union[page_context.PageContext, str], int]:
+        -> typ.Tuple[page_context.PageContext, int]:
     base_title = api.get_special_page_title(title)
     sub_title = api.get_special_page_sub_title(title)
     can_read = user.can_read_page(-1, base_title)
@@ -53,18 +53,14 @@ def _get_special_page(title: str, user: models.User, page_exists: bool, request,
         if can_read:
             base_context = _get_base_page_context(-1, title, SPECIAL, user, True, False, page_exists, can_read, False)
             special_page = special_pages.get_special_page(base_title)
-            data = special_page.get_data(api, sub_title, base_context, request, **kwargs)
+            context = special_page.get_data(api, sub_title, base_context, request, **kwargs)
+            return context, FOUND
 
-            if hasattr(data, 'redirect'):
-                return data.redirect, FOUND
-
-            return data, FOUND
     return _get_page(-1, title, user, page_exists=False, can_read=can_read, can_edit=False, redirect_enabled=False)
 
 
 def _get_page(namespace_id: int, title: str, user: models.User, page_exists: bool, can_read: bool, can_edit: bool,
-              redirect_enabled: bool, revision_id: int = None) \
-        -> typ.Tuple[typ.Union[page_context.PageContext, str], int]:
+              redirect_enabled: bool, revision_id: int = None) -> typ.Tuple[page_context.PageContext, int]:
     redirect = None
     revision = None
     main_page = namespace_id == settings.MAIN_PAGE_NAMESPACE_ID and title == settings.MAIN_PAGE_TITLE
@@ -85,22 +81,24 @@ def _get_page(namespace_id: int, title: str, user: models.User, page_exists: boo
         except api.RevisionDoesNotExist:
             wikicode = _format_message(api.get_page_content(4, 'Message-InvalidRevisionID')[0], revision_id=revision_id)
 
+    context = _get_read_page_context(
+        namespace_id,
+        title,
+        user,
+        wikicode,
+        status != FOUND or revision_id is not None,
+        main_page and status == FOUND,
+        status != NOT_FOUND,
+        can_read,
+        can_edit,
+        revision=revision,
+        archived=revision is not None and revision_id is not None
+    )
+
     if not redirect or not redirect_enabled:
-        return _get_read_page_context(
-            namespace_id,
-            title,
-            user,
-            wikicode,
-            status != FOUND or revision_id is not None,
-            main_page and status == FOUND,
-            status != NOT_FOUND,
-            can_read,
-            can_edit,
-            revision=revision,
-            archived=revision is not None and revision_id is not None
-        ), status
+        return context, status
     else:
-        return redirect, FOUND
+        return page_context.RedirectPageContext(context, redirect), FOUND
 
 
 def _get_edit_page(namespace_id: int, title: str, user: models.User, page_exists: bool, can_read: bool, can_edit: bool,

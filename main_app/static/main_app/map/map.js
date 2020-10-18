@@ -184,7 +184,7 @@
             position: "topleft",
             callback: map.editTools.startPolyline,
             kind: "new_line",
-            html: '<i class="fas fa-project-diagram"></i>',
+            html: '<span class="mdi mdi-vector-polyline"></span>',
           }
         });
 
@@ -193,7 +193,7 @@
             position: "topleft",
             callback: map.editTools.startPolygon,
             kind: "new_polygon",
-            html: '<i class="fas fa-vector-square"></i>',
+            html: '<span class="mdi mdi-vector-polygon"></span>',
           }
         });
 
@@ -202,7 +202,7 @@
             position: "topleft",
             callback: map.editTools.startMarker,
             kind: "new_marker",
-            html: '<i class="fas fa-map-marker-alt"></i>',
+            html: '<span class="mdi mdi-vector-point"></span>',
           }
         });
 

@@ -10,10 +10,24 @@ html, body {
   z-index: 9999;
 }
 
+#navbar li.nav-item .mdi {
+  vertical-align: middle;
+  font-size: 120%;
+}
+
 #page-title {
   background-color: #dbdbdb;
   text-align: center;
   padding: 10px 0 20px;
+}
+
+#page-title small {
+  font-size: 40%;
+}
+
+#user-icon {
+  width: 100px;
+  height: 100px;
 }
 
 .alert p:last-child {
@@ -29,11 +43,11 @@ html, body {
   padding: 10px 0;
 }
 
-#icons-list li span, #icons-list li i.fas {
+#icons-list li span, #icons-list li .mdi {
   vertical-align: middle;
 }
 
-#icons-list li i.fas {
+#icons-list li .mdi {
   font-size: 200%;
   margin-right: 10px;
 }

@@ -1,24 +1,42 @@
 {% load ottm %}
 
-<form method="post" id="{{ form_name }}">
-  {% csrf_token %}
-  {% for field in form %}
-    <div class="form-group">
-      <label
-          for="{{ field.id_for_label }}">{% ottm_translate 'form.'|add:form_name|add:'.'|add:field.label|add:'.label' %}</label>
-      {{ field }}
-      {% if field.help_text %}
-        <small
-            class="form-text text-muted">{% ottm_translate 'form.'|add:form_name|add:'.'|add:field.label|add:'.help' %}</small>
-      {% endif %}
-      {% if field.errors %}
-        <div class="invalid-feedback" style="display: block">
-          {% for error in field.errors.as_data %}
-            {% ottm_translate 'form.'|add:form_name|add:'.'|add:field.label|add:'.error.'|add:error.code %}
-          {% endfor %}
-        </div>
-      {% endif %}
+{% with trans_prefix='form.'|add:form_name|add:'.' %}
+  {% if context.global_errors %}
+    <div class="alert alert-danger">
+      <ul class="list-unstyled">
+        {% for error in context.global_errors %}
+          <li>{% ottm_translate trans_prefix|add:'error.'|add:error %}</li>
+        {% endfor %}
+      </ul>
     </div>
-  {% endfor %}
-  <input type="submit" class="btn btn-primary" value="{% ottm_translate 'form.'|add:form_name|add:'.submit.label' %}">
-</form>
+  {% endif %}
+  <form method="post" id="{{ form_name }}">
+    {% csrf_token %}
+    {% for field in form %}
+      {% with trans_field_prefix=trans_prefix|add:field.label|add:'.' %}
+        <div class="form-group" id="form-{{ field.label }}">
+          <label for="{{ field.id_for_label }}">
+            {% ottm_translate trans_field_prefix|add:'label' %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <small class="form-text text-muted">
+              {% ottm_translate trans_field_prefix|add:'help' %}
+            </small>
+          {% endif %}
+          {% if field.errors %}
+            <div class="invalid-feedback" style="display: block">
+              {% for error in field.errors.as_data %}
+                {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      {% endwith %}
+    {% endfor %}
+    <div class="text-center">
+      <input type="submit" class="btn btn-primary"
+             value="{% ottm_translate trans_prefix|add:'submit.label' %}"/>
+    </div>
+  </form>
+{% endwith %}

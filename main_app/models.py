@@ -4,6 +4,7 @@ import django.contrib.auth as dj_auth
 import django.contrib.auth.models as dj_auth_models
 import django.db.models as dj_models
 
+import WikiPy_app.api as wpy_api
 from . import settings
 
 
@@ -47,6 +48,18 @@ class User:
     @property
     def is_admin(self) -> bool:
         return self.__data.is_admin if self.__data else False
+
+    @property
+    def notes_count(self):
+        return 0  # TODO nombre de notes
+
+    @property
+    def edits_count(self):
+        return 0  # TODO nombre de contributions
+
+    @property
+    def wiki_edits_count(self):
+        return len(wpy_api.get_user_contributions(wpy_api.get_user_from_name(self.username), self.username))
 
     def __repr__(self):
         return f'User[django_user={self.__django_user.username},data={self.__data}]'

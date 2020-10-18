@@ -2,7 +2,7 @@ import dataclasses
 
 import django.utils.safestring as dj_safe
 
-from . import SpecialPage, RedirectPageContext
+from . import SpecialPage
 from .. import page_context
 
 
@@ -25,7 +25,7 @@ def load_special_page(settings) -> SpecialPage:
             context = base_context
             if redirect_to:
                 api.log_out(request)
-                context = RedirectPageContext(context, to=redirect_to)
+                context = page_context.RedirectPageContext(context, to=redirect_to)
 
             user = api.get_user_from_request(request)
             if user.is_logged_in:

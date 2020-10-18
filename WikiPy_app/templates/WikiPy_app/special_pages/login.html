@@ -14,7 +14,8 @@
 <div class="row">
   {% if not wpy_context.user.is_logged_in %}
     <div class="col">
-      <form id="wpy-login-form" method="post" action="{% url 'wikipy:page' wpy_context.full_page_title_url %}?action=login">
+      <form id="wpy-login-form" method="post"
+            action="{% url 'wikipy:page' wpy_context.full_page_title_url %}?action=login">
         {% if wpy_context.login_error %}
           <div class="wpy-error alert alert-danger" role="alert">
             {% wpy_translate 'special.login.form.error' %}
@@ -37,7 +38,10 @@
         <input type="submit" class="btn btn-primary btn-block"
                value="{% wpy_translate 'special.login.form.submit.label' %}">
 
-        <input type="hidden" name="wpy-login-returnto" value="{{ wpy_context.return_to|default_if_none:'' }}"/>
+        <input type="hidden" name="wpy-login-returnto"
+               value="{{ wpy_context.return_to|default_if_none:'' }}"/>
+        <input type="hidden" name="wpy-login-returntopath"
+               value="{{ wpy_context.return_to_path|yesno:'1,' }}"/>
         {% csrf_token %}
       </form>
     </div>

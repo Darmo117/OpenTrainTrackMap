@@ -65,6 +65,11 @@
 
       <input type="submit" class="btn btn-primary btn-block"
              value="{% wpy_translate 'special.create_account.form.submit.label' %}">
+
+      <input type="hidden" name="wpy-createaccount-returnto"
+             value="{{ wpy_context.return_to|default_if_none:'' }}"/>
+      <input type="hidden" name="wpy-createaccount-returntopath"
+             value="{{ wpy_context.return_to_path|yesno:'1,' }}"/>
       {% csrf_token %}
     </form>
   </div>
