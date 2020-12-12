@@ -7,7 +7,6 @@ urlpatterns = [
     path('', views.map_page, name='map'),
     path('history', views.history_page, name='history'),
     path('edit', views.edit_page, name='edit'),
-    path('log-in', views.login_page, name='log_in'),
     path('log-out', views.logout_page, name='log_out'),
     path('copyright', views.page_handler('copyright'), name='copyright'),
     path('help', views.page_handler('help'), name='help'),

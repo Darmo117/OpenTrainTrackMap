@@ -45,11 +45,11 @@ def init(base_dir: str):
     for fname in _os.listdir(langs_dir):
         with open(_os.path.join(langs_dir, fname), mode='r', encoding='UTF-8') as lang_file:
             json_obj = _json.load(lang_file)
-            lang_name = json_obj["name"]
-            lang_code = json_obj["code"]
-            writing_direction = json_obj["writing_direction"]
-            date_format = json_obj["date_format"]
-            mappings = _build_mapping(None, json_obj["mappings"])
+            lang_name = json_obj['name']
+            lang_code = json_obj['code']
+            writing_direction = json_obj['writing_direction']
+            date_format = json_obj['date_format']
+            mappings = _build_mapping(None, json_obj['mappings'])
             LANGUAGES[lang_code] = Language(lang_code, lang_name, writing_direction, date_format, mappings)
 
 

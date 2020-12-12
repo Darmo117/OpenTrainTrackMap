@@ -13,8 +13,11 @@ window.ottm = {
         this._setReturnTo($link, path, isPath ? {"is_path": 1} : null);
       }
     }
-    let logInUrl = new URL($("#nav-login-link").prop("href"));
-    this._setReturnTo($("#nav-signup-link"), logInUrl.pathname + logInUrl.search, {"is_path": 1});
+    let url = $("#nav-login-link").prop("href");
+    if (url) {
+      let logInUrl = new URL(url);
+      this._setReturnTo($("#nav-signup-link"), logInUrl.pathname + logInUrl.search, {"is_path": 1});
+    }
   },
 
   /**

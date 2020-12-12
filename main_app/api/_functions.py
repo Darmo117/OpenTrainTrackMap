@@ -18,11 +18,6 @@ username_validator = wpy_forms.username_validator
 email_validator = wpy_forms.email_validator
 
 
-def log_in_username_validator(value):
-    if not user_exists(value):
-        raise dj_exc.ValidationError('Username does not exist.', code='not_exists')
-
-
 def log_in(request: dj_wsgi.WSGIRequest, username: str, password: str) -> bool:
     user = dj_auth.authenticate(request, username=username, password=password)
     if user is not None:
