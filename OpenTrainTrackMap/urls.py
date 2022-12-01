@@ -16,16 +16,16 @@ Including another URLconf
 from django.urls import path, include
 from django.views.generic.base import RedirectView
 
-from WikiPy_app import apps as wiki_apps
-from main_app import apps
+from WikiPy import apps as wiki_apps
+from ottm import apps
 
 urlpatterns = [
-    path('', include(apps.MainAppConfig.name + '.urls')),
+    path('', include(apps.OTTMConfig.name + '.urls')),
     path('wiki', RedirectView.as_view(url='wiki/', permanent=True)),
-    path('wiki/', include(wiki_apps.WikiPyAppConfig.name + '.urls')),
+    path('wiki/', include(wiki_apps.WikiPyConfig.name + '.urls')),
     path('wiki-api', RedirectView.as_view(url='wiki-api/', permanent=True)),
-    path('wiki-api/', include(wiki_apps.WikiPyAppConfig.name + '.urls_api')),
+    path('wiki-api/', include(wiki_apps.WikiPyConfig.name + '.urls_api')),
 ]
 
-handler404 = apps.MainAppConfig.name + '.views.handle404'
-handler500 = apps.MainAppConfig.name + '.views.handle500'
+handler404 = apps.OTTMConfig.name + '.views.handle404'
+handler500 = apps.OTTMConfig.name + '.views.handle500'

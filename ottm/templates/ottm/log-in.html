@@ -1,0 +1,17 @@
+{% extends 'ottm/not-map.html' %}
+{% load static %}
+{% load ottm %}
+
+{% block container-content %}
+  {% if context.user.is_logged_in %}
+    <div class="alert alert-warning">
+      {% ottm_translate 'alert.log_in.already_logged_in' %}
+    </div>
+  {% else %}
+    {% include 'ottm/include/form.html' with form=context.log_in_form form_name='log_in' %}
+  {% endif %}
+{% endblock %}
+
+{% block page-scripts %}
+  <script src="{% static 'ottm/forms.js' %}"></script>
+{% endblock %}

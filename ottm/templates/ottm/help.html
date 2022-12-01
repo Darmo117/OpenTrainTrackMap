@@ -1,0 +1,46 @@
+{% extends 'ottm/not-map.html' %}
+{% load wpy_tags %}
+
+{% block container-content %}
+  <p>
+    You will find below links to help you contribute on {{ context.site_name }}, places to ask and answer questions and
+    discuss railway-related mapping topics.
+  </p>
+  <div class="row row-cols-1 row-cols-md-3">
+    <div class="col mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title"><a href="{% url 'ottm:basics' %}">Basics</a></h5>
+          <div class="card-text">
+            A quick guide about the basic vocabulary and rules that apply when editing.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title">
+            <a href="{% url 'wikipy:page' raw_page_title='Beginners'|wpy_page_title:100|wpy_encode_url %}">
+              Beginner’s guide
+            </a>
+          </h5>
+          <div class="card-text">
+            A guide for quickly learning the basics of editing.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col mb-4">
+      <div class="card h-100">
+        <div class="card-body">
+          <h5 class="card-title"><a href="{% url 'wikipy:main_page' %}">{{ context.site_name }} Wiki</a></h5>
+          <div class="card-text">
+            Features useful tips and tutorials about how to contribute
+            as well as in-depth information about the map data model.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

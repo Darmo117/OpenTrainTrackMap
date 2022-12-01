@@ -1,0 +1,61 @@
+{% extends 'ottm/not-map.html' %}
+{% load static %}
+
+{% block container-content %}
+  <h2><span class="mdi mdi-map"></span> What is featured on the map?</h2>
+  <div class="row row-cols-1 row-cols-md-2">
+    <div class="col mb-2">
+      <div class="card border-success h-100">
+        <div class="card-body text-success">
+          <h5 class="card-title text-center" style="font-size: 300%;"><span class="mdi mdi-check-circle"></span></h5>
+          <p class="card-text">
+            Railway-related things that are current or that have existed in the past. It includes tracks, stations,
+            bridges, signals, etc.
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col mb-2">
+      <div class="card border-danger h-100">
+        <div class="card-body text-danger">
+          <h5 class="card-title text-center" style="font-size: 300%;"><span class="mdi mdi-close-circle"></span></h5>
+          <p class="card-text">
+            Anything not directly related to railways, like mountains, cities, forests, roads, seas, countries, etc.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2><span class="mdi mdi-book-open-variant"></span> Basic terms for editing</h2>
+  <p>
+    {{ context.site_name }} has some specific terms that you will encounter when editing.
+  </p>
+  <ul class="list-unstyled" id="icons-list">
+    <li>
+      <span class="mdi mdi-vector-point"></span><span>A <strong>node</strong> is a point in the map, they are mostly
+      encountered when drawing polylines and polygons.</span>
+    </li>
+    <li>
+      <span class="mdi mdi-vector-polyline"></span><span>A <strong>polyline</strong> is a sequence of line segments,
+      like a train track or a wall.</span>
+    </li>
+    <li>
+      <span class="mdi mdi-vector-polygon"></span><span>A <strong>polygon</strong> is a zone delimited by a closed
+      polyline,like a building or an area.</span>
+    </li>
+  </ul>
+
+  <h2><span class="mdi mdi-book-check"></span> Rules</h2>
+  <p>{# TODO #}
+    TODO
+  </p>
+
+  <h2><span class="mdi mdi-help-circle"></span> Need help?</h2>
+  <p>
+    There several resources to learn about the project, discuss, ask and answer questions. See the
+    <a href="{% url 'ottm:help' %}">help page</a> for more information.
+  </p>
+
+  <p class="text-center"><a href="{% url 'ottm:edit' %}" class="btn btn-link btn-lg">Start editing</a></p>
+{% endblock %}

@@ -13,8 +13,8 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from pathlib import Path
 
-import WikiPy_app.settings as wpy_settings
-import main_app.settings as main_settings
+import WikiPy.settings as wpy_settings
+import ottm.settings as main_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -31,16 +31,14 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
-
 INSTALLED_APPS = [
-    'main_app.apps.MainAppConfig',
-    'WikiPy_app.apps.WikiPyAppConfig',
+    'ottm.apps.OTTMConfig',
+    'WikiPy.apps.WikiPyConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rdflib_django',
 ]
 
 MIDDLEWARE = [
@@ -113,7 +111,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATICFILES_DIRS = [
-    BASE_DIR / 'main_app/static',
+    BASE_DIR / 'ottm/static',
 ]
 STATIC_URL = '/static/'
 
@@ -121,11 +119,10 @@ STATIC_URL = '/static/'
 # Wiki settings #
 #################
 
-AUTH_USER_MODEL = 'WikiPy_app.CustomUser'
+AUTH_USER_MODEL = 'WikiPy.CustomUser'
 
 wpy_settings.init(BASE_DIR)
 
-LANGUAGE_CODE = wpy_settings.LANGUAGE_CODE
 TIME_ZONE = wpy_settings.TIME_ZONE
 EMAIL_HOST_USER = wpy_settings.EMAIL_HOST_USER
 EMAIL_HOST_PASSWORD = wpy_settings.EMAIL_HOST_PASSWORD
@@ -135,6 +132,8 @@ EMAIL_HOST_PASSWORD = wpy_settings.EMAIL_HOST_PASSWORD
 #################
 
 main_settings.init(BASE_DIR)
+
+LANGUAGE_CODE = main_settings.DEFAULT_LANGUAGE
 
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
