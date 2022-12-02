@@ -7,12 +7,16 @@ import django.shortcuts as dj_scut
 from OpenTrainTrackMap import settings as g_settings
 from . import api, page_context, models, settings
 
+VIEW_MAP = 'show'
+EDIT_MAP = 'edit'
+MAP_HISTORY = 'history'
+
 
 def map_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     user = api.get_user_from_request(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, no_index=False)
+        'context': _get_map_page_context(user)
     })
 
 
@@ -21,7 +25,7 @@ def edit_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     user = api.get_user_from_request(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, no_index=True, action='edit')
+        'context': _get_map_page_context(user, action=EDIT_MAP, no_index=True)
     })
 
 
@@ -29,7 +33,7 @@ def history_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     user = api.get_user_from_request(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, no_index=True, action='history')
+        'context': _get_map_page_context(user, action=MAP_HISTORY, no_index=True)
     })
 
 
@@ -44,7 +48,7 @@ def page_handler(page_name: str) -> typ.Callable[[dj_wsgi.WSGIRequest], dj_respo
         user = api.get_user_from_request(request)
 
         return dj_scut.render(request, f'ottm/{page_name}.html', context={
-            'context': _get_page_context(user, page_name, no_index=False)
+            'context': _get_page_context(user, page_name)
         })
 
     return handler
@@ -71,7 +75,7 @@ def user_settings(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
         return dj_scut.HttpResponseRedirect(dj_scut.reverse('ottm:map'))
 
     return dj_scut.render(request, 'ottm/user-settings.html', context={
-        'context': _get_page_context(user, 'user_settings', no_index=False)
+        'context': _get_page_context(user, 'user_settings')
     })
 
 
@@ -80,7 +84,7 @@ def user_contributions(request: dj_wsgi.WSGIRequest, username: str) -> dj_respon
     target_user = api.get_user_from_name(username)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, no_index=False, action='history')
+        'context': _get_map_page_context(user, action=MAP_HISTORY)
     })
 
 
@@ -110,12 +114,14 @@ def _get_referer_url(request: dj_wsgi.WSGIRequest) -> str:
     return request.GET.get('return_to', '/')
 
 
-def _get_page_context(user: models.User, page_id: str | None, no_index: bool,
+def _get_page_context(user: models.User, page_id: str, no_index: bool = False,
                       titles_args: dict[str, str] = None) -> page_context.PageContext:
-    return page_context.PageContext(**_get_base_context_args(user, page_id, no_index, titles_args))
+    kwargs = _get_base_context_args(user, page_id=page_id, titles_args=titles_args, no_index=no_index)
+    return page_context.PageContext(**kwargs)
 
 
-def _get_map_page_context(user: models.User, no_index: bool, action: str = 'show') -> page_context.MapPageContext:
+def _get_map_page_context(user: models.User, action: str = VIEW_MAP,
+                          no_index: bool = False) -> page_context.MapPageContext:
     translations_keys = [
         'map.controls.layers.standard',
         'map.controls.layers.black_and_white',
@@ -141,18 +147,18 @@ def _get_map_page_context(user: models.User, no_index: bool, action: str = 'show
     for k in translations_keys:
         js_config['trans'][k] = user.prefered_language.translate(k)
 
-    kwargs = _get_base_context_args(user, None, no_index)
+    kwargs = _get_base_context_args(user, no_index=no_index)
     return page_context.MapPageContext(**kwargs, js_config=js_config)
 
 
 def _get_user_page_context(user: models.User, target_user: models.User) -> page_context.UserPageContext:
     titles_rags = {'username': target_user.username}
-    kwargs = _get_base_context_args(user, 'user_profile', no_index=False, titles_args=titles_rags)
+    kwargs = _get_base_context_args(user, page_id='user_profile', titles_args=titles_rags)
     return page_context.UserPageContext(**kwargs, target_user=target_user)
 
 
-def _get_base_context_args(user: models.User, page_id: str | None, no_index: bool,
-                           titles_args: dict[str, str] = None) -> dict[str, typ.Any]:
+def _get_base_context_args(user: models.User, page_id: str = None, titles_args: dict[str, str] = None,
+                           no_index: bool = False) -> dict[str, typ.Any]:
     if page_id:
         title = user.prefered_language.translate(f'page.{page_id}.title')
         tab_title = user.prefered_language.translate(f'page.{page_id}.tab_title')
