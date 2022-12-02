@@ -5,7 +5,7 @@
 
 {% block page-title %}
   <img src="{% static 'ottm/images/user_avatar.svg' %}" id="user-icon"
-       alt="profile picture"/> {{ context.target_user.username }}<br/>
+       alt="profile picture"/> {{ context.target_user.username }}<br>
   <small class="text-muted">
     <span class="mdi mdi-message-text"></span>
     <a href="{% url 'ottm:user_notes' username=context.target_user.username %}">

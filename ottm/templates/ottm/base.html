@@ -4,17 +4,18 @@
 <!DOCTYPE html>
 <html lang="{{ context.lang.code }}" dir="{{ context.lang.writing_direction }}">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"/>
-  {% if context.noindex %}
-    <meta name="robots" content="noindex"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  {% if context.no_index %}
+    <meta name="robots" content="noindex">
   {% endif %}
 
   <title>{% if context.tab_title %}{{ context.tab_title }} &mdash; {% endif %}{{ context.site_name }}</title>
 
-  <link rel="stylesheet" href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css"/>
-  <link href="{% static 'ottm/bootstrap-4.5.2-dist/css/bootstrap.min.css' %}" rel="stylesheet"/>
-  <link href="{% static 'ottm/style.css' %}" rel="stylesheet"/>
+  <link rel="stylesheet" href="//cdn.materialdesignicons.com/5.4.55/css/materialdesignicons.min.css">
+  <link href="{% static 'ottm/bootstrap-4.5.2-dist/css/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'ottm/style.css' %}" rel="stylesheet">
+  {% block styles %}{% endblock styles %}
 </head>
 <body>
   <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -85,7 +86,6 @@
             </a>
           </li>
           <li class="nav-item">
-            {% url 'ottm:log_in' as log_in_url %}
             <a id="nav-signup-link" class="nav-link"
                href="{% url 'wikipy:page' raw_page_title='Create account'|wpy_page_title:-1|wpy_encode_url %}">
               <span class="mdi mdi-account-plus"></span> {% ottm_translate 'navbar.sign_up.label' %}
@@ -105,6 +105,6 @@
   <script src="{% static 'ottm/bootstrap-4.5.2-dist/js/bootstrap.min.js' %}"></script>
   <script src="{% static 'ottm/main.js' %}"></script>
   {% block page-scripts %}{% endblock %}
-  <script>ottm.setReferer();</script>
+  <script>ottm.setReferer()</script>
 </body>
 </html>
