@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import datetime
-import functools
-import math
+import abc
 import typing as typ
 
 import django.contrib.auth as dj_auth
@@ -10,12 +8,8 @@ import django.contrib.auth.models as dj_auth_models
 import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
 import django.db.models as dj_models
-import geopy.distance as geopy_dist
-import pyproj
-import shapely.geometry.polygon as sh_polygon
-import shapely.ops as sh_ops
 
-from . import settings, model_fields
+from . import settings, model_fields, data_types
 
 
 def lang_code_validator(value: str):
@@ -23,1031 +17,531 @@ def lang_code_validator(value: str):
         raise dj_exc.ValidationError(f'invalid language code "{value}"', code='invalid_language')
 
 
-###############
-# Site models #
-###############
+#########
+# Users #
+#########
 
 
 class UserInfo(dj_models.Model):
-    user = dj_models.OneToOneField(dj_auth.get_user_model(), on_delete=dj_models.CASCADE)
-    language_code = dj_models.CharField(max_length=20, validators=[lang_code_validator])
+    user = dj_models.OneToOneField(dj_auth.get_user_model(), on_delete=dj_models.CASCADE, related_name='ottm_user_info')
+    prefered_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator])
     is_administrator = dj_models.BooleanField(default=False)
 
     @property
     def prefered_language(self) -> settings.Language:
-        return settings.LANGUAGES[self.language_code]
+        return settings.LANGUAGES[self.prefered_language_code]
 
 
 class User:
     """Simple wrapper class for a Django user and its associated user data."""
 
-    def __init__(self, django_user: dj_auth_models.AbstractUser, data: typ.Optional[UserInfo]):
-        self.__django_user = django_user
-        self.__data = data
+    def __init__(self, django_user: dj_auth_models.AbstractUser, data: UserInfo | None):
+        self._django_user = django_user
+        self._data = data
 
     @property
     def django_user(self) -> dj_auth_models.AbstractUser:
-        return self.__django_user
+        return self._django_user
 
     @property
-    def data(self) -> typ.Optional[UserInfo]:
-        return self.__data
+    def data(self) -> UserInfo | None:
+        return self._data
 
     @property
     def username(self) -> str:
-        return self.__django_user.username
+        return self._django_user.username
 
     @property
     def is_logged_in(self) -> bool:
-        return self.__django_user.is_authenticated
+        return self._django_user.is_authenticated
 
     @property
     def prefered_language(self) -> settings.Language:
-        return self.__data.prefered_language if self.__data else settings.LANGUAGES[settings.DEFAULT_LANGUAGE]
+        return self._data.prefered_language if self._data else settings.LANGUAGES[settings.DEFAULT_LANGUAGE]
 
     @property
     def is_admin(self) -> bool:
-        return self.__data.is_administrator if self.__data else False
+        return not self._data or self._data.is_administrator
 
-    @property
     def notes_count(self) -> int:
-        return 0  # TODO
+        """Return the total number of notes created by this user."""
+        return (ObjectCreatedEdit.objects  # Get all object creation edits
+                # Keep only those made by this user that are of type "Note"
+                .filter(edit_group__author=self._data, object_type__label='Note')
+                .count())
 
-    @property
     def edits_count(self) -> int:
-        return 0  # TODO
+        """Return the total number of edits on objects and relations made by this user."""
+        return (self._data.edits_groups  # Get all edit groups for this user
+                .annotate(edits_count=dj_models.Count('edits'))  # Count number of edits for each group
+                .aggregate(dj_models.Sum('edits_count')))  # Sum all counts
 
-    @property
+    def edit_groups_count(self) -> int:
+        """Return the number of edit groups made by this user."""
+        return self._data.edits_groups.count()
+
     def wiki_edits_count(self) -> int:
         import WikiPy.api.users as wpy_api_users
         return len(wpy_api_users.get_user_contributions(wpy_api_users.get_user_from_name(self.username), self.username))
 
     def __repr__(self):
-        return f'User[django_user={self.__django_user.username},data={self.__data}]'
+        return f'User[django_user={self._django_user.username},data={self._data}]'
 
 
-##############
-# Data model #
-##############
-# TODO edit history
+###################
+# Meta-meta-model #
+###################
 
 
-def inf_validator_generator(inf: float) -> typ.Callable[[float], None]:
-    return dj_valid.MinValueValidator(inf, message=f'value should be greater than {inf}')
-
-
-positive_value_validator = inf_validator_generator(0)
-
-
-def future_date_validator(date: datetime.datetime):
-    if date and date > datetime.datetime.now():
-        raise dj_exc.ValidationError('date is in the future', code='future_date')
-
-
-def non_empty_text_validator(value: str):
-    if value.strip() == '':
-        raise dj_exc.ValidationError('text is empty', code='empty_text')
-
-
-class BaseObject(dj_models.Model):
-    """Base class of the data model."""
-
-    def save(self, *args, **kwargs):
-        self.full_clean()
-        return super().save(*args, **kwargs)
+class Structure(dj_models.Model, abc.ABC):
+    label = dj_models.CharField(max_length=50)
+    deprecated = dj_models.BooleanField()
+    wikidata_qid = dj_models.CharField(null=True, blank=True, max_length=15,
+                                       validators=[dj_valid.RegexValidator(r'^Q\d+$')])
 
     class Meta:
         abstract = True
 
+    def __str__(self):
+        return self.label
 
-class WikidataQObject(BaseObject):
-    """An object that corresponds to a Wikidata QID"""
-    qid = dj_models.CharField(max_length=16, validators=[dj_valid.RegexValidator(
-        regex=r'^Q\d+$', message='invalid Wikidata QID "%(value)s"', code='invalid_qid')])
-
-
-class Source(BaseObject):
-    """An object used to source information. The "source" field is free text."""
-    source = dj_models.TextField()
-
-    def clean_fields(self, exclude=None):
-        super().clean_fields(exclude=exclude)
-        if not exclude or 'source' not in exclude:
-            self.source = self.source.strip()
+    def __repr__(self):
+        return f'Structure[label={self.label},deprecated={self.deprecated},wikidata_qid={self.wikidata_qid}]'
 
 
-class SourcedObject(BaseObject):
-    """An object that may have attached sources and Wikidata QIDs."""
-    sources = dj_models.ManyToManyField(Source, related_name='objects')
-    qids = dj_models.ManyToManyField(WikidataQObject, related_name='linked_objects')
-
-
-# Temporal models
-
-
-class TemporalObject(SourcedObject):
-    """An object that exists for a specific time interval. This model is abstract."""
-    time_span = model_fields.TimeIntervalField()
-
-    class Meta:
-        abstract = True
-
-
-class TemporalProperty(SourcedObject):
-    """A property that associates some values to an object for a specific time interval.
-
-    The "object_name" attribute should hold the name of the attribute that points to the associated
-    object instance.
-
-    By default, for a given object, the absence of a property for a given time interval means that
-    its value is unknown for this period. This behavior can be disabled by setting the "absent_means_none"
-    attribute to True.
-
-    By default, for a given object, time intervals for different instances of a property cannot overlap.
-    This constraint can be disable by setting the "prevent_overlaps" attribute to False.
-
-    Note: No checks are performed to ensure that properties’ time intervals fit inside the associated
-    object’s time interval. This is intended as to ease editing by users.
-
-    This model is abstract.
-    """
-    time_span = model_fields.TimeIntervalField()
-    # Name of the field that points to the object this property applies to.
-    # It should be an instance of a TemporalObject subclass.
-    object_name = None
-    # Whether the absence of a property on a given interval means that the property does not apply or is unknown.
-    absent_means_none = False
-    # Whether the instances of this property can overlap for a given object.
-    prevent_overlaps = True
-
-    def clean(self):
-        super().clean()
-        obj: TemporalObject = getattr(self, self.object_name)
-        # Check for any overlap
-        if self.prevent_overlaps:
-            for tq in self.__class__.objects.filter(~dj_models.Q(id=self.id) & dj_models.Q(**{self.object_name: obj})):
-                if tq.overlaps(self):
-                    raise dj_exc.ValidationError(
-                        f'property overlap between {self} and {tq} for object {getattr(self, self.object_name)}',
-                        code='time_interval_overlap')
-
-    class Meta:
-        abstract = True
-
-
-# Translations
-
-
-class TranslatedObject(SourcedObject):
-    """A object whose label can be translated in different languages."""
-    unlocalized_name = dj_models.CharField(max_length=200)
-
-    def get_label(self, language_code: str, default: str = None) -> str:
-        """Returns the label for this object in the specific language.
-
-        :param language_code: Code of the desired language.
-        :param default: The value returned if no label was found for the given language code.
-        :return: The label or the default value if no labels were found.
-        """
-        try:
-            trans = self.label_translations.get(language_code=language_code)
-        except Translation.DoesNotExist:
-            return default if default is not None else f'{self.__class__.__name__}@{self.id}'
-        else:
-            return trans.label_text
-
-
-class Translation(BaseObject):
-    """A translation for a TranslatedObject."""
-    object = dj_models.ForeignKey(TranslatedObject, dj_models.CASCADE, related_name='label_translations')
-    label_text = dj_models.CharField(max_length=200, validators=[non_empty_text_validator])
-    language_code = dj_models.CharField(max_length=20, validators=[lang_code_validator])
-
-    def clean_fields(self, exclude=None):
-        super().clean_fields(exclude=exclude)
-        if not exclude or 'label_text' not in exclude:
-            self.label_text = self.label_text.strip()
-
-    class Meta:
-        unique_together = ('object', 'language_code')
-
-
-############
-# Geometry #
-############
-
-
-class Geometry(TemporalObject):
-    """Base class for physical objects."""
-
-    @property
-    def perimeter(self) -> float:
-        """The approximate perimeter of this geometry object in meters."""
-        raise NotImplementedError('should be implemented by subclasses')
-
-    @property
-    def area(self) -> float:
-        """The approximate area of this geometry object in meters squared."""
-        raise NotImplementedError('should be implemented by subclasses')
-
-
-class Node(Geometry):
-    """A node corresponds to an small physical object (such as signals, poles, etc.) or to a line/polygon vertex."""
-    latitude = dj_models.FloatField()
-    longitude = dj_models.FloatField()
-    altitude = dj_models.FloatField()
-
-    @property
-    def perimeter(self):
-        """0, as a point has no perimeter."""
-        return 0
-
-    @property
-    def area(self):
-        """0, as a point has no area."""
-        return 0
-
-    @property
-    def as_tuple(self) -> typ.Tuple[float, float, float]:
-        return self.latitude, self.longitude, self.altitude
-
-    class Meta:
-        unique_together = ('latitude', 'longitude', 'altitude')
-
-
-# noinspection PyAbstractClass
-class GeometryWithNodes(Geometry):
-    """Base class for polylines and polygons."""
-    nodes = dj_models.ManyToManyField(Node, through='GeometryWithNodesNodeTable', related_name='geometries')
-
-    @property
-    def ordered_nodes(self) -> typ.List[Node]:
-        """Returns all nodes for this object ordered by their index."""
-        return list(self.nodes.order_by('geometries_table__index'))
-
-    @staticmethod
-    def _distance(nodes: typ.List[Node]) -> float:  # In meters
-        """Computes the approximate total length in meters of the line formed by the given list of nodes.
-        The computation is done using the WGS-84 ellipsoid model of Earth.
-        To take altitude into account, it is assumed that distances between points is small
-        enough Earth’s curvature is negligeable.
-        """
-        if len(nodes) < 2:
-            return 0
-        distance = 0
-        for i in range(len(nodes) - 1):
-            node1 = nodes[i].as_tuple
-            node2 = nodes[i + 1].as_tuple
-            surface_distance = geopy_dist.distance(node1[:2], node2[:2], ellipsoid='WGS-84').meters
-            # Distances are supposed to be short enough that euclidian distance
-            # for altitude should not degrade results too much
-            distance += math.sqrt(surface_distance ** 2 + (node1[2] - node2[2]) ** 2)
-        return distance
-
-
-class GeometryWithNodesNodeTable(BaseObject):
-    """This table associates geometry objects their nodes.
-    Each object-node pair is associated to an index.
-    Indexes must be unique for each geometry object.
-    A node cannot be associated to a geometry object more than once.
-    """
-    geometry_object = dj_models.ForeignKey(GeometryWithNodes, dj_models.CASCADE, related_name='nodes_table')
-    node = dj_models.ForeignKey(Node, dj_models.CASCADE, related_name='geometries_table')
-    index = dj_models.IntegerField()
+class Type(Structure):
+    is_abstract = dj_models.BooleanField()
+    enum = dj_models.BooleanField()
+    super_type = dj_models.ForeignKey('self', on_delete=dj_models.CASCADE, related_name='sub_types')
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if not exclude or 'index' not in exclude:
-            indexes = []
-            for item in GeometryWithNodesNodeTable.objects.filter(geometry_object=self.geometry_object):
-                index = item.index
-                if index in indexes:
-                    raise dj_exc.ValidationError({
-                        'index': f'duplicate node index {index} for geometry object {self.geometry_object}',
-                    })
-                indexes.append(index)
+        if self.objects.filter(label=self.label).exists():
+            raise dj_exc.ValidationError(f'type with label {self.label} already exist', code='type_duplicate')
+
+
+class Property(Structure, abc.ABC):
+    @staticmethod
+    def _multiplicity_validator(m: int):
+        if m < 0:
+            raise dj_exc.ValidationError('negative property multiplicity', code='property_negative_multiplicity')
+
+    multiplicity_min = dj_models.IntegerField(validators=[_multiplicity_validator])
+    multiplicity_max = dj_models.IntegerField(validators=[_multiplicity_validator])
+    is_temporal = dj_models.BooleanField()
+    absent_means_unknown_value = dj_models.BooleanField(null=True, blank=True)
+    is_value_unique = dj_models.BooleanField()
+    host_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='properties')
 
     class Meta:
-        unique_together = ('geometry_object', 'node')
+        abstract = True
+
+    @classmethod
+    @abc.abstractmethod
+    def relation_class(cls) -> typ.Type[Relation]:
+        pass
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if self.objects.filter(label=self.label, host_type__label=self.host_type.label).exists():
+            raise ValueError(f'property with name {self.label} already exists for class {self.host_type}')
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if self.multiplicity_min > self.multiplicity_max:
+            raise dj_exc.ValidationError('invalid property multiplicities', code='property_invalid_multiplicities')
+        if not self.is_temporal and self.absent_means_unknown_value is not None:
+            raise dj_exc.ValidationError('property is not temporal', code='property_not_temporal')
+        if self.is_temporal:
+            if self.multiplicity_min > 0:
+                raise dj_exc.ValidationError('temporal property must have a min multipliticy of 0',
+                                             code='temporal_property_invalid_min_multiplicity')
+            if self.absent_means_unknown_value is None:
+                raise dj_exc.ValidationError('property is temporal', code='property_is_temporal')
 
 
-class Polyline(GeometryWithNodes):
-    """An object that represents a line composed of a series of contiguous segments."""
+class TypeProperty(Property):
+    target_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='targetting_properties')
+    allows_itself = dj_models.BooleanField()
 
-    @property
-    def perimeter(self):
-        """The approximate total length in meters of this polyline.
-        The computation is done using the WGS-84 ellipsoid model of Earth.
-        To take altitude into account, it is assumed that distances between points is small
-        enough Earth’s curvature is negligeable.
-        """
-        return self.length
-
-    @property
-    def area(self):
-        """0, as a line has no area."""
-        return 0
-
-    @property
-    def length(self) -> float:
-        """Alias for "perimeter" property."""
-        return self._distance(list(self.ordered_nodes))
+    @classmethod
+    def relation_class(cls):
+        return ObjectRelation
 
 
-class Polygon(GeometryWithNodes):
-    """An object that represents a polygon with any number of verteces."""
+class PrimitiveProperty(Property, abc.ABC):
+    class Meta:
+        abstract = True
 
-    @property
-    def perimeter(self):
-        """The perimeter in meters of this polygon.
-        The computation is done using the WGS-84 ellipsoid model of Earth.
-        To take altitude into account, it is assumed that distances between points is small
-        enough Earth’s curvature is negligeable.
-        """
-        holes_total_perimeter = sum(hole.perimeter for hole in self.holes)
-        nodes = list(self.ordered_nodes)
-        return self._distance(nodes + [nodes[0]]) + holes_total_perimeter
 
-    @property
-    def area(self):
-        """The area of this polygon in meters squared.
-        The computation is done using the WGS-84 ellipsoid model of Earth.
-        Verteces altitudes are considered to be at sea level (0 m).
-        """
-        # Swap latitude and longitude, and remove altitude
-        nodes = [n.as_tuple[1::-1] for n in self.ordered_nodes]
-        if len(nodes) < 3:
-            return 0
-        holes_total_area = sum(hole.area for hole in self.holes)
-        geom = sh_polygon.Polygon(nodes)
-        area = sh_ops.transform(
-            functools.partial(
-                pyproj.transform,
-                pyproj.Proj('WGS84'),
-                pyproj.Proj(
-                    proj='aea',
-                    lat_1=geom.bounds[1],
-                    lat_2=geom.bounds[3]
+class StringProperty(PrimitiveProperty):
+    @classmethod
+    def relation_class(cls) -> typ.Type[StringRelation]:
+        return StringRelation
+
+
+class LocalizedProperty(PrimitiveProperty):
+    @classmethod
+    def relation_class(cls) -> typ.Type[LocalizedRelation]:
+        return LocalizedRelation
+
+
+class IntProperty(PrimitiveProperty):
+    min = dj_models.IntegerField(null=True, blank=True)
+    max = dj_models.IntegerField(null=True, blank=True)
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if self.min is not None and self.max is not None:
+            if self.min > self.max:
+                raise dj_exc.ValidationError('max should be greater than min', code='int_property_invalid_bounds')
+            if self.min == self.max:
+                raise dj_exc.ValidationError('min and max must be different', code='int_property_same_bounds')
+
+    @classmethod
+    def relation_class(cls) -> typ.Type[IntRelation]:
+        return IntRelation
+
+
+class FloatProperty(PrimitiveProperty):
+    min = dj_models.FloatField()
+    max = dj_models.FloatField()
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if self.min is not None and self.max is not None:
+            if self.min > self.max:
+                raise dj_exc.ValidationError('max should be greater than min', code='float_property_invalid_bounds')
+            if self.min == self.max:
+                raise dj_exc.ValidationError('min and max must be different', code='float_property_same_bounds')
+
+    @classmethod
+    def relation_class(cls) -> typ.Type[FloatRelation]:
+        return FloatRelation
+
+
+class BooleanProperty(PrimitiveProperty):
+    @classmethod
+    def relation_class(cls) -> typ.Type[BooleanRelation]:
+        return BooleanRelation
+
+
+class UnitType(dj_models.Model):
+    label = dj_models.CharField(unique=True, max_length=30)
+
+
+class Unit(dj_models.Model):
+    symbol = dj_models.CharField(unique=True, max_length=10)
+    type = dj_models.ForeignKey(UnitType, on_delete=dj_models.CASCADE, related_name='units')
+    may_be_negative = dj_models.BooleanField()
+    to_base_unit_coef = dj_models.FloatField()
+
+
+class UnitProperty(PrimitiveProperty):
+    unit_type = dj_models.ForeignKey(UnitType, on_delete=dj_models.CASCADE, related_name='properties')
+
+    @classmethod
+    def relation_class(cls) -> typ.Type[UnitRelation]:
+        return UnitRelation
+
+
+class DateIntervalProperty(PrimitiveProperty):
+    @classmethod
+    def relation_class(cls) -> typ.Type[DateIntervalRelation]:
+        return DateIntervalRelation
+
+
+##############
+# Meta-model #
+##############
+
+
+class Object(dj_models.Model):
+    type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='instances')
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if self.type.is_abstract:
+            raise dj_exc.ValidationError('abstract types cannot have instances', code='object_with_abstract_type')
+
+
+class Relation(dj_models.Model, abc.ABC):
+    left_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_left')
+    existence_interval = model_fields.DateIntervalField()
+    property: Property
+
+    class Meta:
+        abstract = True
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if self.property.is_value_unique:
+            k = self._get_right_value_attribute_name()
+            filters = {
+                'property': self.property,
+                'left_object': self.left_object,
+                k: getattr(self, k),
+            }
+            if self.objects.filter(**filters).exists():
+                raise dj_exc.ValidationError(f'duplicate value for property {self.property}',
+                                             code='relation_duplicate_for_unique_property')
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if self.property.is_temporal and self.existence_interval is None:
+            raise dj_exc.ValidationError('temporal relation must have an associated date interval',
+                                         code='temporal_relation_without_date_interval')
+        maxi = self.property.multiplicity_max
+        if not self.property.is_temporal:
+            if self.objects.filter(left_object=self.left_object, property=self.property).count() >= maxi:
+                raise dj_exc.ValidationError(
+                    f'too many relations for property {self.property} on object {self.left_object}',
+                    code='too_many_relations'
                 )
-            ),
-            geom).area
-        return area - holes_total_area
+        else:
+            filters = {
+                'property': self.property,
+                'left_object': self.left_object,
+                # TODO check no overlap of existence_interval field
+            }
+            if self.property.multiplicity_max == 1 and self.objects.filter(**filters).exists():
+                raise dj_exc.ValidationError(
+                    f'overlapping date intervals for temporal property {self.property}',
+                    code='temporal_relation_overlap_single_value'
+                )
+            elif self.property.multiplicity_max > 1:
+                k = self._get_right_value_attribute_name()
+                v = getattr(self, k)
+                filters[k] = v
+                if self.objects.filter(**filters).exists():
+                    raise dj_exc.ValidationError(
+                        f'overlapping date intervals for property {self.property} and value {v}',
+                        code='temporal_relation_overlap_many_values'
+                    )
+
+    @classmethod
+    @abc.abstractmethod
+    def _get_right_value_attribute_name(cls) -> str:
+        pass
 
 
-def polygon_hole_validator(value: Polygon):
-    if isinstance(value, PolygonHole):
-        raise dj_exc.ValidationError('a PolygonHole object cannot have another PolygonHole object as its parent')
+class ObjectRelation(Relation):
+    right_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_right')
+    property = dj_models.ForeignKey(TypeProperty, on_delete=dj_models.CASCADE, related_name='instances')
+
+    @classmethod
+    def _get_right_value_attribute_name(cls) -> str:
+        return 'right_object'
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if not self.property.allows_itself and self.left_object == self.right_object:
+            raise dj_exc.ValidationError('relation not allowed to have same object on both sides',
+                                         code='object_relation_same_object_on_both_sides')
 
 
-class PolygonHole(Polygon):
-    """An polygon object that represents a hole in another polygon. Holes cannot have holes."""
-    parent_polygon = dj_models.ForeignKey(Polygon, dj_models.CASCADE, validators=[polygon_hole_validator],
-                                          related_name='holes')
+_RT = typ.TypeVar('_RT')
 
 
-##########
-# Tracks #
-##########
+class PrimitiveRelation(Relation, abc.ABC, typ.Generic[_RT]):
+    value: _RT
+
+    class Meta:
+        abstract = True
+
+    @classmethod
+    def _get_right_value_attribute_name(cls) -> str:
+        return 'value'
 
 
-class ElectrificationSystem(TranslatedObject):
-    """An enumeration that represents the electrification system of a track section.
-    Examples: none, side rail(s), overhead wire, floor, etc.
-    """
-    pass
+class LocalizedRelation(PrimitiveRelation[str]):
+    property = dj_models.ForeignKey(LocalizedProperty, on_delete=dj_models.CASCADE, related_name='instances')
+    language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator])
+    value = dj_models.TextField()
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if self.objects.filter(language_code=self.language_code, left_object=self.left_object).exists():
+            raise dj_exc.ValidationError(
+                f'duplicate localization for language {self.language_code} and object {self.left_object}',
+                code='localized_relation_duplicate'
+            )
 
 
-class ElectricityType(TranslatedObject):
-    """An enumeration that represents the type of electrical current used to power a track section.
-    Examples: DC, single-phase, three-phase, etc.
-    """
-    pass
+class StringRelation(PrimitiveRelation[str]):
+    property = dj_models.ForeignKey(StringProperty, on_delete=dj_models.CASCADE, related_name='instances')
+    value = dj_models.CharField(max_length=200)
 
 
-class TrackType(TranslatedObject):
-    """An enumeration that represents the type of a track section.
-    Examples: Main, high speed, spur, tramway, subway, etc.
-    """
-    pass
+class IntRelation(PrimitiveRelation[int]):
+    property = dj_models.ForeignKey(IntProperty, on_delete=dj_models.CASCADE, related_name='instances')
+    value = dj_models.IntegerField()
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if (self.property.min is not None and self.value < self.property.min
+                or self.property.max is not None and self.value > self.property.max):
+            raise dj_exc.ValidationError(f'{self.value} outside of [{self.property.min}, {self.property.max}]',
+                                         code='int_relation_invalid_value')
 
 
-class TrackUsage(TranslatedObject):
-    """An enumeration that represents the usage of a track section.
-    Examples: Passenger service, goods service, project, heritage, in construction, abandonned, industrial, etc.
-    """
-    pass
+class FloatRelation(PrimitiveRelation[float]):
+    property = dj_models.ForeignKey(FloatProperty, on_delete=dj_models.CASCADE, related_name='instances')
+    value = dj_models.FloatField()
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if (self.property.min is not None and self.value < self.property.min
+                or self.property.max is not None and self.value > self.property.max):
+            raise dj_exc.ValidationError(f'{self.value} outside of [{self.property.min}, {self.property.max}]',
+                                         code='float_relation_invalid_value')
 
 
-class Unit(TranslatedObject):
-    """A unit has a symbol and coefficient to convert into the reference unit."""
-    symbol = dj_models.CharField(max_length=20)
-    to_reference_coefficient = dj_models.FloatField(validators=[positive_value_validator])
+class BooleanRelation(PrimitiveRelation[bool]):
+    property = dj_models.ForeignKey(BooleanProperty, on_delete=dj_models.CASCADE, related_name='instances')
+    value = dj_models.BooleanField()
 
-    def clean_fields(self, exclude=None):
-        super().clean_fields(exclude=exclude)
-        if not exclude or 'symbol' not in exclude:
-            s = self.symbol.strip()
-            if s == '':
-                raise dj_exc.ValidationError({'symbol': 'empty symbol'})
-            self.symbol = s
 
-    def convert_value_to(self, value: float, unit: Unit) -> float:
-        """Converts a value expressed in this unit into the given unit.
+class UnitRelation(PrimitiveRelation[float]):
+    property = dj_models.ForeignKey(UnitProperty, on_delete=dj_models.CASCADE, related_name='instances')
+    value = dj_models.FloatField()
+    unit = dj_models.ForeignKey(Unit, on_delete=dj_models.CASCADE, related_name='relations')
 
-        :param value: The value to convert.
-        :param unit: The target unit.
-        :return: The converted value.
-        :raises TypeError: If the unit’s class differs from this unit’s class.
-        """
-        if self.__class__ != unit.__class__:
-            raise TypeError(f'expected unit of type "{self.__class__}", got "{unit.__class__}"')
-        return value * self.to_reference_coefficient / unit.to_reference_coefficient
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if not self.unit.may_be_negative and self.value < 0:
+            raise dj_exc.ValidationError('value cannot be negative', code='unit_relation_negative_value')
+
+
+class DateIntervalRelation(PrimitiveRelation[data_types.DateInterval]):
+    property = dj_models.ForeignKey(DateIntervalProperty, on_delete=dj_models.CASCADE, related_name='instances')
+    value = model_fields.DateIntervalField()
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if self.property.is_temporal:
+            raise dj_exc.ValidationError('date interval relation cannot be temporal',
+                                         code='temporal_date_interval_relation')
+
+
+###############
+# Edit System #
+###############
+
+
+class EditGroup(dj_models.Model):
+    date = dj_models.DateTimeField()
+    author = dj_models.ForeignKey(UserInfo, on_delete=dj_models.SET_NULL, related_name='edits_groups',
+                                  null=True, blank=True)
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if self.objects.filter(date=self.date, author=self.author).exists():
+            # noinspection PyUnresolvedReferences
+            raise dj_exc.ValidationError(
+                f'user {self.user.user.username} cannot make multiple edits at the exact same time',
+                code='edit_group_duplicate_date'
+            )
+
+
+class Edit(dj_models.Model, abc.ABC):
+    @staticmethod
+    def _validate_object_id(i: int):
+        if i < 0:
+            raise dj_exc.ValidationError(f'invalid object ID {i}', code='edit_invalid_object_id')
+
+    edit_group = dj_models.ForeignKey(EditGroup, on_delete=dj_models.CASCADE, related_name='edits')
+    object_id = dj_models.IntegerField(validators=[_validate_object_id])
 
     class Meta:
         abstract = True
 
 
-class LengthUnit(Unit):
-    """A length unit with its symbol and coefficient to convert into meters."""
-
-    @property
-    def to_meters_coefficient(self) -> float:
-        """Alias for "to_reference_coefficient"."""
-        return self.to_reference_coefficient
-
-
-class SpeedUnit(Unit):
-    """A speed unit with its symbol and coefficient to convert into kilometers per hour."""
-
-    @property
-    def to_kph_coefficient(self) -> float:
-        """Alias for "to_reference_coefficient"."""
-        return self.to_reference_coefficient
-
-
-class TrackSection(Polyline):
-    """Base class for all track types.
-
-    Track sections have a direction that is relative to the order of its nodes.
-
-    A track section may belong to one or more track infrastructures.
-    """
-    # Relative to node order
-    direction = dj_models.CharField(max_length=30,
-                                    choices=(('normal', 'Normal'), ('reverse', 'Reverse'), ('both', 'Both')),
-                                    default='both')
-    track_infrastructures = dj_models.ManyToManyField('TrackInfrastructure', related_name='track_sections')
-
-
-class TrackNumberState(TemporalProperty):
-    """A property representing the number of a track section.
-    Meant to be used primarily in stations.
-    The absence of a state object for a given time interval is
-    interpreted as the absence of number, not as unknown.
-    """
-    number = dj_models.CharField(max_length=10)
-    track_section = dj_models.ForeignKey(TrackSection, dj_models.CASCADE, related_name='number_states')
-    object_name = 'track_section'
-    absent_means_none = True
-
-
-class RoadCrossingState(TemporalProperty):
-    """A property representing whether the associated track section is a road crossing or not.
-    The absence of a state object for a given time interval is
-    interpreted as the absence of crossing, not as unknown.
-    """
-    road_name = dj_models.CharField(validators=[non_empty_text_validator], max_length=100, null=True, blank=True)
-    track_section = dj_models.ForeignKey(TrackSection, dj_models.CASCADE, related_name='road_crossing_states')
-    object_name = 'track_section'
-    absent_means_none = True
-
-
-class ElectrificationState(TemporalProperty):
-    """A property representing the electrification state (tension in Volts, current type, system) of a track section.
-    If the property states that the section is not elecrified, the values of the other attributes
-    (namely tension, system and current_type) should be ignored.
-    """
-    electrified = dj_models.BooleanField()
-    tension = dj_models.IntegerField(validators=[positive_value_validator], null=True, blank=True)
-    system = dj_models.ForeignKey(ElectrificationSystem, dj_models.SET_NULL, null=True, blank=True,
-                                  related_name='electrification_states')
-    current_type = dj_models.ForeignKey(ElectricityType, dj_models.SET_NULL, null=True, blank=True,
-                                        related_name='electrification_states')
-    track_section = dj_models.ForeignKey(TrackSection, dj_models.CASCADE, related_name='electrification_states')
-    object_name = 'track_section'
-
-
-class TrackTypeState(TemporalProperty):
-    """A property representing the type of a track section.
-    This property allows overlapping.
-    """
-    type = dj_models.ForeignKey(TrackType, dj_models.PROTECT, related_name='track_type_states')
-    track_section = dj_models.ForeignKey(TrackSection, dj_models.CASCADE, related_name='type_states')
-    object_name = 'track_section'
-    prevent_overlaps = False
-
-
-class TrackUsageState(TemporalProperty):
-    """A property representing the usage of a track section.
-    This property allows overlapping.
-    """
-    usage = dj_models.ForeignKey(TrackUsage, dj_models.PROTECT, related_name='track_usage_states')
-    track_section = dj_models.ForeignKey(TrackSection, dj_models.CASCADE, related_name='usage_states')
-    object_name = 'track_section'
-    prevent_overlaps = False
-
-
-class TrackMaxSpeedState(TemporalProperty):
-    """A property representing the maximum speed of a track section."""
-    max_speed = dj_models.FloatField()
-    unit = dj_models.ForeignKey(SpeedUnit, dj_models.PROTECT, related_name='+')
-    track_section = dj_models.ForeignKey(TrackSection, dj_models.CASCADE, related_name='max_speed_states')
-    object_name = 'track_section'
-
-    def convert_speed_to(self, unit: SpeedUnit) -> float:
-        """Converts the speed into the given unit.
-
-        :param unit: The target unit.
-        :return: The converted speed.
-        :raises TypeError: If the specified unit is not a speed unit.
-        """
-        return self.unit.convert_value_to(self.max_speed, unit)
-
-
-class TractionSystem(TranslatedObject):
-    """An enumeration that represents the traction system of a track section.
-    Examples: None, rack and pinion, funicular, etc.
-    """
-    pass
-
-
-class RailType(TranslatedObject):
-    """An enumeration that represents a rail type.
-    Examples: UIC 60, Vignole, wood, metal strips, etc.
-    """
-    pass
-
-
-class TieType(TranslatedObject):
-    """An enumeration that represents a type of track ties.
-    Examples: Wood, concrete, bi-block, concrete slab, stones, sunken track, metal, etc.
-    """
-    pass
-
-
-def gauge_validator(value: float):
-    if value is not None and value < 380:
-        raise dj_exc.ValidationError('track gauge should be greater than or equal to 380 mm', code='invalid_gauge')
-
-
-class ConventionalTrackSection(TrackSection):
-    """This class represents a section of conventional two-rail train track.
-
-    A track section may have multiple gauges at once. Whenever at least one
-    gauge is specified, the unit should not be null.
-
-    Rails type, ties type and traction system are considered to be a part of a track section
-    and are thus direct attributes and not temporal properties.
-
-    It also features a property named "has_tyre_roll_ways" that indicates whether
-    the track has special strips for tyred trains (e.g. Lyon subway). It defaults to False.
-    """
-    gauges = model_fields.CommaSeparatedFloatField(max_length=200, validators=[gauge_validator], null=True, blank=True)
-    unit = dj_models.ForeignKey(LengthUnit, dj_models.PROTECT, null=True, blank=True,
-                                related_name='+')  # No inverse relation
-    tie_type = dj_models.ForeignKey(TieType, dj_models.SET_NULL, null=True, blank=True, related_name='track_sections')
-    rail_type = dj_models.ForeignKey(RailType, dj_models.SET_NULL, null=True, blank=True, related_name='track_sections')
-    traction_system = dj_models.ForeignKey(TractionSystem, dj_models.SET_NULL, null=True, blank=True,
-                                           related_name='track_sections')
-    has_tyre_roll_ways = dj_models.BooleanField(default=False)  # e.g. Lyon subway
-
-    def clean_fields(self, exclude=None):
-        super().clean_fields(exclude=exclude)
-        if (not exclude or 'unit' not in exclude) and self.gauges and self.unit is None:
-            raise dj_exc.ValidationError({'unit': 'unit cannot be null if at least one gauge is defined'})
-
-    def convert_gauges_to(self, unit_symbol: str) -> typ.Optional[typ.List[float]]:
-        """Converts the gauges of this track section into the given unit.
-
-        :param unit_symbol: The target unit’s symbol.
-        :return: The converted gauges or None if the unit does not exist.
-        """
-        try:
-            target_unit = LengthUnit.objects.get(symbol=unit_symbol)
-        except LengthUnit.DoesNotExist:
-            return None
-        else:
-            return [self.unit.convert_value_to(gauge, target_unit) for gauge in self.gauges]
-
-
-class RailFerryRouteSection(ConventionalTrackSection):
-    """A special case of two-rail track that represents a section of a rail-ferry route."""
-    pass
-
-
-class MonorailTrackType(TranslatedObject):
-    """An enumeration that represents a type of monorail track.
-    Examples: T-track (Jean Bertin), Ewing, Lartigue, Translohr, suspened, tyres with central rail, etc.
-    """
-    pass
-
-
-class MonorailTrackSection(TrackSection):
-    """This class represents a section of monorail track."""
-    type = dj_models.ForeignKey(MonorailTrackType, dj_models.SET_NULL, null=True, blank=True,
-                                related_name='track_sections')
-
-
-class GLTTrackSection(TrackSection):  # TVR
-    """This class represents a section of GLT (Guided Light Rail) track.
-    The "guided" attributes indicates whether a section has a guide rail or not.
-    """
-    guided = dj_models.BooleanField()
-
-
-class VALTracksection(TrackSection):
-    """This class represents a section of VAL (Véhicule Automatique Léger, Automatic Light Vehicle) track"""
-    pass
-
-
-class MaglevTrackSection(TrackSection):
-    """This class represents a section of Maglev track."""
-    pass
-
-
-#############
-# Buildings #
-#############
-
-
-class BuildingMaterial(TranslatedObject):
-    """An enumeration that represents the construction material of a building.
-    Examples: Brick, concrete, stone, wood, etc.
-    """
-    pass
-
-
-class BuildingType(TranslatedObject):
-    """An enumeration that represents the type of a building.
-    Examples: Engine shed, passenger hall, factory, guard house, water tower, etc.
-    """
-    pass
-
-
-class BuildingUsage(TranslatedObject):
-    """An enumeration that represents the usage of a building.
-    Examples: In service, abandonned, house, museum, etc.
-    """
-    pass
-
-
-class Building(Polygon):
-    """This class represents a building."""
-    walls_material = dj_models.ForeignKey(BuildingMaterial, dj_models.SET_NULL, null=True, blank=True,
-                                          related_name='buildings')
-    type = dj_models.ForeignKey(BuildingType, dj_models.SET_NULL, null=True, blank=True, related_name='buildings')
-
-
-class BuildingHeightState(TemporalProperty):
-    """A property representing the height of a building."""
-    height = dj_models.FloatField(validators=[positive_value_validator])
-    unit = dj_models.ForeignKey(LengthUnit, dj_models.PROTECT)
-    building = dj_models.ForeignKey(Building, dj_models.CASCADE, related_name='height_states')
-    object_name = 'building'
-
-    def convert_height_to(self, unit: LengthUnit) -> float:
-        """Converts the height into the given unit.
-
-        :param unit: The target unit.
-        :return: The converted height.
-        :raises TypeError: If the specified unit is not a length unit.
-        """
-        return self.unit.convert_value_to(self.height, unit)
-
-
-class BuildingFloorsState(TemporalProperty):
-    """A property representing the number of floors (above and underground) in a building."""
-    floors = dj_models.IntegerField(validators=[positive_value_validator])
-    underground_floors = dj_models.IntegerField(validators=[positive_value_validator])
-    building = dj_models.ForeignKey(Building, dj_models.CASCADE, related_name='floors_states')
-    object_name = 'building'
-
-
-class BuildingUsageState(TemporalProperty):
-    """A property representing the usage of a building."""
-    usage = dj_models.ForeignKey(BuildingUsage, dj_models.PROTECT, related_name='usage_states')
-    building = dj_models.ForeignKey(Building, dj_models.CASCADE, related_name='usage_states')
-    object_name = 'building'
-
-
-#########
-# Walls #
-#########
-
-
-class WallMaterial(TranslatedObject):
-    """An enumeration that represents the material of a wall or fence.
-    Examples: Brick, stone, wooden fence, chain-link fence, etc.
-    """
-    pass
-
-
-class WallSection(Polyline):
-    """This class represents a section of wall or fence."""
-    material = dj_models.ForeignKey(WallMaterial, dj_models.SET_NULL, null=True, blank=True,
-                                    related_name='wall_sections')
-
-
-class GateMaterial(TranslatedObject):
-    """An enumeration that represents the material of a gate.
-    Examples: Chain, wood, chain-links, metal, etc.
-    """
-    pass
-
-
-class Gate(Polyline):
-    """This class represents a gate."""
-    material = dj_models.ForeignKey(GateMaterial, dj_models.SET_NULL, null=True, blank=True,
-                                    related_name='gates')
-
-
-####################
-# Track structures #
-####################
-
-
-class TrackInfrastructureUsage(TranslatedObject):
-    """An enumeration that represents the usage of a track infrastructure.
-    Examples: Railroad, road, path, none, etc.
-    """
-    pass
-
-
-class TrackInfrastructure(Polygon):
-    """This class represents a track infrastructure, i.e. a construction that supports tracks."""
-    pass
-
-
-class TrackInfrastructureUsageState(TemporalProperty):
-    """A property representing the usage of a track infrastructure.
-    This property allows overlapping.
-    """
-    usage = dj_models.ForeignKey(TrackInfrastructureUsage, dj_models.PROTECT, related_name='usage_states')
-    track_infrastructure = dj_models.ForeignKey(TrackInfrastructure, dj_models.CASCADE, related_name='usage_states')
-    object_name = 'track_infrastructure'
-    prevent_overlaps = False
-
-
-# Bridges
-
-
-class BridgePier(Polygon):
-    """This class represents a bridge pier or column."""
-    infrastructures = dj_models.ManyToManyField('Infrastructure', related_name='bridge_piers')
-    material = dj_models.ForeignKey(BuildingMaterial, dj_models.SET_NULL, null=True, blank=True,
-                                    related_name='bridge_piers')
-
-
-class BridgeAbutment(Polygon):
-    """This class represents a bridge abutment."""
-    infrastructures = dj_models.ManyToManyField('Infrastructure', related_name='bridge_abutments')
-    material = dj_models.ForeignKey(BuildingMaterial, dj_models.SET_NULL, null=True, blank=True,
-                                    related_name='bridge_abutments')
-
-
-class BridgeSectionType(TranslatedObject):
-    """An enumeration that represents a type of bridge section.
-    Examples: Static, swing, bascule, etc.
-    """
-    pass
-
-
-class BridgeSectionStructure(TranslatedObject):
-    """An enumeration that represents the structure of a bridge section.
-    Examples: Cantilever, arch, bow-string, tressle, piers, suspended, etc.
-    """
-    pass
-
-
-class BridgeSection(TrackInfrastructure):
-    """This class represents a section of bridge."""
-    infrastructures = dj_models.ManyToManyField('Infrastructure', related_name='bridge_sections')
-    material = dj_models.ForeignKey(BuildingMaterial, dj_models.SET_NULL, null=True, blank=True,
-                                    related_name='bridge_sections')
-    type = dj_models.ForeignKey(BridgeSectionType, dj_models.SET_NULL, null=True, blank=True,
-                                related_name='bridge_sections')
-    structure = dj_models.ForeignKey(BridgeSectionStructure, dj_models.SET_NULL, null=True, blank=True,
-                                     related_name='bridge_sections')
-
-
-# Tunnels
-
-
-class TunnelSectionMaterial(TranslatedObject):
-    """An enumeration that represents the material of the inside of a tunnel.
-    Examples: None (bare rock), bricks, concrete, etc.
-    """
-    pass
-
-
-class TunnelSection(TrackInfrastructure):
-    """This class represents a tunnel section."""
-    infrastructures = dj_models.ManyToManyField('Infrastructure', related_name='tunnel_sections')
-
-
-class TunnelSectionMaterialState(TemporalProperty):
-    """A property representing the material of a tunnel section."""
-    material = dj_models.ForeignKey(TunnelSectionMaterial, dj_models.PROTECT, related_name='material_states')
-    tunnel_section = dj_models.ForeignKey(TunnelSection, dj_models.CASCADE, related_name='material_states')
-    object_name = 'tunnel_section'
-
-
-# Track covers
-
-
-class TrackCoverSection(TrackInfrastructure):
-    """This class represents a section of track cover (for snow or rocks)."""
-    material = dj_models.ForeignKey(BuildingMaterial, dj_models.SET_NULL, null=True, blank=True,
-                                    related_name='track_cover_sections')
-
-
-# Maneuver
-
-
-class ManeuverStructure(TrackInfrastructure):
-    """This class represents a structure used to maneuver trains."""
-    pass
-
-
-class ManeuverStructureState(TemporalProperty):
-    """A property representing the state of a maneuver structure.
-
-    The "moving_structure_present" attribute indicates whether the moving part of the structure
-    (i.e. bridge, plate, etc.) is still present or not.
-
-    If "moving_structure_present" is False, "tracks_number" should be 0.
-    """
-    moving_structure_present = dj_models.BooleanField()
-    tracks_number = dj_models.IntegerField(validators=[inf_validator_generator(1)])
-    structure = dj_models.ForeignKey(ManeuverStructure, dj_models.CASCADE, related_name='states')
-    object_name = 'structure'
-
-    def clean(self):
-        super().clean()
-        if not self.moving_structure_present and self.tracks_number != 0:
-            raise dj_exc.ValidationError('tracks number is not 0 but structure marked as not present',
-                                         code='invalid_track_number')
-
-
-def angle_validator(value: float):
-    if not (0 <= value <= 360):
-        raise dj_exc.ValidationError(f'angle value should be in [0, 360] degrees, got {value}', code='invalid_angle')
-
-
-class Turntable(ManeuverStructure):
-    """This class represents a turntable.
-
-    The "is_bridge" attribute indicates whether the turntable features a bridge or a plate.
-    """
-    is_bridge = dj_models.BooleanField()
-    max_rotation_angle = dj_models.FloatField(validators=[angle_validator], default=360)  # In degrees
-
-
-class TransferTable(ManeuverStructure):
-    """This class represents a transfer table.
-
-    The "has_pit" attribute indicates whether this structure has a bridge over a pit
-    or the moving section rolls over the tracks.
-    """
-    has_pit = dj_models.BooleanField()
-
-
-# Earth-work
-
-
-class EarthworkType(TranslatedObject):
-    """An enumeration that represents a type of earthwork.
-    Examples: Cutting, embankment, etc.
-    """
-    pass
-
-
-class Earthwork(TrackInfrastructure):
-    """This class represents an earthwork, i.e. a structure made of soil and/or rock to lay tracks on."""
-    type = dj_models.ForeignKey(EarthworkType, dj_models.PROTECT, related_name='earthworks')
-
-
-# Platforms
-
-
-class SurfaceMaterial(TranslatedObject):
-    """An enumeration that represents the material of a surface.
-    Examples: Concrete, gravel, dirt, stone, planks, etc.
-    """
-    pass
-
-
-class Surface(Polygon):
-    """This class represents a surface, e.g. a platform, dock, etc."""
-    pass
-
-
-class SurfaceMaterialState(TemporalProperty):
-    """A property representing the material of a surface."""
-    material = dj_models.ForeignKey(SurfaceMaterial, dj_models.PROTECT, related_name='surface_material_states')
-    surface = dj_models.ForeignKey(Surface, dj_models.CASCADE, related_name='material_states')
-    object_name = 'surface'
-
-
-class Platform(Surface):
-    """This class represents a platform."""
-    pass
-
-
-class Dock(Surface):
-    """This class represents a dock’s floor."""
-    pass
-
-
-#####################
-# Abstract entities #
-#####################
-
-
-class OperatorType(TranslatedObject):
-    """An enumeration that represents the type of an operator.
-    Examples: Private/public company, association, individual, etc.
-    """
-    pass
-
-
-class Operator(TranslatedObject, TemporalObject):
-    """This class represents an operator, i.e. an entity that operates train lines, factories, etc."""
-    pass
-
-
-class OperatorTypeState(TemporalProperty):
-    """A property representing the type of a an operator."""
-    type = dj_models.ForeignKey(OperatorType, dj_models.PROTECT, related_name='type_states')
-    operator = dj_models.ForeignKey(Operator, dj_models.CASCADE, related_name='type_states')
-    object_name = 'operator'
-
-
-class OperatedEntity(TranslatedObject, TemporalObject):
-    """This class represents an entity that is operated by one or more operators."""
-    opened_by = dj_models.ForeignKey(Operator, dj_models.SET_NULL, null=True, blank=True,
-                                     related_name='opened_entities')
-    operators = dj_models.ManyToManyField(Operator, through='OperatedEntityOperatorTable',
-                                          related_name='operated_entities')
-
-
-class OperatedEntityOperatorTable(TemporalObject):
-    """This table associates operator objects to the entities they operate.
-    Each operator-entity pair is associated to a time interval during which the operator operates the entity.
-    An entity cannot be associated to an operator object more than once per time interval.
-    """
-    operator = dj_models.ForeignKey(Operator, dj_models.CASCADE, related_name='entities_table')
-    entity = dj_models.ForeignKey(OperatedEntity, dj_models.CASCADE, related_name='operators_table')
+class ObjectEdit(Edit, abc.ABC):
+    object_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='object_edits')
 
     class Meta:
-        unique_together = ('time_span', 'operator', 'entity')
+        abstract = True
 
 
-class SiteType(TranslatedObject):
-    """An enumeration that represents the type of a site.
-    Examples: Station, factory, mine, military installation, depot, etc.
-    """
+class ObjectCreatedEdit(ObjectEdit):
     pass
 
 
-class Site(OperatedEntity):
-    """This class represents a site."""
-    objects = dj_models.ManyToManyField(Geometry, through='SiteObjectTable', related_name='sites')
-    type = dj_models.ForeignKey(SiteType, dj_models.SET_NULL, null=True, blank=True, related_name='sites')
+class ObjectDeletedEdit(ObjectEdit):
+    pass
 
 
-class SiteObjectTable(TemporalObject):
-    """This table associates site objects the geometries that are part of it.
-    Each site-geometry pair is associated to a time interval during which the geometry is part of the site.
-    A geometry cannot be associated to a site object more than once per time interval.
-    """
-    site = dj_models.ForeignKey(Site, dj_models.CASCADE, related_name='objects_table')
-    object = dj_models.ForeignKey(Geometry, dj_models.CASCADE, related_name='sites_table')
+class RelationEdit(Edit, abc.ABC):
+    property = dj_models.ForeignKey(Property, on_delete=dj_models.CASCADE, related_name='relation_edits')
 
     class Meta:
-        unique_together = ('time_span', 'site', 'object')
+        abstract = True
 
 
-class TrainLine(OperatedEntity):
-    """This class represents a train line."""
-    track_sections = dj_models.ManyToManyField(TrackSection, related_name='train_lines')
-    sites = dj_models.ManyToManyField(Site, related_name='train_lines')
+class RelationValueEdit(RelationEdit):
+    old_value = dj_models.JSONField()
+    new_value = dj_models.JSONField()
 
 
-class Infrastructure(TranslatedObject, TemporalObject):
-    """This class represents an infrastructure. This can be a bridge or a tunnel."""
-    pass
+class RelationCreatedEdit(RelationEdit):
+    value = dj_models.JSONField()
 
 
-class Area(Polygon):  # TODO keep?
-    pass
+class RelationDeletedEdit(RelationEdit):
+    value = dj_models.JSONField()
+
+
+################
+# Translations #
+################
+
+
+class Translation(dj_models.Model, abc.ABC):
+    language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator])
+    label = dj_models.CharField(max_length=100)
+
+    class Meta:
+        abstract = True
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        k = self._get_object_attr_name()
+        obj = getattr(self, k)
+        filters = {
+            'language_code': self.language_code,
+            'label': self.label,
+            k: obj,
+        }
+        if self.objects.filter(**filters).exists():
+            raise dj_exc.ValidationError(f'duplicate translation for object {obj} and language {self.language_code}',
+                                         code='duplicate_translation')
+
+    @classmethod
+    @abc.abstractmethod
+    def _get_object_attr_name(cls) -> str:
+        pass
+
+
+class StructureTranslation(Translation):
+    structure = dj_models.ForeignKey(Structure, on_delete=dj_models.CASCADE, related_name='translations')
+
+    @classmethod
+    def _get_object_attr_name(cls) -> str:
+        return 'structure'
+
+
+class UnitTypeTranslation(Translation):
+    unit_type = dj_models.ForeignKey(UnitType, on_delete=dj_models.CASCADE, related_name='translations')
+
+    @classmethod
+    def _get_object_attr_name(cls) -> str:
+        return 'unit'
+
+
+class UnitTranslation(Translation):
+    unit = dj_models.ForeignKey(Unit, on_delete=dj_models.CASCADE, related_name='translations')
+
+    @classmethod
+    def _get_object_attr_name(cls) -> str:
+        return 'unit'

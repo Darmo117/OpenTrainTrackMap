@@ -17,7 +17,7 @@ class LabelTestCase(TestCase):
         label = models.Label()
         label.save()
         models.Translation(label=label, text='Label', language_code='en').save()
-        c = models.Class(label=label, name='A')
+        c = models.Type(label=label, name='A')
         c.save()
         label_p = models.Label()
         label_p.save()
@@ -38,9 +38,9 @@ class LabelTestCase(TestCase):
     def test_label_duplicate_use_error(self):
         l1 = models.Label()
         l1.save()
-        models.Class(name='Y', label=l1).save()
+        models.Type(name='Y', label=l1).save()
         with self.assertRaises(dj_exc.ValidationError) as cm:
-            models.Class(name='Z', label=l1).save()
+            models.Type(name='Z', label=l1).save()
         self.assertIn('label', cm.exception.message_dict)
 
 
@@ -93,17 +93,17 @@ class ClassTestCase(TestCase):
     def setUp(self):
         self.label_a = models.Label()
         self.label_a.save()
-        self.class_a = models.Class(name='A', label=self.label_a)
+        self.class_a = models.Type(name='A', label=self.label_a)
         self.class_a.save()
 
         self.label_b = models.Label()
         self.label_b.save()
-        self.class_b = models.Class(name='B', label=self.label_b)
+        self.class_b = models.Type(name='B', label=self.label_b)
         self.class_b.save()
 
         self.label_c = models.Label()
         self.label_c.save()
-        self.class_c = models.Class(name='C', label=self.label_c, parent_class=self.class_a)
+        self.class_c = models.Type(name='C', label=self.label_c, parent_class=self.class_a)
         self.class_c.save()
 
         self.label_p1 = models.Label()
@@ -116,14 +116,14 @@ class ClassTestCase(TestCase):
         label = models.Label()
         label.save()
         # Should not raise any errors
-        c = models.Class(name='D', label=label, parent_class=None)
+        c = models.Type(name='D', label=label, parent_class=None)
         c.save()
         self.assertIsNone(c.parent_class)
 
     def test_circular_hierarchy(self):
         label = models.Label()
         label.save()
-        c = models.Class(name='D', label=label)
+        c = models.Type(name='D', label=label)
         c.parent_class = c
         with self.assertRaises(dj_exc.ValidationError) as cm:
             c.save()
@@ -133,26 +133,26 @@ class ClassTestCase(TestCase):
         label = models.Label()
         label.save()
         with self.assertRaises(dj_exc.ValidationError) as cm:
-            models.Class(name=None, label=label).save()
+            models.Type(name=None, label=label).save()
         self.assertIn('name', cm.exception.message_dict)
 
     def test_duplicate_name_error(self):
         label = models.Label()
         label.save()
         with self.assertRaises(dj_exc.ValidationError) as cm:
-            models.Class(name='A', label=label).save()
+            models.Type(name='A', label=label).save()
         self.assertIn('name', cm.exception.message_dict)
 
     def test_label_null_error(self):
         with self.assertRaises(dj_exc.ValidationError) as cm:
-            models.Class(name='D', label=None).save()
+            models.Type(name='D', label=None).save()
         self.assertIn('label', cm.exception.message_dict)
 
     def test_geometry_null(self):
         label = models.Label()
         label.save()
         # Should not raise any errors
-        c = models.Class(name='D', label=label, geometry_type=None)
+        c = models.Type(name='D', label=label, geometry_type=None)
         c.save()
         self.assertIsNone(c.geometry_type)
 
@@ -160,17 +160,17 @@ class ClassTestCase(TestCase):
         label = models.Label()
         label.save()
         with self.assertRaises(dj_exc.ValidationError) as cm:
-            models.Class(name='D', label=label, geometry_type='a').save()
+            models.Type(name='D', label=label, geometry_type='a').save()
         self.assertIn('geometry_type', cm.exception.message_dict)
 
     def test_create_inherited_geometry(self):
         l1 = models.Label()
         l1.save()
-        c1 = models.Class(name='C1', label=l1, geometry_type='node')
+        c1 = models.Type(name='C1', label=l1, geometry_type='node')
         c1.save()
         l2 = models.Label()
         l2.save()
-        c2 = models.Class(name='C2', label=l2, geometry_type='node', parent_class=c1)
+        c2 = models.Type(name='C2', label=l2, geometry_type='node', parent_class=c1)
         c2.save()
         self.assertEqual(c2.parent_class, c1)
         self.assertEqual(c1.geometry_type, c2.geometry_type)
@@ -178,15 +178,15 @@ class ClassTestCase(TestCase):
     def test_create_mismatch_inherited_geometry_error(self):
         l1 = models.Label()
         l1.save()
-        c1 = models.Class(name='C1', label=l1, geometry_type='node')
+        c1 = models.Type(name='C1', label=l1, geometry_type='node')
         c1.save()
         l2 = models.Label()
         l2.save()
         with self.assertRaises(dj_exc.ValidationError) as cm:
-            models.Class(name='C2', label=l2, geometry_type='polygon', parent_class=c1).save()
+            models.Type(name='C2', label=l2, geometry_type='polygon', parent_class=c1).save()
         self.assertIn('geometry_type', cm.exception.message_dict)
         with self.assertRaises(dj_exc.ValidationError) as cm:
-            models.Class(name='C2', label=l2, geometry_type=None, parent_class=c1).save()
+            models.Type(name='C2', label=l2, geometry_type=None, parent_class=c1).save()
         self.assertIn('geometry_type', cm.exception.message_dict)
 
     def test_has_property(self):
@@ -204,7 +204,7 @@ class ClassTestCase(TestCase):
     def test_undirect_subtype(self):
         label = models.Label()
         label.save()
-        c = models.Class(name='D', label=label, parent_class=self.class_c)
+        c = models.Type(name='D', label=label, parent_class=self.class_c)
         c.save()
         self.assertTrue(c.is_subtype_of(self.class_a))
 
@@ -214,7 +214,7 @@ class ClassTestCase(TestCase):
     def test_undirect_supertype(self):
         label = models.Label()
         label.save()
-        c = models.Class(name='D', label=label, parent_class=self.class_c)
+        c = models.Type(name='D', label=label, parent_class=self.class_c)
         c.save()
         self.assertTrue(self.class_a.is_supertype_of(c))
 
@@ -228,12 +228,12 @@ class PropertyTestCase(TestCase):
     def setUp(self):
         self.label_a = models.Label()
         self.label_a.save()
-        self.class_a = models.Class(name='A', label=self.label_a)
+        self.class_a = models.Type(name='A', label=self.label_a)
         self.class_a.save()
 
         self.label_b = models.Label()
         self.label_b.save()
-        self.class_b = models.Class(name='B', label=self.label_b)
+        self.class_b = models.Type(name='B', label=self.label_b)
         self.class_b.save()
 
         self.label_p1 = models.Label()
@@ -261,7 +261,7 @@ class PropertyTestCase(TestCase):
     def test_duplicate_name_for_inherited_class_error(self):
         lc = models.Label()
         lc.save()
-        c = models.Class(name='C', label=lc, parent_class=self.class_a)
+        c = models.Type(name='C', label=lc, parent_class=self.class_a)
         c.save()
         lp = models.Label()
         lp.save()
