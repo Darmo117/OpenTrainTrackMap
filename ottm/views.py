@@ -5,7 +5,7 @@ import django.http.response as dj_response
 import django.shortcuts as dj_scut
 
 from OpenTrainTrackMap import settings as g_settings
-from . import api, page_context, models, settings, forms
+from . import api, page_context, models, settings
 
 
 def map_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
@@ -48,30 +48,6 @@ def page_handler(page_name: str) -> typ.Callable[[dj_wsgi.WSGIRequest], dj_respo
         })
 
     return handler
-
-
-def login_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
-    user = api.get_user_from_request(request)
-    args = {
-        'form': None,
-        'global_errors': [],
-    }
-
-    if not user.is_logged_in:
-        if request.method == 'POST':
-            form = forms.LogInForm(request.POST)
-            args['form'] = form
-            if form.is_valid():
-                if api.log_in(request, form.cleaned_data['username'], form.cleaned_data['password']):
-                    return dj_scut.HttpResponseRedirect(_get_referer_url(request))
-                else:
-                    pass  # TODO handle
-        else:
-            args['form'] = forms.LogInForm()
-
-    return dj_scut.render(request, 'ottm/log-in.html', context={
-        'context': _get_login_page_context(user, **args)
-    })
 
 
 def logout_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
@@ -184,12 +160,6 @@ def _get_map_page_context(user: models.User, no_index: bool, action: str = 'show
 
     context = _get_base_context(user, None, no_index)
     return page_context.MapPageContext(context, js_config)
-
-
-def _get_login_page_context(user: models.User, form, global_errors: typ.List[str]) \
-        -> page_context.LoginPageContext:
-    context = _get_base_context(user, 'log_in', no_index=True)
-    return page_context.LoginPageContext(context, form, global_errors)
 
 
 def _get_user_page_context(user: models.User, target_user: models.User) \
