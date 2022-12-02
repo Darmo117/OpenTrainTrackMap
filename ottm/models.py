@@ -540,7 +540,7 @@ class UnitTypeTranslation(Translation):
 
     @classmethod
     def _get_object_attr_name(cls) -> str:
-        return 'unit'
+        return 'unit_type'
 
 
 class UnitTranslation(Translation):
