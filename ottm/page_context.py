@@ -1,49 +1,60 @@
-from __future__ import annotations
+import typing as _typ
 
-import dataclasses
-
-from . import models
+from . import models as _models
 
 
-@dataclasses.dataclass
 class PageContext:
-    site_name: str
-    tab_title: str | None
-    title: str | None
-    noindex: bool
-    user: models.User
-
-    def __post_init__(self):
+    def __init__(self, site_name: str, tab_title: str | None, title: str | None, no_index: bool, user: _models.User):
+        self._site_name = site_name
+        self._tab_title = tab_title
+        self._title = title
+        self._no_index = no_index
+        self._user = user
+        self._language = self.user.prefered_language
         self._context = None
-        self.lang = self.user.prefered_language
 
-    def __getattr__(self, item):
-        if self._context:
-            return getattr(self._context, item)
-        raise AttributeError(item)
+    @property
+    def site_name(self) -> str:
+        return self._site_name
+
+    @property
+    def tab_title(self) -> str:
+        return self._tab_title
+
+    @property
+    def title(self) -> str:
+        return self._title
+
+    @property
+    def no_index(self) -> bool:
+        return self._no_index
+
+    @property
+    def user(self) -> _models.User:
+        return self._user
+
+    @property
+    def language(self):
+        return self._language
 
 
-@dataclasses.dataclass(init=False)
 class MapPageContext(PageContext):
-    js_config: str
+    def __init__(self, site_name: str, tab_title: str | None, title: str | None, no_index: bool, user: _models.User,
+                 js_config: dict[str, _typ.Any]):
+        super().__init__(site_name=site_name, tab_title=tab_title, title=title, no_index=no_index, user=user)
+        self._js_config = '{' + ','.join(f'{k!r}: {v!r}' for k, v in js_config.items()) + '}'
 
-    def __init__(self, context: PageContext, /, js_config: dict):
-        self._context = context
-        self.js_config = self._to_js(js_config)
-
-    @staticmethod
-    def _to_js(js_config: dict) -> str:
-        def escape(s: str) -> str:
-            return s.replace('"', r'\"').replace('\\', r'\\')
-
-        js = (f'"{escape(k)}": {repr(v)}' for k, v in js_config.items())
-        return '{' + ','.join(js) + '}'
+    @property
+    def js_config(self) -> str:
+        return self._js_config
 
 
-@dataclasses.dataclass(init=False)
 class UserPageContext(PageContext):
-    target_user: models.User
+    def __init__(self, site_name: str, tab_title: str | None, title: str | None, no_index: bool, user: _models.User,
+                 target_user: _models.User):
+        super().__init__(site_name=site_name, tab_title=tab_title, title=title, no_index=no_index, user=user)
+        self._target_user = target_user
 
-    def __init__(self, context: PageContext, /, target_user: models.User):
-        self._context = context
-        self.target_user = target_user
+    @property
+    def target_user(self) -> _models.User:
+        return self._target_user

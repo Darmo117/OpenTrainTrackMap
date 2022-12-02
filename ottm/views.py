@@ -44,7 +44,7 @@ def page_handler(page_name: str) -> typ.Callable[[dj_wsgi.WSGIRequest], dj_respo
         user = api.get_user_from_request(request)
 
         return dj_scut.render(request, f'ottm/{page_name}.html', context={
-            'context': _get_base_context(user, page_name, no_index=False)
+            'context': _get_page_context(user, page_name, no_index=False)
         })
 
     return handler
@@ -53,14 +53,12 @@ def page_handler(page_name: str) -> typ.Callable[[dj_wsgi.WSGIRequest], dj_respo
 def logout_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     if api.get_user_from_request(request).is_logged_in:
         api.log_out(request)
-
     return dj_scut.HttpResponseRedirect(_get_referer_url(request))
 
 
 def user_profile(request: dj_wsgi.WSGIRequest, username: str) -> dj_response.HttpResponse:
     user = api.get_user_from_request(request)
     target_user = api.get_user_from_name(username)
-
     return dj_scut.render(request, 'ottm/user-profile.html', context={
         'context': _get_user_page_context(user, target_user)
     })
@@ -73,7 +71,7 @@ def user_settings(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
         return dj_scut.HttpResponseRedirect(dj_scut.reverse('ottm:map'))
 
     return dj_scut.render(request, 'ottm/user-settings.html', context={
-        'context': _get_base_context(user, 'user_settings', no_index=False)
+        'context': _get_page_context(user, 'user_settings', no_index=False)
     })
 
 
@@ -91,7 +89,7 @@ def user_notes(request: dj_wsgi.WSGIRequest, username: str) -> dj_response.HttpR
     target_user = api.get_user_from_name(username)
 
     return dj_scut.render(request, 'ottm/user-notes.html', context={
-        'context': _get_base_context(user, 'notes', no_index=True)
+        'context': _get_page_context(user, 'notes', no_index=True)
     })
 
 
@@ -112,25 +110,9 @@ def _get_referer_url(request: dj_wsgi.WSGIRequest) -> str:
     return request.GET.get('return_to', '/')
 
 
-def _get_base_context(user: models.User, page_id: typ.Optional[str], no_index: bool,
-                      title_args: typ.Dict[str, str] = None) -> page_context.PageContext:
-    if page_id:
-        title = user.prefered_language.translate(f'page.{page_id}.title')
-        tab_title = user.prefered_language.translate(f'page.{page_id}.tab_title')
-        if title_args is not None:
-            title = title.format(**title_args)
-            tab_title = tab_title.format(**title_args)
-    else:
-        title = None
-        tab_title = None
-
-    return page_context.PageContext(
-        title=title,
-        tab_title=tab_title,
-        site_name=settings.SITE_NAME,
-        noindex=no_index,
-        user=user
-    )
+def _get_page_context(user: models.User, page_id: str | None, no_index: bool,
+                      titles_args: dict[str, str] = None) -> page_context.PageContext:
+    return page_context.PageContext(**_get_base_context_args(user, page_id, no_index, titles_args))
 
 
 def _get_map_page_context(user: models.User, no_index: bool, action: str = 'show') -> page_context.MapPageContext:
@@ -153,16 +135,37 @@ def _get_map_page_context(user: models.User, no_index: bool, action: str = 'show
     js_config = {
         'trans': {},
         'static_path': g_settings.STATIC_URL,
-        'edit': int(action == 'edit'),  # To avoid False and True in the JavaScript code.
+        'edit': 'true' if action == 'edit' else 'false',
     }
-    for t in translations_keys:
-        js_config['trans'][t] = user.prefered_language.translate(t)
 
-    context = _get_base_context(user, None, no_index)
-    return page_context.MapPageContext(context, js_config)
+    for k in translations_keys:
+        js_config['trans'][k] = user.prefered_language.translate(k)
+
+    kwargs = _get_base_context_args(user, None, no_index)
+    return page_context.MapPageContext(**kwargs, js_config=js_config)
 
 
-def _get_user_page_context(user: models.User, target_user: models.User) \
-        -> page_context.UserPageContext:
-    context = _get_base_context(user, 'user_profile', no_index=False, title_args={'username': target_user.username})
-    return page_context.UserPageContext(context, target_user)
+def _get_user_page_context(user: models.User, target_user: models.User) -> page_context.UserPageContext:
+    titles_rags = {'username': target_user.username}
+    kwargs = _get_base_context_args(user, 'user_profile', no_index=False, titles_args=titles_rags)
+    return page_context.UserPageContext(**kwargs, target_user=target_user)
+
+
+def _get_base_context_args(user: models.User, page_id: str | None, no_index: bool,
+                           titles_args: dict[str, str] = None) -> dict[str, typ.Any]:
+    if page_id:
+        title = user.prefered_language.translate(f'page.{page_id}.title')
+        tab_title = user.prefered_language.translate(f'page.{page_id}.tab_title')
+        if titles_args:
+            title = title.format(**titles_args)
+            tab_title = tab_title.format(**titles_args)
+    else:
+        title = None
+        tab_title = None
+    return {
+        'title': title,
+        'tab_title': tab_title,
+        'site_name': settings.SITE_NAME,
+        'no_index': no_index,
+        'user': user,
+    }
