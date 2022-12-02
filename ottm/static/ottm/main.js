@@ -1,40 +1,46 @@
 "use strict";
 
-window.ottm = {
-  setReferer: function () {
-    let path = window.location.pathname + window.location.hash;
-    let links = [
-      ["#nav-login-link", true],
-      ["#nav-logout-link", false],
-    ];
-    for (let [link, isPath] of links) {
-      let $link = $(link);
+/**
+ * Class that manages all JS interactions.
+ */
+class OTTM {
+  /**
+   * Set referer URL to login-related links.
+   */
+  setReferer() {
+    const path = window.location.pathname + window.location.hash;
+    const linkSelectors = {
+      "#nav-login-link": true,
+      "#nav-logout-link": false,
+    };
+    for (const [linkSelector, isPath] of Object.entries(linkSelectors)) {
+      const $link = $(linkSelector);
       if ($link.length) {
-        this._setReturnTo($link, path, isPath ? {"is_path": 1} : null);
+        OTTM.#setReturnTo($link, path, isPath ? {"is_path": 1} : null);
       }
     }
-    let url = $("#nav-login-link").prop("href");
+    const url = $("#nav-login-link").prop("href");
     if (url) {
-      let logInUrl = new URL(url);
-      this._setReturnTo($("#nav-signup-link"), logInUrl.pathname + logInUrl.search, {"is_path": 1});
+      const loginURL = new URL(url);
+      OTTM.#setReturnTo($("#nav-signup-link"), loginURL.pathname + loginURL.search, {"is_path": 1});
     }
-  },
+  }
 
   /**
-   *
-   * @param $link
-   * @param path {string}
-   * @param args {Object<string, *>?}
-   * @private
+   * Add "return_to" argument to the given link’s href attribute.
+   * @param $link Link element to modify.
+   * @param path {string} Path to pass to "return_to" argument.
+   * @param args {Object<string, *>?} Additional arguments to append to URL.
    */
-  _setReturnTo: function ($link, path, args) {
-    let url = new URL($link.prop("href"));
+  static #setReturnTo($link, path, args) {
+    const url = new URL($link.prop("href"));
     url.search = "return_to=" + encodeURIComponent(path);
     if (args) {
-      url.search += "&" + $.map(Object.entries(args), function (e) {
-        return `${e[0]}=${e[1]}`;
-      }).join("&");
+      url.search += "&" + $.map(Object.entries(args), e => `${e[0]}=${e[1]}`).join("&");
     }
     $link.attr("href", url.href);
-  },
-};
+  }
+}
+
+// Expose instance to global scope
+window.ottm = new OTTM();

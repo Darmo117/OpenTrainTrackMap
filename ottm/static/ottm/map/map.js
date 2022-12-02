@@ -7,13 +7,13 @@
       label: "Button",
       tooltip: null,
       icon: null,
-      action: function () {
+      action: () => {
       },
     },
 
     onAdd: function (map) {
-      let div = L.DomUtil.create("div", "leaflet-bar");
-      let link = L.DomUtil.create("a");
+      const div = L.DomUtil.create("div", "leaflet-bar");
+      const link = L.DomUtil.create("a");
 
       if (this.options.icon) {
         link.style.width = "30px";
@@ -32,12 +32,10 @@
 
     onRemove: function (map) {
       // Nothing to do here
-    }
+    },
   });
 
-  L.control.button = function (options) {
-    return new L.Control.Button(options);
-  }
+  L.control.button = options => new L.Control.Button(options);
 
   L.EditControl = L.Control.extend({
     options: {
@@ -48,132 +46,150 @@
     },
 
     onAdd: function (map) {
-      let container = L.DomUtil.create("div", "leaflet-control leaflet-bar");
-      let link = L.DomUtil.create("a", "", container);
+      const container = L.DomUtil.create("div", "leaflet-control leaflet-bar");
+      const link = L.DomUtil.create("a", "", container);
 
       link.href = "#";
-      link.title = OTTM_CONFIG["trans"][`map.controls.edit.${this.options.kind}.tooltip`];
+      link.title = window.OTTM_CONFIG["trans"][`map.controls.edit.${this.options.kind}.tooltip`];
       link.innerHTML = this.options.html;
       L.DomEvent.on(link, "click", L.DomEvent.stop)
-          .on(link, "click", function () {
+          .on(link, "click", () => {
             window.LAYER = this.options.callback.call(map.editTools);
           }, this);
 
       return container;
-    }
+    },
   });
 
+  /**
+   * Wrapper class around a Leaflet map object.
+   * Adds various buttons to control the map’s view.
+   * Uses the page’s URL hash to update the view and vice-versa.
+   */
   class Map {
     /**
-     * @private
+     * Leaflet map object.
      */
-    _map;
+    #map;
     /**
+     * Map’s tile layers.
      * @type {Object<string, L.TileLayer>}
-     * @private
      */
-    _layers = {};
+    #layers;
     /**
+     * View zoom control.
      * @type {L.Zoom}
-     * @private
      */
-    _zoomControl;
+    #zoomControl;
     /**
+     * View scale control.
      * @type {L.Scale}
-     * @private
      */
-    _scaleControl;
-
-    _updatingHash = false;
-    _updatingView = false;
-
-    _markers = [];
-    _lines = [];
-    _polygons = [];
+    #scaleControl;
+    /**
+     * Indicates whether the page’s URL hash is being updated from the map’s view.
+     * @type {boolean}
+     */
+    #updatingHash = false;
+    /**
+     * Indicates whether the map’s view is being updated from the page’s URL hash.
+     * @type {boolean}
+     */
+    #updatingView = false;
+    /**
+     * List of markers.
+     * @type {[]}
+     */
+    #markers = [];
+    /**
+     * List of polylines.
+     * @type {[]}
+     */
+    #lines = [];
+    /**
+     * List of polygons.
+     * @type {[]}
+     */
+    #polygons = [];
 
     /**
-     * Creates the map wrapper object.
-     * @param mapId {string} Map HTML tag ID.
+     * Create a map wrapper object.
+     * @param mapID {string} Map’s HTML tag ID.
      * @param editMode {boolean} Whether the map should be editable.
      */
-    constructor(mapId, editMode) {
-      let map = L.map(mapId, {
+    constructor(mapID, editMode) {
+      const map = L.map(mapID, {
         zoomControl: false, // Remove default zoom control
         editable: editMode,
       }).setView([0, 0], 2);
 
-      map.on("zoomend", this.updateUrl.bind(this));
-      map.on("moveend", this.updateUrl.bind(this));
-      map.on("resize", this.updateUrl.bind(this));
-      window.onhashchange = this.centerViewFromUrl.bind(this);
+      map.on("zoomend", () => this.updateUrl());
+      map.on("moveend", () => this.updateUrl());
+      map.on("resize", () => this.updateUrl());
+      window.onhashchange = () => this.centerViewFromUrl();
 
-      let osmTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      this.#zoomControl = L.control.zoom({
+        zoomInTitle: window.OTTM_CONFIG["trans"]["map.controls.zoom_in.tooltip"],
+        zoomOutTitle: window.OTTM_CONFIG["trans"]["map.controls.zoom_out.tooltip"],
+        position: "topright",
+      }).addTo(map);
+
+      const osmTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         maxZoom: 19,
       }).addTo(map);
-
-      let mapnikBWTiles = L.tileLayer("https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png", {
+      const mapnikBWTiles = L.tileLayer("https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png", {
         attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         maxZoom: 18,
       });
-
-      // TODO cacher la clé
-      let maptilerSatelliteTiles = L.tileLayer("https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=5PelNcEc4zGc3OEutmIG", {
+      // TODO hide API key
+      const maptilerSatelliteTiles = L.tileLayer("https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=5PelNcEc4zGc3OEutmIG", {
         attribution: 'Tiles © <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>, Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
         maxZoom: 19,
       });
-
-      let esriSatelliteTiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
+      const esriSatelliteTiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
         attribution: "Tiles © Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
         maxZoom: 19,
       });
 
-      this._zoomControl = L.control.zoom({
-        zoomInTitle: OTTM_CONFIG["trans"]["map.controls.zoom_in.tooltip"],
-        zoomOutTitle: OTTM_CONFIG["trans"]["map.controls.zoom_out.tooltip"],
-        position: "topright",
-      }).addTo(map);
-
-      this._layers = {
-        [OTTM_CONFIG["trans"]["map.controls.layers.standard"]]: osmTiles,
-        [OTTM_CONFIG["trans"]["map.controls.layers.black_and_white"]]: mapnikBWTiles,
-        [OTTM_CONFIG["trans"]["map.controls.layers.satellite_maptiler"]]: maptilerSatelliteTiles,
-        [OTTM_CONFIG["trans"]["map.controls.layers.satellite_esri"]]: esriSatelliteTiles,
+      this.#layers = {
+        [window.OTTM_CONFIG["trans"]["map.controls.layers.standard"]]: osmTiles,
+        [window.OTTM_CONFIG["trans"]["map.controls.layers.black_and_white"]]: mapnikBWTiles,
+        [window.OTTM_CONFIG["trans"]["map.controls.layers.satellite_maptiler"]]: maptilerSatelliteTiles,
+        [window.OTTM_CONFIG["trans"]["map.controls.layers.satellite_esri"]]: esriSatelliteTiles,
       };
-      L.control.layers(this._layers).addTo(map);
+      L.control.layers(this.#layers).addTo(map);
 
+      /**
+       * Open the current view in the given online mapping service.
+       * @param map Leaflet map object.
+       * @param urlPattern {string} Mapping service’s URL pattern.
+       */
       function openMapInTab(map, urlPattern) {
-        let latLong = map.getCenter();
-        let lat = latLong.lat;
-        let long = latLong.lng;
-        let zoom = map.getZoom();
+        const latLong = map.getCenter();
         window.open(urlPattern
-            .replace("{lat}", lat)
-            .replace("{long}", long)
-            .replace("{zoom}", zoom))
+            .replace("{lat}", latLong.lat)
+            .replace("{long}", latLong.lng)
+            .replace("{zoom}", map.getZoom()))
       }
 
       L.control.button({
-        tooltip: OTTM_CONFIG["trans"]["map.controls.google_maps_button.tooltip"],
-        icon: OTTM_CONFIG["static_path"] + "ottm/images/Google_Maps_icon.svg.png",
-        action: function (map) {
-          openMapInTab(map, "https://www.google.com/maps/@{lat},{long},{zoom}z");
-        },
+        tooltip: window.OTTM_CONFIG["trans"]["map.controls.google_maps_button.tooltip"],
+        icon: window.OTTM_CONFIG["static_path"] + "ottm/images/Google_Maps_icon.svg.png",
+        action: map => openMapInTab(map, "https://www.google.com/maps/@{lat},{long},{zoom}z"),
       }).addTo(map);
       L.control.button({
-        label: OTTM_CONFIG["trans"]["map.controls.ign_compare_button.label"],
-        tooltip: OTTM_CONFIG["trans"]["map.controls.ign_compare_button.tooltip"],
-        action: function (map) {
-          openMapInTab(map, "https://remonterletemps.ign.fr/comparer/basic?x={long}&y={lat}&z={zoom}");
-        },
+        label: window.OTTM_CONFIG["trans"]["map.controls.ign_compare_button.label"],
+        tooltip: window.OTTM_CONFIG["trans"]["map.controls.ign_compare_button.tooltip"],
+        action: map => openMapInTab(map, "https://remonterletemps.ign.fr/comparer/basic?x={long}&y={lat}&z={zoom}"),
       }).addTo(map);
 
-      this._scaleControl = L.control.scale().addTo(map);
+      this.#scaleControl = L.control.scale().addTo(map);
 
       // noinspection JSUnresolvedVariable,JSUnresolvedFunction
       L.esri.Geocoding.geosearch({
-        title: OTTM_CONFIG["trans"]["map.controls.search.tooltip"],
-        placeholder: OTTM_CONFIG["trans"]["map.controls.search.placeholder"],
+        title: window.OTTM_CONFIG["trans"]["map.controls.search.tooltip"],
+        placeholder: window.OTTM_CONFIG["trans"]["map.controls.search.placeholder"],
         expanded: true,
         collapseAfterResult: false,
       }).addTo(map);
@@ -213,63 +229,66 @@
 
       // map.locate({setView: true, maxZoom: 16}); // TODO ?
 
-      this._map = map;
+      this.#map = map;
       this.centerViewFromUrl();
 
       delete window.OTTM_CONFIG;
     }
 
+    /**
+     * Update page’s URL hash from the current map view.
+     */
     updateUrl() {
-      if (this._updatingView) {
-        this._updatingView = false;
+      if (this.#updatingView) {
+        this.#updatingView = false;
       } else {
-        this._updatingHash = true;
-        let zoom = this._map.getZoom();
-        let centerPos = this._map.getCenter();
-        let lat = parseFloat(centerPos.lat).toFixed(5);
-        let long = parseFloat(centerPos.lng).toFixed(5);
-        let hash = `#map=${zoom}/${lat}/${long}`
+        this.#updatingHash = true;
+        const centerPos = this.#map.getCenter();
+        const lat = parseFloat(centerPos.lat).toFixed(5);
+        const long = parseFloat(centerPos.lng).toFixed(5);
+        const hash = `#map=${this.#map.getZoom()}/${lat}/${long}`
         window.location.hash = hash;
-
-        let mapNavLinks = ["#nav-main-link", "#nav-edit-link", "#nav-history-link"];
-        for (let linkId of mapNavLinks) {
-          let $navLink = $(linkId);
-          let url = new URL($navLink.prop("href"));
+        const mapNavLinks = ["#nav-main-link", "#nav-edit-link", "#nav-history-link"];
+        for (const linkId of mapNavLinks) {
+          const $navLink = $(linkId);
+          const url = new URL($navLink.prop("href"));
           url.hash = hash;
           $navLink.attr("href", url.href);
         }
-        ottm.setReferer();
+        window.ottm.setReferer();
       }
     }
 
+    /**
+     * Center the view from the URL’s hash.
+     */
     centerViewFromUrl() {
-      if (this._updatingHash) {
-        this._updatingHash = false;
+      if (this.#updatingHash) {
+        this.#updatingHash = false;
       } else {
         let lat, long, zoom;
-        let match = /^#map=(\d+)\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)$/.exec(window.location.hash);
-
+        const match = /^#map=(\d+)\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)$/.exec(window.location.hash);
         if (match) {
-          this._updatingView = true;
-          let minZoom = this._map.getMinZoom();
-          let maxZoom = this._map.getMaxZoom();
-
+          this.#updatingView = true;
+          const minZoom = this.#map.getMinZoom();
+          const maxZoom = this.#map.getMaxZoom();
           zoom = Math.max(minZoom, Math.min(maxZoom, parseInt(match[1])));
           lat = parseFloat(match[2]);
           long = parseFloat(match[3]);
-
-          this._map.setView([lat, long], zoom);
+          this.#map.setView([lat, long], zoom);
         } else {
           this.updateUrl();
         }
       }
     }
 
+    /**
+     * @return {L.Map} The Leaflet map object.
+     */
     get leafletMap() {
-      return this._map;
+      return this.#map;
     }
   }
 
-  window.ottm.map = new Map("map", OTTM_CONFIG["edit"]);
-  window.ottm.Map = Map;
+  window.ottm.map = new Map("map", window.OTTM_CONFIG["edit"]);
 })();

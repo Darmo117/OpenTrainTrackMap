@@ -26,9 +26,9 @@
   <script src="https://unpkg.com/esri-leaflet-geocoder@2.3.3/dist/esri-leaflet-geocoder.js"
           integrity="sha512-HrFUyCEtIpxZloTgEKKMq4RFYhxjJkCiF5sDxuAokklOeZ68U2NPfh4MFtyIVWlsKtVbK5GD2/JzFyAfvT5ejA=="
           crossorigin=""></script>
-  <script src="{% static 'ottm/leaflet/plugins/Leaflet.Editable.js' %}"></script>
-  <script src="{% static 'ottm/leaflet/plugins/leaflet.geometryutil.js' %}"></script>
-  {#  <script src="{% static 'ottm/leaflet/plugins/leaflet.snap.js' %}"></script>#}
+  <script src="{% static 'ottm/libs/leaflet/plugins/Leaflet.Editable.js' %}"></script>
+  <script src="{% static 'ottm/libs/leaflet/plugins/leaflet.geometryutil.js' %}"></script>
+  {#  <script src="{% static 'ottm/libs/leaflet/plugins/leaflet.snap.js' %}"></script>#}
   <script>window.OTTM_CONFIG = {{ context.js_config|safe }};</script>
   <script src="{% static 'ottm/map/map.js' %}"></script>
 {% endblock %}
