@@ -93,7 +93,7 @@ class User:
 ###################
 
 
-class Structure(dj_models.Model, abc.ABC):
+class Structure(dj_models.Model):
     label = dj_models.CharField(max_length=50)
     deprecated = dj_models.BooleanField()
     wikidata_qid = dj_models.CharField(null=True, blank=True, max_length=15,
@@ -120,7 +120,7 @@ class Type(Structure):
             raise dj_exc.ValidationError(f'type with label {self.label} already exist', code='type_duplicate')
 
 
-class Property(Structure, abc.ABC):
+class Property(Structure):
     @staticmethod
     def _multiplicity_validator(m: int):
         if m < 0:
@@ -137,9 +137,8 @@ class Property(Structure, abc.ABC):
         abstract = True
 
     @classmethod
-    @abc.abstractmethod
     def relation_class(cls) -> typ.Type[Relation]:
-        pass
+        raise NotImplementedError()
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -169,7 +168,8 @@ class TypeProperty(Property):
         return ObjectRelation
 
 
-class PrimitiveProperty(Property, abc.ABC):
+# noinspection PyAbstractClass
+class PrimitiveProperty(Property):
     class Meta:
         abstract = True
 
@@ -265,7 +265,7 @@ class Object(dj_models.Model):
             raise dj_exc.ValidationError('abstract types cannot have instances', code='object_with_abstract_type')
 
 
-class Relation(dj_models.Model, abc.ABC):
+class Relation(dj_models.Model):
     left_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_left')
     existence_interval = model_fields.DateIntervalField()
     property: Property
@@ -347,7 +347,7 @@ class ObjectRelation(Relation):
 _RT = typ.TypeVar('_RT')
 
 
-class PrimitiveRelation(Relation, abc.ABC, typ.Generic[_RT]):
+class PrimitiveRelation(Relation, typ.Generic[_RT]):
     value: _RT
 
     class Meta:
@@ -448,7 +448,7 @@ class EditGroup(dj_models.Model):
             )
 
 
-class Edit(dj_models.Model, abc.ABC):
+class Edit(dj_models.Model):
     @staticmethod
     def _validate_object_id(i: int):
         if i < 0:
@@ -461,7 +461,7 @@ class Edit(dj_models.Model, abc.ABC):
         abstract = True
 
 
-class ObjectEdit(Edit, abc.ABC):
+class ObjectEdit(Edit):
     object_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='object_edits')
 
     class Meta:
@@ -476,7 +476,7 @@ class ObjectDeletedEdit(ObjectEdit):
     pass
 
 
-class RelationEdit(Edit, abc.ABC):
+class RelationEdit(Edit):
     property = dj_models.ForeignKey(Property, on_delete=dj_models.CASCADE, related_name='relation_edits')
 
     class Meta:
@@ -501,7 +501,7 @@ class RelationDeletedEdit(RelationEdit):
 ################
 
 
-class Translation(dj_models.Model, abc.ABC):
+class Translation(dj_models.Model):
     language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator])
     label = dj_models.CharField(max_length=100)
 
