@@ -299,12 +299,17 @@ class Relation(dj_models.Model, abc.ABC):
                     code='too_many_relations'
                 )
         else:
-            filters = {
-                'property': self.property,
-                'left_object': self.left_object,
-                # TODO check no overlap of existence_interval field
-            }
-            if self.property.multiplicity_max == 1 and self.objects.filter(**filters).exists():
+            def overlaps(f: tuple[str, typ.Any] = None):
+                filters = {
+                    'property': self.property,
+                    'left_object': self.left_object,
+                    **({f[0]: f[1]} if f else {})
+                }
+                # TODO if possible, delegate to SQL
+                return any(relation.existence_interval.overlaps(self.existence_interval)
+                           for relation in self.objects.filter(**filters))
+
+            if self.property.multiplicity_max == 1 and overlaps():
                 raise dj_exc.ValidationError(
                     f'overlapping date intervals for temporal property {self.property}',
                     code='temporal_relation_overlap_single_value'
@@ -312,8 +317,7 @@ class Relation(dj_models.Model, abc.ABC):
             elif self.property.multiplicity_max > 1:
                 k = self._get_right_value_attribute_name()
                 v = getattr(self, k)
-                filters[k] = v
-                if self.objects.filter(**filters).exists():
+                if overlaps((k, v)):
                     raise dj_exc.ValidationError(
                         f'overlapping date intervals for property {self.property} and value {v}',
                         code='temporal_relation_overlap_many_values'
