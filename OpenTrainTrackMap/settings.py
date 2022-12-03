@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 import pathlib
 
-import WikiPy.settings as wpy_settings
 import ottm.settings as ottm_settings
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -30,7 +29,7 @@ ALLOWED_HOSTS = []
 # Application definition
 INSTALLED_APPS = [
     'ottm.apps.OTTMConfig',
-    'WikiPy.apps.WikiPyConfig',
+    'wiki.apps.WikiConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -113,13 +112,13 @@ STATIC_URL = '/static/'
 # Wiki settings #
 #################
 
-AUTH_USER_MODEL = 'WikiPy.CustomUser'
+# AUTH_USER_MODEL = 'WikiPy.CustomUser'
 
-wpy_settings.init(BASE_DIR)
-
-TIME_ZONE = wpy_settings.TIME_ZONE
-EMAIL_HOST_USER = wpy_settings.EMAIL_HOST_USER
-EMAIL_HOST_PASSWORD = wpy_settings.EMAIL_HOST_PASSWORD
+# wpy_settings.init(BASE_DIR)
+#
+# TIME_ZONE = wpy_settings.TIME_ZONE
+# EMAIL_HOST_USER = wpy_settings.EMAIL_HOST_USER
+# EMAIL_HOST_PASSWORD = wpy_settings.EMAIL_HOST_PASSWORD
 
 #################
 # Site settings #
