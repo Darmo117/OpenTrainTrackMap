@@ -22,7 +22,7 @@ class ConfirmPasswordFormMixin:
 class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
     @staticmethod
     def username_validator(value: str, anonymous: bool = False):
-        models.User.username_validator_(value)
+        models.username_validator(value)
         if not anonymous and value.startswith('Anonymous-'):
             raise dj_exc.ValidationError('invalid username', code='invalid')
 

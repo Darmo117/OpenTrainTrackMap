@@ -25,6 +25,11 @@ def lang_code_validator(value: str):
 #########
 
 
+def user_group_label_validator(value: str):
+    if not value.isascii() or not value.isalnum():
+        raise dj_exc.ValidationError('invalid user group label', code='user_group_invalid_label')
+
+
 # TODO
 # superuser: PERM_EDIT_SCHEMA
 # administrator: PERM_EDIT_USER_GROUPS, PERM_BLOCK_USERS
@@ -35,27 +40,21 @@ def lang_code_validator(value: str):
 # user: PERM_EDIT_OBJECTS
 # all: PERM_WIKI_EDIT
 class UserGroup(dj_models.Model):
-    @staticmethod
-    def label_validator(value: str):
-        if not value.isascii() or not value.isalnum():
-            raise dj_exc.ValidationError('invalid user group label', code='user_group_invalid_label')
-
-    label = dj_models.CharField(max_length=20, unique=True, validators=[label_validator])
+    label = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
     permissions = model_fields.CommaSeparatedStringsField()
 
     def has_permission(self, perm: str) -> bool:
         return perm in self.permissions
 
 
+def username_validator(value: str):
+    if '/' in value or settings.INVALID_TITLE_REGEX.search(value):
+        raise dj_exc.ValidationError('invalid username', code='invalid')
+
+
 class User(dj_auth_models.AbstractUser):
     """Custom user class to override the default username validator and add additional data."""
-
-    @staticmethod
-    def username_validator_(value: str):
-        if '/' in value or settings.INVALID_TITLE_REGEX.search(value):
-            raise dj_exc.ValidationError('invalid username', code='invalid')
-
-    username_validator = username_validator_
+    username_validator = username_validator
     prefered_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator],
                                                  default=settings.DEFAULT_LANGUAGE_CODE)
     groups = dj_models.ManyToManyField(UserGroup, related_name='users')
@@ -146,14 +145,11 @@ class UserBlock(dj_models.Model):
 ###################
 
 
-class Structure(dj_models.Model):
+class Structure(dj_models.Model):  # TODO abstract
     label = dj_models.CharField(max_length=50)
     deprecated = dj_models.BooleanField()
     wikidata_qid = dj_models.CharField(null=True, blank=True, max_length=15,
                                        validators=[dj_valid.RegexValidator(r'^Q\d+$')])
-
-    class Meta:
-        abstract = True
 
     def __str__(self):
         return self.label
@@ -173,21 +169,18 @@ class Type(Structure):
             raise dj_exc.ValidationError(f'type with label {self.label} already exist', code='type_duplicate')
 
 
-class Property(Structure):
-    @staticmethod
-    def _multiplicity_validator(m: int):
-        if m < 0:
-            raise dj_exc.ValidationError('negative property multiplicity', code='property_negative_multiplicity')
+def _property_multiplicity_validator(m: int):
+    if m < 0:
+        raise dj_exc.ValidationError('negative property multiplicity', code='property_negative_multiplicity')
 
-    multiplicity_min = dj_models.IntegerField(validators=[_multiplicity_validator])
-    multiplicity_max = dj_models.IntegerField(validators=[_multiplicity_validator])
+
+class Property(Structure):  # TODO abstract
+    multiplicity_min = dj_models.IntegerField(validators=[_property_multiplicity_validator])
+    multiplicity_max = dj_models.IntegerField(validators=[_property_multiplicity_validator])
     is_temporal = dj_models.BooleanField()
     absent_means_unknown_value = dj_models.BooleanField(null=True, blank=True)
     is_value_unique = dj_models.BooleanField()
     host_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='properties')
-
-    class Meta:
-        abstract = True
 
     @classmethod
     def relation_class(cls) -> typ.Type[Relation]:
@@ -318,13 +311,10 @@ class Object(dj_models.Model):
             raise dj_exc.ValidationError('abstract types cannot have instances', code='object_with_abstract_type')
 
 
-class Relation(dj_models.Model):
+class Relation(dj_models.Model):  # TODO abstract
     left_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_left')
     existence_interval = model_fields.DateIntervalField()
     property: Property
-
-    class Meta:
-        abstract = True
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -397,11 +387,8 @@ class ObjectRelation(Relation):
                                          code='object_relation_same_object_on_both_sides')
 
 
-_RT = typ.TypeVar('_RT')
-
-
-class PrimitiveRelation(Relation, typ.Generic[_RT]):
-    value: _RT
+class PrimitiveRelation(Relation):
+    value: object
 
     class Meta:
         abstract = True
@@ -411,7 +398,7 @@ class PrimitiveRelation(Relation, typ.Generic[_RT]):
         return 'value'
 
 
-class LocalizedRelation(PrimitiveRelation[str]):
+class LocalizedRelation(PrimitiveRelation):
     property = dj_models.ForeignKey(LocalizedProperty, on_delete=dj_models.CASCADE, related_name='instances')
     language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator])
     value = dj_models.TextField()
@@ -425,12 +412,12 @@ class LocalizedRelation(PrimitiveRelation[str]):
             )
 
 
-class StringRelation(PrimitiveRelation[str]):
+class StringRelation(PrimitiveRelation):
     property = dj_models.ForeignKey(StringProperty, on_delete=dj_models.CASCADE, related_name='instances')
     value = dj_models.CharField(max_length=200)
 
 
-class IntRelation(PrimitiveRelation[int]):
+class IntRelation(PrimitiveRelation):
     property = dj_models.ForeignKey(IntProperty, on_delete=dj_models.CASCADE, related_name='instances')
     value = dj_models.IntegerField()
 
@@ -442,7 +429,7 @@ class IntRelation(PrimitiveRelation[int]):
                                          code='int_relation_invalid_value')
 
 
-class FloatRelation(PrimitiveRelation[float]):
+class FloatRelation(PrimitiveRelation):
     property = dj_models.ForeignKey(FloatProperty, on_delete=dj_models.CASCADE, related_name='instances')
     value = dj_models.FloatField()
 
@@ -454,12 +441,12 @@ class FloatRelation(PrimitiveRelation[float]):
                                          code='float_relation_invalid_value')
 
 
-class BooleanRelation(PrimitiveRelation[bool]):
+class BooleanRelation(PrimitiveRelation):
     property = dj_models.ForeignKey(BooleanProperty, on_delete=dj_models.CASCADE, related_name='instances')
     value = dj_models.BooleanField()
 
 
-class UnitRelation(PrimitiveRelation[float]):
+class UnitRelation(PrimitiveRelation):
     property = dj_models.ForeignKey(UnitProperty, on_delete=dj_models.CASCADE, related_name='instances')
     value = dj_models.FloatField()
     unit = dj_models.ForeignKey(Unit, on_delete=dj_models.CASCADE, related_name='relations')
@@ -470,7 +457,7 @@ class UnitRelation(PrimitiveRelation[float]):
             raise dj_exc.ValidationError('value cannot be negative', code='unit_relation_negative_value')
 
 
-class DateIntervalRelation(PrimitiveRelation[data_types.DateInterval]):
+class DateIntervalRelation(PrimitiveRelation):
     property = dj_models.ForeignKey(DateIntervalProperty, on_delete=dj_models.CASCADE, related_name='instances')
     value = model_fields.DateIntervalField()
 
@@ -501,24 +488,18 @@ class EditGroup(dj_models.Model):
             )
 
 
-class Edit(dj_models.Model):
-    @staticmethod
-    def _validate_object_id(i: int):
-        if i < 0:
-            raise dj_exc.ValidationError(f'invalid object ID {i}', code='edit_invalid_object_id')
+def _edit_validate_object_id(i: int):
+    if i < 0:
+        raise dj_exc.ValidationError(f'invalid object ID {i}', code='edit_invalid_object_id')
 
+
+class Edit(dj_models.Model):  # TODO abstract
     edit_group = dj_models.ForeignKey(EditGroup, on_delete=dj_models.CASCADE, related_name='edits')
-    object_id = dj_models.IntegerField(validators=[_validate_object_id])
-
-    class Meta:
-        abstract = True
+    object_id = dj_models.IntegerField(validators=[_edit_validate_object_id])
 
 
-class ObjectEdit(Edit):
+class ObjectEdit(Edit):  # TODO abstract
     object_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='object_edits')
-
-    class Meta:
-        abstract = True
 
 
 class ObjectCreatedEdit(ObjectEdit):
@@ -529,11 +510,8 @@ class ObjectDeletedEdit(ObjectEdit):
     pass
 
 
-class RelationEdit(Edit):
+class RelationEdit(Edit):  # TODO abstract
     property = dj_models.ForeignKey(Property, on_delete=dj_models.CASCADE, related_name='relation_edits')
-
-    class Meta:
-        abstract = True
 
 
 class RelationValueEdit(RelationEdit):
@@ -626,14 +604,14 @@ class RevisionMixin:
 #########
 
 
-class Page(dj_models.Model):
-    @staticmethod
-    def title_validator(value: str):
-        if settings.INVALID_TITLE_REGEX.match(value):
-            raise dj_exc.ValidationError('invalid page title', code='page_invalid_title')
+def page_title_validator(value: str):
+    if settings.INVALID_TITLE_REGEX.match(value):
+        raise dj_exc.ValidationError('invalid page title', code='page_invalid_title')
 
+
+class Page(dj_models.Model):
     namespace_id = dj_models.IntegerField()
-    title = dj_models.CharField(max_length=200, validators=[title_validator])
+    title = dj_models.CharField(max_length=200, validators=[page_title_validator])
     content_type = dj_models.CharField(max_length=20, choices=constants.CONTENT_TYPES, default=constants.CT_WIKIPAGE)
     deleted = dj_models.BooleanField(default=False)
 
