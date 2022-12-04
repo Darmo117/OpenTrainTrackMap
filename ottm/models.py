@@ -30,15 +30,6 @@ def user_group_label_validator(value: str):
         raise dj_exc.ValidationError('invalid user group label', code='user_group_invalid_label')
 
 
-# TODO
-# superuser: PERM_EDIT_SCHEMA
-# administrator: PERM_EDIT_USER_GROUPS, PERM_BLOCK_USERS
-# wiki_administrator: PERM_WIKI_DELETE, PERM_WIKI_RENAME, PERM_WIKI_MASK, PERM_WIKI_EDIT_FILTERS, PERM_WIKI_BLOCK_USERS,
-#  PERM_WIKI_EDIT_USER_PAGES
-# patroller: PERM_REVERT
-# wiki_patroller: PERM_WIKI_REVERT
-# user: PERM_EDIT_OBJECTS
-# all: PERM_WIKI_EDIT, PERM_WIKI_EDIT
 class UserGroup(dj_models.Model):
     label = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
     permissions = model_fields.CommaSeparatedStringsField()
@@ -46,16 +37,23 @@ class UserGroup(dj_models.Model):
     def has_permission(self, perm: str) -> bool:
         return perm in self.permissions
 
+    def delete(self, using=None, keep_parents=False):
+        if self.label == 'all':
+            raise RuntimeError('cannot delete "all" user group')
+        super().delete(using=using, keep_parents=keep_parents)
+
 
 def username_validator(value: str):
     if '/' in value or settings.INVALID_TITLE_REGEX.search(value):
         raise dj_exc.ValidationError('invalid username', code='invalid')
+    if CustomUser.objects.filter(username=value).exists():
+        raise dj_exc.ValidationError('duplicate username', code='duplicate')
 
 
 class User:
     """Wrapper class around CustomUser and AnonymousUser classes."""
 
-    def __init__(self, dj_user: CustomUser | dj_auth_models.AnonymousUser, anonymous_username: str = None):
+    def __init__(self, dj_user: CustomUser, anonymous_username: str = None):
         """Create a wrapper around the given user.
 
         :param dj_user: Either a CustomUser or AnonymousUser.
@@ -66,7 +64,7 @@ class User:
         self._anonymous_username = anonymous_username
 
     @property
-    def internal_user(self) -> CustomUser | dj_auth_models.AnonymousUser:
+    def internal_user(self) -> CustomUser:
         return self._user
 
     @property
@@ -75,6 +73,9 @@ class User:
 
     @property
     def is_anonymous(self) -> bool:
+        """Return true if the user is anonymous, false otherwise.
+        A user is anonymous if they are not authenticated and their IP address
+        has not already been use to edit the wiki at least once."""
         return self._user.is_anonymous
 
     @property
@@ -128,20 +129,20 @@ class User:
 
     @property
     def block(self) -> UserBlock | None:
-        self._check_not_anonymous()
-        return self._user.block
+        return self._user.block if not self.is_anonymous else None
 
     @block.setter
     def block(self, value: UserBlock | None):
+        self._check_not_anonymous()
         self._user.block = value
 
     @property
     def edits(self) -> dj_models.Manager[EditGroup]:
-        return self._user.edit_groups
+        return self._user.edit_groups if not self.is_anonymous else dj_auth_models.EmptyManager(EditGroup)
 
     @property
     def wiki_messages(self) -> dj_models.Manager[Message]:
-        return self._user.wiki_messages
+        return self._user.wiki_messages if not self.is_anonymous else dj_auth_models.EmptyManager(Message)
 
     @property
     def wiki_topics(self) -> dj_models.Manager[Topic]:
@@ -169,19 +170,19 @@ class User:
 
     def edit_groups_count(self) -> int:
         """Return the number of edit groups made by this user."""
-        return self._user.edit_groups.count() if self.is_anonymous else 0
+        return self._user.edit_groups.count() if not self.is_anonymous else 0
 
     def wiki_edits_count(self) -> int:
         """Return the number of edits this user made on the wiki."""
-        return self._user.wiki_edits.count() if self.is_anonymous else 0
+        return self._user.wiki_edits.count() if not self.is_anonymous else 0
 
     def wiki_topics_count(self) -> int:
         """Return the number of topics this user created on the wiki."""
-        return self._user.wiki_topics.count() if self.is_anonymous else 0
+        return self._user.wiki_topics.count() if not self.is_anonymous else 0
 
     def wiki_messages_count(self) -> int:
         """Return the number of messages this user posted on the wiki."""
-        return self._user.wiki_messages.count() if self.is_anonymous else 0
+        return self._user.wiki_messages.count() if not self.is_anonymous else 0
 
     def _check_not_anonymous(self):
         if not self.is_anonymous:
@@ -191,6 +192,8 @@ class User:
 class CustomUser(dj_auth_models.AbstractUser):
     """Custom user class to override the default username validator and add additional data."""
     username_validator = username_validator
+    # IP for anonymous accounts
+    ip = dj_models.CharField(max_length=39, null=True, blank=True)
     prefered_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator],
                                                  default=settings.DEFAULT_LANGUAGE_CODE)
     groups = dj_models.ManyToManyField(UserGroup, related_name='users')

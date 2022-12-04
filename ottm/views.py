@@ -107,6 +107,10 @@ def user_notes(request: dj_wsgi.WSGIRequest, username: str) -> dj_response.HttpR
 
 
 def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_response.HttpResponse:
+    if not raw_page_title:
+        return dj_scut.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
+            'raw_page_title': w_pages.url_encode_page_title(w_pages.MAIN_PAGE_TITLE)
+        }))
     user = auth.get_user_from_request(request)
     page_title = w_pages.get_correct_title(raw_page_title)
     ns, title = w_pages.split_title(page_title)

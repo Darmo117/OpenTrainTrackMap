@@ -3,6 +3,8 @@ import urllib.parse
 from . import namespaces
 from ... import models
 
+MAIN_PAGE_TITLE = namespaces.NS_META.get_full_page_title('Main Page')
+
 
 def split_title(title: str) -> tuple[namespaces.Namespace, str]:
     ns_id = 0
@@ -19,7 +21,7 @@ def split_title(title: str) -> tuple[namespaces.Namespace, str]:
 
 
 def get_correct_title(raw_title: str) -> str:
-    return raw_title.replace('_', ' ')
+    return urllib.parse.unquote(raw_title.replace('_', ' '))
 
 
 def url_encode_page_title(title: str) -> str:
@@ -28,7 +30,7 @@ def url_encode_page_title(title: str) -> str:
     :param title: Page title to encode.
     :return: The encoded page title.
     """
-    return urllib.parse.quote(title)
+    return urllib.parse.quote(title.replace(' ', '_'), safe='/:')
 
 
 def get_page(ns: namespaces.Namespace, title: str) -> models.Page:
