@@ -9,10 +9,11 @@ import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
 import django.db.models as dj_models
 import django.db.models.manager as dj_manager
+import math
 
 from . import settings, model_fields
-from .api import data_types, permissions
-from .api.wiki import namespaces, constants
+from .api import data_types, permissions, constants
+from .api.wiki import namespaces, constants as w_cons
 
 
 def lang_code_validator(value: str):
@@ -77,9 +78,9 @@ class User(dj_auth_models.AbstractUser):
 
     def notes_count(self) -> int:
         """Return the total number of notes created by this user."""
-        return (ObjectCreatedEdit.objects  # Get all object creation edits
+        return (ObjectEdit.objects  # Get all object creation edits
                 # Keep only those made by this user that are of type "Note"
-                .filter(edit_group__author=self, object_type__label='Note')
+                .filter(edit_group__author=self, operation=constants.OBJECT_CREATED, object_type__label='Note')
                 .count())
 
     def edits_count(self) -> int:
@@ -145,133 +146,6 @@ class UserBlock(dj_models.Model):
 ###################
 
 
-class Structure(dj_models.Model):  # TODO abstract
-    label = dj_models.CharField(max_length=50)
-    deprecated = dj_models.BooleanField()
-    wikidata_qid = dj_models.CharField(null=True, blank=True, max_length=15,
-                                       validators=[dj_valid.RegexValidator(r'^Q\d+$')])
-
-    def __str__(self):
-        return self.label
-
-    def __repr__(self):
-        return f'Structure[label={self.label},deprecated={self.deprecated},wikidata_qid={self.wikidata_qid}]'
-
-
-class Type(Structure):
-    is_abstract = dj_models.BooleanField()
-    enum = dj_models.BooleanField()
-    super_type = dj_models.ForeignKey('self', on_delete=dj_models.CASCADE, related_name='sub_types')
-
-    def validate_unique(self, exclude=None):
-        super().validate_unique(exclude=exclude)
-        if self.objects.filter(label=self.label).exists():
-            raise dj_exc.ValidationError(f'type with label {self.label} already exist', code='type_duplicate')
-
-
-def _property_multiplicity_validator(m: int):
-    if m < 0:
-        raise dj_exc.ValidationError('negative property multiplicity', code='property_negative_multiplicity')
-
-
-class Property(Structure):  # TODO abstract
-    multiplicity_min = dj_models.IntegerField(validators=[_property_multiplicity_validator])
-    multiplicity_max = dj_models.IntegerField(validators=[_property_multiplicity_validator])
-    is_temporal = dj_models.BooleanField()
-    absent_means_unknown_value = dj_models.BooleanField(null=True, blank=True)
-    is_value_unique = dj_models.BooleanField()
-    host_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='properties')
-
-    @classmethod
-    def relation_class(cls) -> typ.Type[Relation]:
-        raise NotImplementedError()
-
-    def validate_unique(self, exclude=None):
-        super().validate_unique(exclude=exclude)
-        if self.objects.filter(label=self.label, host_type__label=self.host_type.label).exists():
-            raise ValueError(f'property with name {self.label} already exists for class {self.host_type}')
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if self.multiplicity_min > self.multiplicity_max:
-            raise dj_exc.ValidationError('invalid property multiplicities', code='property_invalid_multiplicities')
-        if not self.is_temporal and self.absent_means_unknown_value is not None:
-            raise dj_exc.ValidationError('property is not temporal', code='property_not_temporal')
-        if self.is_temporal:
-            if self.multiplicity_min > 0:
-                raise dj_exc.ValidationError('temporal property must have a min multipliticy of 0',
-                                             code='temporal_property_invalid_min_multiplicity')
-            if self.absent_means_unknown_value is None:
-                raise dj_exc.ValidationError('property is temporal', code='property_is_temporal')
-
-
-class TypeProperty(Property):
-    target_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='targetting_properties')
-    allows_itself = dj_models.BooleanField()
-
-    @classmethod
-    def relation_class(cls):
-        return ObjectRelation
-
-
-# noinspection PyAbstractClass
-class PrimitiveProperty(Property):
-    class Meta:
-        abstract = True
-
-
-class StringProperty(PrimitiveProperty):
-    @classmethod
-    def relation_class(cls) -> typ.Type[StringRelation]:
-        return StringRelation
-
-
-class LocalizedProperty(PrimitiveProperty):
-    @classmethod
-    def relation_class(cls) -> typ.Type[LocalizedRelation]:
-        return LocalizedRelation
-
-
-class IntProperty(PrimitiveProperty):
-    min = dj_models.IntegerField(null=True, blank=True)
-    max = dj_models.IntegerField(null=True, blank=True)
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if self.min is not None and self.max is not None:
-            if self.min > self.max:
-                raise dj_exc.ValidationError('max should be greater than min', code='int_property_invalid_bounds')
-            if self.min == self.max:
-                raise dj_exc.ValidationError('min and max must be different', code='int_property_same_bounds')
-
-    @classmethod
-    def relation_class(cls) -> typ.Type[IntRelation]:
-        return IntRelation
-
-
-class FloatProperty(PrimitiveProperty):
-    min = dj_models.FloatField()
-    max = dj_models.FloatField()
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if self.min is not None and self.max is not None:
-            if self.min > self.max:
-                raise dj_exc.ValidationError('max should be greater than min', code='float_property_invalid_bounds')
-            if self.min == self.max:
-                raise dj_exc.ValidationError('min and max must be different', code='float_property_same_bounds')
-
-    @classmethod
-    def relation_class(cls) -> typ.Type[FloatRelation]:
-        return FloatRelation
-
-
-class BooleanProperty(PrimitiveProperty):
-    @classmethod
-    def relation_class(cls) -> typ.Type[BooleanRelation]:
-        return BooleanRelation
-
-
 class UnitType(dj_models.Model):
     label = dj_models.CharField(unique=True, max_length=30)
 
@@ -283,18 +157,224 @@ class Unit(dj_models.Model):
     to_base_unit_coef = dj_models.FloatField()
 
 
-class UnitProperty(PrimitiveProperty):
-    unit_type = dj_models.ForeignKey(UnitType, on_delete=dj_models.CASCADE, related_name='properties')
-
-    @classmethod
-    def relation_class(cls) -> typ.Type[UnitRelation]:
-        return UnitRelation
+def structure_label_validator(value: str):
+    if not value.isascii() or not value.isalnum():
+        raise dj_exc.ValidationError('invalid structure label', code='structure_invalid_label')
 
 
-class DateIntervalProperty(PrimitiveProperty):
-    @classmethod
-    def relation_class(cls) -> typ.Type[DateIntervalRelation]:
-        return DateIntervalRelation
+class Structure(dj_models.Model):
+    label = dj_models.CharField(max_length=50, validators=[structure_label_validator])
+    deprecated = dj_models.BooleanField()
+    wikidata_qid = dj_models.CharField(null=True, blank=True, max_length=15,
+                                       validators=[dj_valid.RegexValidator(r'^Q\d+$')])
+
+    class Meta:
+        abstract = True
+
+
+class Type(Structure):
+    is_abstract = dj_models.BooleanField()
+    enum = dj_models.BooleanField()
+    super_type = dj_models.ForeignKey('self', on_delete=dj_models.CASCADE, related_name='sub_types')
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if self.objects.filter(label=self.label).exists():
+            raise dj_exc.ValidationError(
+                f'type with label {self.label} already exist',
+                code='type_duplicate'
+            )
+
+    def __str__(self):
+        return self.label
+
+
+def property_multiplicity_validator(m: int):
+    if m < 0:
+        raise dj_exc.ValidationError(
+            'negative property multiplicity',
+            code='property_negative_multiplicity'
+        )
+
+
+class Property(Structure):
+    # Common fields
+    host_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='properties')
+    multiplicity_min = dj_models.IntegerField(validators=[property_multiplicity_validator])
+    multiplicity_max = dj_models.IntegerField(validators=[property_multiplicity_validator], null=True, blank=True)
+    is_temporal = dj_models.BooleanField()
+    absent_means_unknown_value = dj_models.BooleanField(null=True, blank=True)
+    is_value_unique = dj_models.BooleanField()
+    property_type = dj_models.CharField(max_length=20, choices=constants.PROPERTY_TYPES)
+    # Type property fields
+    target_type = dj_models.ForeignKey(Type, on_delete=dj_models.SET_NULL, related_name='targetting_properties',
+                                       null=True, blank=True)
+    allows_itself = dj_models.BooleanField(null=True, blank=True)
+    # Int property fields
+    min_int = dj_models.IntegerField(null=True, blank=True)
+    max_int = dj_models.IntegerField(null=True, blank=True)
+    # Float property fields
+    min_float = dj_models.FloatField(null=True, blank=True)
+    max_float = dj_models.FloatField(null=True, blank=True)
+    # Unit type property fields
+    unit_type = dj_models.ForeignKey(UnitType, on_delete=dj_models.SET_NULL, related_name='properties',
+                                     null=True, blank=True)
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if self.objects.filter(label=self.label, host_type__label=self.host_type.label).exists():
+            raise dj_exc.ValidationError(
+                f'property with name {self.label} already exists for type {self.host_type}',
+                code='duplicate_property'
+            )
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        match self.property_type:
+            case constants.PROPERTY_TYPE:
+                self._check_type_property()
+            case constants.PROPERTY_LOCALIZED:
+                self._check_localized_property()
+            case constants.PROPERTY_STRING:
+                self._check_string_property()
+            case constants.PROPERTY_INT:
+                self._check_int_property()
+            case constants.PROPERTY_FLOAT:
+                self._check_float_property()
+            case constants.PROPERTY_BOOLEAN:
+                self._check_boolean_property()
+            case constants.PROPERTY_UNIT:
+                self._check_unit_property()
+            case constants.PROPERTY_DATE_INTERVAL:
+                self._check_date_interval_property()
+
+        if self.multiplicity_min > self.multiplicity_max:
+            raise dj_exc.ValidationError('invalid property multiplicities', code='property_invalid_multiplicities')
+        if not self.is_temporal and self.absent_means_unknown_value is not None:
+            raise dj_exc.ValidationError('property is not temporal', code='property_not_temporal')
+        if self.is_temporal:
+            if self.multiplicity_min > 0:
+                raise dj_exc.ValidationError('temporal property must have a min multipliticy of 0',
+                                             code='temporal_property_invalid_min_multiplicity')
+            if self.absent_means_unknown_value is None:
+                raise dj_exc.ValidationError('property is temporal', code='property_is_temporal')
+
+    @staticmethod
+    def _any_not_null(*fields) -> bool:
+        return any(f is not None for f in fields)
+
+    def _check_type_property(self):
+        if self._any_not_null(self.min_int, self.max_int, self.min_float, self.max_float, self.unit_type):
+            raise dj_exc.ValidationError(
+                'type property should only have common fields set',
+                code='type_property_invalid_fields'
+            )
+        if self.target_type is None:
+            raise dj_exc.ValidationError(
+                'missing target_type field',
+                code='type_property_missing_target_type_field'
+            )
+        if self.allows_itself is None:
+            raise dj_exc.ValidationError(
+                'missing allows_itself field',
+                code='type_property_missing_allows_itself_field'
+            )
+
+    def _check_localized_property(self):
+        if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
+                              self.min_float, self.max_float, self.unit_type):
+            raise dj_exc.ValidationError(
+                'localized property should only have common fields set',
+                code='localized_property_invalid_fields'
+            )
+        if self.is_temporal:
+            raise dj_exc.ValidationError(
+                'localized property cannot be temporal',
+                code='localized_property_temporal'
+            )
+
+    def _check_string_property(self):
+        if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
+                              self.min_float, self.max_float, self.unit_type):
+            raise dj_exc.ValidationError(
+                'string property should only have common fields set',
+                code='string_property_invalid_fields'
+            )
+
+    def _check_int_property(self):
+        if self._any_not_null(self.target_type, self.allows_itself, self.min_float, self.max_float,
+                              self.unit_type):
+            raise dj_exc.ValidationError(
+                'int property should only have min_int and min_max fields set',
+                code='int_property_invalid_fields'
+            )
+        if self.min_int is not None and self.max_int is not None:
+            if self.min_int > self.max_int:
+                raise dj_exc.ValidationError(
+                    'max should be greater than min',
+                    code='int_property_invalid_bounds'
+                )
+            if self.min_int == self.max_int:
+                raise dj_exc.ValidationError(
+                    'min and max must be different',
+                    code='int_property_same_bounds'
+                )
+
+    def _check_float_property(self):
+        if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
+                              self.unit_type):
+            raise dj_exc.ValidationError(
+                'string property should only have min_float and max_float fields set',
+                code='float_property_invalid_fields'
+            )
+        if self.min_float is not None and self.max_float is not None:
+            if self.min_float > self.max_float:
+                raise dj_exc.ValidationError(
+                    'max should be greater than min',
+                    code='float_property_invalid_bounds'
+                )
+            if self.min_float == self.max_float:
+                raise dj_exc.ValidationError(
+                    'min and max must be different',
+                    code='float_property_same_bounds'
+                )
+
+    def _check_boolean_property(self):
+        if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
+                              self.min_float, self.max_float, self.unit_type):
+            raise dj_exc.ValidationError(
+                'boolean property should only have common fields set',
+                code='boolean_property_invalid_fields'
+            )
+
+    def _check_unit_property(self):
+        if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
+                              self.min_float, self.max_float, self.unit_type):
+            raise dj_exc.ValidationError(
+                'unit property should only have unit_type field set',
+                code='unit_property_invalid_fields'
+            )
+        if self.unit_type is None:
+            raise dj_exc.ValidationError(
+                f'missing unit type for unit property {self.label}',
+                code='unit_property_missing_unit_type'
+            )
+
+    def _check_date_interval_property(self):
+        if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
+                              self.min_float, self.max_float, self.unit_type):
+            raise dj_exc.ValidationError(
+                'date interval property should only have common fields set',
+                code='date_interval_property_invalid_fields'
+            )
+        if self.is_temporal:
+            raise dj_exc.ValidationError(
+                'date interval property cannot be temporal',
+                code='date_interval_property_temporal'
+            )
+
+    def __str__(self):
+        return f'{self.host_type.label}.{self.label}'
 
 
 ##############
@@ -311,10 +391,30 @@ class Object(dj_models.Model):
             raise dj_exc.ValidationError('abstract types cannot have instances', code='object_with_abstract_type')
 
 
-class Relation(dj_models.Model):  # TODO abstract
+class Relation(dj_models.Model):
+    # Common fields
+    property = dj_models.ForeignKey(Property, on_delete=dj_models.CASCADE, related_name='instances')
     left_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_left')
     existence_interval = model_fields.DateIntervalField()
-    property: Property
+    # Object relation fields
+    right_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_right',
+                                        null=True, blank=True)
+    # Localized relation fields
+    language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator], null=True, blank=True)
+    value_localized_p = dj_models.TextField(null=True, blank=True)
+    # String relation fields
+    value_string_p = dj_models.CharField(max_length=200, null=True, blank=True)
+    # Int relation fields
+    value_int_p = dj_models.IntegerField(null=True, blank=True)
+    # Float relation fields
+    value_float_p = dj_models.FloatField(null=True, blank=True)
+    # Boolean relation fields
+    value_boolean_p = dj_models.BooleanField(null=True, blank=True)
+    # Unit relation fields
+    value_unit_p = dj_models.FloatField(null=True, blank=True)
+    unit = dj_models.ForeignKey(Unit, on_delete=dj_models.CASCADE, related_name='relations', null=True, blank=True)
+    # Date interval relation fields
+    value_date_interval_p = model_fields.DateIntervalField(null=True, blank=True)
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -326,15 +426,46 @@ class Relation(dj_models.Model):  # TODO abstract
                 k: getattr(self, k),
             }
             if self.objects.filter(**filters).exists():
-                raise dj_exc.ValidationError(f'duplicate value for property {self.property}',
-                                             code='relation_duplicate_for_unique_property')
+                raise dj_exc.ValidationError(
+                    f'duplicate value for property {self.property}',
+                    code='relation_duplicate_for_unique_property'
+                )
+
+        match self.property.property_type:
+            case constants.PROPERTY_LOCALIZED:
+                if self.objects.filter(language_code=self.language_code, left_object=self.left_object).exists():
+                    raise dj_exc.ValidationError(
+                        f'duplicate localization for language {self.language_code} and object {self.left_object}',
+                        code='localized_relation_duplicate'
+                    )
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
+        match self.property.property_type:
+            case constants.PROPERTY_TYPE:
+                self._check_object_relation()
+            case constants.PROPERTY_LOCALIZED:
+                self._check_localized_relation()
+            case constants.PROPERTY_STRING:
+                self._check_string_relation()
+            case constants.PROPERTY_INT:
+                self._check_int_relation()
+            case constants.PROPERTY_FLOAT:
+                self._check_float_relation()
+            case constants.PROPERTY_BOOLEAN:
+                self._check_boolean_relation()
+            case constants.PROPERTY_UNIT:
+                self._check_unit_relation()
+            case constants.PROPERTY_DATE_INTERVAL:
+                self._check_date_interval_relation()
+
         if self.property.is_temporal and self.existence_interval is None:
-            raise dj_exc.ValidationError('temporal relation must have an associated date interval',
-                                         code='temporal_relation_without_date_interval')
-        maxi = self.property.multiplicity_max
+            raise dj_exc.ValidationError(
+                'temporal relation must have an associated date interval',
+                code='temporal_relation_without_date_interval'
+            )
+
+        maxi = self.property.multiplicity_max or math.inf
         if not self.property.is_temporal:
             if self.objects.filter(left_object=self.left_object, property=self.property).count() >= maxi:
                 raise dj_exc.ValidationError(
@@ -352,12 +483,12 @@ class Relation(dj_models.Model):  # TODO abstract
                 return any(relation.existence_interval.overlaps(self.existence_interval)
                            for relation in self.objects.filter(**filters))
 
-            if self.property.multiplicity_max == 1 and overlaps():
+            if maxi == 1 and overlaps():
                 raise dj_exc.ValidationError(
                     f'overlapping date intervals for temporal property {self.property}',
                     code='temporal_relation_overlap_single_value'
                 )
-            elif self.property.multiplicity_max > 1:
+            elif maxi > 1:
                 k = self._get_right_value_attribute_name()
                 v = getattr(self, k)
                 if overlaps((k, v)):
@@ -366,106 +497,185 @@ class Relation(dj_models.Model):  # TODO abstract
                         code='temporal_relation_overlap_many_values'
                     )
 
-    @classmethod
-    @abc.abstractmethod
-    def _get_right_value_attribute_name(cls) -> str:
-        pass
+    def _get_right_value_attribute_name(self) -> str:
+        match self.property.property_type:
+            case constants.PROPERTY_TYPE:
+                return 'right_object'
+            case constants.PROPERTY_LOCALIZED:
+                return 'value_localized_p'
+            case constants.PROPERTY_STRING:
+                return 'value_string_p'
+            case constants.PROPERTY_INT:
+                return 'value_int_p'
+            case constants.PROPERTY_FLOAT:
+                return 'value_float_p'
+            case constants.PROPERTY_BOOLEAN:
+                return 'value_boolean_p'
+            case constants.PROPERTY_UNIT:
+                return 'value_unit_p'
+            case constants.PROPERTY_DATE_INTERVAL:
+                return 'value_date_interval_p'
 
+    @staticmethod
+    def _any_not_null(*fields) -> bool:
+        return any(f is not None for f in fields)
 
-class ObjectRelation(Relation):
-    right_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_right')
-    property = dj_models.ForeignKey(TypeProperty, on_delete=dj_models.CASCADE, related_name='instances')
-
-    @classmethod
-    def _get_right_value_attribute_name(cls) -> str:
-        return 'right_object'
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if not self.property.allows_itself and self.left_object == self.right_object:
-            raise dj_exc.ValidationError('relation not allowed to have same object on both sides',
-                                         code='object_relation_same_object_on_both_sides')
-
-
-class PrimitiveRelation(Relation):
-    value: object
-
-    class Meta:
-        abstract = True
-
-    @classmethod
-    def _get_right_value_attribute_name(cls) -> str:
-        return 'value'
-
-
-class LocalizedRelation(PrimitiveRelation):
-    property = dj_models.ForeignKey(LocalizedProperty, on_delete=dj_models.CASCADE, related_name='instances')
-    language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator])
-    value = dj_models.TextField()
-
-    def validate_unique(self, exclude=None):
-        super().validate_unique(exclude=exclude)
-        if self.objects.filter(language_code=self.language_code, left_object=self.left_object).exists():
+    def _check_object_relation(self):
+        if self._any_not_null(
+                self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p, self.value_float_p,
+                self.value_boolean_p, self.value_unit_p, self.unit, self.value_date_interval_p
+        ):
             raise dj_exc.ValidationError(
-                f'duplicate localization for language {self.language_code} and object {self.left_object}',
-                code='localized_relation_duplicate'
+                'object relation should only have right_object field set',
+                code='object_relation_invalid_fields'
+            )
+        if self.right_object is None:
+            raise dj_exc.ValidationError(
+                'missing right object',
+                code='object_relation_missing_right_object'
+            )
+        if not self.property.allows_itself and self.left_object == self.right_object:
+            raise dj_exc.ValidationError(
+                'relation not allowed to have same object on both sides',
+                code='object_relation_same_object_on_both_sides'
             )
 
+    def _check_localized_relation(self):
+        if self._any_not_null(
+                self.right_object, self.value_string_p, self.value_int_p, self.value_float_p, self.value_boolean_p,
+                self.value_unit_p, self.unit, self.value_date_interval_p
+        ):
+            raise dj_exc.ValidationError(
+                'localized relation should only have language_code and value_localized_p fields set',
+                code='localized_relation_invalid_fields'
+            )
+        if self.language_code is None:
+            raise dj_exc.ValidationError(
+                'missing language code',
+                code='localized_relation_missing_language_code'
+            )
+        if self.value_localized_p is None:
+            raise dj_exc.ValidationError(
+                'missing localized value',
+                code='localized_relation_missing_language_code'
+            )
 
-class StringRelation(PrimitiveRelation):
-    property = dj_models.ForeignKey(StringProperty, on_delete=dj_models.CASCADE, related_name='instances')
-    value = dj_models.CharField(max_length=200)
+    def _check_string_relation(self):
+        if self._any_not_null(
+                self.right_object, self.language_code, self.value_localized_p, self.value_int_p, self.value_float_p,
+                self.value_boolean_p, self.value_unit_p, self.unit, self.value_date_interval_p
+        ):
+            raise dj_exc.ValidationError(
+                'string relation should only have value_string_p field set',
+                code='string_relation_invalid_fields'
+            )
+        if self.value_string_p is None:
+            raise dj_exc.ValidationError(
+                'missing string value',
+                code='string_relation_missing_value'
+            )
 
+    def _check_int_relation(self):
+        if self._any_not_null(
+                self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_float_p,
+                self.value_boolean_p, self.value_unit_p, self.unit, self.value_date_interval_p
+        ):
+            raise dj_exc.ValidationError(
+                'int relation should only have value_int_p field set',
+                code='int_relation_invalid_fields'
+            )
+        if self.value_int_p is None:
+            raise dj_exc.ValidationError(
+                'missing int value',
+                code='int_relation_missing_value'
+            )
+        if (self.property.min_int is not None and self.value_int_p < self.property.min_int
+                or self.property.max_int is not None and self.value_int_p > self.property.max_int):
+            raise dj_exc.ValidationError(
+                f'{self.value_int_p} outside of [{self.property.min_int}, {self.property.max_int}]',
+                code='int_relation_invalid_value'
+            )
 
-class IntRelation(PrimitiveRelation):
-    property = dj_models.ForeignKey(IntProperty, on_delete=dj_models.CASCADE, related_name='instances')
-    value = dj_models.IntegerField()
+    def _check_float_relation(self):
+        if self._any_not_null(
+                self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p,
+                self.value_boolean_p, self.value_unit_p, self.unit, self.value_date_interval_p
+        ):
+            raise dj_exc.ValidationError(
+                'float relation should only have value_float_p field set',
+                code='float_relation_invalid_fields'
+            )
+        if self.value_int_p is None:
+            raise dj_exc.ValidationError(
+                'missing float value',
+                code='float_relation_missing_value'
+            )
+        if (self.property.min_float is not None and self.value_float_p < self.property.min_float
+                or self.property.max_float is not None and self.value_float_p > self.property.max_float):
+            raise dj_exc.ValidationError(
+                f'{self.value_float_p} outside of [{self.property.min_float}, {self.property.max_float}]',
+                code='float_relation_invalid_value'
+            )
 
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if (self.property.min is not None and self.value < self.property.min
-                or self.property.max is not None and self.value > self.property.max):
-            raise dj_exc.ValidationError(f'{self.value} outside of [{self.property.min}, {self.property.max}]',
-                                         code='int_relation_invalid_value')
+    def _check_boolean_relation(self):
+        if self._any_not_null(
+                self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p,
+                self.value_float_p, self.value_unit_p, self.unit, self.value_date_interval_p
+        ):
+            raise dj_exc.ValidationError(
+                'boolean relation should only have value_boolean_p field set',
+                code='boolean_relation_invalid_fields'
+            )
+        if self.value_boolean_p is None:
+            raise dj_exc.ValidationError(
+                'missing boolean value',
+                code='boolean_relation_missing_value'
+            )
 
+    def _check_unit_relation(self):
+        if self._any_not_null(
+                self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p,
+                self.value_float_p, self.value_boolean_p, self.value_date_interval_p
+        ):
+            raise dj_exc.ValidationError(
+                'unit relation should only have value_boolean_p field set',
+                code='unit_relation_invalid_fields'
+            )
+        if self.value_unit_p is None:
+            raise dj_exc.ValidationError(
+                'missing unit value',
+                code='unit_relation_missing_value'
+            )
+        if self.unit is None:
+            raise dj_exc.ValidationError(
+                'missing unit',
+                code='unit_relation_missing_unit'
+            )
+        if not self.unit.may_be_negative and self.value_unit_p < 0:
+            raise dj_exc.ValidationError(
+                'value cannot be negative',
+                code='unit_relation_negative_value'
+            )
 
-class FloatRelation(PrimitiveRelation):
-    property = dj_models.ForeignKey(FloatProperty, on_delete=dj_models.CASCADE, related_name='instances')
-    value = dj_models.FloatField()
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if (self.property.min is not None and self.value < self.property.min
-                or self.property.max is not None and self.value > self.property.max):
-            raise dj_exc.ValidationError(f'{self.value} outside of [{self.property.min}, {self.property.max}]',
-                                         code='float_relation_invalid_value')
-
-
-class BooleanRelation(PrimitiveRelation):
-    property = dj_models.ForeignKey(BooleanProperty, on_delete=dj_models.CASCADE, related_name='instances')
-    value = dj_models.BooleanField()
-
-
-class UnitRelation(PrimitiveRelation):
-    property = dj_models.ForeignKey(UnitProperty, on_delete=dj_models.CASCADE, related_name='instances')
-    value = dj_models.FloatField()
-    unit = dj_models.ForeignKey(Unit, on_delete=dj_models.CASCADE, related_name='relations')
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if not self.unit.may_be_negative and self.value < 0:
-            raise dj_exc.ValidationError('value cannot be negative', code='unit_relation_negative_value')
-
-
-class DateIntervalRelation(PrimitiveRelation):
-    property = dj_models.ForeignKey(DateIntervalProperty, on_delete=dj_models.CASCADE, related_name='instances')
-    value = model_fields.DateIntervalField()
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
+    def _check_date_interval_relation(self):
+        if self._any_not_null(
+                self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p,
+                self.value_float_p, self.value_boolean_p, self.value_unit_p, self.unit
+        ):
+            raise dj_exc.ValidationError(
+                'date interval relation should only have value_date_interval_p field set',
+                code='date_interval_relation_invalid_fields'
+            )
+        if self.value_date_interval_p is None:
+            raise dj_exc.ValidationError(
+                'missing date interval',
+                code='date_interval_missing_value'
+            )
         if self.property.is_temporal:
-            raise dj_exc.ValidationError('date interval relation cannot be temporal',
-                                         code='temporal_date_interval_relation')
+            raise dj_exc.ValidationError(
+                'date interval relation cannot be temporal',
+                code='temporal_date_interval_relation'
+            )
 
 
 ###############
@@ -475,8 +685,7 @@ class DateIntervalRelation(PrimitiveRelation):
 
 class EditGroup(dj_models.Model):
     date = dj_models.DateTimeField()
-    author = dj_models.ForeignKey(User, on_delete=dj_models.SET_NULL, related_name='edits_groups',
-                                  null=True, blank=True)
+    author = dj_models.ForeignKey(User, on_delete=dj_models.SET_NULL, related_name='edits_groups', null=True)
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -493,38 +702,32 @@ def _edit_validate_object_id(i: int):
         raise dj_exc.ValidationError(f'invalid object ID {i}', code='edit_invalid_object_id')
 
 
-class Edit(dj_models.Model):  # TODO abstract
-    edit_group = dj_models.ForeignKey(EditGroup, on_delete=dj_models.CASCADE, related_name='edits')
+class Edit(dj_models.Model):
+    edit_group = dj_models.ForeignKey(EditGroup, on_delete=dj_models.CASCADE)
     object_id = dj_models.IntegerField(validators=[_edit_validate_object_id])
 
-
-class ObjectEdit(Edit):  # TODO abstract
-    object_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='object_edits')
-
-
-class ObjectCreatedEdit(ObjectEdit):
-    pass
+    class Meta:
+        abstract = True
 
 
-class ObjectDeletedEdit(ObjectEdit):
-    pass
+class ObjectEdit(Edit):
+    object_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE)
+    operation = dj_models.CharField(max_length=10, choices=constants.OBJECT_EDIT_ACTIONS)
 
 
-class RelationEdit(Edit):  # TODO abstract
-    property = dj_models.ForeignKey(Property, on_delete=dj_models.CASCADE, related_name='relation_edits')
+class RelationEdit(Edit):
+    property_name = dj_models.ForeignKey(Relation, on_delete=dj_models.CASCADE, related_name='edits')
+    old_value = dj_models.JSONField(null=True, blank=True)
+    new_value = dj_models.JSONField(null=True, blank=True)
+    operation = dj_models.CharField(max_length=10, choices=constants.RELATION_EDIT_ACTIONS)
 
-
-class RelationValueEdit(RelationEdit):
-    old_value = dj_models.JSONField()
-    new_value = dj_models.JSONField()
-
-
-class RelationCreatedEdit(RelationEdit):
-    value = dj_models.JSONField()
-
-
-class RelationDeletedEdit(RelationEdit):
-    value = dj_models.JSONField()
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if self.old_value is None and self.new_value is None:
+            raise dj_exc.ValidationError(
+                'old and new value cannot both be None',
+                code='relation_edit_missing_values'
+            )
 
 
 ################
@@ -558,12 +761,20 @@ class Translation(dj_models.Model):
         pass
 
 
-class StructureTranslation(Translation):
-    structure = dj_models.ForeignKey(Structure, on_delete=dj_models.CASCADE, related_name='translations')
+class TypeTranslation(Translation):
+    type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='translations')
 
     @classmethod
     def _get_object_attr_name(cls) -> str:
-        return 'structure'
+        return 'type'
+
+
+class PropertyTranslation(Translation):
+    property = dj_models.ForeignKey(Property, on_delete=dj_models.CASCADE, related_name='translations')
+
+    @classmethod
+    def _get_object_attr_name(cls) -> str:
+        return 'property'
 
 
 class UnitTypeTranslation(Translation):
@@ -612,7 +823,7 @@ def page_title_validator(value: str):
 class Page(dj_models.Model):
     namespace_id = dj_models.IntegerField()
     title = dj_models.CharField(max_length=200, validators=[page_title_validator])
-    content_type = dj_models.CharField(max_length=20, choices=constants.CONTENT_TYPES, default=constants.CT_WIKIPAGE)
+    content_type = dj_models.CharField(max_length=20, choices=w_cons.CONTENT_TYPES, default=w_cons.CT_WIKIPAGE)
     deleted = dj_models.BooleanField(default=False)
 
     class Meta:
@@ -651,13 +862,13 @@ class Page(dj_models.Model):
         return revision.text if (revision := self.revisions.latest()) else ''
 
 
-class Tag(dj_models.Model):
-    @staticmethod
-    def label_validator(value: str):
-        if not value.isascii() or not value.isalnum():
-            raise dj_exc.ValidationError('invalid tag label', code='tag_invalid_label')
+def tag_label_validator(value: str):
+    if not value.isascii() or not value.isalnum():
+        raise dj_exc.ValidationError('invalid tag label', code='tag_invalid_label')
 
-    label = dj_models.CharField(max_length=20, validators=[])
+
+class Tag(dj_models.Model):
+    label = dj_models.CharField(max_length=20, validators=[tag_label_validator])
 
 
 class PageRevision(dj_models.Model, RevisionMixin):
