@@ -27,9 +27,9 @@ DEBUG = True
 ALLOWED_HOSTS = []
 
 # Application definition
+
 INSTALLED_APPS = [
     'ottm.apps.OTTMConfig',
-    'wiki.apps.WikiConfig',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -45,6 +45,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'ottm.middleware',
 ]
 
 ROOT_URLCONF = 'OpenTrainTrackMap.urls'
@@ -68,6 +69,7 @@ WSGI_APPLICATION = 'OpenTrainTrackMap.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -77,6 +79,7 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -96,37 +99,23 @@ AUTH_PASSWORD_VALIDATORS = [
 # https://docs.djangoproject.com/en/3.1/topics/i18n/
 
 USE_I18N = True
-
 USE_L10N = True
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
+
 STATICFILES_DIRS = [
     BASE_DIR / 'ottm/static',
 ]
 STATIC_URL = '/static/'
 
-#################
-# Wiki settings #
-#################
-
-# AUTH_USER_MODEL = 'WikiPy.CustomUser'
-
-# wpy_settings.init(BASE_DIR)
-#
-# TIME_ZONE = wpy_settings.TIME_ZONE
-# EMAIL_HOST_USER = wpy_settings.EMAIL_HOST_USER
-# EMAIL_HOST_PASSWORD = wpy_settings.EMAIL_HOST_PASSWORD
-
-#################
-# Site settings #
-#################
+# Site settings
 
 ottm_settings.init(DEBUG)
-
-LANGUAGE_CODE = ottm_settings.DEFAULT_LANGUAGE
+AUTH_USER_MODEL = 'ottm.User'
+AUTH_ANONYMOUS_MODEL = 'ottm.AnonymousUser'
+LANGUAGE_CODE = ottm_settings.DEFAULT_LANGUAGE_CODE
 
 if DEBUG:
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

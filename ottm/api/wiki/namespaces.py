@@ -1,0 +1,51 @@
+import dataclasses
+
+from ... import util
+
+SEPARATOR = ':'
+
+
+@dataclasses.dataclass(frozen=True)
+class Namespace:
+    id: int
+    name: str
+    is_content: bool = False
+    allows_subpages: bool = True
+    perms_required: tuple[str] = ()
+    is_editable: bool = True
+
+    def get_full_page_title(self, page_title: str) -> str:
+        if self.name == '':
+            return page_title
+        return self.name + SEPARATOR + page_title
+
+    def can_user_edit_pages(self, user) -> bool:
+        """Check whether the given user can edit pages from this namespace.
+
+        :param user: The user.
+        :type user: ottm.models.User
+        :return: True if the user is allowed, false otherwise.
+        """
+        return self.is_editable and all(user.has_permission(p) for p in self.perms_required)
+
+
+NS_SPECIAL = Namespace(id=-1, name='Special', is_editable=False, allows_subpages=False)
+NS_MAIN = Namespace(id=0, name='', is_content=True)
+NS_CATEGORY = Namespace(id=1, name='Category', allows_subpages=False)
+NS_META = Namespace(id=2, name='Meta')
+NS_HELP = Namespace(id=3, name='Help')
+NS_USER = Namespace(id=4, name='User')
+NS_TEMPLATE = Namespace(id=10, name='Template')
+NS_MODULE = Namespace(id=11, name='Module')
+NS_INTERFACE = Namespace(id=12, name='Interface')
+NS_FILE = Namespace(id=13, name='File', allows_subpages=False)
+
+NAMESPACES: dict[int, Namespace] = util.gather_globals_dict('^NS_', Namespace)
+
+
+def resolve_name(ns_name: str) -> Namespace | None:
+    ns_name = ns_name.lower()
+    for ns_id, ns in NAMESPACES.items():
+        if ns.name.lower() == ns_name:
+            return ns
+    return None

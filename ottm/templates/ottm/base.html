@@ -1,6 +1,6 @@
 {% load static %}
 {% load ottm %}
-{% load wpy_tags %}
+{% load wiki %}
 <!DOCTYPE html>
 <html lang="{{ context.lang.code }}" dir="{{ context.lang.writing_direction }}">
 <head>
@@ -47,6 +47,11 @@
             {% ottm_translate 'navbar.help.label' %}</a>
         </li>
         <li class="nav-item">
+          <a id="nav-help-link" class="nav-link" href="{% url 'ottm:wiki_main_page' %}">
+            <span class="mdi mdi-help-circle-outline"></span>{# TODO icon #}
+            {% ottm_translate 'navbar.wiki.label' %}</a>
+        </li>
+        <li class="nav-item">
           <a id="nav-about-link" class="nav-link" href="{% url 'ottm:about' %}">
             <span class="mdi mdi-information-outline"></span>
             {% ottm_translate 'navbar.about.label' %}</a>
@@ -56,7 +61,7 @@
              href="{% url 'ottm:copyright' %}"><span class="mdi mdi-copyright"></span>
             {% ottm_translate 'navbar.copyright.label' %}</a>
         </li>
-        {% if context.user.is_logged_in %}
+        {% if context.user.is_authenticated %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">
@@ -80,14 +85,12 @@
           </li>
         {% else %}
           <li class="nav-item">
-            <a id="nav-login-link" class="nav-link"
-               href="{% url 'wikipy:page' raw_page_title='Login'|wpy_page_title:-1|wpy_encode_url %}">
+            <a id="nav-login-link" class="nav-link" href="{% url 'ottm:log_in' %}">
               <span class="mdi mdi-login"></span> {% ottm_translate 'navbar.log_in.label' %}
             </a>
           </li>
           <li class="nav-item">
-            <a id="nav-signup-link" class="nav-link"
-               href="{% url 'wikipy:page' raw_page_title='Create account'|wpy_page_title:-1|wpy_encode_url %}">
+            <a id="nav-signup-link" class="nav-link" href="{% url 'ottm:sign_up' %}">
               <span class="mdi mdi-account-plus"></span> {% ottm_translate 'navbar.sign_up.label' %}
             </a>
           </li>

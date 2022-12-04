@@ -98,17 +98,17 @@
     #updatingView = false;
     /**
      * List of markers.
-     * @type {[]}
+     * @type {?[]}
      */
     #markers = [];
     /**
      * List of polylines.
-     * @type {[]}
+     * @type {?[]}
      */
     #lines = [];
     /**
      * List of polygons.
-     * @type {[]}
+     * @type {?[]}
      */
     #polygons = [];
 

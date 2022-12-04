@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import abc
+import datetime
 import typing as typ
 
-import django.contrib.auth as dj_auth
 import django.contrib.auth.models as dj_auth_models
 import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
 import django.db.models as dj_models
+import django.db.models.manager as dj_manager
 
-from . import settings, model_fields, data_types
+from . import settings, model_fields
+from .api import data_types, permissions
+from .api.wiki import namespaces, constants
 
 
 def lang_code_validator(value: str):
@@ -22,70 +25,120 @@ def lang_code_validator(value: str):
 #########
 
 
-class UserInfo(dj_models.Model):
-    user = dj_models.OneToOneField(dj_auth.get_user_model(), on_delete=dj_models.CASCADE, related_name='ottm_user_info')
-    prefered_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator])
-    is_administrator = dj_models.BooleanField(default=False)
+# TODO
+# superuser: PERM_EDIT_SCHEMA
+# administrator: PERM_EDIT_USER_GROUPS, PERM_BLOCK_USERS
+# wiki_administrator: PERM_WIKI_DELETE, PERM_WIKI_RENAME, PERM_WIKI_MASK, PERM_WIKI_EDIT_FILTERS, PERM_WIKI_BLOCK_USERS,
+#  PERM_WIKI_EDIT_USER_PAGES
+# patroller: PERM_REVERT
+# wiki_patroller: PERM_WIKI_REVERT
+# user: PERM_EDIT_OBJECTS
+# all: PERM_WIKI_EDIT
+class UserGroup(dj_models.Model):
+    @staticmethod
+    def label_validator(value: str):
+        if not value.isascii() or not value.isalnum():
+            raise dj_exc.ValidationError('invalid user group label', code='user_group_invalid_label')
+
+    label = dj_models.CharField(max_length=20, unique=True, validators=[label_validator])
+    permissions = model_fields.CommaSeparatedStringsField()
+
+    def has_permission(self, perm: str) -> bool:
+        return perm in self.permissions
+
+
+class User(dj_auth_models.AbstractUser):
+    """Custom user class to override the default username validator and add additional data."""
+
+    @staticmethod
+    def username_validator_(value: str):
+        if '/' in value or settings.INVALID_TITLE_REGEX.search(value):
+            raise dj_exc.ValidationError('invalid username', code='invalid')
+
+    username_validator = username_validator_
+    prefered_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator],
+                                                 default=settings.DEFAULT_LANGUAGE_CODE)
+    groups = dj_models.ManyToManyField(UserGroup, related_name='users')
+    gender_code = dj_models.CharField(max_length=10, choices=tuple(data_types.GENDERS.keys()))
 
     @property
     def prefered_language(self) -> settings.Language:
         return settings.LANGUAGES[self.prefered_language_code]
 
-
-class User:
-    """Simple wrapper class for a Django user and its associated user data."""
-
-    def __init__(self, django_user: dj_auth_models.AbstractUser, data: UserInfo | None):
-        self._django_user = django_user
-        self._data = data
-
     @property
-    def django_user(self) -> dj_auth_models.AbstractUser:
-        return self._django_user
+    def gender(self):
+        return data_types.GENDERS.get(self.gender_code, data_types.GENDER_N)
 
-    @property
-    def data(self) -> UserInfo | None:
-        return self._data
+    @gender.setter
+    def gender(self, value):
+        pass
 
-    @property
-    def username(self) -> str:
-        return self._django_user.username
-
-    @property
-    def is_logged_in(self) -> bool:
-        return self._django_user.is_authenticated
-
-    @property
-    def prefered_language(self) -> settings.Language:
-        return self._data.prefered_language if self._data else settings.LANGUAGES[settings.DEFAULT_LANGUAGE]
-
-    @property
-    def is_admin(self) -> bool:
-        return not self._data or self._data.is_administrator
+    def has_permission(self, perm: str) -> bool:
+        return any(g.has_permission(perm) for g in self.groups.all())
 
     def notes_count(self) -> int:
         """Return the total number of notes created by this user."""
         return (ObjectCreatedEdit.objects  # Get all object creation edits
                 # Keep only those made by this user that are of type "Note"
-                .filter(edit_group__author=self._data, object_type__label='Note')
+                .filter(edit_group__author=self, object_type__label='Note')
                 .count())
 
     def edits_count(self) -> int:
         """Return the total number of edits on objects and relations made by this user."""
-        return (self._data.edits_groups  # Get all edit groups for this user
+        return (self.edits_groups  # Get all edit groups for this user
                 .annotate(edits_count=dj_models.Count('edits'))  # Count number of edits for each group
                 .aggregate(dj_models.Sum('edits_count')))  # Sum all counts
 
     def edit_groups_count(self) -> int:
         """Return the number of edit groups made by this user."""
-        return self._data.edits_groups.count()
+        return self.edits_groups.count()
 
     def wiki_edits_count(self) -> int:
-        import WikiPy.api.users as wpy_api_users
-        return len(wpy_api_users.get_user_contributions(wpy_api_users.get_user_from_name(self.username), self.username))
+        """Return the number of edits this user made on the wiki."""
+        return self.wiki_edits.count()
 
-    def __repr__(self):
-        return f'User[django_user={self._django_user.username},data={self._data}]'
+    def wiki_topics_count(self) -> int:
+        """Return the number of topics this user created on the wiki."""
+        return self.wiki_topics.count()
+
+    def wiki_messages_count(self) -> int:
+        """Return the number of messages this user posted on the wiki."""
+        return self.wiki_messages.count()
+
+
+class AnonymousUser(User, dj_auth_models.AnonymousUser):
+    """Dummy class representing a user that is not authenticated."""
+
+    objects = dj_manager.EmptyManager(User)
+    prefered_language_code = settings.DEFAULT_LANGUAGE_CODE
+    is_administrator = False
+
+    def notes_count(self) -> int:
+        return 0
+
+    def edits_count(self) -> int:
+        return 0
+
+    def edit_groups_count(self) -> int:
+        return 0
+
+    def wiki_edits_count(self) -> int:
+        return 0
+
+    def wiki_topics_count(self) -> int:
+        return 0
+
+    def wiki_messages_count(self) -> int:
+        return 0
+
+
+class UserBlock(dj_models.Model):
+    user = dj_models.OneToOneField(User, on_delete=dj_models.CASCADE, related_name='block')
+    performer = dj_models.ForeignKey(User, on_delete=dj_models.SET_NULL, related_name='blocks_given', null=True)
+    reason = dj_models.CharField(max_length=200)
+    end_date = dj_models.DateTimeField(null=True, blank=True)
+    allow_messages_on_own_user_page = dj_models.BooleanField()
+    allow_editing_own_settings = dj_models.BooleanField()
 
 
 ###################
@@ -435,7 +488,7 @@ class DateIntervalRelation(PrimitiveRelation[data_types.DateInterval]):
 
 class EditGroup(dj_models.Model):
     date = dj_models.DateTimeField()
-    author = dj_models.ForeignKey(UserInfo, on_delete=dj_models.SET_NULL, related_name='edits_groups',
+    author = dj_models.ForeignKey(User, on_delete=dj_models.SET_NULL, related_name='edits_groups',
                                   null=True, blank=True)
 
     def validate_unique(self, exclude=None):
@@ -549,3 +602,145 @@ class UnitTranslation(Translation):
     @classmethod
     def _get_object_attr_name(cls) -> str:
         return 'unit'
+
+
+########
+# Wiki #
+########
+
+
+class RevisionMixin:
+    date = dj_models.DateTimeField(auto_now_add=True)
+    author = dj_models.ForeignKey(User, on_delete=dj_models.CASCADE, related_name='wiki_edits', null=True)
+    author_name_hidden = dj_models.BooleanField(default=False)
+    comment = dj_models.CharField(max_length=200)
+    comment_hidden = dj_models.BooleanField(default=False)
+
+    @property
+    def hidden(self):
+        return self.author_name_hidden and self.comment_hidden
+
+
+#########
+# Pages #
+#########
+
+
+class Page(dj_models.Model):
+    @staticmethod
+    def title_validator(value: str):
+        if settings.INVALID_TITLE_REGEX.match(value):
+            raise dj_exc.ValidationError('invalid page title', code='page_invalid_title')
+
+    namespace_id = dj_models.IntegerField()
+    title = dj_models.CharField(max_length=200, validators=[title_validator])
+    content_type = dj_models.CharField(max_length=20, choices=constants.CONTENT_TYPES, default=constants.CT_WIKIPAGE)
+    deleted = dj_models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('namespace_id', 'title')
+
+    @property
+    def namespace(self) -> namespaces.Namespace:
+        return namespaces.NAMESPACES[self.namespace_id]
+
+    @property
+    def base_name(self) -> str:
+        if '/' in self.title and self.namespace.allows_subpages:
+            return self.title.split('/')[0]
+        return self.title
+
+    @property
+    def exists(self) -> bool:
+        return self.pk is not None
+
+    def can_user_edit(self, user: User) -> bool:
+        return (self.namespace.can_user_edit_pages(user)
+                and (user.block is None
+                     or user.block.end_date >= datetime.datetime.now())
+                and (self.namespace != namespaces.NS_USER
+                     or self.base_name == user.username
+                     or user.has_permission(permissions.PERM_WIKI_EDIT_USER_PAGES)))
+
+    def can_user_post_messages(self, user: User) -> bool:
+        return self.namespace.is_editable and (
+                user.block is None
+                or user.block.end_date < datetime.datetime.now()
+                or (user.block.allow_messages_on_own_user_page and self.namespace == namespaces.NS_USER)
+        )
+
+    def get_content(self) -> str:
+        return revision.text if (revision := self.revisions.latest()) else ''
+
+
+class Tag(dj_models.Model):
+    @staticmethod
+    def label_validator(value: str):
+        if not value.isascii() or not value.isalnum():
+            raise dj_exc.ValidationError('invalid tag label', code='tag_invalid_label')
+
+    label = dj_models.CharField(max_length=20, validators=[])
+
+
+class PageRevision(dj_models.Model, RevisionMixin):
+    page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='revisions')
+    tags = dj_models.ManyToManyField(Tag, related_name='revisions')
+    text = dj_models.TextField(blank=True)
+    text_hidden = dj_models.BooleanField(default=False)
+
+    class Meta:
+        get_latest_by = 'date'
+
+    @property
+    def hidden(self):
+        return super().hidden and self.text_hidden
+
+
+###############
+# Discussions #
+###############
+
+
+class Topic(dj_models.Model):
+    page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='topics')
+    author = dj_models.ForeignKey(User, on_delete=dj_models.CASCADE, related_name='wiki_topics', null=True)
+    date = dj_models.DateTimeField(auto_now_add=True)
+
+    def get_title(self) -> str:
+        return revision.title if (revision := self.revisions.latest()) else ''
+
+
+class TopicRevision(dj_models.Model, RevisionMixin):
+    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='revisions')
+    title = dj_models.CharField(max_length=200)
+    title_hidden = dj_models.BooleanField(default=False)
+
+    class Meta:
+        get_latest_by = 'date'
+
+    @property
+    def hidden(self):
+        return super().hidden and self.title_hidden
+
+
+class Message(dj_models.Model):
+    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='messages')
+    author = dj_models.ForeignKey(User, on_delete=dj_models.CASCADE, related_name='wiki_messages', null=True)
+    date = dj_models.DateTimeField(auto_now_add=True)
+    response_to = dj_models.ForeignKey('self', on_delete=dj_models.SET_NULL, related_name='responses', null=True)
+
+    def get_content(self) -> str:
+        return revision.text if (revision := self.revisions.latest()) else ''
+
+
+class MessageRevision(dj_models.Model, RevisionMixin):
+    message = dj_models.ForeignKey(Message, on_delete=dj_models.CASCADE, related_name='revisions')
+    text = dj_models.TextField(blank=True)
+    text_hidden = dj_models.BooleanField(default=False)
+
+    class Meta:
+        get_latest_by = 'date'
+
+    @property
+    def hidden(self):
+        return super().hidden and self.text_hidden

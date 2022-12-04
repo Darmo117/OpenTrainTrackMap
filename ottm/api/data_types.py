@@ -1,7 +1,10 @@
 """This module defines various classes for representing data."""
 from __future__ import annotations
 
+import dataclasses
 import datetime
+
+from .. import util
 
 
 class DateInterval:
@@ -156,3 +159,16 @@ class DateInterval:
             if self.end_date and self.fuzzy_end_date and not self.is_current:
                 end = '~' + end
         return f'[{start}, {end}]'
+
+
+@dataclasses.dataclass(frozen=True)
+class UserGender:
+    label: str
+    i18n_label: str
+
+
+GENDER_N = UserGender(label='neutral', i18n_label='neutral')
+GENDER_F = UserGender(label='female', i18n_label='feminine')
+GENDER_M = UserGender(label='male', i18n_label='masculine')
+
+GENDERS: dict[str, UserGender] = util.gather_globals_dict('^GENDER_', UserGender)

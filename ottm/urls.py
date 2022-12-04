@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path, include, re_path
 
 from . import views
 
@@ -19,5 +19,9 @@ urlpatterns = [
             path('notes', views.user_notes, name='user_notes'),
         ])),
         path('settings', views.user_settings, name='user_settings'),
+    ])),
+    path('wiki/', include([
+        path('', views.wiki_page, name='wiki_main_page'),
+        re_path('(?P<raw_page_title>.*)', views.wiki_page, name='wiki_page'),
     ])),
 ]

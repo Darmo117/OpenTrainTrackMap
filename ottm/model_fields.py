@@ -1,11 +1,12 @@
 """This module defines custom model fields."""
 import datetime
+import typing as typ
 
 import django.core.exceptions as dj_exc
 import django.db.models as dj_models
 from django.utils.translation import gettext_lazy as _t
 
-from . import data_types
+from .api import data_types
 
 
 class DateIntervalField(dj_models.Field):
@@ -53,3 +54,32 @@ class DateIntervalField(dj_models.Field):
         approx_end = parts[3] != '0'
         is_current = parts[4] != '0'
         return data_types.DateInterval(start_date, approx_start, end_date, approx_end, is_current)
+
+
+class CommaSeparatedStringsField(dj_models.TextField):
+    """A model field that can store a list of string values."""
+    description = 'Comma-separated strings'
+
+    def from_db_value(self, value: str | None, _expression, _connection) -> typ.Sequence[str] | None:
+        if value is None:
+            return None
+        return self._parse(value)
+
+    def to_python(self, value: typ.Sequence[float] | None | str) -> typ.Sequence[str] | None:
+        if isinstance(value, typ.Sequence):
+            return value
+        if value is None:
+            return None
+        return self._parse(value)
+
+    def get_prep_value(self, value: typ.Sequence[str] | None) -> str | None:
+        if value is None:
+            return None
+        return ','.join(value)
+
+    def value_to_string(self, obj) -> str | None:
+        return self.get_prep_value(self.value_from_object(obj))
+
+    @staticmethod
+    def _parse(s: str) -> typ.Sequence[str]:
+        return s.split(',')

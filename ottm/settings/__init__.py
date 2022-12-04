@@ -2,8 +2,7 @@ import dataclasses as _dt
 import json as _json
 import logging as _logging
 import pathlib as _pathlib
-
-from .. import apps as _apps
+import re as _re
 
 
 @_dt.dataclass(frozen=True)
@@ -19,20 +18,22 @@ class Language:
 
 
 SITE_NAME = 'OpenTrainTrackMap'
-DEFAULT_LANGUAGE = 'en'
+DEFAULT_LANGUAGE_CODE = 'en'
+INVALID_TITLE_REGEX = _re.compile(
+    r'([%@<>_#|{}\[\]\x00-\x1f\x7f]|&[A-Za-z0-9\x80-\xff]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;)')
 LANGUAGES: dict[str, Language] = {}
 LOGGER: _logging.Logger
 
 
 def init(debug: bool):
-    global LOGGER
+    global LOGGER, LANGUAGES
 
-    LOGGER = _logging.Logger('ottm', level=_logging.DEBUG if debug else _logging.INFO)
+    LOGGER = _logging.Logger('OTTM', level=_logging.DEBUG if debug else _logging.INFO)
     sh = _logging.StreamHandler()
-    sh.setFormatter(_apps.OTTMConfig.name + ':%(levelname)s:%(message)s')
+    sh.setFormatter(_logging.Formatter('%(name)s:%(levelname)s:%(message)s'))
     LOGGER.addHandler(sh)
     LOGGER.info('Loading translations…')
-    langs_dir = _pathlib.Path(__file__, 'ottm/settings/langs/')
+    langs_dir = _pathlib.Path(__file__).parent / 'langs'
     for fname in langs_dir.glob('*.json'):
         with (langs_dir / fname).open(encoding='utf8') as lang_file:
             json_obj = _json.load(lang_file)
