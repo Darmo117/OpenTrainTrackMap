@@ -4,8 +4,6 @@ from __future__ import annotations
 import dataclasses
 import datetime
 
-from .. import util
-
 
 class DateInterval:
     def __init__(self, start_date: datetime.datetime | None, approx_start: bool,
@@ -171,4 +169,4 @@ GENDER_N = UserGender(label='neutral', i18n_label='neutral')
 GENDER_F = UserGender(label='female', i18n_label='feminine')
 GENDER_M = UserGender(label='male', i18n_label='masculine')
 
-GENDERS: dict[str, UserGender] = util.gather_globals_dict('^GENDER_', UserGender)
+GENDERS: dict[str, UserGender] = {k: v for k, v in globals().items() if k.startswith('GENDER_')}

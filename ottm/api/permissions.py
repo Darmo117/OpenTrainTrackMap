@@ -1,5 +1,3 @@
-from .. import util
-
 # OTTM
 PERM_EDIT_SCHEMA = 'edit_schema'
 PERM_EDIT_OBJECTS = 'edit_objects'
@@ -16,4 +14,4 @@ PERM_WIKI_EDIT_FILTERS = 'wiki_edit_filters'
 PERM_WIKI_BLOCK_USERS = 'wiki_block_users'
 PERM_WIKI_EDIT_USER_PAGES = 'wiki_edit_user_pages'
 
-PERMS: tuple[str, ...] = util.gather_globals('^PERM_', str)
+PERMS: tuple[str, ...] = tuple(v for k, v in globals().items() if k.startswith('PERM_'))

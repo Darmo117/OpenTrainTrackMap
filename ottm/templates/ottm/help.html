@@ -1,5 +1,4 @@
 {% extends 'ottm/not-map.html' %}
-{% load wpy_tags %}
 
 {% block container-content %}
   <p>
@@ -21,7 +20,7 @@
       <div class="card h-100">
         <div class="card-body">
           <h5 class="card-title">
-            <a href="{% url 'wikipy:page' raw_page_title='Beginners'|wpy_page_title:100|wpy_encode_url %}">
+            <a href="{% url 'ottm:wiki_page' raw_page_title='Help:Beginners' %}">
               Beginner’s guide
             </a>
           </h5>
@@ -34,7 +33,7 @@
     <div class="col mb-4">
       <div class="card h-100">
         <div class="card-body">
-          <h5 class="card-title"><a href="{% url 'wikipy:main_page' %}">{{ context.site_name }} Wiki</a></h5>
+          <h5 class="card-title"><a href="{% url 'ottm:wiki_main_page' %}">{{ context.site_name }} Wiki</a></h5>
           <div class="card-text">
             Features useful tips and tutorials about how to contribute
             as well as in-depth information about the map data model.

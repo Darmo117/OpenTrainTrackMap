@@ -55,6 +55,14 @@ def page_handler(page_name: str) -> typ.Callable[[dj_wsgi.WSGIRequest], dj_respo
     return handler
 
 
+def signup_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
+    pass  # TODO
+
+
+def login_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
+    pass  # TODO
+
+
 def logout_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     if auth.get_user_from_request(request).is_authenticated:
         auth.log_out(request)

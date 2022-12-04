@@ -45,7 +45,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'ottm.middleware',
 ]
 
 ROOT_URLCONF = 'OpenTrainTrackMap.urls'
@@ -113,8 +112,7 @@ STATIC_URL = '/static/'
 # Site settings
 
 ottm_settings.init(DEBUG)
-AUTH_USER_MODEL = 'ottm.User'
-AUTH_ANONYMOUS_MODEL = 'ottm.AnonymousUser'
+AUTH_USER_MODEL = 'ottm.CustomUser'
 LANGUAGE_CODE = ottm_settings.DEFAULT_LANGUAGE_CODE
 
 if DEBUG:

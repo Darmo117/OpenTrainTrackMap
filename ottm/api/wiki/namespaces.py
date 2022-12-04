@@ -1,7 +1,5 @@
 import dataclasses
 
-from ... import util
-
 SEPARATOR = ':'
 
 
@@ -40,7 +38,7 @@ NS_MODULE = Namespace(id=11, name='Module')
 NS_INTERFACE = Namespace(id=12, name='Interface')
 NS_FILE = Namespace(id=13, name='File', allows_subpages=False)
 
-NAMESPACES: dict[int, Namespace] = util.gather_globals_dict('^NS_', Namespace)
+NAMESPACES: dict[int, Namespace] = {v.id: v for k, v in globals().items() if k.startswith('NS_')}
 
 
 def resolve_name(ns_name: str) -> Namespace | None:

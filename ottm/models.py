@@ -8,7 +8,6 @@ import django.contrib.auth.models as dj_auth_models
 import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
 import django.db.models as dj_models
-import django.db.models.manager as dj_manager
 import math
 
 from . import settings, model_fields
@@ -39,7 +38,7 @@ def user_group_label_validator(value: str):
 # patroller: PERM_REVERT
 # wiki_patroller: PERM_WIKI_REVERT
 # user: PERM_EDIT_OBJECTS
-# all: PERM_WIKI_EDIT
+# all: PERM_WIKI_EDIT, PERM_WIKI_EDIT
 class UserGroup(dj_models.Model):
     label = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
     permissions = model_fields.CommaSeparatedStringsField()
@@ -53,31 +52,108 @@ def username_validator(value: str):
         raise dj_exc.ValidationError('invalid username', code='invalid')
 
 
-class User(dj_auth_models.AbstractUser):
-    """Custom user class to override the default username validator and add additional data."""
-    username_validator = username_validator
-    prefered_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator],
-                                                 default=settings.DEFAULT_LANGUAGE_CODE)
-    groups = dj_models.ManyToManyField(UserGroup, related_name='users')
-    gender_code = dj_models.CharField(max_length=10, choices=tuple(data_types.GENDERS.keys()))
+class User:
+    """Wrapper class around CustomUser and AnonymousUser classes."""
+
+    def __init__(self, dj_user: CustomUser | dj_auth_models.AnonymousUser, anonymous_username: str = None):
+        """Create a wrapper around the given user.
+
+        :param dj_user: Either a CustomUser or AnonymousUser.
+        :param anonymous_username: If the wrapped user is anonymous,
+            the username to use instead of the default empty string.
+        """
+        self._user = dj_user
+        self._anonymous_username = anonymous_username
+
+    @property
+    def internal_user(self) -> CustomUser | dj_auth_models.AnonymousUser:
+        return self._user
+
+    @property
+    def is_authenticated(self) -> bool:
+        return self._user.is_authenticated
+
+    @property
+    def is_anonymous(self) -> bool:
+        return self._user.is_anonymous
+
+    @property
+    def username(self) -> str:
+        if self.is_anonymous:
+            return self._anonymous_username
+        return self._user.username
+
+    @username.setter
+    def username(self, value: str):
+        self._check_not_anonymous()
+        self._user.username = value
+
+    @property
+    def password(self) -> str:
+        return self._user.password
+
+    @password.setter
+    def password(self, value: str):
+        self._check_not_anonymous()
+        self._user.password = value
+
+    @property
+    def email(self) -> str:
+        return self._user.email
+
+    @email.setter
+    def email(self, value: str):
+        self._check_not_anonymous()
+        self._user.email = value
 
     @property
     def prefered_language(self) -> settings.Language:
-        return settings.LANGUAGES[self.prefered_language_code]
+        if self.is_anonymous:
+            return settings.LANGUAGES[settings.DEFAULT_LANGUAGE_CODE]
+        return settings.LANGUAGES[self._user.prefered_language_code]
+
+    @prefered_language.setter
+    def prefered_language(self, value: settings.Language):
+        self._check_not_anonymous()
+        self._user.prefered_language_code = value.code
 
     @property
-    def gender(self):
-        return data_types.GENDERS.get(self.gender_code, data_types.GENDER_N)
+    def gender(self) -> data_types.UserGender:
+        return data_types.GENDERS.get(self._user.gender_code, data_types.GENDER_N)
 
     @gender.setter
-    def gender(self, value):
-        pass
+    def gender(self, value: data_types.UserGender):
+        self._check_not_anonymous()
+        self._user.gender_code = value.label
+
+    @property
+    def block(self) -> UserBlock | None:
+        self._check_not_anonymous()
+        return self._user.block
+
+    @block.setter
+    def block(self, value: UserBlock | None):
+        self._user.block = value
+
+    @property
+    def edits(self) -> dj_models.Manager[EditGroup]:
+        return self._user.edit_groups
+
+    @property
+    def wiki_messages(self) -> dj_models.Manager[Message]:
+        return self._user.wiki_messages
+
+    @property
+    def wiki_topics(self) -> dj_models.Manager[Topic]:
+        return self._user.wiki_topics
 
     def has_permission(self, perm: str) -> bool:
-        return any(g.has_permission(perm) for g in self.groups.all())
+        return any(g.has_permission(perm) for g in self._user.groups.all())
 
     def notes_count(self) -> int:
         """Return the total number of notes created by this user."""
+        if not self.is_anonymous:
+            return 0
         return (ObjectEdit.objects  # Get all object creation edits
                 # Keep only those made by this user that are of type "Note"
                 .filter(edit_group__author=self, operation=constants.OBJECT_CREATED, object_type__label='Note')
@@ -85,56 +161,46 @@ class User(dj_auth_models.AbstractUser):
 
     def edits_count(self) -> int:
         """Return the total number of edits on objects and relations made by this user."""
-        return (self.edits_groups  # Get all edit groups for this user
+        if not self.is_anonymous:
+            return 0
+        return (self._user.edit_groups  # Get all edit groups for this user
                 .annotate(edits_count=dj_models.Count('edits'))  # Count number of edits for each group
                 .aggregate(dj_models.Sum('edits_count')))  # Sum all counts
 
     def edit_groups_count(self) -> int:
         """Return the number of edit groups made by this user."""
-        return self.edits_groups.count()
+        return self._user.edit_groups.count() if self.is_anonymous else 0
 
     def wiki_edits_count(self) -> int:
         """Return the number of edits this user made on the wiki."""
-        return self.wiki_edits.count()
+        return self._user.wiki_edits.count() if self.is_anonymous else 0
 
     def wiki_topics_count(self) -> int:
         """Return the number of topics this user created on the wiki."""
-        return self.wiki_topics.count()
+        return self._user.wiki_topics.count() if self.is_anonymous else 0
 
     def wiki_messages_count(self) -> int:
         """Return the number of messages this user posted on the wiki."""
-        return self.wiki_messages.count()
+        return self._user.wiki_messages.count() if self.is_anonymous else 0
+
+    def _check_not_anonymous(self):
+        if not self.is_anonymous:
+            raise RuntimeError('user is anonymous')
 
 
-class AnonymousUser(User, dj_auth_models.AnonymousUser):
-    """Dummy class representing a user that is not authenticated."""
-
-    objects = dj_manager.EmptyManager(User)
-    prefered_language_code = settings.DEFAULT_LANGUAGE_CODE
-    is_administrator = False
-
-    def notes_count(self) -> int:
-        return 0
-
-    def edits_count(self) -> int:
-        return 0
-
-    def edit_groups_count(self) -> int:
-        return 0
-
-    def wiki_edits_count(self) -> int:
-        return 0
-
-    def wiki_topics_count(self) -> int:
-        return 0
-
-    def wiki_messages_count(self) -> int:
-        return 0
+class CustomUser(dj_auth_models.AbstractUser):
+    """Custom user class to override the default username validator and add additional data."""
+    username_validator = username_validator
+    prefered_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator],
+                                                 default=settings.DEFAULT_LANGUAGE_CODE)
+    groups = dj_models.ManyToManyField(UserGroup, related_name='users')
+    gender_code = dj_models.CharField(max_length=10, choices=tuple((v, v) for v in data_types.GENDERS.keys()),
+                                      default=data_types.GENDER_N.label)
 
 
 class UserBlock(dj_models.Model):
-    user = dj_models.OneToOneField(User, on_delete=dj_models.CASCADE, related_name='block')
-    performer = dj_models.ForeignKey(User, on_delete=dj_models.SET_NULL, related_name='blocks_given', null=True)
+    user = dj_models.OneToOneField(CustomUser, on_delete=dj_models.CASCADE, related_name='block')
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='blocks_given', null=True)
     reason = dj_models.CharField(max_length=200)
     end_date = dj_models.DateTimeField(null=True, blank=True)
     allow_messages_on_own_user_page = dj_models.BooleanField()
@@ -205,7 +271,7 @@ class Property(Structure):
     is_temporal = dj_models.BooleanField()
     absent_means_unknown_value = dj_models.BooleanField(null=True, blank=True)
     is_value_unique = dj_models.BooleanField()
-    property_type = dj_models.CharField(max_length=20, choices=constants.PROPERTY_TYPES)
+    property_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in constants.PROPERTY_TYPES))
     # Type property fields
     target_type = dj_models.ForeignKey(Type, on_delete=dj_models.SET_NULL, related_name='targetting_properties',
                                        null=True, blank=True)
@@ -685,7 +751,10 @@ class Relation(dj_models.Model):
 
 class EditGroup(dj_models.Model):
     date = dj_models.DateTimeField()
-    author = dj_models.ForeignKey(User, on_delete=dj_models.SET_NULL, related_name='edits_groups', null=True)
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='edit_groups', null=True)
+
+    class Meta:
+        get_latest_by = 'date'
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -699,7 +768,10 @@ class EditGroup(dj_models.Model):
 
 def _edit_validate_object_id(i: int):
     if i < 0:
-        raise dj_exc.ValidationError(f'invalid object ID {i}', code='edit_invalid_object_id')
+        raise dj_exc.ValidationError(
+            f'invalid object ID {i}',
+            code='edit_invalid_object_id'
+        )
 
 
 class Edit(dj_models.Model):
@@ -712,14 +784,14 @@ class Edit(dj_models.Model):
 
 class ObjectEdit(Edit):
     object_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE)
-    operation = dj_models.CharField(max_length=10, choices=constants.OBJECT_EDIT_ACTIONS)
+    operation = dj_models.CharField(max_length=10, choices=tuple((v, v) for v in constants.OBJECT_EDIT_ACTIONS))
 
 
 class RelationEdit(Edit):
     property_name = dj_models.ForeignKey(Relation, on_delete=dj_models.CASCADE, related_name='edits')
     old_value = dj_models.JSONField(null=True, blank=True)
     new_value = dj_models.JSONField(null=True, blank=True)
-    operation = dj_models.CharField(max_length=10, choices=constants.RELATION_EDIT_ACTIONS)
+    operation = dj_models.CharField(max_length=10, choices=tuple((v, v) for v in constants.RELATION_EDIT_ACTIONS))
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
@@ -800,7 +872,7 @@ class UnitTranslation(Translation):
 
 class RevisionMixin:
     date = dj_models.DateTimeField(auto_now_add=True)
-    author = dj_models.ForeignKey(User, on_delete=dj_models.CASCADE, related_name='wiki_edits', null=True)
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='wiki_edits', null=True)
     author_name_hidden = dj_models.BooleanField(default=False)
     comment = dj_models.CharField(max_length=200)
     comment_hidden = dj_models.BooleanField(default=False)
@@ -823,7 +895,8 @@ def page_title_validator(value: str):
 class Page(dj_models.Model):
     namespace_id = dj_models.IntegerField()
     title = dj_models.CharField(max_length=200, validators=[page_title_validator])
-    content_type = dj_models.CharField(max_length=20, choices=w_cons.CONTENT_TYPES, default=w_cons.CT_WIKIPAGE)
+    content_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in w_cons.CONTENT_TYPES),
+                                       default=w_cons.CT_WIKIPAGE)
     deleted = dj_models.BooleanField(default=False)
 
     class Meta:
@@ -859,7 +932,9 @@ class Page(dj_models.Model):
         )
 
     def get_content(self) -> str:
-        return revision.text if (revision := self.revisions.latest()) else ''
+        if self.exists and (revision := self.revisions.latest()):
+            return revision.text
+        return ''
 
 
 def tag_label_validator(value: str):
@@ -892,7 +967,7 @@ class PageRevision(dj_models.Model, RevisionMixin):
 
 class Topic(dj_models.Model):
     page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='topics')
-    author = dj_models.ForeignKey(User, on_delete=dj_models.CASCADE, related_name='wiki_topics', null=True)
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='wiki_topics', null=True)
     date = dj_models.DateTimeField(auto_now_add=True)
 
     def get_title(self) -> str:
@@ -914,7 +989,7 @@ class TopicRevision(dj_models.Model, RevisionMixin):
 
 class Message(dj_models.Model):
     topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='messages')
-    author = dj_models.ForeignKey(User, on_delete=dj_models.CASCADE, related_name='wiki_messages', null=True)
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='wiki_messages', null=True)
     date = dj_models.DateTimeField(auto_now_add=True)
     response_to = dj_models.ForeignKey('self', on_delete=dj_models.SET_NULL, related_name='responses', null=True)
 

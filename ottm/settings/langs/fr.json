@@ -69,6 +69,9 @@
       "history": {
         "label": "Historique"
       },
+      "wiki": {
+        "label": "Wiki"
+      },
       "copyright": {
         "label": "Copyright"
       },

@@ -17,12 +17,12 @@ def log_out(request: dj_wsgi.WSGIRequest):
 
 
 def get_user_from_request(request: dj_wsgi.WSGIRequest) -> models.User:
-    return dj_auth.get_user(request)
+    return models.User(dj_auth.get_user(request))
 
 
 def get_user_from_name(username: str) -> models.User | None:
     try:
-        return dj_auth.get_user_model().objects.get(username__iexact=username)
+        return models.User(dj_auth.get_user_model().objects.get(username=username))
     except dj_auth.get_user_model().DoesNotExist:
         return None
 
