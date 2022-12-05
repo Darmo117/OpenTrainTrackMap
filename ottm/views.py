@@ -5,8 +5,8 @@ import django.http.response as dj_response
 import django.shortcuts as dj_scut
 
 from OpenTrainTrackMap import settings as g_settings
-from . import page_context, models, settings, wiki_special_pages
-from .api import auth, permissions
+from . import page_context, models, settings, wiki_special_pages, forms
+from .api import auth, permissions, errors
 from .api.wiki import pages as w_pages, namespaces as w_ns, constants as w_cons
 
 VIEW_MAP = 'show'
@@ -111,14 +111,20 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
         return dj_scut.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
             'raw_page_title': w_pages.url_encode_page_title(w_pages.MAIN_PAGE_TITLE)
         }))
+    site_name = settings.SITE_NAME
+    kwargs = request.GET
     user = auth.get_user_from_request(request)
+    if (lang_code := kwargs.get('lang')) and lang_code in settings.LANGUAGES:
+        language = settings.LANGUAGES.get(lang_code)
+    else:
+        language = user.prefered_language
     page_title = w_pages.get_correct_title(raw_page_title)
     ns, title = w_pages.split_title(page_title)
-    kwargs = request.GET
     action = kwargs.get('action', w_cons.ACTION_SHOW)
     page = w_pages.get_page(ns, title)
     js_config = w_pages.get_js_config(page, action)
-    site_name = settings.SITE_NAME
+    results_per_page = kwargs.get('results_per_page', 20)
+    page_index = kwargs.get('page', 1)
 
     if ns == w_ns.NS_SPECIAL:
         special_page = wiki_special_pages.SPECIAL_PAGES.get(title)
@@ -127,6 +133,8 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                 site_name=site_name,
                 page=page,
                 user=user,
+                language=language,
+                page_exists=False,
                 js_config=js_config,
             )
             status = 404
@@ -135,6 +143,8 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                 site_name=site_name,
                 page=page,
                 user=user,
+                language=language,
+                page_exists=True,
                 js_config=js_config,
                 required_perms=special_page.permissions_required,
             )
@@ -145,14 +155,20 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                 site_name=site_name,
                 page=page,
                 user=user,
+                language=language,
+                page_exists=True,
                 js_config=js_config,
                 **data,
             )
             status = 200
-        return dj_scut.render(request, 'ottm/wiki/special-page.html', context={'context': context}, status=status)
 
     else:
-        page_exists = page.pk is not None
+        revid: str | None = kwargs.get('revid')
+        if revid and revid.isascii() and revid.isnumeric():
+            revision_id = int(revid)
+        else:
+            revision_id = None
+
         match action:
             case w_cons.ACTION_RAW:
                 return dj_response.HttpResponse(
@@ -161,44 +177,143 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                     status=200 if page.exists else 404,
                 )
             case w_cons.ACTION_EDIT:
-                context = page_context.WikiPageEditActionContext(
-                    site_name=site_name,
-                    page=page,
-                    user=user,
-                    js_config=js_config,
-                    code=page.get_content(),
-                )
+                context = _wiki_page_edit_context(page, user, language, revision_id, js_config)
             case w_cons.ACTION_SUBMIT:
-                # TODO edit
-                context = None
+                form = forms.WikiEditPageForm(request.POST)
+                if not form.is_valid():
+                    context = _wiki_page_edit_context(page, user, language, revision_id, js_config, form=form)
+                else:
+                    try:
+                        w_pages.edit_page(request, user, page, form.content, form.comment, form.minor_edit,
+                                          form.follow_page, form.section_id)
+                    except errors.MissingPermissionError:
+                        context = _wiki_page_edit_context(page, user, language, revision_id, js_config, perm_error=True)
+                    else:
+                        # Redirect to normal view
+                        return dj_scut.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
+                            'raw_page_title': page.full_title,
+                        }))
             case w_cons.ACTION_HISTORY:
-                revisions = page.revisions.all()
-                if not user.has_permission(permissions.PERM_WIKI_MASK):
-                    revisions = [r for r in revisions if not r.hidden]
-                context = page_context.WikiPageHistoryActionContext(
-                    site_name=site_name,
-                    page=page,
-                    user=user,
-                    js_config=js_config,
-                    revisions=revisions,
-                )
-            case w_cons.ACTION_DISCUSS:
+                context = _wiki_page_history_context(page, user, language, results_per_page, page_index, js_config)
+            case w_cons.ACTION_TALK:
                 # TODO get topics
                 context = None
             case _:
-                no_index = not page_exists
-                content = w_pages.render_wikicode(page.get_content())
-                context = page_context.WikiPageShowActionContext(
-                    site_name=site_name,
-                    page=page,
-                    no_index=no_index,
-                    user=user,
-                    js_config=js_config,
-                    content=content,
-                )
+                context = _show_wiki_page_context(page, user, language, revision_id, results_per_page, page_index,
+                                                  js_config)
+        status = 200 if context.page.exists else 404
 
-    status = 200 if context.page.exists else 404
-    return dj_scut.render(request, 'ottm/wiki/page.html', context={'context': context}, status=status)
+    ctxt = {
+        'context': context,
+        **w_cons.ACTIONS,
+        **w_ns.NAMESPACES_NAMES,
+    }
+    return dj_scut.render(request, 'ottm/wiki/page.html', context=ctxt, status=status)
+
+
+def _show_wiki_page_context(
+        page: models.Page,
+        user: models.User,
+        language: settings.Language,
+        revision_id: int,
+        results_per_page: int,
+        page_index: int,
+        js_config: dict,
+):
+    no_index = not page.exists
+    content = w_pages.render_wikicode(page.get_content())
+    cat_subcategories = []
+    cat_pages = []
+    if revision_id is None:
+        revision = page.revisions.latest()
+        archived = False
+        if page.namespace == w_ns.NS_CATEGORY:
+            cat_subcategories = list(models.PageCategory.subcategories_for_category(page.full_title))
+            cat_pages = list(models.PageCategory.pages_for_category(page.full_title))
+    else:
+        revision = page.revisions.get(id=revision_id)
+        archived = True
+    return page_context.WikiPageShowActionContext(
+        site_name=settings.SITE_NAME,
+        page=page,
+        no_index=no_index,
+        user=user,
+        language=language,
+        js_config=js_config,
+        content=content,
+        revision=revision,
+        archived=archived,
+        cat_subcategories=cat_subcategories,
+        cat_pages=cat_pages,
+        cat_results_per_page=results_per_page,
+        cat_page_index=page_index,
+    )
+
+
+def _wiki_page_edit_context(
+        page: models.Page,
+        user: models.User,
+        language: settings.Language,
+        revision_id: int,
+        js_config: dict,
+        form: forms.WikiEditPageForm = None,
+        perm_error: bool = False,
+        concurrent_edit_error: bool = False,
+):
+    if revision_id is None:
+        revision = page.revisions.latest()
+        archived = False
+    else:
+        revision = page.revisions.get(id=revision_id)
+        archived = True
+    form = form or forms.WikiEditPageForm(
+        user=user,
+        language=language,
+        disabled=page.can_user_edit(user),
+        warn_unsaved_changes=True,
+        initial={
+            'content': page.get_content(),
+            'follow_page': page.is_user_following(user),
+        },
+    )
+    return page_context.WikiPageEditActionContext(
+        site_name=settings.SITE_NAME,
+        page=page,
+        user=user,
+        language=language,
+        js_config=js_config,
+        content=page.get_content(),
+        revision=revision,
+        archived=archived,
+        edit_form=form,
+        edit_notice=w_pages.get_edit_notice(),
+        perm_error=perm_error,
+        concurrent_edit_error=concurrent_edit_error,
+    )
+
+
+def _wiki_page_history_context(
+        page: models.Page,
+        user: models.User,
+        language: settings.Language,
+        results_per_page: int,
+        page_index: int,
+        js_config: dict,
+):
+    if user.has_permission(permissions.PERM_WIKI_MASK):
+        revisions = page.revisions.all()
+    else:
+        revisions = page.revisions.filter(hidden=False)
+    return page_context.WikiPageHistoryActionContext(
+        site_name=settings.SITE_NAME,
+        page=page,
+        user=user,
+        language=language,
+        js_config=js_config,
+        revisions=revisions,
+        revisions_per_page=results_per_page,
+        page_index=page_index,
+    )
 
 
 def handle404(request: dj_wsgi.WSGIRequest, _) -> dj_response.HttpResponse:
@@ -252,7 +367,7 @@ def _get_map_page_context(user: models.User, action: str = VIEW_MAP,
         js_config['trans'][k] = user.prefered_language.translate(k)
 
     kwargs = _get_base_context_args(user, no_index=no_index)
-    return page_context.MapPageContext(**kwargs, js_config=js_config)
+    return page_context.MapPageContext(**kwargs, map_js_config=js_config)
 
 
 def _get_user_page_context(user: models.User, target_user: models.User) -> page_context.UserPageContext:
@@ -278,4 +393,5 @@ def _get_base_context_args(user: models.User, page_id: str = None, titles_args: 
         'site_name': settings.SITE_NAME,
         'no_index': no_index,
         'user': user,
+        'language': user.prefered_language,
     }

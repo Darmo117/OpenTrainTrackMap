@@ -1,15 +1,16 @@
-{% extends 'ottm/base.html' %}
+{% extends 'ottm/ottm-base.html' %}
 {% load static %}
 
 {% block styles %}
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+  {{ block.super }}
+  <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
         integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-        crossorigin="">
-  <link rel="stylesheet" href="https://unpkg.com/esri-leaflet-geocoder@2.3.3/dist/esri-leaflet-geocoder.css"
+        crossorigin="" rel="stylesheet">
+  <link href="https://unpkg.com/esri-leaflet-geocoder@2.3.3/dist/esri-leaflet-geocoder.css"
         integrity="sha512-IM3Hs+feyi40yZhDH6kV8vQMg4Fh20s9OzInIIAc4nx7aMYMfo+IenRUekoYsHZqGkREUgx0VvlEsgm7nCDW9g=="
-        crossorigin="">
+        crossorigin="" rel="stylesheet">
   <link href="{% static 'ottm/map/map.css' %}" rel="stylesheet">
-{% endblock styles %}
+{% endblock %}
 
 {% block page-content %}
   <aside>{% block side-menu %}{% endblock %}</aside>
@@ -17,6 +18,7 @@
 {% endblock %}
 
 {% block page-scripts %}
+  {{ block.super }}
   <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
           integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
           crossorigin=""></script>
@@ -29,6 +31,6 @@
   <script src="{% static 'ottm/libs/leaflet/plugins/Leaflet.Editable.js' %}"></script>
   <script src="{% static 'ottm/libs/leaflet/plugins/leaflet.geometryutil.js' %}"></script>
   {#  <script src="{% static 'ottm/libs/leaflet/plugins/leaflet.snap.js' %}"></script>#}
-  <script>window.OTTM_CONFIG = {{ context.js_config|safe }};</script>
+  <script id="ottm-map-config">window.OTTM_MAP_CONFIG = {{ context.map_js_config|safe }};</script>
   <script src="{% static 'ottm/map/map.js' %}"></script>
 {% endblock %}

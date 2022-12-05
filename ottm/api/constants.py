@@ -15,4 +15,4 @@ PROPERTY_FLOAT = 'float'
 PROPERTY_BOOLEAN = 'boolean'
 PROPERTY_UNIT = 'unit'
 PROPERTY_DATE_INTERVAL = 'date_interval'
-PROPERTY_TYPES: tuple[str, ...] = tuple(v for k, v in globals().items() if k.startswith('PROPERTY'))
+PROPERTY_TYPES: tuple[str, ...] = tuple(v for k, v in globals().items() if k.startswith('PROPERTY_'))

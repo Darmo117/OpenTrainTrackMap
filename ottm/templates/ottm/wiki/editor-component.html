@@ -1,0 +1,134 @@
+{% load static %}
+{% load utils %}
+{% load wiki %}
+
+{% if context.new_page_notice %}
+  <div class="wiki-edit-new-page-notice-{{ context.page.namespace_id }}">
+    {{ context.new_page_notice|safe }}
+  </div>
+{% endif %}
+
+<div id="wiki-edit-notice">
+  <div id="wiki-edit-notice-{{ context.page.namespace_id }}">
+    {% if context.edit_notice %}
+      {{ context.edit_notice|safe }}
+    {% endif %}
+  </div>
+</div>
+
+{% if context.archived and context.can_user_edit_page %}
+  <div class="wiki-edit-diff-warning-box alert alert-warning" role="alert">
+    {% wiki_translate 'form.edit.revision_warning' %}
+  </div>
+{% endif %}
+
+{% if context.page.namespace == NS_INTERFACE and context.can_user_edit_page %}
+  <div class="wiki-edit-interface-warning-box alert alert-warning" role="alert">
+    {% wiki_translate 'form.edit.interface_warning' %}
+  </div>
+{% endif %}
+
+{% if context.permission_error %}
+  <div class="wiki-edit-interface-permission-error-box alert alert-danger" role="alert">
+    {% wiki_translate 'form.edit.permission_error' %}
+  </div>
+{% elif context.concurrent_edit_error %}
+  <div class="wiki-edit-interface-concurrent-edit-error-box alert alert-danger" role="alert">
+    {% wiki_translate 'form.edit.concurrent_edit_error' %}
+  </div>
+{% endif %}
+
+{% with edit_protection=context.page.get_edit_protection %}{# Cached to avoid making several DB requests #}
+  {% if edit_protection %}
+    <div class="wiki-edit-interface-warning-box alert alert-warning" role="alert">
+      <p>
+        {% wiki_translate 'group.'|add:edit_protection.protection_level as group_name %}
+        {% wiki_translate 'form.edit.protection_warning' group_name=group_name reason=edit_protection.reason %}
+      </p>
+      {% wiki_format_log_entry context.edit_protection_log_entry %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+{% if not context.page_exists and context.can_user_edit_page %}
+  <div class="wiki-edit-diff-error-box alert alert-default" role="alert">
+    {{ context.new_page_notice|safe }}
+  </div>
+{% endif %}
+
+{% with form=context.edit_form trans_prefix='form.edit.' %}
+  <form
+      action="{% url 'wikipy:page' raw_page_title=context.page.full_title|wiki_url_escape_page_title %}?action=submit"
+      method="post"
+      id="wiki-{{ form.name|replace:'_,-' }}-form">
+    {% if form.warn_unsaved_changes %}
+      <input type="hidden" name="warn-unsaved" value="1">
+    {% endif %}
+
+    <div class="form-group">
+      <label class="sr-only" for="{{ form.content.id_for_label }}">
+        {% wiki_translate trans_prefix|add:'content.label' %}
+      </label>
+      <div class="wiki-ace-editor" id="{{ form.content.id_for_label }}-ace"
+           data-ace-target="{{ form.content.id_for_label }}"
+           data-content-type="{{ context.page.content_type }}"
+           {% if not context.can_user_edit_page %}data-disabled="1"{% endif %}></div>
+      {{ form.content }}
+    </div>
+
+    {% if context.can_user_edit_page %}
+      <div class="form-group">
+        <label for="{{ form.comment.id_for_label }}">
+          {% wiki_translate trans_prefix|add:'comment.label' %}
+        </label>
+        {{ form.comment }}
+      </div>
+
+      <div class="form-group text-center">
+        <div class="custom-control custom-checkbox custom-control-inline">
+          {{ form.minor_edit }}
+          <label for="{{ form.minor_edit.id_for_label }}" class="custom-control-label"
+                 title="{% wiki_translate trans_prefix|add:'minor_edit.tooltip' %}">
+            {% wiki_translate trans_prefix|add:'minor_edit.label' %}
+          </label>
+        </div>
+
+        <div class="custom-control custom-checkbox custom-control-inline">
+          {{ form.follow_page }}
+          <label for="{{ form.follow_page.id_for_label }}" class="custom-control-label"
+                 title="{% wiki_translate trans_prefix|add:'follow_page.tooltip' %}">
+            {% wiki_translate trans_prefix|add:'follow_page.label' %}
+          </label>
+        </div>
+
+        {% if context.page.namespace == NS_CATEGORY %}
+          <div class="custom-control custom-checkbox custom-control-inline">
+            {{ form.maintenance_category }}
+            <label for="{{ form.maintenance_category.id_for_label }}" class="custom-control-label"
+                   title="{% wiki_translate trans_prefix|add:'maintenance_category.tooltip' %}">
+              {% wiki_translate trans_prefix|add:'maintenance_category.label' %}
+            </label>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="text-center">
+        <input id="wiki-edit-form-submit-btn" type="submit" accesskey="s"
+               value="{% wiki_translate trans_prefix|add:'submit.label' %}"
+               title="{% wiki_translate trans_prefix|add:'submit.tooltip' %}" class="btn btn-primary"/>
+        <button id="wiki-edit-form-preview-btn" type="button" accesskey="p"
+                title="{% wiki_translate trans_prefix|add:'preview.tooltip' %}"
+                class="btn btn-secondary">{% wiki_translate trans_prefix|add:'preview.label' %}</button>
+        <button id="wiki-edit-form-diff-btn" type="button" accesskey="w"
+                title="{% wiki_translate trans_prefix|add:'diff.tooltip' %}"
+                class="btn btn-secondary">{% wiki_translate trans_prefix|add:'diff.label' %}</button>
+        <button id="wiki-edit-form-cancel-btn" type="button"
+                title="{% wiki_translate trans_prefix|add:'cancel.tooltip' %}"
+                class="btn btn-outline-danger">{% wiki_translate trans_prefix|add:'cancel.label' %}</button>
+      </div>
+
+      {{ form.section_id }}
+      {% csrf_token %}
+    {% endif %}
+  </form>
+{% endwith %}

@@ -2,9 +2,9 @@ ACTION_SHOW = 'show'
 ACTION_EDIT = 'edit'
 ACTION_SUBMIT = 'submit'
 ACTION_HISTORY = 'history'
-ACTION_DISCUSS = 'discuss'
+ACTION_TALK = 'talk'
 ACTION_RAW = 'raw'
-ACTIONS: tuple[str, ...] = tuple(v for k, v in globals().items() if k.startswith('ACTION_'))
+ACTIONS: dict[str, str] = {k: v for k, v in globals().items() if k.startswith('ACTION_')}
 
 CT_WIKIPAGE = 'wikipage'
 CT_MODULE = 'module'

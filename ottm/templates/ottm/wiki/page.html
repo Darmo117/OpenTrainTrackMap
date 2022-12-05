@@ -1,0 +1,128 @@
+{% extends 'ottm/base.html' %}
+{% load static %}
+{% load wiki %}
+
+{% block styles %}
+  <link href="{% static 'ottm/wiki/style.css' %}" rel="stylesheet">
+  {% if context.page.namespace == NS_SPECIAL and context.has_custom_css %}
+    {# Using "with" to avoid warning #}
+    {% with path='ottm/wiki/special_pages/css/'|add:context.page.title|add:'.min.css' %}
+      <link href="{% static path %}" rel="stylesheet">
+    {% endwith %}
+  {% endif %}
+  {% wiki_static 'Interface:Common.css' %}
+  {% if not context.user.is_anonymous %}
+    {% wiki_static 'User:'|add:context.user.username|add:'/Common.css' %}
+  {% endif %}
+
+  <link rel="stylesheet" href="{% static 'ottm/libs/materialdesign-icons/css/materialdesignicons.min.css' %}">
+  {% block head %}{% endblock %}
+{% endblock %}
+
+{% block page-content %}
+  <div aria-live="polite" aria-atomic="true">
+    <div id="wiki-toasts-area"></div>
+  </div>
+
+  {% block pre-content %}{% endblock %}
+
+  <main id="wiki-article">
+    {% if context.show_title %}
+      <h1 id="wiki-article-title" {% block title_attr %}{% endblock %}><!--
+        {% if context.action == ACTION_READ %}
+        -->{{ context.page.full_title }}<!--
+          {% if context.page.is_category_hidden %}
+          --> <span id="wiki-maintenance-category-icon" class="mdi mdi-tools"
+                    title="{% wiki_translate 'title.maintenance_category.tooltip' %}"></span><!--
+          {% endif %}
+        {% elif context.action == ACTION_TALK %}
+        -->{% wiki_translate 'title.talk' page_title=context.page.full_title %}<!--
+        {% elif context.action == ACTION_EDIT %}
+          {% if context.page_exists %}
+            {% if context.page.can_user_edit %}
+            -->{% wiki_translate 'title.edit' page_title=context.page.full_title %}<!--
+            {% else %}
+            -->{% wiki_translate 'title.source' page_title=context.page.full_title %}<!--
+            {% endif %}
+          {% else %}
+          -->{% wiki_translate 'title.create' page_title=context.page.full_title %}<!--
+          {% endif %}
+        {% elif context.mode == ACTION_HISTORY %}
+        -->{% wiki_translate 'title.history' page_title=context.page.full_title %}<!--
+        {% endif %}
+      --></h1>
+    {% endif %}
+
+    {% if context.parent_pages %}
+      <div id="wiki-parent-pages-info" class="text-muted">
+        <span class="mdi mdi-chevron-up"></span>
+        {% for parent_page in context.parent_pages %}
+          {% wiki_inner_link page_title=parent_page.full_title text=parent_page.page_name %}
+          {% if not forloop.last %}|{% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if context.is_redirection or context.redirected_from %}
+      <div id="wiki-redirect-info" class="text-muted">
+        {% if context.is_redirection %}
+          {% wiki_translate 'redirection_info.is_redirection' %}
+          {% if context.redirected_from %}<br>{% endif %}
+        {% endif %}
+        {% if context.redirected_from %}
+          {% wiki_inner_link page_title=context.redirected_from no_redirect=True as link %}
+          {% wiki_translate 'redirection_info.redirected_from' link=link %}
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <article id="wiki-content" lang="{{ context.page.content_language.code }}">
+      {% if context.page.namespace == NS_SPECIAL %}
+        {% if not context.page_exists %}
+          {{ context.rendered_page_content }}
+        {% elif context.user_can_read %}
+          {# Using "with" to avoid warning #}
+          {% with path='ottm/wiki/special_pages/'|add:context.page.title|add:'.html' %}
+            {% include path %}
+          {% endwith %}
+        {% else %}
+          {% wiki_translate 'special.error.permission_required' perms=context.required_perms|join:', ' %}
+        {% endif %}
+      {% elif context.action == ACTION_READ %}
+        {% include 'ottm/wiki/read-component.html' %}
+      {% elif context.action == ACTION_TALK %}
+        {% include 'ottm/wiki/talk-component.html' %}
+      {% elif context.action == ACTION_EDIT %}
+        {% include 'ottm/wiki/editor-component.html' %}
+      {% elif context.action == ACTION_HISTORY %}
+        {% include 'ottm/wiki/history-component.html' %}
+      {% endif %}
+    </article>
+  </main>
+  {% block post-content %}{% endblock %}
+
+  {% block page-scripts %}
+    <script id="wiki-config-script">window.WIKI_CONFIG = {{ context.wiki_js_config }};</script>
+    <script src="{% static 'ottm/libs/jquery.confirmExit.min.js' %}"></script>
+    <script src="{% static 'ottm/wiki/common.min.js' %}"></script>
+    <script src="{% static 'ottm/forms.min.js' %}"></script>
+    {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}
+      {# Using "with" to avoid warning #}
+      {% with path='ottm/wiki/special_pages/js/'|add:context.page.title|add:'.min.js' %}
+        <link href="{% static path %}" rel="stylesheet">
+      {% endwith %}
+    {% endif %}
+
+    {% wiki_static 'Interface:Common.js' %}
+    {% if not context.user.is_anonymous %}
+      {% wiki_static 'User:'|add:context.user.username|add:'/Common.js' %}
+    {% endif %}
+    {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT or context.action == ACTION_TALK %}
+      <script src="{% static 'ottm/libs/ace-editor/ace.js' %}"></script>
+      <script src="{% static 'ottm/wiki/editor.min.js' %}"></script>
+      {% if context.action == ACTION_TALK %}
+        <script src="{% static 'ottm/wiki/talk.min.js' %}"></script>
+      {% endif %}
+    {% endif %}
+  {% endblock %}
+{% endblock %}

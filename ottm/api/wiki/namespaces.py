@@ -39,6 +39,7 @@ NS_INTERFACE = Namespace(id=12, name='Interface')
 NS_FILE = Namespace(id=13, name='File', allows_subpages=False)
 
 NAMESPACES: dict[int, Namespace] = {v.id: v for k, v in globals().items() if k.startswith('NS_')}
+NAMESPACES_NAMES: dict[str, Namespace] = {k: v for k, v in globals().items() if k.startswith('NS_')}
 
 
 def resolve_name(ns_name: str) -> Namespace | None:

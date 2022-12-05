@@ -9,13 +9,23 @@ from .. import models
 
 
 class SpecialPage(abc.ABC):
-    def __init__(self, name: str, *requires_perms: str):
+    def __init__(self, name: str, *requires_perms: str, has_custom_css: bool = False, has_custom_js: bool = False):
         self._name = name
+        self._has_custom_css = has_custom_css
+        self._has_custom_js = has_custom_js
         self._perms_required = requires_perms
 
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def has_custom_css(self) -> bool:
+        return self._has_custom_css
+
+    @property
+    def has_custom_js(self) -> bool:
+        return self._has_custom_js
 
     @property
     def permissions_required(self) -> tuple[str, ...]:
@@ -25,7 +35,11 @@ class SpecialPage(abc.ABC):
         return all(user.has_permission(p) for p in self.permissions_required)
 
     def process_request(self, request: dj_wsgi.WSGIRequest, title: str, **kwargs: str) -> dict[str, typ.Any]:
-        return self._process_request(request, *title.split('/'), **kwargs)
+        return {
+            'has_custom_css': self.has_custom_css,
+            'has_custom_js': self.has_custom_js,
+            **self._process_request(request, *title.split('/'), **kwargs),
+        }
 
     @abc.abstractmethod
     def _process_request(self, request: dj_wsgi.WSGIRequest, *args: str, **kwargs: str) -> dict[str, typ.Any]:

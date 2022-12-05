@@ -3,7 +3,7 @@ import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
 import django.forms as dj_forms
 
-from . import models
+from . import models, settings
 
 
 class _CustomForm(dj_forms.Form):
@@ -53,3 +53,66 @@ class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
         max_length=dj_auth.User._meta.get_field('password').max_length,
         widget=dj_forms.PasswordInput()
     )
+
+
+class _WikiForm(_CustomForm):
+    def __init__(self, name: str, *args, warn_unsaved_changes: bool, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._name = name
+        self._warn_unsaved_changes = warn_unsaved_changes
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def warn_unsaved_changes(self) -> bool:
+        return self._warn_unsaved_changes
+
+
+class WikiEditPageForm(_WikiForm):
+    """Form used to edit a wiki page."""
+    content = dj_forms.CharField(
+        label='content',
+        required=False,
+        widget=dj_forms.Textarea(attrs={'rows': 20})
+    )
+    comment = dj_forms.CharField(
+        label='comment',
+        max_length=200,
+        required=False
+    )
+    minor_edit = dj_forms.BooleanField(
+        label='minor_edit',
+        required=False
+    )
+    follow_page = dj_forms.BooleanField(
+        label='follow_page',
+        required=False
+    )
+    # ID of the page section being edited (optional).
+    section_id = dj_forms.CharField(
+        widget=dj_forms.HiddenInput(),
+        required=False
+    )
+
+    def __init__(self, *args, user: models.User = None, language: settings.Language = None, disabled: bool = False,
+                 warn_unsaved_changes: bool = True, **kwargs):
+        """Create a page edit form.
+
+        :param args: Positional arguments.
+        :param user: The user to send the form to.
+        :param language: Page’s current language.
+        :param disabled: If true, the content field will be disabled and all others will not be generated.
+        :param warn_unsaved_changes: If true this form will warn the user
+            of any unsaved changes before exiting the page.
+        :param kwargs: Other named arguments.
+        """
+        super().__init__('edit', *args, warn_unsaved_changes=warn_unsaved_changes, **kwargs)
+
+        if user and user.is_anonymous:
+            self.fields['follow_page'].widget.attrs['disabled'] = True
+        if disabled:
+            self.fields['content'].widget.attrs['disabled'] = True
+        if language:
+            self.fields['comment'].widget.attrs['placeholder'] = language.translate('form.edit.comment.tooltip')

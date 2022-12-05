@@ -1,0 +1,122 @@
+internal links:
+[[page_title]]
+[[page_title|]]
+[[page_title|text]]
+
+external links:
+[url]
+[url text]
+
+categories:
+[[@category_name]]
+[[@category_name|sort_key]]
+
+transclusions:
+{{template_name}}
+{{template_name|arg}}
+{{template_name|arg_name=value}}
+{{page_title}}
+{{page_title|arg}}
+{{page_title|arg_name=value}}
+
+files:
+((file_name))
+((file_name|legend))
+((file_name|legend|position))
+((file_name|legend|position|alt=value))
+
+titles:
+= title =
+== title ==
+=== title ===
+==== title ====
+===== title =====
+
+lists:
+* unordered list (ul/li)
+# ordered list (ol/li)
+: description list definition item (dl/dt)
+; description list description item (dl/dd)
+
+formats:
+**bold**
+//italic//
+__underlined__
+~~strikethrough~~
+
+Custom HTML tags:
+<nowiki>nowiki</nowiki>
+<includeonly></includeonly>
+<noinclude></noinclude>
+<onlyinclude></onlyinclude>
+<ref>
+<references>
+
+Allowed HTML tags:
+<a></a>
+<abbr></abbr>
+<address></address>
+<area></area>
+<article></article>
+<aside></aside>
+<b></b>
+<bdi></bdi>
+<bdo></bdo>
+<blockquote></blockquote>
+<br>
+<button></button>
+<caption></caption>
+<cite></cite>
+<code></code>
+<col></col>
+<colgroup></colgroup>
+<data></data>
+<dd></dd>
+<del></del>
+<details></details>
+<dfn></dfn>
+<div></div>
+<dl></dl>
+<dt></dt>
+<em></em>
+<hr>
+<i></i>
+<ins></ins>
+<kbd></kbd>
+<label></label>
+<li></li>
+<map></map>
+<mark></mark>
+<meter></meter>
+<nav></nav>
+<ol></ol>
+<output></output>
+<p></p>
+<pre></pre>
+<progress></progress>
+<q></q>
+<rp></rp>
+<rt></rt>
+<ruby></ruby>
+<s></s>
+<samp></samp>
+<section></section>
+<small></small>
+<span></span>
+<strong></strong>
+<sub></sub>
+<summary></summary>
+<sup></sup>
+<table></table>
+<tbody></tbody>
+<td></td>
+<template></template>
+<tfoot></tfoot>
+<th></th>
+<thead></thead>
+<time></time>
+<tr></tr>
+<u></u>
+<ul></ul>
+<var></var>
+<wbr></wbr>

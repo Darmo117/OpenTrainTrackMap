@@ -1,6 +1,10 @@
 import urllib.parse
 
+import django.core.handlers.wsgi as dj_wsgi
+import django.db.transaction as dj_db_trans
+
 from . import namespaces
+from .. import errors, permissions, auth
 from ... import models
 
 MAIN_PAGE_TITLE = namespaces.NS_META.get_full_page_title('Main Page')
@@ -54,3 +58,49 @@ def get_js_config(page: models.Page, action: str) -> dict:
 
 def render_wikicode(code: str) -> str:
     pass  # TODO
+
+
+def get_edit_notice() -> str:
+    return ''  # TODO
+
+
+@dj_db_trans.atomic
+def edit_page(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Page, content: str, comment: str = None,
+              minor_edit: bool = False, follow: bool = False, section_id: str = None):
+    if not page.can_user_edit(author):
+        raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
+    if False:  # TODO check if another edit was made while editing
+        raise errors.ConcurrentWikiEditError()
+    if author.is_anonymous:
+        author = auth.get_or_create_anonymous_account_from_request(request)
+    if not page.exists:
+        page.save()
+    models.PageRevision(
+        page=page,
+        author=author.internal_user,
+        comment=comment,
+        is_minor=minor_edit,
+        content=content,
+    ).save()
+    follow_page(author, page, follow)
+    # TODO add to creation and edit journals
+
+
+@dj_db_trans.atomic
+def follow_page(user: models.User, page: models.Page, follow: bool) -> bool:
+    if user.is_anonymous:
+        return False
+    user_follows = page.is_user_following(user)
+    if follow and not user_follows:
+        models.PageWatchlist(
+            user=user.internal_user,
+            page_namespace_id=page.namespace_id,
+            page_title=page.title,
+        ).save()
+    elif not follow and user_follows:
+        try:
+            models.PageWatchlist.objects.get(user=user, page_namespace_id=page.namespace_id,
+                                             page_title=page.title).delete()
+        except models.PageWatchlist.DoesNotExist:
+            return False
+    return True

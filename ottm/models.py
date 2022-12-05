@@ -192,6 +192,7 @@ class User:
 class CustomUser(dj_auth_models.AbstractUser):
     """Custom user class to override the default username validator and add additional data."""
     username_validator = username_validator
+    hide_username = dj_models.BooleanField(default=False)
     # IP for anonymous accounts
     ip = dj_models.CharField(max_length=39, null=True, blank=True)
     prefered_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator],
@@ -876,13 +877,10 @@ class UnitTranslation(Translation):
 class RevisionMixin:
     date = dj_models.DateTimeField(auto_now_add=True)
     author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='wiki_edits', null=True)
-    author_name_hidden = dj_models.BooleanField(default=False)
-    comment = dj_models.CharField(max_length=200)
+    comment = dj_models.CharField(max_length=200, null=True, blank=True)
     comment_hidden = dj_models.BooleanField(default=False)
-
-    @property
-    def hidden(self):
-        return self.author_name_hidden and self.comment_hidden
+    hidden = dj_models.BooleanField(default=False)
+    is_minor = dj_models.BooleanField(default=False)
 
 
 #########
@@ -901,13 +899,28 @@ class Page(dj_models.Model):
     content_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in w_cons.CONTENT_TYPES),
                                        default=w_cons.CT_WIKIPAGE)
     deleted = dj_models.BooleanField(default=False)
+    is_category_hidden = dj_models.BooleanField(null=True, blank=True)
+    content_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator],
+                                                default=settings.DEFAULT_LANGUAGE_CODE)
 
     class Meta:
         unique_together = ('namespace_id', 'title')
 
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude=exclude)
+        if self.namespace == namespaces.NS_CATEGORY and self.is_category_hidden is not None:
+            raise dj_exc.ValidationError(
+                'page is not a category',
+                code='page_not_category'
+            )
+
     @property
     def namespace(self) -> namespaces.Namespace:
         return namespaces.NAMESPACES[self.namespace_id]
+
+    @property
+    def full_title(self) -> str:
+        return self.namespace.get_full_page_title(self.title)
 
     @property
     def base_name(self) -> str:
@@ -916,8 +929,18 @@ class Page(dj_models.Model):
         return self.title
 
     @property
+    def page_name(self) -> str:
+        if '/' in self.title and self.namespace.allows_subpages:
+            return self.title.split('/')[-1]
+        return self.title
+
+    @property
     def exists(self) -> bool:
         return self.pk is not None
+
+    @property
+    def content_language(self) -> settings.Language:
+        return settings.LANGUAGES[self.content_language_code]
 
     def can_user_edit(self, user: User) -> bool:
         return (self.namespace.can_user_edit_pages(user)
@@ -934,10 +957,64 @@ class Page(dj_models.Model):
                 or (user.block.allow_messages_on_own_user_page and self.namespace == namespaces.NS_USER)
         )
 
+    def is_user_following(self, user: User) -> bool:
+        return not user.is_anonymous and user.internal_user.watched_pages.filter(page_namespace_id=self.namespace_id,
+                                                                                 page_title=self.title).exists()
+
     def get_content(self) -> str:
         if self.exists and (revision := self.revisions.latest()):
             return revision.text
         return ''
+
+    def get_edit_protection(self) -> PageProtection | None:
+        try:
+            return PageProtection.objects.get(page_namespace_id=self.namespace_id, page_title=self.title)
+        except PageProtection.DoesNotExist:
+            return None
+
+
+class PageCategory(dj_models.Model):
+    page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='categories')
+    cat_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
+    sort_key = dj_models.CharField(max_length=200, null=True, blank=True)
+
+    class Meta:
+        unique_together = ('page', 'cat_title')
+
+    @staticmethod
+    def subcategories_for_category(cat_title: str) -> dj_models.QuerySet[Page]:
+        return Page.objects.filter(categories__cat_title=cat_title, namespace_id=namespaces.NS_CATEGORY)
+
+    @staticmethod
+    def pages_for_category(cat_title: str) -> dj_models.QuerySet[Page]:
+        return Page.objects.filter(dj_models.Q(categories__cat_title=cat_title)
+                                   & ~dj_models.Q(namespace_id=namespaces.NS_CATEGORY))
+
+
+class PageProtection(dj_models.Model):
+    # No foreign key to Page as it allows protecting non-existent pages.
+    page_namespace_id = dj_models.IntegerField()
+    page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
+    end_date = dj_models.DateTimeField()
+    reason = dj_models.TextField(null=True, blank=True)
+    protection_level = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
+
+
+class PageWatchlist(dj_models.Model):
+    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='watched_pages')
+    # No foreign key to Page as it allows following non-existent pages.
+    page_namespace_id = dj_models.IntegerField()
+    page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
+    end_date = dj_models.DateTimeField(null=True, blank=True)
+
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if self.objects.filter(user=self.user, page_namespace_id=self.page_namespace_id,
+                               page_title=self.page_title).exists():
+            raise dj_exc.ValidationError(
+                'duplicate watchlist entry',
+                code='page_watchlist_duplicate_entry'
+            )
 
 
 def tag_label_validator(value: str):
@@ -952,15 +1029,10 @@ class Tag(dj_models.Model):
 class PageRevision(dj_models.Model, RevisionMixin):
     page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='revisions')
     tags = dj_models.ManyToManyField(Tag, related_name='revisions')
-    text = dj_models.TextField(blank=True)
-    text_hidden = dj_models.BooleanField(default=False)
+    content = dj_models.TextField(blank=True)
 
     class Meta:
         get_latest_by = 'date'
-
-    @property
-    def hidden(self):
-        return super().hidden and self.text_hidden
 
 
 ###############
@@ -980,14 +1052,9 @@ class Topic(dj_models.Model):
 class TopicRevision(dj_models.Model, RevisionMixin):
     topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='revisions')
     title = dj_models.CharField(max_length=200)
-    title_hidden = dj_models.BooleanField(default=False)
 
     class Meta:
         get_latest_by = 'date'
-
-    @property
-    def hidden(self):
-        return super().hidden and self.title_hidden
 
 
 class Message(dj_models.Model):
@@ -1003,11 +1070,6 @@ class Message(dj_models.Model):
 class MessageRevision(dj_models.Model, RevisionMixin):
     message = dj_models.ForeignKey(Message, on_delete=dj_models.CASCADE, related_name='revisions')
     text = dj_models.TextField(blank=True)
-    text_hidden = dj_models.BooleanField(default=False)
 
     class Meta:
         get_latest_by = 'date'
-
-    @property
-    def hidden(self):
-        return super().hidden and self.text_hidden

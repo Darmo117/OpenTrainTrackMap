@@ -1,0 +1,34 @@
+{% load wiki %}
+
+{% if context.archived %}
+  <div id="wiki-revision-navbox" class="alert alert-info text-center" role="alert">
+    <div class="wiki-revision-navbox-message">
+      {% wiki_format_date context.revision.date as revision_date %}
+      {% wiki_inner_link 'User:'|add:context.revision.author.username as user_link %}
+      {% wiki_translate 'revision.nav_box.label' user_link=user_link date=revision_date %}
+    </div>
+    <div class="wiki-revision-navbox-diffnav">
+      {% wiki_diff_link context.revision against='previous' show_nav_link=True %}
+      | {% wiki_diff_link context.revision against='current' show_nav_link=True %}
+      | {% wiki_diff_link context.revision against='next' show_nav_link=True %}
+    </div>
+    {% if context.revision.comment %}
+      {% wiki_revision_comment context.revision %}
+    {% endif %}
+  </div>
+{% endif %}
+
+{{ context.rendered_page_content }}
+
+{% if context.page.namespace == NS_CATEGORY %}
+  {% if context.cat_subcategories %}
+    <h2>{% wiki_translate 'category.subcategories.title' %}</h2>
+    {% wiki_page_list context.cat_subcategories paginate=False %}
+  {% endif %}
+  {% if context.cat_pages.count != 0 %}
+    <h2>{% wiki_translate 'category.pages.title' category_name=context.page.title %}</h2>
+    {% wiki_page_list context.cat_pages %}
+  {% else %}
+    <p class="wiki-empty-category-message">{% wiki_translate 'category.empty' %}</p>
+  {% endif %}
+{% endif %}
