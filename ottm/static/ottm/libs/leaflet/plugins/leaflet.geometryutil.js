@@ -3,10 +3,10 @@
     var L;
     if (typeof define === 'function' && define.amd) {
         // AMD
-        define(['main_app/leaflet/leaflet'], factory);
+        define(['leaflet'], factory);
     } else if (typeof module !== 'undefined') {
         // Node/CommonJS
-        L = require('main_app/leaflet/leaflet');
+        L = require('leaflet');
         module.exports = factory(L);
     } else {
         // Browser globals
@@ -73,7 +73,7 @@ L.GeometryUtil = L.extend(L.GeometryUtil || {}, {
                 distanceStr = (distance  / 1000).toFixed(2) + ' km';
             }
             else {
-                distanceStr = Math.ceil(distance) + ' m';
+                distanceStr = distance.toFixed(1) + ' m';
             }
         }
         else {
@@ -82,7 +82,7 @@ L.GeometryUtil = L.extend(L.GeometryUtil || {}, {
                 distanceStr = (distance / 1760).toFixed(2) + ' miles';
             }
             else {
-                distanceStr = Math.ceil(distance) + ' yd';
+                distanceStr = distance.toFixed(1) + ' yd';
             }
         }
         return distanceStr;
@@ -184,7 +184,7 @@ L.GeometryUtil = L.extend(L.GeometryUtil || {}, {
                 // recursive
                 for (i = 0; i < layer.length; i++) {
                     subResult = L.GeometryUtil.closest(map, layer[i], latlng, vertices);
-                    if (subResult.distance < mindist) {
+                    if (subResult && subResult.distance < mindist) {
                         mindist = subResult.distance;
                         result = subResult;
                     }
@@ -540,7 +540,7 @@ L.GeometryUtil = L.extend(L.GeometryUtil || {}, {
             var l1 = latlngs[i],
                 l2 = latlngs[i+1];
             portion = lengths[i];
-            if (L.GeometryUtil.belongsSegment(point, l1, l2, 0.0001)) {
+            if (L.GeometryUtil.belongsSegment(point, l1, l2, 0.001)) {
                 portion += l1.distanceTo(point);
                 found = true;
                 break;

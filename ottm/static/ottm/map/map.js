@@ -53,9 +53,9 @@
       link.title = window.OTTM_MAP_CONFIG["trans"][`map.controls.edit.${this.options.kind}.tooltip`];
       link.innerHTML = this.options.html;
       L.DomEvent.on(link, "click", L.DomEvent.stop)
-          .on(link, "click", () => {
-            window.LAYER = this.options.callback.call(map.editTools);
-          }, this);
+        .on(link, "click", () => {
+          window.LAYER = this.options.callback.call(map.editTools);
+        }, this);
 
       return container;
     },
@@ -111,6 +111,11 @@
      * @type {?[]}
      */
     #polygons = [];
+    /**
+     * User’s IP address.
+     * @type {string}
+     */
+    #userIP;
 
     /**
      * Create a map wrapper object.
@@ -118,6 +123,8 @@
      * @param editMode {boolean} Whether the map should be editable.
      */
     constructor(mapID, editMode) {
+      this.#userIP = window.OTTM_MAP_CONFIG["user_ip"];
+
       const map = L.map(mapID, {
         zoomControl: false, // Remove default zoom control
         editable: editMode,
@@ -142,8 +149,8 @@
         attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         maxZoom: 18,
       });
-      // TODO hide API key
-      const maptilerSatelliteTiles = L.tileLayer("https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=5PelNcEc4zGc3OEutmIG", {
+      // Make call to server to hide API key
+      const maptilerSatelliteTiles = L.tileLayer("/tile?provider=maptiler&x={x}&y={y}&z={z}", {
         attribution: 'Tiles © <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>, Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
         maxZoom: 19,
       });
@@ -168,9 +175,9 @@
       function openMapInTab(map, urlPattern) {
         const latLong = map.getCenter();
         window.open(urlPattern
-            .replace("{lat}", latLong.lat)
-            .replace("{long}", latLong.lng)
-            .replace("{zoom}", map.getZoom()))
+          .replace("{lat}", latLong.lat)
+          .replace("{long}", latLong.lng)
+          .replace("{zoom}", map.getZoom()))
       }
 
       L.control.button({
@@ -186,13 +193,24 @@
 
       this.#scaleControl = L.control.scale().addTo(map);
 
-      // noinspection JSUnresolvedVariable,JSUnresolvedFunction
       L.esri.Geocoding.geosearch({
         title: window.OTTM_MAP_CONFIG["trans"]["map.controls.search.tooltip"],
         placeholder: window.OTTM_MAP_CONFIG["trans"]["map.controls.search.placeholder"],
         expanded: true,
         collapseAfterResult: false,
+        providers: [
+          L.esri.Geocoding.arcgisOnlineProvider({
+            apikey: '5PelNcEc4zGc3OEutmIG', // FIXME wrong key?
+          }),
+        ],
       }).addTo(map);
+      // L.Control.geocoder({
+      //   title: window.OTTM_MAP_CONFIG["trans"]["map.controls.search.tooltip"],
+      //   placeholder: window.OTTM_MAP_CONFIG["trans"]["map.controls.search.placeholder"],
+      //   expanded: true,
+      //   collapseAfterResult: false,
+      //   position: 'topleft',
+      // }).addTo(map);
 
       if (editMode) {
         L.NewLineControl = L.EditControl.extend({
@@ -227,13 +245,55 @@
         map.addControl(new L.NewPolygonControl());
       }
 
-      // map.locate({setView: true, maxZoom: 16}); // TODO ?
-
       this.#map = map;
-      this.centerViewFromUrl();
+      if (this.getPositionFromURL()[1]) {
+        this.centerViewFromUrl();
+      } else {
+        this.centerViewToUserLocation();
+      }
       // Delete config object and script tag
       delete window.OTTM_MAP_CONFIG;
       $("#ottm-map-config").remove();
+    }
+
+    /**
+     * Ask the client if they want to allow geolocation.
+     * If yes, the map view is centered on the position returned by the browser.
+     * @async
+     */
+    centerViewToUserLocation() {
+      navigator.permissions.query({name: "geolocation"}).then(result => {
+        if (result.state === "granted" || result.state === "prompt") {
+          navigator.geolocation.getCurrentPosition(
+            p => this.#map.setView([p.coords.latitude, p.coords.longitude], 13),
+            e => {
+              console.log(e.message);
+              this.updateUrl();
+            },
+            {
+              enableHighAccuracy: false,
+              maximumAge: 30000,
+              timeout: 20000,
+            }
+          );
+        } else if (result.state === "denied") {
+          console.log("User does not allow geolocation");
+          this.updateUrl();
+        }
+      });
+    }
+
+    getPositionFromURL() {
+      const match = /^#map=(\d+)\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)$/.exec(window.location.hash);
+      if (match) {
+        const minZoom = this.#map.getMinZoom();
+        const maxZoom = this.#map.getMaxZoom();
+        const zoom = Math.max(minZoom, Math.min(maxZoom, parseInt(match[1])));
+        const lat = parseFloat(match[2]);
+        const long = parseFloat(match[3]);
+        return [[lat, long, zoom], true];
+      }
+      return [[0, 0, 15], false];
     }
 
     /**
@@ -267,15 +327,9 @@
       if (this.#updatingHash) {
         this.#updatingHash = false;
       } else {
-        let lat, long, zoom;
-        const match = /^#map=(\d+)\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)$/.exec(window.location.hash);
-        if (match) {
+        const [[lat, long, zoom], found] = this.getPositionFromURL();
+        if (found) {
           this.#updatingView = true;
-          const minZoom = this.#map.getMinZoom();
-          const maxZoom = this.#map.getMaxZoom();
-          zoom = Math.max(minZoom, Math.min(maxZoom, parseInt(match[1])));
-          lat = parseFloat(match[2]);
-          long = parseFloat(match[3]);
           this.#map.setView([lat, long], zoom);
         } else {
           this.updateUrl();

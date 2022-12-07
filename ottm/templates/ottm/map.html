@@ -3,12 +3,9 @@
 
 {% block styles %}
   {{ block.super }}
-  <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
-        integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
-        crossorigin="" rel="stylesheet">
-  <link href="https://unpkg.com/esri-leaflet-geocoder@2.3.3/dist/esri-leaflet-geocoder.css"
-        integrity="sha512-IM3Hs+feyi40yZhDH6kV8vQMg4Fh20s9OzInIIAc4nx7aMYMfo+IenRUekoYsHZqGkREUgx0VvlEsgm7nCDW9g=="
-        crossorigin="" rel="stylesheet">
+  <link href="{% static 'ottm/libs/leaflet/leaflet.css' %}" rel="stylesheet">
+  <link href="{% static 'ottm/libs/leaflet/plugins/esri-leaflet-geocoder/esri-leaflet-geocoder.css' %}"
+        rel="stylesheet">
   <link href="{% static 'ottm/map/map.min.css' %}" rel="stylesheet">
 {% endblock %}
 
@@ -20,15 +17,9 @@
 
 {% block page-scripts %}
   {{ block.super }}
-  <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
-          integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
-          crossorigin=""></script>
-  <script src="https://unpkg.com/esri-leaflet@2.5.0/dist/esri-leaflet.js"
-          integrity="sha512-ucw7Grpc+iEQZa711gcjgMBnmd9qju1CICsRaryvX7HJklK0pGl/prxKvtHwpgm5ZHdvAil7YPxI1oWPOWK3UQ=="
-          crossorigin=""></script>
-  <script src="https://unpkg.com/esri-leaflet-geocoder@2.3.3/dist/esri-leaflet-geocoder.js"
-          integrity="sha512-HrFUyCEtIpxZloTgEKKMq4RFYhxjJkCiF5sDxuAokklOeZ68U2NPfh4MFtyIVWlsKtVbK5GD2/JzFyAfvT5ejA=="
-          crossorigin=""></script>
+  <script src="{% static 'ottm/libs/leaflet/leaflet.js' %}"></script>
+  <script src="{% static 'ottm/libs/leaflet/plugins/esri-leaflet/esri-leaflet.js' %}"></script>
+  <script src="{% static 'ottm/libs/leaflet/plugins/esri-leaflet-geocoder/esri-leaflet-geocoder.js' %}"></script>
   <script src="{% static 'ottm/libs/leaflet/plugins/Leaflet.Editable.js' %}"></script>
   <script src="{% static 'ottm/libs/leaflet/plugins/leaflet.geometryutil.js' %}"></script>
   {#  <script src="{% static 'ottm/libs/leaflet/plugins/leaflet.snap.js' %}"></script>#}

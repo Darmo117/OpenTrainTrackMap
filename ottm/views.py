@@ -8,6 +8,7 @@ from django.conf import settings as dj_settings
 from . import forms, models, page_context, settings, wiki_special_pages
 from .api import auth, errors, permissions
 from .api.wiki import constants as w_cons, namespaces as w_ns, pages as w_pages
+import requests
 
 VIEW_MAP = 'show'
 EDIT_MAP = 'edit'
@@ -18,8 +19,25 @@ def map_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     user = auth.get_user_from_request(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user)
+        'context': _get_map_page_context(user, auth.get_ip(request))
     })
+
+
+def get_tile(request):
+    provider = request.GET.get('provider')
+    try:
+        x = int(request.GET.get('x'))
+        y = int(request.GET.get('y'))
+        z = int(request.GET.get('z'))
+    except ValueError:
+        return dj_response.HttpResponseBadRequest()
+    if provider == 'maptiler':
+        url = f'https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=5PelNcEc4zGc3OEutmIG'
+        response = requests.get(url)
+        # Remove Connection header as it may cause issues with Django
+        del response.headers['Connection']
+        return dj_response.HttpResponse(response.content, status=response.status_code, headers=response.headers)
+    return dj_response.HttpResponseNotFound(f'invalid provider {provider}')
 
 
 # TODO redirect to login page with alert-warning if user not logged in
@@ -27,7 +45,7 @@ def edit_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     user = auth.get_user_from_request(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, action=EDIT_MAP, no_index=True)
+        'context': _get_map_page_context(user, auth.get_ip(request), action=EDIT_MAP, no_index=True)
     })
 
 
@@ -35,7 +53,7 @@ def history_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     user = auth.get_user_from_request(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, action=MAP_HISTORY, no_index=True)
+        'context': _get_map_page_context(user, auth.get_ip(request), action=MAP_HISTORY, no_index=True)
     })
 
 
@@ -66,7 +84,7 @@ def login_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
 def logout_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     if auth.get_user_from_request(request).is_authenticated:
         auth.log_out(request)
-    return dj_scut.HttpResponseRedirect(_get_referer_url(request))
+    return dj_response.HttpResponseRedirect(_get_referer_url(request))
 
 
 def user_profile(request: dj_wsgi.WSGIRequest, username: str) -> dj_response.HttpResponse:
@@ -81,7 +99,7 @@ def user_settings(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     user = auth.get_user_from_request(request)
 
     if not user.is_authenticated:
-        return dj_scut.HttpResponseRedirect(dj_scut.reverse('ottm:map'))
+        return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:map'))
 
     return dj_scut.render(request, 'ottm/user-settings.html', context={
         'context': _get_page_context(user, 'user_settings')
@@ -93,7 +111,7 @@ def user_contributions(request: dj_wsgi.WSGIRequest, username: str) -> dj_respon
     target_user = auth.get_user_from_name(username)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, action=MAP_HISTORY)
+        'context': _get_map_page_context(user, auth.get_ip(request), action=MAP_HISTORY)
     })
 
 
@@ -108,7 +126,7 @@ def user_notes(request: dj_wsgi.WSGIRequest, username: str) -> dj_response.HttpR
 
 def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_response.HttpResponse:
     if not raw_page_title:
-        return dj_scut.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
+        return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
             'raw_page_title': w_pages.url_encode_page_title(w_pages.MAIN_PAGE_TITLE)
         }))
     site_name = settings.SITE_NAME
@@ -190,7 +208,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                         context = _wiki_page_edit_context(page, user, language, revision_id, js_config, perm_error=True)
                     else:
                         # Redirect to normal view
-                        return dj_scut.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
+                        return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
                             'raw_page_title': page.full_title,
                         }))
             case w_cons.ACTION_HISTORY:
@@ -338,7 +356,7 @@ def _get_page_context(user: models.User, page_id: str, no_index: bool = False,
     return page_context.PageContext(**kwargs)
 
 
-def _get_map_page_context(user: models.User, action: str = VIEW_MAP,
+def _get_map_page_context(user: models.User, user_ip: str, action: str = VIEW_MAP,
                           no_index: bool = False) -> page_context.MapPageContext:
     translations_keys = [
         'map.controls.layers.standard',
@@ -360,6 +378,7 @@ def _get_map_page_context(user: models.User, action: str = VIEW_MAP,
         'trans': {},
         'static_path': dj_settings.STATIC_URL,
         'edit': 'true' if action == 'edit' else 'false',
+        'user_ip': user_ip,
     }
 
     for k in translations_keys:

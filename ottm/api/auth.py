@@ -32,14 +32,17 @@ def get_user_from_name(username: str) -> models.User | None:
         return None
 
 
-@dj_db_trans.atomic
-def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest) -> models.User:
+def get_ip(request: dj_wsgi.WSGIRequest) -> str:
     # Client’s IP address is always at the last one in HTTP_X_FORWARDED_FOR on Heroku
     # https://stackoverflow.com/questions/18264304/get-clients-real-ip-address-on-heroku#answer-18517550
     if x_forwarded_for := request.META.get('HTTP_X_FORWARDED_FOR'):
-        ip = x_forwarded_for[-1]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
+        return x_forwarded_for[-1]
+    return request.META.get('REMOTE_ADDR')
+
+
+@dj_db_trans.atomic
+def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest) -> models.User:
+    ip = get_ip(request)
 
     try:
         latest_user = models.CustomUser.objects.latest("id")
