@@ -3,7 +3,7 @@
 {% load wiki %}
 
 {% block styles %}
-  <link href="{% static 'ottm/wiki/style.css' %}" rel="stylesheet">
+  <link href="{% static 'ottm/wiki/style.min.css' %}" rel="stylesheet">
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_css %}
     {# Using "with" to avoid warning #}
     {% with path='ottm/wiki/special_pages/css/'|add:context.page.title|add:'.min.css' %}
