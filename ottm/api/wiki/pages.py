@@ -4,7 +4,7 @@ import urllib.parse
 import django.core.handlers.wsgi as dj_wsgi
 import django.db.transaction as dj_db_trans
 
-from . import namespaces
+from . import namespaces, constants
 from .. import errors, permissions, auth
 from ... import models
 
@@ -97,12 +97,12 @@ def get_edit_notice() -> str:
 
 
 @dj_db_trans.atomic
-def edit_page(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Page, content: str, comment: str = None,
-              minor_edit: bool = False, follow: bool = False, section_id: str = None):
+def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: models.Page, content: str,
+              comment: str = None, minor_edit: bool = False, follow: bool = False, section_id: str = None):
     """Submit a new revision for the given page.
     If the page does not exist, it is created.
 
-    :param request: Client request.
+    :param request: Client request. May be None for internal calls.
     :param author: Edit’s author.
     :param page: Page to edit.
     :param content: New content of the page.
@@ -112,13 +112,20 @@ def edit_page(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Pa
     :param section_id: ID of the edited page section. Not yet available.
     :raise MissingPermissionError: If the user cannot edit the page.
     :raise ConcurrentWikiEditError: If another edit was made on the same page before this edit.
+    :raise ValueError: If the request is None and the user is anonymous.
     """
     if not page.can_user_edit(author):
         raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
     if False:  # TODO check if another edit was made while editing
         raise errors.ConcurrentWikiEditError()
-    if author.is_anonymous:
-        author = auth.get_or_create_anonymous_account_from_request(request)
+    if request:
+        if author.is_anonymous:
+            author = auth.get_or_create_anonymous_account_from_request(request)
+        else:
+            raise ValueError('missing request')
+    # Set content type to correct value
+    if (ct := _get_page_content_type(page)) != page.content_type:
+        page.content_type = ct
     if not page.exists:
         page.save()
         # Add to log
@@ -131,6 +138,21 @@ def edit_page(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Pa
         content=content,
     ).save()
     follow_page(author, page, follow)
+
+
+def _get_page_content_type(page: models.Page) -> str:
+    if page.namespace == namespaces.NS_MODULE:
+        return constants.CT_MODULE
+    # Only pages in namespace Interface and User are allowd to have JS, CSS or JSON pages.
+    # For User namespace, only subpages can have either of these types, user page itself cannot.
+    if page.namespace == namespaces.NS_INTERFACE or page.namespace == namespaces.NS_USER and '/' in page.title:
+        if page.title.endswith('.js'):
+            return constants.CT_JS
+        if page.title.endswith('.css'):
+            return constants.CT_CSS
+        if page.title.endswith('.json'):
+            return constants.CT_JSON
+    return constants.CT_WIKIPAGE
 
 
 @dj_db_trans.atomic
