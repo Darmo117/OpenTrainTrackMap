@@ -392,7 +392,7 @@ def _show_wiki_page_context(
     :return: A WikiPageContext object.
     """
     no_index = not page.exists
-    content = w_pages.render_wikicode(page.get_content(), user)
+    content = w_pages.render_wikicode(page.get_content(), user, language)
     cat_subcategories = []
     cat_pages = []
     if revision_id is None:
@@ -468,7 +468,8 @@ def _wiki_page_edit_context(
         revision=revision,
         archived=archived,
         edit_form=form,
-        edit_notice=w_pages.get_edit_notice(),
+        edit_notice=w_pages.get_edit_notice(user, language),
+        new_page_notice=w_pages.get_new_page_notice(user, language) if not page.exists else None,
         perm_error=perm_error,
         concurrent_edit_error=concurrent_edit_error,
     )

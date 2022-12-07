@@ -6,7 +6,7 @@ import django.db.transaction as dj_db_trans
 
 from . import constants, namespaces
 from .. import auth, errors, permissions
-from ... import models
+from ... import models, settings
 
 MAIN_PAGE_TITLE = namespaces.NS_WIKI.get_full_page_title('Main Page')
 
@@ -83,19 +83,50 @@ def get_js_config(page: models.Page, action: str) -> dict:
     }
 
 
-def render_wikicode(code: str, user: models.User) -> str:
+def render_wikicode(code: str, user: models.User, language: settings.UILanguage) -> str:
     """Render the given wikicode.
 
     :param code: The wikicode to render.
     :param user: The current user.
+    :param language: Page’s language.
     :return: The rendered wikicode.
     """
     pass  # TODO
 
 
-def get_edit_notice() -> str:
-    """Return the rendered edit notice from "Interface:EditNotice"."""
-    return ''  # TODO
+def get_edit_notice(user: models.User, language: settings.UILanguage) -> str:
+    """Return the rendered edit notice from "Interface:EditNotice/<lang_code>".
+
+    :param user: Current user.
+    :param language: Page’s language.
+    :return: The rendered edit notice.
+    """
+    return _get_page_notice('EditNotice', user, language)
+
+
+def get_new_page_notice(user: models.User, language: settings.UILanguage) -> str:
+    """Return the rendered edit notice from "Interface:NewPageNotice/<lang_code>".
+
+    :param user: Current user.
+    :param language: Page’s language.
+    :return: The rendered new page notice.
+    """
+    return _get_page_notice('NewPageNotice', user, language)
+
+
+def _get_page_notice(title: str, user: models.User, language: settings.UILanguage) -> str:
+    """Return the rendered notice from "Interface:<title>/<lang_code>".
+
+    :param title: Notice page title.
+    :param user: Current user.
+    :param language: Page’s language.
+    :return: The rendered notice.
+    """
+    try:
+        content = models.Page.objects.get(namespace_id=namespaces.NS_INTERFACE.id, title=f'{title}/{language.code}')
+    except models.Page.DoesNotExist:
+        return ''
+    return render_wikicode(content, user, language)
 
 
 @dj_db_trans.atomic
