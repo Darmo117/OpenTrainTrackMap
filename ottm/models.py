@@ -241,7 +241,7 @@ class CustomUser(dj_auth_models.AbstractUser):
                                       default=data_types.GENDER_N.label)
 
 
-class UserBlock(dj_models.Model):  # TODO block IPs
+class UserBlock(dj_models.Model):
     """Defines the block status of a user.
     Users can be prevented from editing pages, post messages and editing their own settings.
     Blocks expire after a specified date. If no end date is specified, the block will never expire.
@@ -1215,4 +1215,69 @@ class MessageRevision(dj_models.Model, RevisionMixin):
     class Meta:
         get_latest_by = 'date'
 
-# TODO logs
+
+########
+# Logs #
+########
+
+
+class Log(dj_models.Model):
+    date = dj_models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        abstract = True
+
+
+class PageLog(Log):
+    performer = dj_models.CharField(max_length=150, validators=[username_validator])
+    # No foreign key to Page as pages may be deleted.
+    page_namespace_id = dj_models.IntegerField()
+    page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
+
+    class Meta:
+        abstract = True
+
+
+class PageCreationLog(PageLog):
+    pass
+
+
+class PageDeletionLog(PageLog):
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
+
+
+class PageProtectionLog(PageLog):
+    end_date = dj_models.DateTimeField()
+    reason = dj_models.TextField(null=True, blank=True)
+    protection_level = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
+
+
+class UserLog(Log):
+    username = dj_models.CharField(max_length=150, validators=[username_validator])
+
+    class Meta:
+        abstract = True
+
+
+class UserAccountCreationLog(UserLog):
+    pass
+
+
+class UserAccountDeletionLog(UserLog):
+    pass
+
+
+class BlockLogMixin:
+    performer = dj_models.CharField(max_length=150, validators=[username_validator])
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
+    end_date = dj_models.DateTimeField(null=True, blank=True)
+    allow_messages_on_own_user_page = dj_models.BooleanField()
+
+
+class UserBlockLog(UserLog, BlockLogMixin):
+    allow_editing_own_settings = dj_models.BooleanField()
+
+
+class IPBlockLog(Log, BlockLogMixin):
+    ip = dj_models.CharField(max_length=39)
+    allow_account_creation = dj_models.BooleanField()

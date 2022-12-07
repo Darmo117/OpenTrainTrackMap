@@ -121,6 +121,12 @@ def edit_page(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Pa
         author = auth.get_or_create_anonymous_account_from_request(request)
     if not page.exists:
         page.save()
+        # Add to log
+        models.PageCreationLog(
+            performer=author.username,
+            page_namespace_id=page.namespace_id,
+            page_title=page.title,
+        )
     models.PageRevision(
         page=page,
         author=author.internal_user,
@@ -129,7 +135,6 @@ def edit_page(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Pa
         content=content,
     ).save()
     follow_page(author, page, follow)
-    # TODO add to creation and edit journals
 
 
 @dj_db_trans.atomic
