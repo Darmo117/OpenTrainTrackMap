@@ -45,18 +45,6 @@ NS_MODULE = Namespace(id=11, name='Module')
 NS_INTERFACE = Namespace(id=12, name='Interface')
 NS_FILE = Namespace(id=13, name='File', allows_subpages=False)
 
-NAMESPACES: dict[int, Namespace] = {v.id: v for k, v in globals().items() if k.startswith('NS_')}
-NAMESPACES_NAMES: dict[str, Namespace] = {k: v for k, v in globals().items() if k.startswith('NS_')}
-
-
-def resolve_name(ns_name: str) -> Namespace | None:
-    """Return the namespace for the given name.
-
-    :param ns_name: Namespace name to resolve.
-    :return: The namespace object or None if no namespace matched.
-    """
-    ns_name = ns_name.lower()
-    for ns_id, ns in NAMESPACES.items():
-        if ns.name.lower() == ns_name:
-            return ns
-    return None
+NAMESPACE_IDS: dict[int, Namespace] = {v.id: v for k, v in globals().items() if k.startswith('NS_')}
+NAMESPACE_NAMES: dict[str, Namespace] = {v.name: v for k, v in globals().items() if k.startswith('NS_')}
+NAMESPACES_DICT: dict[str, Namespace] = {k: v for k, v in globals().items() if k.startswith('NS_')}

@@ -248,7 +248,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
     ctxt = {
         'context': context,
         **w_cons.ACTIONS,
-        **w_ns.NAMESPACES_NAMES,
+        **w_ns.NAMESPACES_DICT,
     }
     return dj_scut.render(request, 'ottm/wiki/page.html', context=ctxt, status=status)
 

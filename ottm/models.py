@@ -987,7 +987,7 @@ class Page(dj_models.Model, NonDeletableMixin):
     @property
     def namespace(self) -> namespaces.Namespace:
         """Page’s namespace."""
-        return namespaces.NAMESPACES[self.namespace_id]
+        return namespaces.NAMESPACE_IDS[self.namespace_id]
 
     @property
     def full_title(self) -> str:

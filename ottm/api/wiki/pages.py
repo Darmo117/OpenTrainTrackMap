@@ -20,14 +20,14 @@ def split_title(title: str) -> tuple[namespaces.Namespace, str]:
     ns_id = 0
     if namespaces.SEPARATOR in title:
         a, b = title.split(namespaces.SEPARATOR, maxsplit=1)
-        if ns := namespaces.resolve_name(a):
+        if ns := namespaces.NAMESPACE_NAMES.get(a):
             ns_id = ns.id
             page_title = b
         else:
             page_title = title
     else:
         page_title = title
-    return namespaces.NAMESPACES[ns_id], page_title
+    return namespaces.NAMESPACE_IDS[ns_id], page_title
 
 
 def get_correct_title(raw_title: str) -> str:
