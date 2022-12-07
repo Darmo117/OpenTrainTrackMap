@@ -18,8 +18,8 @@ def wiki_url_escape_page_title(value: str) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def wiki_translate(context: dict[str, typ.Any], key: str) -> str:
-    return ottm.ottm_translate(context, 'wiki.' + key)
+def wiki_translate(context: dict[str, typ.Any], key: str, **kwargs) -> str:
+    return ottm.ottm_translate(context, 'wiki.' + key, **kwargs)
 
 
 @register.simple_tag(takes_context=True)

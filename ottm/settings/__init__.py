@@ -13,8 +13,8 @@ class Language:
     date_format: str
     _mappings: dict[str, str]
 
-    def translate(self, key: str, default: str = None) -> str:
-        return self._mappings.get(key, default if default is not None else key)
+    def translate(self, key: str, default: str = None, /, **kwargs) -> str:
+        return self._mappings.get(key, default if default is not None else key).format(**kwargs)
 
 
 SITE_NAME = 'OpenTrainTrackMap'
