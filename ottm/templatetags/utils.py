@@ -1,10 +1,10 @@
 """This module defines utility template tags."""
 import django.template as dj_template
 
-_register = dj_template.Library()
+register = dj_template.Library()
 
 
-@_register.filter
+@register.filter
 def replace(value: str, pattern: str) -> str:
     """Replace all occurences of a value by another in a string.
 

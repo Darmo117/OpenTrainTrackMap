@@ -10,16 +10,16 @@ from . import ottm
 from .. import models
 from ..api.wiki import pages as w_pages
 
-_register = dj_template.Library()
+register = dj_template.Library()
 
 
-@_register.filter
+@register.filter
 def wiki_url_escape_page_title(value: str) -> str:
     """Convert the given page name to a URL-safe value."""
     return dj_safe.mark_safe(w_pages.url_encode_page_title(value))
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def wiki_translate(context: dict[str, typ.Any], key: str, **kwargs) -> str:
     """Translate the given key. The prefix 'wiki.' is appended automatically.
 
@@ -31,7 +31,7 @@ def wiki_translate(context: dict[str, typ.Any], key: str, **kwargs) -> str:
     return ottm.ottm_translate(context, 'wiki.' + key, **kwargs)
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def wiki_inner_link(context: dict[str, typ.Any], page_title: str, text: str = None, no_redirect: bool = False) -> str:
     """Render an internal link.
 
@@ -44,7 +44,7 @@ def wiki_inner_link(context: dict[str, typ.Any], page_title: str, text: str = No
     return ''  # TODO
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def wiki_static(context: dict[str, typ.Any], page_title: str) -> str:
     """Return the static resource link for the given wiki page.
 
@@ -55,7 +55,7 @@ def wiki_static(context: dict[str, typ.Any], page_title: str) -> str:
     return ''  # TODO
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def wiki_format_date(context: dict[str, typ.Any], date: datetime.datetime) -> str:
     """Format the given date according to the context’s language.
 
@@ -66,7 +66,7 @@ def wiki_format_date(context: dict[str, typ.Any], date: datetime.datetime) -> st
     return ''  # TODO
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def wiki_diff_link(context: dict[str, typ.Any], revision: models.PageRevision, against: str,
                    show_nav_link: bool = True) -> str:
     """Render a revision’s diff link.
@@ -87,7 +87,7 @@ def wiki_diff_link(context: dict[str, typ.Any], revision: models.PageRevision, a
     return ''  # TODO
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def wiki_revision_comment(context: dict[str, typ.Any], revision: models.PageRevision) -> str:
     """Format a revision’s comment.
 
@@ -98,7 +98,7 @@ def wiki_revision_comment(context: dict[str, typ.Any], revision: models.PageRevi
     return ''  # TODO
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def wiki_page_list(context: dict[str, typ.Any], pages: dj_paginator.Paginator, paginate: bool = True) -> str:
     """Render a list of pages.
 
@@ -110,7 +110,7 @@ def wiki_page_list(context: dict[str, typ.Any], pages: dj_paginator.Paginator, p
     return ''  # TODO
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def wiki_revisions_list(context: dict[str, typ.Any], revisions: dj_paginator.Paginator, mode: str) -> str:
     """Render a list of revisions.
 
@@ -122,7 +122,7 @@ def wiki_revisions_list(context: dict[str, typ.Any], revisions: dj_paginator.Pag
     return ''  # TODO
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def wiki_format_log_entry(context: dict[str, typ.Any], log_entry) -> str:
     """Format a log entry.
 

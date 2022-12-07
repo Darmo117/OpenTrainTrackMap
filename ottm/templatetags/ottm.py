@@ -6,10 +6,10 @@ import django.utils.safestring as dj_safe
 
 from .. import page_context
 
-_register = dj_template.Library()
+register = dj_template.Library()
 
 
-@_register.simple_tag(takes_context=True)
+@register.simple_tag(takes_context=True)
 def ottm_translate(context: dict[str, typ.Any], key: str, **kwargs) -> str:
     """Translate the given key.
 
