@@ -1,11 +1,10 @@
 """This module defines a command that initializes the database."""
 import django.core.management.base as dj_mngmt
 
-from ... import models, settings
 from ...api import auth
 from ...api.groups import *
 from ...api.permissions import *
-from ...api.wiki import pages, namespaces as w_ns
+from ...api.wiki import namespaces as w_ns, pages
 
 
 class Command(dj_mngmt.BaseCommand):
@@ -13,12 +12,33 @@ class Command(dj_mngmt.BaseCommand):
 
     def handle(self, *args, **options):
         self.stdout.write('Initializing DB…')
+        self._init_default_languages()
         self._init_user_groups()
         self._init_ottm_model()
         self._init_default_wiki_pages()
         self.stdout.write('DB initialized successfully.')
 
+    def _init_default_languages(self):
+        from ... import models
+        self.stdout.write('Initializing default languages…')
+        models.Language(
+            code='en',
+            name='English',
+            writing_direction='ltr',
+            date_format='M j, Y',
+            available_for_ui=True,
+        ).save()
+        models.Language(
+            code='fr',
+            name='Français',
+            writing_direction='ltr',
+            date_format='j M Y',
+            available_for_ui=True,
+        ).save()
+        self.stdout.write('Done.')
+
     def _init_user_groups(self):
+        from ... import models
         self.stdout.write('Creating default user groups…')
 
         models.UserGroup(
@@ -65,6 +85,7 @@ class Command(dj_mngmt.BaseCommand):
         pass  # TODO
 
     def _init_default_wiki_pages(self):
+        from ... import settings, models
         self.stdout.write('Initializing wiki default pages…')
 
         # Create dummy user with throwaway password
@@ -75,35 +96,33 @@ class Command(dj_mngmt.BaseCommand):
 
         ns, title = pages.split_title(pages.MAIN_PAGE_TITLE)
         content = f'Welcome to {settings.SITE_NAME}’s wiki!'
-        pages.edit_page(None, wiki_user, models.Page(namespace_id=ns.id, title=title), content, edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(ns, title), content, edit_comment)
 
         content = """
 /*
  * Put the wiki’s global JavaScript here. It will be loaded on every wiki page, regardless of device.
  */
 """.strip()
-        pages.edit_page(None, wiki_user, models.Page(namespace_id=w_ns.NS_INTERFACE.id, title='Common.js'), content,
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Common.js'), content,
                         edit_comment)
         content = """
 /*
  * Put the wiki’s global CSS here. It will be loaded on every wiki page, regardless of device.
  */
 """.strip()
-        pages.edit_page(None, wiki_user, models.Page(namespace_id=w_ns.NS_INTERFACE.id, title='Common.css'), content,
-                        edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Common.css'), content, edit_comment)
         content = """
 /*
  * Put the wiki’s mobile JavaScript here. It will be loaded on every wiki page on mobile devices only.
  */
 """.strip()
-        pages.edit_page(None, wiki_user, models.Page(namespace_id=w_ns.NS_INTERFACE.id, title='Mobile.js'), content,
-                        edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Mobile.js'), content, edit_comment)
         content = """
 /*
  * Put the wiki’s mobile CSS here. It will be loaded on every wiki page on mobile devices only.
  */
 """.strip()
-        pages.edit_page(None, wiki_user, models.Page(namespace_id=w_ns.NS_INTERFACE.id, title='Mobile.css'), content,
-                        edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Mobile.css'), content, edit_comment)
+        # TODO
 
         self.stdout.write('Done.')

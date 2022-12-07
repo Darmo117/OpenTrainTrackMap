@@ -122,7 +122,7 @@ class WikiEditPageForm(_WikiForm):
         required=False
     )
 
-    def __init__(self, *args, user: models.User = None, language: settings.Language = None, disabled: bool = False,
+    def __init__(self, *args, user: models.User = None, language: settings.UILanguage = None, disabled: bool = False,
                  warn_unsaved_changes: bool = True, **kwargs):
         """Create a page edit form.
 

@@ -4,8 +4,8 @@ import urllib.parse
 import django.core.handlers.wsgi as dj_wsgi
 import django.db.transaction as dj_db_trans
 
-from . import namespaces, constants
-from .. import errors, permissions, auth
+from . import constants, namespaces
+from .. import auth, errors, permissions
 from ... import models
 
 MAIN_PAGE_TITLE = namespaces.NS_WIKI.get_full_page_title('Main Page')
@@ -58,11 +58,12 @@ def get_page(ns: namespaces.Namespace, title: str) -> models.Page:
     :return: A Page object.
     """
     try:
-        return models.Page.objects.get(namespace_id=ns.id, title__iexact=title)
+        return models.Page.objects.get(namespace_id=ns.id, title=title)
     except models.Page.DoesNotExist:
         return models.Page(
             namespace_id=ns.id,
             title=title,
+            content_language=models.Language.get_default(),
         )
 
 
@@ -78,6 +79,7 @@ def get_js_config(page: models.Page, action: str) -> dict:
         'pageNamespaceName': page.namespace.name,
         'pageTitle': page.title,
         'action': action,
+        # TODO
     }
 
 

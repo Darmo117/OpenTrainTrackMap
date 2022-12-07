@@ -374,7 +374,7 @@ def _get_base_context_args(user: models.User, page_id: str = None, titles_args: 
 def _show_wiki_page_context(
         page: models.Page,
         user: models.User,
-        language: settings.Language,
+        language: settings.UILanguage,
         revision_id: int | None,
         results_per_page: int,
         page_index: int,
@@ -424,7 +424,7 @@ def _show_wiki_page_context(
 def _wiki_page_edit_context(
         page: models.Page,
         user: models.User,
-        language: settings.Language,
+        language: settings.UILanguage,
         revision_id: int | None,
         js_config: dict,
         form: forms.WikiEditPageForm = None,
@@ -477,7 +477,7 @@ def _wiki_page_edit_context(
 def _wiki_page_history_context(
         page: models.Page,
         user: models.User,
-        language: settings.Language,
+        language: settings.UILanguage,
         results_per_page: int,
         page_index: int,
         js_config: dict,

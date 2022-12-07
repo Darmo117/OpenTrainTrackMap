@@ -16,9 +16,23 @@ from .api import constants, data_types, permissions
 from .api.wiki import constants as w_cons, namespaces
 
 
-def lang_code_validator(value: str):
-    if value not in settings.LANGUAGES:
-        raise dj_exc.ValidationError(f'invalid language code "{value}"', code='invalid_language')
+class Language(dj_models.Model):
+    DIRECTIONS = ('ltr', 'rtl')
+
+    code = dj_models.CharField(max_length=20, unique=True)
+    name = dj_models.CharField(max_length=100, unique=True)
+    writing_direction = dj_models.CharField(max_length=3, choices=tuple((d, d) for d in DIRECTIONS))
+    date_format = dj_models.CharField(max_length=20)
+    available_for_ui = dj_models.BooleanField(default=False)
+
+    @classmethod
+    def get_default(cls) -> Language:
+        return cls.objects.get(code=settings.DEFAULT_LANGUAGE_CODE)
+
+    def delete(self, using=None, keep_parents=False):
+        if self.available_for_ui:
+            raise dj_exc.ValidationError('cannot delete UI language', code='delete_ui_language')
+        super().delete(using=using, keep_parents=keep_parents)
 
 
 #########
@@ -120,17 +134,20 @@ class User:
         self._user.email = value
 
     @property
-    def prefered_language(self) -> settings.Language:
+    def prefered_language(self) -> settings.UILanguage:
         """This user’s prefered language."""
         if self.is_anonymous:
             return settings.LANGUAGES[settings.DEFAULT_LANGUAGE_CODE]
-        return settings.LANGUAGES[self._user.prefered_language_code]
+        return settings.LANGUAGES[self._user.prefered_language.code]
 
     @prefered_language.setter
-    def prefered_language(self, value: settings.Language):
+    def prefered_language(self, value: settings.UILanguage):
         """Set this user’s prefered language. User must not be anonymous."""
         self._check_not_anonymous()
-        self._user.prefered_language_code = value.code
+        try:
+            self._user.prefered_language = Language.objects.get(code=value.code)
+        except Language.DoesNotExist:  # Should never happen
+            raise ValueError(f'invalid language code {value.code}')
 
     @property
     def gender(self) -> data_types.UserGender:
@@ -228,8 +245,7 @@ class CustomUser(dj_auth_models.AbstractUser):
     hide_username = dj_models.BooleanField(default=False)
     # IP for anonymous accounts
     ip = dj_models.CharField(max_length=39, null=True, blank=True)
-    prefered_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator],
-                                                 default=settings.DEFAULT_LANGUAGE_CODE)
+    prefered_language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
     groups = dj_models.ManyToManyField(UserGroup, related_name='users')
     gender_code = dj_models.CharField(max_length=10, choices=tuple((v, v) for v in data_types.GENDERS.keys()),
                                       default=data_types.GENDER_N.label)
@@ -240,9 +256,8 @@ class UserBlock(dj_models.Model):
     Users can be prevented from editing pages, post messages and editing their own settings.
     Blocks expire after a specified date. If no end date is specified, the block will never expire.
     """
-    user = dj_models.OneToOneField(CustomUser, on_delete=dj_models.CASCADE, related_name='block')
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='user_blocks_given',
-                                     null=True)
+    user = dj_models.OneToOneField(CustomUser, on_delete=dj_models.PROTECT, related_name='block')
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='user_blocks_given')
     reason = dj_models.CharField(max_length=200, null=True, blank=True)
     end_date = dj_models.DateTimeField(null=True, blank=True)
     allow_messages_on_own_user_page = dj_models.BooleanField(default=True)
@@ -256,8 +271,7 @@ class IPBlock(dj_models.Model):
     Blocks expire after a specified date. If no end date is specified, the block will never expire.
     """
     ip = dj_models.CharField(max_length=39)
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='ip_blocks_given',
-                                     null=True)
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='ip_blocks_given')
     reason = dj_models.CharField(max_length=200, null=True, blank=True)
     end_date = dj_models.DateTimeField(null=True, blank=True)
     allow_messages_on_own_user_page = dj_models.BooleanField(default=True)
@@ -330,7 +344,7 @@ class Property(Structure):
     is_value_unique = dj_models.BooleanField()
     property_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in constants.PROPERTY_TYPES))
     # Type property fields
-    target_type = dj_models.ForeignKey(Type, on_delete=dj_models.SET_NULL, related_name='targetting_properties',
+    target_type = dj_models.ForeignKey(Type, on_delete=dj_models.PROTECT, related_name='targetting_properties',
                                        null=True, blank=True)
     allows_itself = dj_models.BooleanField(null=True, blank=True)
     # Int property fields
@@ -340,7 +354,7 @@ class Property(Structure):
     min_float = dj_models.FloatField(null=True, blank=True)
     max_float = dj_models.FloatField(null=True, blank=True)
     # Unit type property fields
-    unit_type = dj_models.ForeignKey(UnitType, on_delete=dj_models.SET_NULL, related_name='properties',
+    unit_type = dj_models.ForeignKey(UnitType, on_delete=dj_models.PROTECT, related_name='properties',
                                      null=True, blank=True)
 
     def validate_unique(self, exclude=None):
@@ -506,7 +520,7 @@ class Property(Structure):
 
 
 class Object(dj_models.Model):
-    type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='instances')
+    type = dj_models.ForeignKey(Type, on_delete=dj_models.PROTECT, related_name='instances')
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
@@ -516,14 +530,14 @@ class Object(dj_models.Model):
 
 class Relation(dj_models.Model):
     # Common fields
-    property = dj_models.ForeignKey(Property, on_delete=dj_models.CASCADE, related_name='instances')
+    property = dj_models.ForeignKey(Property, on_delete=dj_models.PROTECT, related_name='instances')
     left_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_left')
     existence_interval = model_fields.DateIntervalField()
     # Object relation fields
     right_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_right',
                                         null=True, blank=True)
     # Localized relation fields
-    language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator], null=True, blank=True)
+    language_code = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT, null=True, blank=True)
     value_localized_p = dj_models.TextField(null=True, blank=True)
     # String relation fields
     value_string_p = dj_models.CharField(max_length=200, null=True, blank=True)
@@ -535,7 +549,7 @@ class Relation(dj_models.Model):
     value_boolean_p = dj_models.BooleanField(null=True, blank=True)
     # Unit relation fields
     value_unit_p = dj_models.FloatField(null=True, blank=True)
-    unit = dj_models.ForeignKey(Unit, on_delete=dj_models.CASCADE, related_name='relations', null=True, blank=True)
+    unit = dj_models.ForeignKey(Unit, on_delete=dj_models.PROTECT, related_name='relations', null=True, blank=True)
     # Date interval relation fields
     value_date_interval_p = model_fields.DateIntervalField(null=True, blank=True)
 
@@ -808,7 +822,7 @@ class Relation(dj_models.Model):
 
 class EditGroup(dj_models.Model):
     date = dj_models.DateTimeField()
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='edit_groups', null=True)
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='edit_groups')
 
     class Meta:
         get_latest_by = 'date'
@@ -865,7 +879,7 @@ class RelationEdit(Edit):
 
 
 class Translation(dj_models.Model):
-    language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator])
+    language_code = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
     label = dj_models.CharField(max_length=100)
 
     class Meta:
@@ -930,7 +944,7 @@ class UnitTranslation(Translation):
 class Revision(dj_models.Model):
     """Base class for all revision models."""
     date = dj_models.DateTimeField(auto_now_add=True)
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, null=True)
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)
     comment = dj_models.CharField(max_length=200, null=True, blank=True)
     comment_hidden = dj_models.BooleanField(default=False)
     hidden = dj_models.BooleanField(default=False)
@@ -965,8 +979,7 @@ class Page(dj_models.Model, NonDeletableMixin):
                                        default=w_cons.CT_WIKIPAGE)
     deleted = dj_models.BooleanField(default=False)
     is_category_hidden = dj_models.BooleanField(null=True, blank=True)
-    content_language_code = dj_models.CharField(max_length=5, validators=[lang_code_validator],
-                                                default=settings.DEFAULT_LANGUAGE_CODE)
+    content_language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
 
     class Meta:
         unique_together = ('namespace_id', 'title')
@@ -1012,11 +1025,6 @@ class Page(dj_models.Model, NonDeletableMixin):
     def exists(self) -> bool:
         """Whether this pages exists in the database."""
         return self.pk is not None
-
-    @property
-    def content_language(self) -> settings.Language:
-        """This page’s content language."""
-        return settings.LANGUAGES[self.content_language_code]
 
     def can_user_edit(self, user: User) -> bool:
         f"""Check whether the given user can edit this page.
@@ -1097,7 +1105,7 @@ class Page(dj_models.Model, NonDeletableMixin):
 class PageCategory(dj_models.Model):
     """Model that associates a page to a category with an optional sort key.
     Pages can be in non-existent categories."""
-    page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='categories')
+    page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT, related_name='categories')
     cat_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
     sort_key = dj_models.CharField(max_length=200, null=True, blank=True)
 
@@ -1136,7 +1144,7 @@ class PageProtection(dj_models.Model):
 
 class PageFollowStatus(dj_models.Model):
     """Defines the follow status of a page. Non-existent pages can be followed."""
-    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='followed_pages')
+    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='followed_pages')
     # No foreign key to Page as it allows following non-existent pages.
     page_namespace_id = dj_models.IntegerField()
     page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
@@ -1169,8 +1177,8 @@ class Tag(dj_models.Model):
 
 class Topic(dj_models.Model, NonDeletableMixin):
     """A talk topic groups a hierarchical list of user messages."""
-    page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='topics')
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='wiki_topics', null=True)
+    page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT, related_name='topics')
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='wiki_topics')
     date = dj_models.DateTimeField(auto_now_add=True)
 
     def get_title(self) -> str:
@@ -1180,10 +1188,10 @@ class Topic(dj_models.Model, NonDeletableMixin):
 
 class Message(dj_models.Model, NonDeletableMixin):
     """Messages can be posted by users under specific topics."""
-    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='messages')
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='wiki_messages', null=True)
+    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.PROTECT, related_name='messages')
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='wiki_messages')
     date = dj_models.DateTimeField(auto_now_add=True)
-    response_to = dj_models.ForeignKey('self', on_delete=dj_models.SET_NULL, related_name='responses', null=True)
+    response_to = dj_models.ForeignKey('self', on_delete=dj_models.PROTECT, related_name='responses', null=True)
 
     def get_content(self) -> str:
         """Return the content of this message or an empty string if it does not exist."""
@@ -1197,19 +1205,19 @@ class Message(dj_models.Model, NonDeletableMixin):
 
 class PageRevision(Revision, NonDeletableMixin):
     """A page revision is a version of a page’s content at a given time."""
-    page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='revisions')
+    page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT, related_name='revisions')
     content = dj_models.TextField()
 
 
 class TopicRevision(Revision, NonDeletableMixin):
     """A topic revision is a version of a topic’s title at a given time."""
-    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='revisions')
+    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.PROTECT, related_name='revisions')
     title = dj_models.CharField(max_length=200)
 
 
 class MessageRevision(Revision, NonDeletableMixin):
     """A message revision is a version of a message’s content at a given time."""
-    message = dj_models.ForeignKey(Message, on_delete=dj_models.CASCADE, related_name='revisions')
+    message = dj_models.ForeignKey(Message, on_delete=dj_models.PROTECT, related_name='revisions')
     text = dj_models.TextField()
 
 
@@ -1228,8 +1236,8 @@ class Log(dj_models.Model, NonDeletableMixin):
 
 class PageLog(Log):
     """Base class for page-related operations."""
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, null=True)
-    page = dj_models.ForeignKey(Page, on_delete=dj_models.SET_NULL, null=True)
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)
+    page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT)
 
     class Meta:
         abstract = True
@@ -1254,7 +1262,7 @@ class PageProtectionLog(PageLog):
 
 class UserLog(Log):
     """Base class for user-related operations."""
-    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, null=True)
+    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, null=True)
 
     class Meta:
         abstract = True
@@ -1272,7 +1280,7 @@ class UserAccountDeletionLog(UserLog):
 
 class BlockLogMixin:
     """Mixin class that holds fields shared between block logs."""
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, null=True)
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, null=True)
     reason = dj_models.CharField(max_length=200, null=True, blank=True)
     end_date = dj_models.DateTimeField(null=True, blank=True)
     allow_messages_on_own_user_page = dj_models.BooleanField()

@@ -1,197 +1,191 @@
 {
-  "code": "fr",
-  "name": "Français",
-  "writing_direction": "ltr",
-  "date_format": "j M Y",
-  "mappings": {
-    "page": {
+  "page": {
+    "edit": {
+      "tab_title": "Modifier"
+    },
+    "history": {
+      "tab_title": "Historique"
+    },
+    "copyright": {
+      "title": "Copyright et licence",
+      "tab_title": "Copyright et licence"
+    },
+    "help": {
+      "title": "Trouver de l’aide",
+      "tab_title": "Aide"
+    },
+    "about": {
+      "title": "À propos d’OpenTrainTrackMap",
+      "tab_title": "À propos"
+    },
+    "basics": {
+      "title": "Vocabulaire de base et règles",
+      "tab_title": "Vocabulaire et règles"
+    },
+    "log_in": {
+      "title": "Connexion",
+      "tab_title": "Connexion"
+    },
+    "sign_up": {
+      "title": "Créer un compte",
+      "tab_title": "Inscription"
+    },
+    "user_profile": {
+      "title": "",
+      "tab_title": "Profile de {username}",
+      "subtitle": {
+        "notes": "Notes",
+        "contributions": "Contributions",
+        "wiki_contributions": "Contributions au wiki",
+        "settings": "Paramètres"
+      },
+      "statistics": {
+        "title": "Statistiques",
+        "admin_label": "Administrateurice",
+        "account_creation_date_label": "Contributeurice depuis",
+        "notes_count_label": "Nombre de notes",
+        "edits_count_label": "Nombre de modifications",
+        "wiki_edits_count_label": "Nombre de modifications sur le wiki"
+      }
+    },
+    "user_settings": {
+      "title": "Paramètres du compte",
+      "tab_title": "Paramètres du compte",
+      "subtitle": {
+        "profile": "Retourner au profil"
+      }
+    }
+  },
+  "navbar": {
+    "edit": {
+      "label": "Modifier",
+      "signup_title": "Connectez-vous pour modifier"
+    },
+    "history": {
+      "label": "Historique"
+    },
+    "wiki": {
+      "label": "Wiki"
+    },
+    "copyright": {
+      "label": "Copyright"
+    },
+    "help": {
+      "label": "Aide"
+    },
+    "about": {
+      "label": "À propos"
+    },
+    "log_in": {
+      "label": "Connexion"
+    },
+    "sign_up": {
+      "label": "Inscription"
+    },
+    "log_out": {
+      "label": "Déconnexion"
+    }
+  },
+  "alert": {
+    "log_in": {
+      "already_logged_in": "<p><strong>Vous êtes déjà connecté·e.</strong></p><p>Veuillez vous déconnecter puis vous reconnecter avec un autre compte.</p>"
+    },
+    "sign_up": {
+      "already_logged_in": "<p><strong>Vous êtes déjà connecté·e avec un autre compte.</strong></p><p>Veuillez vous déconnecter avant de créer un compte..</p>"
+    }
+  },
+  "form": {
+    "sign_up": {
+      "username": {
+        "label": "Username",
+        "help": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
+        "error": {
+          "invalid": "Invalid username.",
+          "duplicate": "This username is already taken.",
+          "min_length": "Username is too short.",
+          "max_length": "Username is too long.",
+          "required": "This field is required."
+        }
+      },
+      "email": {
+        "label": "Email",
+        "help": "Required.",
+        "error": {
+          "invalid": "Invalid email address.",
+          "required": "This field is required."
+        }
+      },
+      "password": {
+        "label": "Password",
+        "help": "Required.",
+        "error": {
+          "min_length": "Password is too short.",
+          "max_length": "Password is too long.",
+          "required": "This field is required."
+        }
+      },
+      "password_confirm": {
+        "label": "Confirm password",
+        "help": "Required."
+      },
+      "submit": {
+        "label": "Create account"
+      }
+    },
+    "log_in": {
+      "username": {
+        "label": "Username",
+        "error": {
+          "not_exists": "No accounts registered with this username.",
+          "required": "This field is required."
+        }
+      },
+      "password": {
+        "label": "Password",
+        "help": "Required.",
+        "error": {
+          "required": "This field is required."
+        }
+      },
+      "submit": {
+        "label": "Log in"
+      }
+    }
+  },
+  "map": {
+    "controls": {
+      "layers": {
+        "standard": "Map",
+        "black_and_white": "Map (black and white)",
+        "satellite_maptiler": "Satellite (MapTiler)",
+        "satellite_esri": "Satellite (Esri)"
+      },
+      "zoom_in": {
+        "tooltip": "Zoom in"
+      },
+      "zoom_out": {
+        "tooltip": "Zoom out"
+      },
+      "search": {
+        "tooltip": "Location search",
+        "placeholder": "Search for places or addresses…"
+      },
+      "google_maps_button": {
+        "tooltip": "Open current location in Google Maps"
+      },
+      "ign_compare_button": {
+        "label": "IGN",
+        "tooltip": "Open current location in IGN’s comparing tool"
+      },
       "edit": {
-        "tab_title": "Modifier"
-      },
-      "history": {
-        "tab_title": "Historique"
-      },
-      "copyright": {
-        "title": "Copyright et licence",
-        "tab_title": "Copyright et licence"
-      },
-      "help": {
-        "title": "Trouver de l’aide",
-        "tab_title": "Aide"
-      },
-      "about": {
-        "title": "À propos d’OpenTrainTrackMap",
-        "tab_title": "À propos"
-      },
-      "basics": {
-        "title": "Vocabulaire de base et règles",
-        "tab_title": "Vocabulaire et règles"
-      },
-      "log_in": {
-        "title": "Connexion",
-        "tab_title": "Connexion"
-      },
-      "sign_up": {
-        "title": "Créer un compte",
-        "tab_title": "Inscription"
-      },
-      "user_profile": {
-        "title": "",
-        "tab_title": "Profile de {username}",
-        "subtitle": {
-          "notes": "Notes",
-          "contributions": "Contributions",
-          "wiki_contributions": "Contributions au wiki",
-          "settings": "Paramètres"
+        "new_marker": {
+          "tooltip": "Create a new marker"
         },
-        "statistics": {
-          "title": "Statistiques",
-          "admin_label": "Administrateurice",
-          "account_creation_date_label": "Contributeurice depuis",
-          "notes_count_label": "Nombre de notes",
-          "edits_count_label": "Nombre de modifications",
-          "wiki_edits_count_label": "Nombre de modifications sur le wiki"
-        }
-      },
-      "user_settings": {
-        "title": "Paramètres du compte",
-        "tab_title": "Paramètres du compte",
-        "subtitle": {
-          "profile": "Retourner au profil"
-        }
-      }
-    },
-    "navbar": {
-      "edit": {
-        "label": "Modifier",
-        "signup_title": "Connectez-vous pour modifier"
-      },
-      "history": {
-        "label": "Historique"
-      },
-      "wiki": {
-        "label": "Wiki"
-      },
-      "copyright": {
-        "label": "Copyright"
-      },
-      "help": {
-        "label": "Aide"
-      },
-      "about": {
-        "label": "À propos"
-      },
-      "log_in": {
-        "label": "Connexion"
-      },
-      "sign_up": {
-        "label": "Inscription"
-      },
-      "log_out": {
-        "label": "Déconnexion"
-      }
-    },
-    "alert": {
-      "log_in": {
-        "already_logged_in": "<p><strong>Vous êtes déjà connecté·e.</strong></p><p>Veuillez vous déconnecter puis vous reconnecter avec un autre compte.</p>"
-      },
-      "sign_up": {
-        "already_logged_in": "<p><strong>Vous êtes déjà connecté·e avec un autre compte.</strong></p><p>Veuillez vous déconnecter avant de créer un compte..</p>"
-      }
-    },
-    "form": {
-      "sign_up": {
-        "username": {
-          "label": "Username",
-          "help": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
-          "error": {
-            "invalid": "Invalid username.",
-            "duplicate": "This username is already taken.",
-            "min_length": "Username is too short.",
-            "max_length": "Username is too long.",
-            "required": "This field is required."
-          }
+        "new_line": {
+          "tooltip": "Create a new polyline"
         },
-        "email": {
-          "label": "Email",
-          "help": "Required.",
-          "error": {
-            "invalid": "Invalid email address.",
-            "required": "This field is required."
-          }
-        },
-        "password": {
-          "label": "Password",
-          "help": "Required.",
-          "error": {
-            "min_length": "Password is too short.",
-            "max_length": "Password is too long.",
-            "required": "This field is required."
-          }
-        },
-        "password_confirm": {
-          "label": "Confirm password",
-          "help": "Required."
-        },
-        "submit": {
-          "label": "Create account"
-        }
-      },
-      "log_in": {
-        "username": {
-          "label": "Username",
-          "error": {
-            "not_exists": "No accounts registered with this username.",
-            "required": "This field is required."
-          }
-        },
-        "password": {
-          "label": "Password",
-          "help": "Required.",
-          "error": {
-            "required": "This field is required."
-          }
-        },
-        "submit": {
-          "label": "Log in"
-        }
-      }
-    },
-    "map": {
-      "controls": {
-        "layers": {
-          "standard": "Map",
-          "black_and_white": "Map (black and white)",
-          "satellite_maptiler": "Satellite (MapTiler)",
-          "satellite_esri": "Satellite (Esri)"
-        },
-        "zoom_in": {
-          "tooltip": "Zoom in"
-        },
-        "zoom_out": {
-          "tooltip": "Zoom out"
-        },
-        "search": {
-          "tooltip": "Location search",
-          "placeholder": "Search for places or addresses…"
-        },
-        "google_maps_button": {
-          "tooltip": "Open current location in Google Maps"
-        },
-        "ign_compare_button": {
-          "label": "IGN",
-          "tooltip": "Open current location in IGN’s comparing tool"
-        },
-        "edit": {
-          "new_marker": {
-            "tooltip": "Create a new marker"
-          },
-          "new_line": {
-            "tooltip": "Create a new polyline"
-          },
-          "new_polygon": {
-            "tooltip": "Create a new polygon"
-          }
+        "new_polygon": {
+          "tooltip": "Create a new polygon"
         }
       }
     }

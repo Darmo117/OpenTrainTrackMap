@@ -19,7 +19,7 @@ class PageContext:
             title: str | None,
             no_index: bool,
             user: _models.User,
-            language: settings.Language,
+            language: settings.UILanguage,
     ):
         """Create a generic page context.
 
@@ -70,7 +70,7 @@ class MapPageContext(PageContext):
             title: str | None,
             no_index: bool,
             user: _models.User,
-            language: settings.Language,
+            language: settings.UILanguage,
             map_js_config: dict[str, _typ.Any],
     ):
         """Create a page context for map pages.
@@ -107,7 +107,7 @@ class UserPageContext(PageContext):
             title: str | None,
             no_index: bool,
             user: _models.User,
-            language: settings.Language,
+            language: settings.UILanguage,
             target_user: _models.User,
     ):
         """Create a page context for user pages.
@@ -142,7 +142,7 @@ class WikiPageContext(PageContext, abc.ABC):  # TODO parent pages
             page: _models.Page,
             no_index: bool,
             user: _models.User,
-            language: settings.Language,
+            language: settings.UILanguage,
             action: str,
             show_title: bool,
             page_exists: bool,
@@ -207,7 +207,7 @@ class WikiPageShowActionContext(WikiPageContext):
             page: _models.Page,
             no_index: bool,
             user: _models.User,
-            language: settings.Language,
+            language: settings.UILanguage,
             js_config: dict[str, _typ.Any],
             content: str,
             revision: _models.PageRevision | None,
@@ -286,7 +286,7 @@ class WikiPageEditActionContext(WikiPageContext):
             site_name: str,
             page: _models.Page,
             user: _models.User,
-            language: settings.Language,
+            language: settings.UILanguage,
             js_config: dict[str, _typ.Any],
             revision: _models.PageRevision | None,
             archived: bool,
@@ -366,7 +366,7 @@ class WikiPageHistoryActionContext(WikiPageContext):
             site_name: str,
             page: _models.Page,
             user: _models.User,
-            language: settings.Language,
+            language: settings.UILanguage,
             js_config: dict[str, _typ.Any],
             revisions: list[_models.PageRevision],
             page_index: int = 1,
@@ -413,7 +413,7 @@ class WikiPageTalkContext(WikiPageContext):
             site_name: str,
             page: _models.Page,
             user: _models.User,
-            language: settings.Language,
+            language: settings.UILanguage,
             js_config: dict[str, _typ.Any],
             topics: dict[_models.Topic, list[_models.Message]],
     ):
@@ -456,7 +456,7 @@ class WikiSpecialPageContext(WikiPageContext):
             site_name: str,
             page: _models.Page,
             user: _models.User,
-            language: settings.Language,
+            language: settings.UILanguage,
             page_exists: bool,
             js_config: dict[str, _typ.Any],
             **kwargs,

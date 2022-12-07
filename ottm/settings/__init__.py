@@ -1,19 +1,42 @@
 """This package defines the website’s settings."""
-import dataclasses as _dt
 import json as _json
 import logging as _logging
 import pathlib as _pathlib
 import re as _re
 
 
-@_dt.dataclass(frozen=True)
-class Language:
-    """Class representing a language."""
-    code: str
-    name: str
-    writing_direction: str
-    date_format: str
-    _mappings: dict[str, str]
+class UILanguage:
+    """Class representing a language of the site’s UI."""
+
+    def __init__(self, language, mappings: dict[str, str]):
+        """Create a UI language.
+
+        :param language: Related language instance from the database.
+        :type language: ottm.models.Language
+        :param mappings: Language’s UI translation mappings.
+        """
+        self._language = language
+        self._mappings = mappings
+
+    @property
+    def code(self) -> str:
+        """This language’s code."""
+        return self._language.code
+
+    @property
+    def name(self) -> str:
+        """This language’s name."""
+        return self._language.name
+
+    @property
+    def writing_direction(self) -> str:
+        """This language’s writing direction."""
+        return self._language.writing_direction
+
+    @property
+    def date_format(self) -> str:
+        """This language’s date format."""
+        return self._language.date_format
 
     def translate(self, key: str, default: str = None, /, **kwargs) -> str:
         """Translate the given key.
@@ -30,7 +53,7 @@ SITE_NAME = 'OpenTrainTrackMap'
 DEFAULT_LANGUAGE_CODE = 'en'
 INVALID_TITLE_REGEX = _re.compile(
     r'([%<>_#|{}\[\]\x00-\x1f\x7f-\x9f]|^[/\s]|[/\s]$|&[A-Za-z0-9]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;)')
-LANGUAGES: dict[str, Language] = {}
+LANGUAGES: dict[str, UILanguage] = {}
 LOGGER: _logging.Logger
 
 
@@ -45,21 +68,23 @@ def init(debug: bool):
     sh = _logging.StreamHandler()
     sh.setFormatter(_logging.Formatter('%(name)s:%(levelname)s:%(message)s'))
     LOGGER.addHandler(sh)
+
+
+def init_languages():
+    """Initialize UI languages."""
+    from .. import models  # Local import to avoid loops
     LOGGER.info('Loading translations…')
-    langs_dir = _pathlib.Path(__file__).parent / 'langs'
-    for fname in langs_dir.glob('*.json'):
-        with (langs_dir / fname).open(encoding='utf8') as lang_file:
-            json_obj = _json.load(lang_file)
-            lang_code = json_obj['code']
-            lang_name = json_obj['name']
-            LANGUAGES[lang_code] = Language(
-                code=lang_code,
-                name=lang_name,
-                writing_direction=json_obj['writing_direction'],
-                date_format=json_obj['date_format'],
-                _mappings=_build_mapping(json_obj['mappings']),
+    for language in models.Language.objects.filter(available_for_ui=True):
+        lang_file = _pathlib.Path(__file__).parent / 'langs' / f'{language.code}.json'
+        if not lang_file.exists():
+            LOGGER.error(f'Missing translation file for language code {language.code}')
+            continue
+        with lang_file.open(encoding='utf8') as lang_file:
+            LANGUAGES[language.code] = UILanguage(
+                language=language,
+                mappings=_build_mapping(_json.load(lang_file)),
             )
-            LOGGER.info(f'Loaded translations for {lang_name} ({lang_code})')
+            LOGGER.info(f'Loaded translations for {language.name} ({language.code})')
     LOGGER.info('Translations loaded.')
 
 
