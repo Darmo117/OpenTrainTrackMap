@@ -1,5 +1,4 @@
 """This module declares functions related to user authentication."""
-
 import django.contrib.auth as dj_auth
 import django.core.exceptions as dj_exc
 import django.core.handlers.wsgi as dj_wsgi
@@ -11,6 +10,13 @@ from ..api import errors, groups
 
 
 def log_in(request: dj_wsgi.WSGIRequest, username: str, password: str) -> bool:
+    """Log in a user.
+
+    :param request: Client request.
+    :param username: User’s username.
+    :param password: User’s password.
+    :return: True if the login was successful, false otherwise.
+    """
     if (user := dj_auth.authenticate(request, username=username, password=password)) is not None:
         dj_auth.login(request, user)
         return True
@@ -18,14 +24,20 @@ def log_in(request: dj_wsgi.WSGIRequest, username: str, password: str) -> bool:
 
 
 def log_out(request: dj_wsgi.WSGIRequest):
+    """Log out the user associated to the given request.
+
+    :param request: Client request.
+    """
     dj_auth.logout(request)
 
 
 def get_user_from_request(request: dj_wsgi.WSGIRequest) -> models.User:
+    """Return the user associated to the given request."""
     return models.User(dj_auth.get_user(request))
 
 
 def get_user_from_name(username: str) -> models.User | None:
+    """Return the user object for the given username or None if the username is not registered."""
     try:
         return models.User(dj_auth.get_user_model().objects.get(username=username))
     except dj_auth.get_user_model().DoesNotExist:
@@ -33,6 +45,7 @@ def get_user_from_name(username: str) -> models.User | None:
 
 
 def get_ip(request: dj_wsgi.WSGIRequest) -> str:
+    """Return the IP of the given request."""
     # Client’s IP address is always at the last one in HTTP_X_FORWARDED_FOR on Heroku
     # https://stackoverflow.com/questions/18264304/get-clients-real-ip-address-on-heroku#answer-18517550
     if x_forwarded_for := request.META.get('HTTP_X_FORWARDED_FOR'):
@@ -42,6 +55,9 @@ def get_ip(request: dj_wsgi.WSGIRequest) -> str:
 
 @dj_db_trans.atomic
 def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest) -> models.User:
+    """Create a new user account for the IP address of the given request.
+    If an anonymous account for the IP already exists, it is returned and no new one is created.
+    """
     ip = get_ip(request)
 
     try:
@@ -64,6 +80,16 @@ def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest) -
 
 @dj_db_trans.atomic
 def create_user(username: str, email: str = None, password: str = None, ignore_email: bool = False) -> models.User:
+    """Create a new user account.
+
+    :param username: User’s username.
+    :param email: User’s email address.
+    :param password: User’s password.
+    :param ignore_email: Whether to ignore the email address. Reserved for internal dummy users.
+    :return: A new user object.
+    :raise InvalidUsernameError: If the username is invalid.
+    :raise DuplicateUsernameError: If the username is already taken.
+    """
     try:
         models.username_validator(username)
     except dj_exc.ValidationError as e:
@@ -91,4 +117,5 @@ def create_user(username: str, email: str = None, password: str = None, ignore_e
 
 
 def user_exists(username: str) -> bool:
+    """Check whether the given username exists."""
     return dj_auth.get_user_model().objects.filter(username=username).exists()

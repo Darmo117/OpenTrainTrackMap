@@ -8,22 +8,33 @@ external links:
 [url text]
 
 categories:
-[[@category_name]]
-[[@category_name|sort_key]]
+@[[category_name]]
+@[[category_name|sort_key]]
 
 transclusions:
 {{template_name}}
-{{template_name|arg}}
+{{template_name|args…}}
 {{template_name|arg_name=value}}
 {{page_title}}
-{{page_title|arg}}
+{{page_title|args…}}
 {{page_title|arg_name=value}}
 
+transclusion params:
+${var_name}
+${var_name|default_value}
+
+magic values:
+%{name}
+%{name|args…}
+
 files:
-((file_name))
-((file_name|legend))
-((file_name|legend|position))
-((file_name|legend|position|alt=value))
+{{File:file_name}}
+{{File:file_name|legend}}
+{{File:file_name|legend|position}}
+{{File:file_name|alt=value}}
+
+functions:
+{{#name:arg1|args…}}
 
 titles:
 = title =
@@ -49,8 +60,10 @@ Custom HTML tags:
 <includeonly></includeonly>
 <noinclude></noinclude>
 <onlyinclude></onlyinclude>
-<ref>
-<references>
+<ref name="ref_name"></ref>
+<ref name="ref_name" group="group_name"></ref>
+<references/>
+<references group="group_name"/>
 
 Allowed HTML tags:
 <a></a>

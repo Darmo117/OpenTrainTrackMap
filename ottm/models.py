@@ -1,18 +1,19 @@
+"""This module defines the website’s database models."""
 from __future__ import annotations
 
 import abc
 import datetime
+import math
 import typing as typ
 
 import django.contrib.auth.models as dj_auth_models
 import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
 import django.db.models as dj_models
-import math
 
-from . import settings, model_fields
-from .api import data_types, permissions, constants
-from .api.wiki import namespaces, constants as w_cons
+from . import model_fields, settings
+from .api import constants, data_types, permissions
+from .api.wiki import constants as w_cons, namespaces
 
 
 def lang_code_validator(value: str):
@@ -31,10 +32,16 @@ def user_group_label_validator(value: str):
 
 
 class UserGroup(dj_models.Model):
+    """User groups define permissions to grant to user that belong to them."""
     label = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
     permissions = model_fields.CommaSeparatedStringsField()
 
     def has_permission(self, perm: str) -> bool:
+        """Check whether this group has the given permission.
+
+        :param perm: The permission.
+        :return: True if this group contains the permission, false otherwise.
+        """
         return perm in self.permissions
 
     def delete(self, using=None, keep_parents=False):
@@ -44,10 +51,12 @@ class UserGroup(dj_models.Model):
 
 
 def username_validator(value: str):
+    """Validate a username. Usernames must be valid page titles and not contain any '/'.
+
+    :param value: The username.
+    """
     if '/' in value or settings.INVALID_TITLE_REGEX.search(value):
         raise dj_exc.ValidationError('invalid username', code='invalid')
-    if CustomUser.objects.filter(username=value).exists():
-        raise dj_exc.ValidationError('duplicate username', code='duplicate')
 
 
 class User:
@@ -65,90 +74,120 @@ class User:
 
     @property
     def internal_user(self) -> CustomUser:
+        """Reference to the internal database user object."""
         return self._user
 
     @property
     def is_authenticated(self) -> bool:
+        """Whether this user is authenticated."""
         return self._user.is_authenticated
 
     @property
     def is_anonymous(self) -> bool:
         """Return true if the user is anonymous, false otherwise.
         A user is anonymous if they are not authenticated and their IP address
-        has not already been use to edit the wiki at least once."""
+        has not already been used to edit the wiki at least once."""
         return self._user.is_anonymous
 
     @property
     def username(self) -> str:
+        """This user’s username."""
         if self.is_anonymous:
             return self._anonymous_username
         return self._user.username
 
     @username.setter
     def username(self, value: str):
+        """Set this user’s username. User must not be anonymous."""
         self._check_not_anonymous()
         self._user.username = value
 
     @property
     def password(self) -> str:
+        """This user’s password."""
         return self._user.password
 
     @password.setter
     def password(self, value: str):
+        """Set this user’s password. User must not be anonymous."""
         self._check_not_anonymous()
         self._user.password = value
 
     @property
     def email(self) -> str:
+        """This user’s email address."""
         return self._user.email
 
     @email.setter
     def email(self, value: str):
+        """Set this user’s email address. User must not be anonymous."""
         self._check_not_anonymous()
         self._user.email = value
 
     @property
     def prefered_language(self) -> settings.Language:
+        """This user’s prefered language."""
         if self.is_anonymous:
             return settings.LANGUAGES[settings.DEFAULT_LANGUAGE_CODE]
         return settings.LANGUAGES[self._user.prefered_language_code]
 
     @prefered_language.setter
     def prefered_language(self, value: settings.Language):
+        """Set this user’s prefered language. User must not be anonymous."""
         self._check_not_anonymous()
         self._user.prefered_language_code = value.code
 
     @property
     def gender(self) -> data_types.UserGender:
+        """This user’s gender."""
         return data_types.GENDERS.get(self._user.gender_code, data_types.GENDER_N)
 
     @gender.setter
     def gender(self, value: data_types.UserGender):
+        """Set this user’s gender. User must not be anonymous."""
         self._check_not_anonymous()
         self._user.gender_code = value.label
 
     @property
     def block(self) -> UserBlock | None:
+        """This user’s block status or None if the user’s not blocked."""
         return self._user.block if not self.is_anonymous else None
 
     @block.setter
     def block(self, value: UserBlock | None):
+        """Set this user’s block status. May be None. User must not be anonymous."""
         self._check_not_anonymous()
         self._user.block = value
 
     @property
     def edits(self) -> dj_models.Manager[EditGroup]:
+        """A Manager object for this user’s edit groups."""
         return self._user.edit_groups if not self.is_anonymous else dj_auth_models.EmptyManager(EditGroup)
 
     @property
-    def wiki_messages(self) -> dj_models.Manager[Message]:
-        return self._user.wiki_messages if not self.is_anonymous else dj_auth_models.EmptyManager(Message)
+    def wiki_edits(self) -> dj_models.Manager[PageRevision] | dj_models.QuerySet[PageRevision]:
+        """A Manager/QuerySet object for the wiki page edits made by this user."""
+        if not self.is_anonymous:
+            return PageRevision.objects.filter(author=self._user)
+        else:
+            return dj_auth_models.EmptyManager(Message)
 
     @property
     def wiki_topics(self) -> dj_models.Manager[Topic]:
+        """A Manager object for the wiki topics created by this user."""
         return self._user.wiki_topics
 
+    @property
+    def wiki_messages(self) -> dj_models.Manager[Message]:
+        """A Manager object for the wiki messages posted by this user."""
+        return self._user.wiki_messages if not self.is_anonymous else dj_auth_models.EmptyManager(Message)
+
     def has_permission(self, perm: str) -> bool:
+        """Check whether this user has the given permission.
+
+        :param perm: The permission.
+        :return: True if the user has the permission, false otherwise.
+        """
         return any(g.has_permission(perm) for g in self._user.groups.all())
 
     def notes_count(self) -> int:
@@ -174,7 +213,7 @@ class User:
 
     def wiki_edits_count(self) -> int:
         """Return the number of edits this user made on the wiki."""
-        return self._user.wiki_edits.count() if not self.is_anonymous else 0
+        return PageRevision.objects.filter(author=self._user).count() if not self.is_anonymous else 0
 
     def wiki_topics_count(self) -> int:
         """Return the number of topics this user created on the wiki."""
@@ -202,13 +241,33 @@ class CustomUser(dj_auth_models.AbstractUser):
                                       default=data_types.GENDER_N.label)
 
 
-class UserBlock(dj_models.Model):
+class UserBlock(dj_models.Model):  # TODO block IPs
+    """Defines the block status of a user.
+    Users can be prevented from editing pages, post messages and editing their own settings.
+    Blocks expire after a specified date. If no end date is specified, the block will never expire.
+    """
     user = dj_models.OneToOneField(CustomUser, on_delete=dj_models.CASCADE, related_name='block')
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='blocks_given', null=True)
-    reason = dj_models.CharField(max_length=200)
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='user_blocks_given',
+                                     null=True)
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
     end_date = dj_models.DateTimeField(null=True, blank=True)
-    allow_messages_on_own_user_page = dj_models.BooleanField()
-    allow_editing_own_settings = dj_models.BooleanField()
+    allow_messages_on_own_user_page = dj_models.BooleanField(default=True)
+    allow_editing_own_settings = dj_models.BooleanField(default=True)
+
+
+class IPBlock(dj_models.Model):
+    """Defines the block status of an IP address.
+    Non-authenticated users under specific IPs can be prevented from editing pages, posting messages
+     and creating new accounts.
+    Blocks expire after a specified date. If no end date is specified, the block will never expire.
+    """
+    ip = dj_models.CharField(max_length=39)
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='ip_blocks_given',
+                                     null=True)
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
+    end_date = dj_models.DateTimeField(null=True, blank=True)
+    allow_messages_on_own_user_page = dj_models.BooleanField(default=True)
+    allow_account_creation = dj_models.BooleanField(default=True)
 
 
 ###################
@@ -875,8 +934,9 @@ class UnitTranslation(Translation):
 
 
 class RevisionMixin:
+    """Mixin for all revision models."""
     date = dj_models.DateTimeField(auto_now_add=True)
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='wiki_edits', null=True)
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, null=True)
     comment = dj_models.CharField(max_length=200, null=True, blank=True)
     comment_hidden = dj_models.BooleanField(default=False)
     hidden = dj_models.BooleanField(default=False)
@@ -889,11 +949,12 @@ class RevisionMixin:
 
 
 def page_title_validator(value: str):
-    if settings.INVALID_TITLE_REGEX.match(value):
+    if settings.INVALID_TITLE_REGEX.match(value) or value.startswith(' ') or value.endswith(' '):
         raise dj_exc.ValidationError('invalid page title', code='page_invalid_title')
 
 
 class Page(dj_models.Model):
+    """Represents a wiki page."""
     namespace_id = dj_models.IntegerField()
     title = dj_models.CharField(max_length=200, validators=[page_title_validator])
     content_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in w_cons.CONTENT_TYPES),
@@ -913,60 +974,116 @@ class Page(dj_models.Model):
                 'page is not a category',
                 code='page_not_category'
             )
+        if self.namespace.allows_subpages and (
+                self.title.startswith('/') or self.title.endswith('/')
+                or '//' in self.title or '' in map(str.strip, self.title.split('/'))
+        ):
+            raise dj_exc.ValidationError('invalid page title', code='page_invalid_title')
 
     @property
     def namespace(self) -> namespaces.Namespace:
+        """Page’s namespace."""
         return namespaces.NAMESPACES[self.namespace_id]
 
     @property
     def full_title(self) -> str:
+        """Page’s full title in the format "<namespace>:<title>"."""
         return self.namespace.get_full_page_title(self.title)
 
     @property
     def base_name(self) -> str:
+        """Page’s base name. If the namespace allows subpages, it is the value before the first '/'."""
         if '/' in self.title and self.namespace.allows_subpages:
             return self.title.split('/')[0]
         return self.title
 
     @property
     def page_name(self) -> str:
+        """Page’s name. If the namespace allows subpages, it is the value after the last '/'."""
         if '/' in self.title and self.namespace.allows_subpages:
             return self.title.split('/')[-1]
         return self.title
 
     @property
     def exists(self) -> bool:
+        """Whether this pages exists in the database."""
         return self.pk is not None
 
     @property
     def content_language(self) -> settings.Language:
+        """This page’s content language."""
         return settings.LANGUAGES[self.content_language_code]
 
     def can_user_edit(self, user: User) -> bool:
+        f"""Check whether the given user can edit this page.
+
+        A user can edit a page if the following conditions are met:
+            - They can edit the page’s namespace.
+            - AND they are logged in and not blocked, or they are logged out and their IP address is not blocked.
+            - OR the page is their own user page or they have the {permissions.PERM_WIKI_EDIT_USER_PAGES} permission.
+
+        :param user: The user.
+        :return: True if the user can edit, false otherwise.
+        """
+        block = user.block
+        ip_block = None
+        if user.is_anonymous:
+            try:
+                ip_block = IPBlock.objects.get(ip=user.internal_user.ip)
+            except IPBlock.DoesNotExist:
+                pass
+        own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
+        now = datetime.datetime.now()
         return (self.namespace.can_user_edit_pages(user)
-                and (user.block is None
-                     or user.block.end_date >= datetime.datetime.now())
-                and (self.namespace != namespaces.NS_USER
-                     or self.base_name == user.username
-                     or user.has_permission(permissions.PERM_WIKI_EDIT_USER_PAGES)))
+                and (block is None or block.end_date < now)
+                and (ip_block is None or ip_block.end_date < now)
+                and (not own_page or user.has_permission(permissions.PERM_WIKI_EDIT_USER_PAGES)))
 
     def can_user_post_messages(self, user: User) -> bool:
-        return self.namespace.is_editable and (
-                user.block is None
-                or user.block.end_date < datetime.datetime.now()
-                or (user.block.allow_messages_on_own_user_page and self.namespace == namespaces.NS_USER)
-        )
+        """Check whether the given user can post messages on this page.
+
+        A user can post a message if the following conditions are met:
+            - The namespace is editable.
+            - AND they are logged in and not blocked, or they are logged out and their IP address is not blocked.
+            - OR they can post messages on their own user page.
+
+        :param user: The user.
+        :return: True if the user can post messages, false otherwise.
+        """
+        block = user.block
+        ip_block = None
+        if user.is_anonymous:
+            try:
+                ip_block = IPBlock.objects.get(ip=user.internal_user.ip)
+            except IPBlock.DoesNotExist:
+                pass
+        own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
+        now = datetime.datetime.now()
+        return (self.namespace.is_editable
+                and (block is None or block.end_date < now
+                     or (own_page and block.allow_messages_on_own_user_page))
+                and (ip_block is None or ip_block.end_date < now
+                     or (own_page and ip_block.allow_messages_on_own_user_page)))
 
     def is_user_following(self, user: User) -> bool:
-        return not user.is_anonymous and user.internal_user.watched_pages.filter(page_namespace_id=self.namespace_id,
-                                                                                 page_title=self.title).exists()
+        """Check whether the given agent is following this page, whether it exists or not.
+
+        :param user: The user.
+        :return: True if the user follows this page, false otherwise.
+        """
+        return not user.is_anonymous and user.internal_user.followed_pages.filter(
+            page_namespace_id=self.namespace_id,
+            page_title=self.title,
+        ).exists()
 
     def get_content(self) -> str:
+        """Return this page’s content or an empty string if it does not exist."""
         if self.exists and (revision := self.revisions.latest()):
             return revision.text
         return ''
 
     def get_edit_protection(self) -> PageProtection | None:
+        """Return the page protection status for this page if it is protected, None otherwise."""
         try:
             return PageProtection.objects.get(page_namespace_id=self.namespace_id, page_title=self.title)
         except PageProtection.DoesNotExist:
@@ -974,6 +1091,8 @@ class Page(dj_models.Model):
 
 
 class PageCategory(dj_models.Model):
+    """Model that associates a page to a category with an optional sort key.
+    Pages can be in non-existent categories."""
     page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='categories')
     cat_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
     sort_key = dj_models.CharField(max_length=200, null=True, blank=True)
@@ -983,15 +1102,26 @@ class PageCategory(dj_models.Model):
 
     @staticmethod
     def subcategories_for_category(cat_title: str) -> dj_models.QuerySet[Page]:
+        """Get a query set of pages that are subcategories of the given category.
+
+        :param cat_title: Category’s title.
+        :return: A QuerySet of Page objects.
+        """
         return Page.objects.filter(categories__cat_title=cat_title, namespace_id=namespaces.NS_CATEGORY)
 
     @staticmethod
     def pages_for_category(cat_title: str) -> dj_models.QuerySet[Page]:
+        """Get a query set of pages that are in the given category.
+
+        :param cat_title: Category’s title.
+        :return: A QuerySet of Page objects.
+        """
         return Page.objects.filter(dj_models.Q(categories__cat_title=cat_title)
                                    & ~dj_models.Q(namespace_id=namespaces.NS_CATEGORY))
 
 
 class PageProtection(dj_models.Model):
+    """Defines the protection status of a page. Non-existent pages can be protected."""
     # No foreign key to Page as it allows protecting non-existent pages.
     page_namespace_id = dj_models.IntegerField()
     page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
@@ -1000,8 +1130,9 @@ class PageProtection(dj_models.Model):
     protection_level = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
 
 
-class PageWatchlist(dj_models.Model):
-    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='watched_pages')
+class PageFollowStatus(dj_models.Model):
+    """Defines the follow status of a page. Non-existent pages can be followed."""
+    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='followed_pages')
     # No foreign key to Page as it allows following non-existent pages.
     page_namespace_id = dj_models.IntegerField()
     page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
@@ -1012,8 +1143,8 @@ class PageWatchlist(dj_models.Model):
         if self.objects.filter(user=self.user, page_namespace_id=self.page_namespace_id,
                                page_title=self.page_title).exists():
             raise dj_exc.ValidationError(
-                'duplicate watchlist entry',
-                code='page_watchlist_duplicate_entry'
+                'duplicate follow list entry',
+                code='page_follow_list_duplicate_entry'
             )
 
 
@@ -1023,12 +1154,14 @@ def tag_label_validator(value: str):
 
 
 class Tag(dj_models.Model):
+    """Tags are used to add metadata to page revisions."""
     label = dj_models.CharField(max_length=20, validators=[tag_label_validator])
 
 
 class PageRevision(dj_models.Model, RevisionMixin):
+    """A page revision is a version of a page’ content at a given time."""
     page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='revisions')
-    tags = dj_models.ManyToManyField(Tag, related_name='revisions')
+    tags = dj_models.ManyToManyField(Tag, related_name='page_revisions')
     content = dj_models.TextField(blank=True)
 
     class Meta:
@@ -1041,16 +1174,20 @@ class PageRevision(dj_models.Model, RevisionMixin):
 
 
 class Topic(dj_models.Model):
+    """A talk topic groups a hierarchical list of user messages."""
     page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='topics')
     author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='wiki_topics', null=True)
     date = dj_models.DateTimeField(auto_now_add=True)
 
     def get_title(self) -> str:
+        """Return the title of this topic or an empty string if it does not exist."""
         return revision.title if (revision := self.revisions.latest()) else ''
 
 
 class TopicRevision(dj_models.Model, RevisionMixin):
+    """A topic revision is a version of a topic’s title at a given time."""
     topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='revisions')
+    tags = dj_models.ManyToManyField(Tag, related_name='topic_revisions')
     title = dj_models.CharField(max_length=200)
 
     class Meta:
@@ -1058,18 +1195,24 @@ class TopicRevision(dj_models.Model, RevisionMixin):
 
 
 class Message(dj_models.Model):
+    """Messages can be posted by users under specific topics."""
     topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='messages')
     author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='wiki_messages', null=True)
     date = dj_models.DateTimeField(auto_now_add=True)
     response_to = dj_models.ForeignKey('self', on_delete=dj_models.SET_NULL, related_name='responses', null=True)
 
     def get_content(self) -> str:
+        """Return the content of this message or an empty string if it does not exist."""
         return revision.text if (revision := self.revisions.latest()) else ''
 
 
 class MessageRevision(dj_models.Model, RevisionMixin):
+    """A message revision is a version of a message’s content at a given time."""
     message = dj_models.ForeignKey(Message, on_delete=dj_models.CASCADE, related_name='revisions')
+    tags = dj_models.ManyToManyField(Tag, related_name='revisions')
     text = dj_models.TextField(blank=True)
 
     class Meta:
         get_latest_by = 'date'
+
+# TODO logs

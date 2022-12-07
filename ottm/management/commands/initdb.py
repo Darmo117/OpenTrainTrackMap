@@ -1,3 +1,4 @@
+"""This module defines a command that initializes the database."""
 import django.core.management.base as dj_mngmt
 
 from ... import models

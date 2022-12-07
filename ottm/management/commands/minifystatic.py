@@ -1,21 +1,22 @@
+"""This module defines a command that manages minified static files."""
 import pathlib
 import typing as typ
-import rjsmin
-import cssmin
 
+import cssmin
 import django.core.management.base as dj_mngmt
+import rjsmin
 from django.conf import settings
 
 
 class Command(dj_mngmt.BaseCommand):
-    help = 'Minifies all JS and CSS static files'
+    help = 'Minifies all JS and CSS static files (except those in libs/)'
 
     def add_arguments(self, parser: dj_mngmt.CommandParser):
         parser.add_argument(
-            "-p", "--purge",
-            action="store_true",
+            '-p', '--purge',
+            action='store_true',
             dest='purge',
-            help="Purge all minified static files (except libs).",
+            help='Purge all minified static files (except those in libs/).',
         )
 
     def handle(self, *args: str, **options):

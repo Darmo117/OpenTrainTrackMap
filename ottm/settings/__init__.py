@@ -1,3 +1,4 @@
+"""This package defines the website’s settings."""
 import dataclasses as _dt
 import json as _json
 import logging as _logging
@@ -7,6 +8,7 @@ import re as _re
 
 @_dt.dataclass(frozen=True)
 class Language:
+    """Class representing a language."""
     code: str
     name: str
     writing_direction: str
@@ -14,18 +16,29 @@ class Language:
     _mappings: dict[str, str]
 
     def translate(self, key: str, default: str = None, /, **kwargs) -> str:
+        """Translate the given key.
+
+        :param key: Key to translate.
+        :param default: The value to return if the key is not defined.
+        :param kwargs: Translation’s arguments.
+        :return: The translated text or the key/default value if it is undefined for the current language.
+        """
         return self._mappings.get(key, default if default is not None else key).format(**kwargs)
 
 
 SITE_NAME = 'OpenTrainTrackMap'
 DEFAULT_LANGUAGE_CODE = 'en'
 INVALID_TITLE_REGEX = _re.compile(
-    r'([%@<>_#|{}\[\]\x00-\x1f\x7f]|&[A-Za-z0-9\x80-\xff]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;)')
+    r'([%<>_#|{}\[\]\x00-\x1f\x7f-\x9f]|^[/\s]|[/\s]$|&[A-Za-z0-9]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;)')
 LANGUAGES: dict[str, Language] = {}
 LOGGER: _logging.Logger
 
 
 def init(debug: bool):
+    """Initialize the settings.
+
+    :param debug: Whether the website is in debug mode or not.
+    """
     global LOGGER, LANGUAGES
 
     LOGGER = _logging.Logger('OTTM', level=_logging.DEBUG if debug else _logging.INFO)
@@ -51,6 +64,15 @@ def init(debug: bool):
 
 
 def _build_mapping(json_object: dict[str, str | dict], root: str = None) -> dict[str, str]:
+    """Build translation mappings for the given JSON dict.
+
+    Example:
+        A JSON dict of the form ``{"a": {"b": "c"}}`` will result in the mappings ``{"a.b": "c"}``.
+
+    :param json_object: A dict object containing translations defined in a JSON language file.
+    :param root: The root translation key prefix. May be None.
+    :return: A flat dict containing the mappings.
+    """
     mapping = {}
     for k, v in json_object.items():
         if root is not None:

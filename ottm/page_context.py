@@ -1,13 +1,17 @@
+"""This module defines all page context classes."""
+import abc
 import json as _json
 import typing as _typ
 
 import django.core.paginator as dj_paginator
 
-from . import models as _models, settings, forms
+from . import forms, models as _models, settings
 from .api.wiki import constants as w_cons, pages
 
 
 class PageContext:
+    """A page context object contains values meant to be used within HTML templates."""
+
     def __init__(
             self,
             site_name: str,
@@ -17,6 +21,15 @@ class PageContext:
             user: _models.User,
             language: settings.Language,
     ):
+        """Create a generic page context.
+
+        :param site_name: Site’s name.
+        :param tab_title: Title of the browser’s tab.
+        :param title: Page’s title.
+        :param no_index: Whether to insert a noindex clause within the HTML page.
+        :param user: Current user.
+        :param language: Page’s language.
+        """
         self._site_name = site_name
         self._tab_title = tab_title
         self._title = title
@@ -58,8 +71,19 @@ class MapPageContext(PageContext):
             no_index: bool,
             user: _models.User,
             language: settings.Language,
-            map_js_config: dict[str, _typ.Any]
+            map_js_config: dict[str, _typ.Any],
     ):
+        """Create a page context for map pages.
+
+        :param site_name: Site’s name.
+        :param tab_title: Title of the browser’s tab.
+        :param title: Page’s title.
+        :param no_index: Whether to insert a noindex clause within the HTML page.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param map_js_config: Dict object containing map’s JS config.
+         It is converted to a JSON object before being inserted in the HTML page.
+        """
         super().__init__(
             site_name=site_name,
             tab_title=tab_title,
@@ -84,8 +108,18 @@ class UserPageContext(PageContext):
             no_index: bool,
             user: _models.User,
             language: settings.Language,
-            target_user: _models.User
+            target_user: _models.User,
     ):
+        """Create a page context for user pages.
+
+        :param site_name: Site’s name.
+        :param tab_title: Title of the browser’s tab.
+        :param title: Page’s title.
+        :param no_index: Whether to insert a noindex clause within the HTML page.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param target_user: User of the requested page.
+        """
         super().__init__(
             site_name=site_name,
             tab_title=tab_title,
@@ -101,7 +135,7 @@ class UserPageContext(PageContext):
         return self._target_user
 
 
-class WikiPageContext(PageContext):  # TODO parent pages
+class WikiPageContext(PageContext, abc.ABC):  # TODO parent pages
     def __init__(
             self,
             site_name: str,
@@ -112,8 +146,21 @@ class WikiPageContext(PageContext):  # TODO parent pages
             action: str,
             show_title: bool,
             page_exists: bool,
-            js_config: dict[str, _typ.Any]
+            js_config: dict[str, _typ.Any],
     ):
+        """Create a page context for wiki pages.
+
+        :param site_name: Site’s name.
+        :param page: Wiki page object.
+        :param no_index: Whether to insert a noindex clause within the HTML page.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param action: Page action.
+        :param show_title: Whether the page title should be displayed.
+        :param page_exists: Whether the page exists.
+        :param js_config: Dict object containing the wiki’s JS config.
+         It is converted to a JSON object before being inserted in the HTML page.
+        """
         super().__init__(
             site_name=site_name,
             tab_title=page.title,
@@ -170,6 +217,25 @@ class WikiPageShowActionContext(WikiPageContext):
             cat_page_index: int = 1,
             cat_results_per_page: int = 20,
     ):
+        """Create a page context for wiki pages.
+
+        :param site_name: Site’s name.
+        :param page: Wiki page object.
+        :param no_index: Whether to insert a noindex clause within the HTML page.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param js_config: Dict object containing the wiki’s JS config.
+         It is converted to a JSON object before being inserted in the HTML page.
+        :param content: Rendered page’s content.
+        :param revision: A revision of the page. May be None.
+        :param archived: Whether the revision is not the current one.
+        :param cat_subcategories: The list of subcategories of the category represented by the page.
+         Only used if the page is a category.
+        :param cat_pages: The list of pages within the category represented by the page.
+         Only used if the page is a category.
+        :param cat_page_index: Current pagination index. Only used if the page is a category.
+        :param cat_results_per_page: Number of pages per page to display. Only used if the page is a category.
+        """
         show_title = page.full_title != pages.MAIN_PAGE_TITLE
         super().__init__(
             site_name=site_name,
@@ -230,6 +296,22 @@ class WikiPageEditActionContext(WikiPageContext):
             perm_error: bool = False,
             concurrent_edit_error: bool = False,
     ):
+        """Create a page context for wiki pages.
+
+        :param site_name: Site’s name.
+        :param page: Wiki page object.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param js_config: Dict object containing the wiki’s JS config.
+         It is converted to a JSON object before being inserted in the HTML page.
+        :param revision: A revision of the page. May be None.
+        :param archived: Whether the revision is not the current one.
+        :param edit_form: Editing form.
+        :param edit_notice: Rendered edit notice. May be None.
+        :param new_page_notice: Rendered new page notice. May be None.
+        :param perm_error: Whether the user lacks the permission to edit wiki pages.
+        :param concurrent_edit_error: Whether another edit was made before submitting.
+        """
         super().__init__(
             site_name=site_name,
             page=page,
@@ -290,6 +372,18 @@ class WikiPageHistoryActionContext(WikiPageContext):
             page_index: int = 1,
             revisions_per_page: int = 20,
     ):
+        """Create a page context for wiki pages’ history.
+
+        :param site_name: Site’s name.
+        :param page: Wiki page object.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param js_config: Dict object containing the wiki’s JS config.
+         It is converted to a JSON object before being inserted in the HTML page.
+        :param revisions: List of page revisions.
+        :param page_index: Current pagination index.
+        :param revisions_per_page: Number of revisions to display per page.
+        """
         super().__init__(
             site_name=site_name,
             page=page,
@@ -323,6 +417,16 @@ class WikiPageTalkContext(WikiPageContext):
             js_config: dict[str, _typ.Any],
             topics: dict[_models.Topic, list[_models.Message]],
     ):
+        """Create a page context for wiki talk pages.
+
+        :param site_name: Site’s name.
+        :param page: Wiki page object.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param js_config: Dict object containing the wiki’s JS config.
+         It is converted to a JSON object before being inserted in the HTML page.
+        :param topics: Dict of topics with their associated messages.
+        """
         super().__init__(
             site_name=site_name,
             page=page,
@@ -357,6 +461,17 @@ class WikiSpecialPageContext(WikiPageContext):
             js_config: dict[str, _typ.Any],
             **kwargs,
     ):
+        """Create a page context for special pages.
+
+        :param site_name: Site’s name.
+        :param page: Wiki page object.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param page_exists: Whether the page exists.
+        :param js_config: Dict object containing the wiki’s JS config.
+         It is converted to a JSON object before being inserted in the HTML page.
+        :param kwargs: Special page’s additional parameters.
+        """
         super().__init__(
             site_name=site_name,
             page=page,

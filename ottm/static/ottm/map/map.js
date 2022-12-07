@@ -111,11 +111,6 @@
      * @type {?[]}
      */
     #polygons = [];
-    /**
-     * User’s IP address.
-     * @type {string}
-     */
-    #userIP;
 
     /**
      * Create a map wrapper object.
@@ -123,8 +118,6 @@
      * @param editMode {boolean} Whether the map should be editable.
      */
     constructor(mapID, editMode) {
-      this.#userIP = window.OTTM_MAP_CONFIG["user_ip"];
-
       const map = L.map(mapID, {
         zoomControl: false, // Remove default zoom control
         editable: editMode,

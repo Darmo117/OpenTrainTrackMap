@@ -1,3 +1,4 @@
+"""This module defines constants used by the wiki."""
 ACTION_SHOW = 'show'
 ACTION_EDIT = 'edit'
 ACTION_SUBMIT = 'submit'

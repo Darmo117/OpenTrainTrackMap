@@ -1,3 +1,4 @@
+"""This module defines various constants."""
 OBJECT_CREATED = 'create'
 OBJECT_DELETED = 'delete'
 OBJECT_EDIT_ACTIONS: tuple[str, ...] = tuple(v for k, v in globals().items() if k.startswith('OBJECT_'))

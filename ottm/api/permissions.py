@@ -1,3 +1,4 @@
+"""This module defines all user permissions used througout the website."""
 # OTTM
 PERM_EDIT_SCHEMA = 'edit_schema'
 PERM_EDIT_OBJECTS = 'edit_objects'

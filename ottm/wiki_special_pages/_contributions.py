@@ -1,3 +1,4 @@
+"""This module defines the user contributions special page."""
 import typing as typ
 
 from django.core.handlers import wsgi as dj_wsgi
@@ -7,6 +8,12 @@ from ..api import auth
 
 
 class SpecialPageContributions(SpecialPage):
+    """This special page lists all contributions of a specific user.
+
+    Args: ``/<username:str>``
+        - ``username``: the username of the user to display the contributions of.
+    """
+
     def __init__(self):
         super().__init__(name='Contributions')
 

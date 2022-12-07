@@ -1,3 +1,4 @@
+"""This module defines website’s forms."""
 import django.contrib.auth.models as dj_auth
 import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
@@ -7,6 +8,8 @@ from . import models, settings
 
 
 class _CustomForm(dj_forms.Form):
+    """Base class for all forms. Applies custom CSS styles to widgets."""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for visible in self.visible_fields():
@@ -14,17 +17,30 @@ class _CustomForm(dj_forms.Form):
 
 
 class ConfirmPasswordFormMixin:
+    """Mixin for forms with a password confirmation field."""
+
     def passwords_match(self) -> bool:
+        """Check whether the passwords in the 'password' and 'password_confirm' fields match."""
         cleaned_data = getattr(self, 'cleaned_data')
         return cleaned_data['password'] == cleaned_data['password_confirm']
 
 
 class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
+    """User settings form."""
+
     @staticmethod
     def username_validator(value: str, anonymous: bool = False):
+        """Validate the given username. Checks if it is valid and not already taken.
+
+        :param value: Username to validate.
+        :param anonymous: Whether the username is for an anonymous user.
+         If false, username cannot start with 'Anonymous-'.
+        """
         models.username_validator(value)
         if not anonymous and value.startswith('Anonymous-'):
             raise dj_exc.ValidationError('invalid username', code='invalid')
+        if models.CustomUser.objects.filter(username=value).exists():
+            raise dj_exc.ValidationError('duplicate username', code='duplicate')
 
     username = dj_forms.CharField(
         label='username',
@@ -56,7 +72,17 @@ class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
 
 
 class _WikiForm(_CustomForm):
+    """Base class for wiki forms."""
+
     def __init__(self, name: str, *args, warn_unsaved_changes: bool, **kwargs):
+        """Create a wiki form.
+
+        :param name: Form’s name.
+        :param args: Form’s arguments.
+        :param warn_unsaved_changes: Whether to display a warning whenever a user quits
+         the page without submitting this form.
+        :param kwargs: Forms’s named arguments.
+        """
         super().__init__(*args, **kwargs)
         self._name = name
         self._warn_unsaved_changes = warn_unsaved_changes
@@ -104,8 +130,8 @@ class WikiEditPageForm(_WikiForm):
         :param user: The user to send the form to.
         :param language: Page’s current language.
         :param disabled: If true, the content field will be disabled and all others will not be generated.
-        :param warn_unsaved_changes: If true this form will warn the user
-            of any unsaved changes before exiting the page.
+        :param warn_unsaved_changes: Whether to display a warning whenever a user quits
+         the page without submitting this form.
         :param kwargs: Other named arguments.
         """
         super().__init__('edit', *args, warn_unsaved_changes=warn_unsaved_changes, **kwargs)

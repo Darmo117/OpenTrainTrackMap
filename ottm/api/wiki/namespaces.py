@@ -1,3 +1,4 @@
+"""This module defines the wiki’s namespaces."""
 import dataclasses
 
 SEPARATOR = ':'
@@ -5,6 +6,7 @@ SEPARATOR = ':'
 
 @dataclasses.dataclass(frozen=True)
 class Namespace:
+    """Pages in different namespaces have different behaviors depending on the namespace’s configuration."""
     id: int
     name: str
     is_content: bool = False
@@ -13,6 +15,11 @@ class Namespace:
     is_editable: bool = True
 
     def get_full_page_title(self, page_title: str) -> str:
+        """Return the full version of the given page title in this namespace.
+
+        :param page_title: Page title to prepend this namespace’s name to.
+        :return: The full page title in the format &lt;ns_name>:&lt;page_title>.
+        """
         if self.name == '':
             return page_title
         return self.name + SEPARATOR + page_title
@@ -28,7 +35,7 @@ class Namespace:
 
 
 NS_SPECIAL = Namespace(id=-1, name='Special', is_editable=False, allows_subpages=False)
-NS_MAIN = Namespace(id=0, name='', is_content=True)
+NS_MAIN = Namespace(id=0, name='', is_content=True, allows_subpages=False)
 NS_CATEGORY = Namespace(id=1, name='Category', allows_subpages=False)
 NS_WIKI = Namespace(id=2, name='Wiki')
 NS_HELP = Namespace(id=3, name='Help')
@@ -43,6 +50,11 @@ NAMESPACES_NAMES: dict[str, Namespace] = {k: v for k, v in globals().items() if 
 
 
 def resolve_name(ns_name: str) -> Namespace | None:
+    """Return the namespace for the given name.
+
+    :param ns_name: Namespace name to resolve.
+    :return: The namespace object or None if no namespace matched.
+    """
     ns_name = ns_name.lower()
     for ns_id, ns in NAMESPACES.items():
         if ns.name.lower() == ns_name:

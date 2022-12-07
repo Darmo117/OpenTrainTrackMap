@@ -6,15 +6,23 @@ import datetime
 
 
 class DateInterval:
+    """TimeInterval objects represent time intervals whose bounds may be fuzzy.
+    Instances are hashable and orderable.
+
+    A ValueError may be raised if at least one of these situations is encountered:
+        - start_date is after end_date.
+        - start_date, end_date or both are in the future.
+        - is_current is true and end_date is not None
+    """
+
     def __init__(self, start_date: datetime.datetime | None, approx_start: bool,
                  end_date: datetime.datetime | None, approx_end: bool, is_current: bool = False):
         """TimeInterval objects represent time intervals whose bounds may be fuzzy.
 
         A ValueError may be raised if at least one of these situations is encountered:
-
-        - start_date is after end_date.
-        - start_date, end_date or both are in the future.
-        - is_current is true and end_date is not None
+            - start_date is after end_date.
+            - start_date, end_date or both are in the future.
+            - is_current is true and end_date is not None
 
         :param start_date: The start date; may be None.
         :param approx_start: Whether the start date is approximate or exact.
@@ -105,18 +113,18 @@ class DateInterval:
         self_end = now if self.is_current else self.end_date
         other_end = now if other.is_current else other.end_date
         return (
-                       self.start_date and self_end
-                       and (
-                               other.start_date and self.start_date <= other.start_date <= self_end
-                               or other_end and self.start_date <= other_end <= self_end
-                       )
-               ) or (
-                       other.start_date and other_end
-                       and (
-                               self.start_date and other.start_date <= self.start_date <= other_end
-                               or self_end and other.start_date <= self_end <= other_end
-                       )
-               )
+                self.start_date and self_end
+                and (
+                        other.start_date and self.start_date <= other.start_date <= self_end
+                        or other_end and self.start_date <= other_end <= self_end
+                )
+        ) or (
+                other.start_date and other_end
+                and (
+                        self.start_date and other.start_date <= self.start_date <= other_end
+                        or self_end and other.start_date <= self_end <= other_end
+                )
+        )
 
     def __lt__(self, other: DateInterval) -> bool:
         return self.end_date is not None and other.start_date is not None and self.end_date <= other.start_date
@@ -161,6 +169,7 @@ class DateInterval:
 
 @dataclasses.dataclass(frozen=True)
 class UserGender:
+    """Represents a user’s gender."""
     label: str
     i18n_label: str
 
