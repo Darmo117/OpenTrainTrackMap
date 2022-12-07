@@ -3,11 +3,11 @@ import typing as typ
 import django.core.handlers.wsgi as dj_wsgi
 import django.http.response as dj_response
 import django.shortcuts as dj_scut
+from django.conf import settings as dj_settings
 
-from OpenTrainTrackMap import settings as g_settings
-from . import page_context, models, settings, wiki_special_pages, forms
-from .api import auth, permissions, errors
-from .api.wiki import pages as w_pages, namespaces as w_ns, constants as w_cons
+from . import forms, models, page_context, settings, wiki_special_pages
+from .api import auth, errors, permissions
+from .api.wiki import constants as w_cons, namespaces as w_ns, pages as w_pages
 
 VIEW_MAP = 'show'
 EDIT_MAP = 'edit'
@@ -215,7 +215,7 @@ def _show_wiki_page_context(
         page: models.Page,
         user: models.User,
         language: settings.Language,
-        revision_id: int,
+        revision_id: int | None,
         results_per_page: int,
         page_index: int,
         js_config: dict,
@@ -225,7 +225,7 @@ def _show_wiki_page_context(
     cat_subcategories = []
     cat_pages = []
     if revision_id is None:
-        revision = page.revisions.latest()
+        revision = page.revisions.latest() if page.exists else None
         archived = False
         if page.namespace == w_ns.NS_CATEGORY:
             cat_subcategories = list(models.PageCategory.subcategories_for_category(page.full_title))
@@ -254,14 +254,14 @@ def _wiki_page_edit_context(
         page: models.Page,
         user: models.User,
         language: settings.Language,
-        revision_id: int,
+        revision_id: int | None,
         js_config: dict,
         form: forms.WikiEditPageForm = None,
         perm_error: bool = False,
         concurrent_edit_error: bool = False,
 ):
     if revision_id is None:
-        revision = page.revisions.latest()
+        revision = page.revisions.latest() if page.exists else None
         archived = False
     else:
         revision = page.revisions.get(id=revision_id)
@@ -282,7 +282,6 @@ def _wiki_page_edit_context(
         user=user,
         language=language,
         js_config=js_config,
-        content=page.get_content(),
         revision=revision,
         archived=archived,
         edit_form=form,
@@ -359,7 +358,7 @@ def _get_map_page_context(user: models.User, action: str = VIEW_MAP,
     ]
     js_config = {
         'trans': {},
-        'static_path': g_settings.STATIC_URL,
+        'static_path': dj_settings.STATIC_URL,
         'edit': 'true' if action == 'edit' else 'false',
     }
 

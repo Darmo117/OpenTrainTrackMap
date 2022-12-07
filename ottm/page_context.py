@@ -163,7 +163,7 @@ class WikiPageShowActionContext(WikiPageContext):
             language: settings.Language,
             js_config: dict[str, _typ.Any],
             content: str,
-            revision: _models.PageRevision,
+            revision: _models.PageRevision | None,
             archived: bool,
             cat_subcategories: list[_models.Page] = None,
             cat_pages: list[_models.Page] = None,
@@ -198,7 +198,7 @@ class WikiPageShowActionContext(WikiPageContext):
         return self._archived
 
     @property
-    def revision(self) -> _models.PageRevision:
+    def revision(self) -> _models.PageRevision | None:
         return self._revision
 
     @property
@@ -222,7 +222,7 @@ class WikiPageEditActionContext(WikiPageContext):
             user: _models.User,
             language: settings.Language,
             js_config: dict[str, _typ.Any],
-            revision: _models.PageRevision,
+            revision: _models.PageRevision | None,
             archived: bool,
             edit_form: forms.WikiEditPageForm,
             edit_notice: str = None,
@@ -254,7 +254,7 @@ class WikiPageEditActionContext(WikiPageContext):
         return self._archived
 
     @property
-    def revision(self) -> _models.PageRevision:
+    def revision(self) -> _models.PageRevision | None:
         return self._revision
 
     @property
