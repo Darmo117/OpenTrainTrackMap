@@ -30,7 +30,7 @@ class Namespace:
 NS_SPECIAL = Namespace(id=-1, name='Special', is_editable=False, allows_subpages=False)
 NS_MAIN = Namespace(id=0, name='', is_content=True)
 NS_CATEGORY = Namespace(id=1, name='Category', allows_subpages=False)
-NS_META = Namespace(id=2, name='Meta')
+NS_WIKI = Namespace(id=2, name='Wiki')
 NS_HELP = Namespace(id=3, name='Help')
 NS_USER = Namespace(id=4, name='User')
 NS_TEMPLATE = Namespace(id=10, name='Template')

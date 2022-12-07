@@ -7,7 +7,7 @@ from . import namespaces
 from .. import errors, permissions, auth
 from ... import models
 
-MAIN_PAGE_TITLE = namespaces.NS_META.get_full_page_title('Main Page')
+MAIN_PAGE_TITLE = namespaces.NS_WIKI.get_full_page_title('Main Page')
 
 
 def split_title(title: str) -> tuple[namespaces.Namespace, str]:
