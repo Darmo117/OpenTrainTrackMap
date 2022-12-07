@@ -229,7 +229,12 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                         w_pages.edit_page(request, user, page, form.content, form.comment, form.minor_edit,
                                           form.follow_page, form.section_id)
                     except errors.MissingPermissionError:
-                        context = _wiki_page_edit_context(page, user, language, revision_id, js_config, perm_error=True)
+                        context = _wiki_page_edit_context(page, user, language, revision_id, js_config,
+                                                          perm_error=True)
+                    except errors.ConcurrentWikiEditError:
+                        # TODO form containing concurrent page content
+                        context = _wiki_page_edit_context(page, user, language, revision_id, js_config,
+                                                          concurrent_edit_error=True)
                     else:
                         # Redirect to normal view
                         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
