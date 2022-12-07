@@ -100,29 +100,29 @@
     </article>
   </main>
   {% block post-content %}{% endblock %}
+{% endblock %}
 
-  {% block page-scripts %}
-    <script id="wiki-config-script">window.WIKI_CONFIG = {{ context.wiki_js_config }};</script>
-    <script src="{% static 'ottm/libs/jquery.confirmExit.min.js' %}"></script>
-    <script src="{% static 'ottm/wiki/common.min.js' %}"></script>
-    <script src="{% static 'ottm/forms.min.js' %}"></script>
-    {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}
-      {# Using "with" to avoid warning #}
-      {% with path='ottm/wiki/special_pages/js/'|add:context.page.title|add:'.min.js' %}
-        <link href="{% static path %}" rel="stylesheet">
-      {% endwith %}
-    {% endif %}
+{% block page-scripts %}
+  <script id="wiki-config-script">window.WIKI_CONFIG = {{ context.wiki_js_config|safe }};</script>
+  <script src="{% static 'ottm/libs/jquery.confirmExit.min.js' %}"></script>
+  <script src="{% static 'ottm/wiki/main.min.js' %}"></script>
+  <script src="{% static 'ottm/forms.min.js' %}"></script>
+  {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}
+    {# Using "with" to avoid warning #}
+    {% with path='ottm/wiki/special_pages/js/'|add:context.page.title|add:'.min.js' %}
+      <link href="{% static path %}" rel="stylesheet">
+    {% endwith %}
+  {% endif %}
 
-    {% wiki_static 'Interface:Common.js' %}
-    {% if not context.user.is_anonymous %}
-      {% wiki_static 'User:'|add:context.user.username|add:'/Common.js' %}
+  {% wiki_static 'Interface:Common.js' %}
+  {% if not context.user.is_anonymous %}
+    {% wiki_static 'User:'|add:context.user.username|add:'/Common.js' %}
+  {% endif %}
+  {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT or context.action == ACTION_TALK %}
+    <script src="{% static 'ottm/libs/ace-editor/ace.js' %}"></script>
+    <script src="{% static 'ottm/wiki/editor.min.js' %}"></script>
+    {% if context.action == ACTION_TALK %}
+      <script src="{% static 'ottm/wiki/talk.min.js' %}"></script>
     {% endif %}
-    {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT or context.action == ACTION_TALK %}
-      <script src="{% static 'ottm/libs/ace-editor/ace.js' %}"></script>
-      <script src="{% static 'ottm/wiki/editor.min.js' %}"></script>
-      {% if context.action == ACTION_TALK %}
-        <script src="{% static 'ottm/wiki/talk.min.js' %}"></script>
-      {% endif %}
-    {% endif %}
-  {% endblock %}
+  {% endif %}
 {% endblock %}

@@ -1,6 +1,7 @@
 {% extends 'ottm/ottm-base.html' %}
 
 {% block page-content %}
+  {{ block.super }}
   <div class="container">
     <h1 id="page-title">{% block page-title %}{{ context.title }}{% endblock %}</h1>
     {% block container-content %}{% endblock %}

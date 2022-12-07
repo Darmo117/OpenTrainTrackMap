@@ -13,6 +13,7 @@
 {% endblock %}
 
 {% block page-content %}
+  {{ block.super }}
   <aside>{% block side-menu %}{% endblock %}</aside>
   <div id="map"></div>
 {% endblock %}
