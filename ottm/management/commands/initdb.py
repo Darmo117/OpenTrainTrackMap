@@ -1,10 +1,11 @@
 """This module defines a command that initializes the database."""
 import django.core.management.base as dj_mngmt
 
-from ... import models
+from ... import models, settings
 from ...api import auth
 from ...api.groups import *
 from ...api.permissions import *
+from ...api.wiki import pages, namespaces as w_ns
 
 
 class Command(dj_mngmt.BaseCommand):
@@ -72,6 +73,37 @@ class Command(dj_mngmt.BaseCommand):
         wiki_user.internal_object.groups.add(models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATOR))
         edit_comment = 'Wiki setup.'
 
-        # TODO create pages
+        ns, title = pages.split_title(pages.MAIN_PAGE_TITLE)
+        content = f'Welcome to {settings.SITE_NAME}’s wiki!'
+        pages.edit_page(None, wiki_user, models.Page(namespace_id=ns.id, title=title), content, edit_comment)
+
+        content = """
+/*
+ * Put the wiki’s global JavaScript here. It will be loaded on every wiki page, regardless of device.
+ */
+""".strip()
+        pages.edit_page(None, wiki_user, models.Page(namespace_id=w_ns.NS_INTERFACE.id, title='Common.js'), content,
+                        edit_comment)
+        content = """
+/*
+ * Put the wiki’s global CSS here. It will be loaded on every wiki page, regardless of device.
+ */
+""".strip()
+        pages.edit_page(None, wiki_user, models.Page(namespace_id=w_ns.NS_INTERFACE.id, title='Common.css'), content,
+                        edit_comment)
+        content = """
+/*
+ * Put the wiki’s mobile JavaScript here. It will be loaded on every wiki page on mobile devices only.
+ */
+""".strip()
+        pages.edit_page(None, wiki_user, models.Page(namespace_id=w_ns.NS_INTERFACE.id, title='Mobile.js'), content,
+                        edit_comment)
+        content = """
+/*
+ * Put the wiki’s mobile CSS here. It will be loaded on every wiki page on mobile devices only.
+ */
+""".strip()
+        pages.edit_page(None, wiki_user, models.Page(namespace_id=w_ns.NS_INTERFACE.id, title='Mobile.css'), content,
+                        edit_comment)
 
         self.stdout.write('Done.')
