@@ -122,14 +122,10 @@ def edit_page(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Pa
     if not page.exists:
         page.save()
         # Add to log
-        models.PageCreationLog(
-            performer=author.username,
-            page_namespace_id=page.namespace_id,
-            page_title=page.title,
-        )
+        models.PageCreationLog(performer=author.internal_object, page=page).save()
     models.PageRevision(
         page=page,
-        author=author.internal_user,
+        author=author.internal_object,
         comment=comment,
         is_minor=minor_edit,
         content=content,
@@ -151,7 +147,7 @@ def follow_page(user: models.User, page: models.Page, follow: bool) -> bool:
     user_follows = page.is_user_following(user)
     if follow and not user_follows:
         models.PageFollowStatus(
-            user=user.internal_user,
+            user=user.internal_object,
             page_namespace_id=page.namespace_id,
             page_title=page.title,
         ).save()

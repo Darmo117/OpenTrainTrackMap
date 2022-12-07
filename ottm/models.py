@@ -62,18 +62,15 @@ def username_validator(value: str):
 class User:
     """Wrapper class around CustomUser and AnonymousUser classes."""
 
-    def __init__(self, dj_user: CustomUser, anonymous_username: str = None):
+    def __init__(self, dj_user: CustomUser):
         """Create a wrapper around the given user.
 
         :param dj_user: Either a CustomUser or AnonymousUser.
-        :param anonymous_username: If the wrapped user is anonymous,
-            the username to use instead of the default empty string.
         """
         self._user = dj_user
-        self._anonymous_username = anonymous_username
 
     @property
-    def internal_user(self) -> CustomUser:
+    def internal_object(self) -> CustomUser:
         """Reference to the internal database user object."""
         return self._user
 
@@ -92,8 +89,6 @@ class User:
     @property
     def username(self) -> str:
         """This user’s username."""
-        if self.is_anonymous:
-            return self._anonymous_username
         return self._user.username
 
     @username.setter
@@ -151,13 +146,12 @@ class User:
     @property
     def block(self) -> UserBlock | None:
         """This user’s block status or None if the user’s not blocked."""
-        return self._user.block if not self.is_anonymous else None
-
-    @block.setter
-    def block(self, value: UserBlock | None):
-        """Set this user’s block status. May be None. User must not be anonymous."""
-        self._check_not_anonymous()
-        self._user.block = value
+        if self.is_anonymous:
+            return None
+        try:
+            return self._user.block
+        except dj_exc.ObjectDoesNotExist:
+            return None
 
     @property
     def edits(self) -> dj_models.Manager[EditGroup]:
@@ -933,14 +927,24 @@ class UnitTranslation(Translation):
 ########
 
 
-class RevisionMixin:
-    """Mixin for all revision models."""
+class Revision(dj_models.Model):
+    """Base class for all revision models."""
     date = dj_models.DateTimeField(auto_now_add=True)
     author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, null=True)
     comment = dj_models.CharField(max_length=200, null=True, blank=True)
     comment_hidden = dj_models.BooleanField(default=False)
     hidden = dj_models.BooleanField(default=False)
     is_minor = dj_models.BooleanField(default=False)
+    tags = dj_models.ManyToManyField('Tag')
+
+    class Meta:
+        abstract = True
+        get_latest_by = 'date'
+
+
+class NonDeletableMixin:
+    def delete(self, *args, **kwargs):
+        raise RuntimeError(f'cannot delete instances of {self.__class__.__name__}')
 
 
 #########
@@ -953,7 +957,7 @@ def page_title_validator(value: str):
         raise dj_exc.ValidationError('invalid page title', code='page_invalid_title')
 
 
-class Page(dj_models.Model):
+class Page(dj_models.Model, NonDeletableMixin):
     """Represents a wiki page."""
     namespace_id = dj_models.IntegerField()
     title = dj_models.CharField(max_length=200, validators=[page_title_validator])
@@ -1029,7 +1033,7 @@ class Page(dj_models.Model):
         ip_block = None
         if user.is_anonymous:
             try:
-                ip_block = IPBlock.objects.get(ip=user.internal_user.ip)
+                ip_block = IPBlock.objects.get(ip=user.internal_object.ip)
             except IPBlock.DoesNotExist:
                 pass
         own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
@@ -1054,7 +1058,7 @@ class Page(dj_models.Model):
         ip_block = None
         if user.is_anonymous:
             try:
-                ip_block = IPBlock.objects.get(ip=user.internal_user.ip)
+                ip_block = IPBlock.objects.get(ip=user.internal_object.ip)
             except IPBlock.DoesNotExist:
                 pass
         own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
@@ -1071,7 +1075,7 @@ class Page(dj_models.Model):
         :param user: The user.
         :return: True if the user follows this page, false otherwise.
         """
-        return not user.is_anonymous and user.internal_user.followed_pages.filter(
+        return not user.is_anonymous and user.internal_object.followed_pages.filter(
             page_namespace_id=self.namespace_id,
             page_title=self.title,
         ).exists()
@@ -1079,7 +1083,7 @@ class Page(dj_models.Model):
     def get_content(self) -> str:
         """Return this page’s content or an empty string if it does not exist."""
         if self.exists and (revision := self.revisions.latest()):
-            return revision.text
+            return revision.content
         return ''
 
     def get_edit_protection(self) -> PageProtection | None:
@@ -1158,25 +1162,15 @@ class Tag(dj_models.Model):
     label = dj_models.CharField(max_length=20, validators=[tag_label_validator])
 
 
-class PageRevision(dj_models.Model, RevisionMixin):
-    """A page revision is a version of a page’ content at a given time."""
-    page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='revisions')
-    tags = dj_models.ManyToManyField(Tag, related_name='page_revisions')
-    content = dj_models.TextField(blank=True)
-
-    class Meta:
-        get_latest_by = 'date'
-
-
 ###############
 # Discussions #
 ###############
 
 
-class Topic(dj_models.Model):
+class Topic(dj_models.Model, NonDeletableMixin):
     """A talk topic groups a hierarchical list of user messages."""
     page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='topics')
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='wiki_topics', null=True)
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='wiki_topics', null=True)
     date = dj_models.DateTimeField(auto_now_add=True)
 
     def get_title(self) -> str:
@@ -1184,20 +1178,10 @@ class Topic(dj_models.Model):
         return revision.title if (revision := self.revisions.latest()) else ''
 
 
-class TopicRevision(dj_models.Model, RevisionMixin):
-    """A topic revision is a version of a topic’s title at a given time."""
-    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='revisions')
-    tags = dj_models.ManyToManyField(Tag, related_name='topic_revisions')
-    title = dj_models.CharField(max_length=200)
-
-    class Meta:
-        get_latest_by = 'date'
-
-
-class Message(dj_models.Model):
+class Message(dj_models.Model, NonDeletableMixin):
     """Messages can be posted by users under specific topics."""
     topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='messages')
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.CASCADE, related_name='wiki_messages', null=True)
+    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, related_name='wiki_messages', null=True)
     date = dj_models.DateTimeField(auto_now_add=True)
     response_to = dj_models.ForeignKey('self', on_delete=dj_models.SET_NULL, related_name='responses', null=True)
 
@@ -1206,14 +1190,27 @@ class Message(dj_models.Model):
         return revision.text if (revision := self.revisions.latest()) else ''
 
 
-class MessageRevision(dj_models.Model, RevisionMixin):
+#############
+# Revisions #
+#############
+
+
+class PageRevision(Revision, NonDeletableMixin):
+    """A page revision is a version of a page’s content at a given time."""
+    page = dj_models.ForeignKey(Page, on_delete=dj_models.CASCADE, related_name='revisions')
+    content = dj_models.TextField()
+
+
+class TopicRevision(Revision, NonDeletableMixin):
+    """A topic revision is a version of a topic’s title at a given time."""
+    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.CASCADE, related_name='revisions')
+    title = dj_models.CharField(max_length=200)
+
+
+class MessageRevision(Revision, NonDeletableMixin):
     """A message revision is a version of a message’s content at a given time."""
     message = dj_models.ForeignKey(Message, on_delete=dj_models.CASCADE, related_name='revisions')
-    tags = dj_models.ManyToManyField(Tag, related_name='revisions')
-    text = dj_models.TextField(blank=True)
-
-    class Meta:
-        get_latest_by = 'date'
+    text = dj_models.TextField()
 
 
 ########
@@ -1221,7 +1218,8 @@ class MessageRevision(dj_models.Model, RevisionMixin):
 ########
 
 
-class Log(dj_models.Model):
+class Log(dj_models.Model, NonDeletableMixin):
+    """Base class for logs. Logs are models that store all operations performed by users."""
     date = dj_models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -1229,55 +1227,63 @@ class Log(dj_models.Model):
 
 
 class PageLog(Log):
-    performer = dj_models.CharField(max_length=150, validators=[username_validator])
-    # No foreign key to Page as pages may be deleted.
-    page_namespace_id = dj_models.IntegerField()
-    page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
+    """Base class for page-related operations."""
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, null=True)
+    page = dj_models.ForeignKey(Page, on_delete=dj_models.SET_NULL, null=True)
 
     class Meta:
         abstract = True
 
 
 class PageCreationLog(PageLog):
+    """New entries are added each time a page is created."""
     pass
 
 
 class PageDeletionLog(PageLog):
+    """New entries are added each time a page is deleted."""
     reason = dj_models.CharField(max_length=200, null=True, blank=True)
 
 
 class PageProtectionLog(PageLog):
+    """New entries are added each time a page’s protection status changes."""
     end_date = dj_models.DateTimeField()
     reason = dj_models.TextField(null=True, blank=True)
     protection_level = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
 
 
 class UserLog(Log):
-    username = dj_models.CharField(max_length=150, validators=[username_validator])
+    """Base class for user-related operations."""
+    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, null=True)
 
     class Meta:
         abstract = True
 
 
 class UserAccountCreationLog(UserLog):
+    """New entries are added each time a user account is created."""
     pass
 
 
 class UserAccountDeletionLog(UserLog):
+    """New entries are added each time a user account is deleted."""
     pass
 
 
 class BlockLogMixin:
-    performer = dj_models.CharField(max_length=150, validators=[username_validator])
+    """Mixin class that holds fields shared between block logs."""
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.SET_NULL, null=True)
     reason = dj_models.CharField(max_length=200, null=True, blank=True)
     end_date = dj_models.DateTimeField(null=True, blank=True)
     allow_messages_on_own_user_page = dj_models.BooleanField()
 
 
 class UserBlockLog(UserLog, BlockLogMixin):
+    """New entries are added each time a user’s block status changes."""
     allow_editing_own_settings = dj_models.BooleanField()
 
 
 class IPBlockLog(Log, BlockLogMixin):
+    """New entries are added each time an IP address’ block status changes."""
     ip = dj_models.CharField(max_length=39)
     allow_account_creation = dj_models.BooleanField()

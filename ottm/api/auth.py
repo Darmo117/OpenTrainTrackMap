@@ -71,7 +71,7 @@ def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest) -
         dj_user = models.CustomUser.objects.get(ip=ip)
     except models.CustomUser.DoesNotExist:
         # Create temporary user account
-        dj_user = models.CustomUser.objects.create_user(f'Anonymous-{nb + 1}', ip=ip)
+        dj_user = models.CustomUser.objects.create_user(username=f'Anonymous-{nb + 1}', ip=ip)
         dj_user.save()
         dj_user.groups.add(models.UserGroup.objects.get(label='all'))
 
@@ -107,12 +107,12 @@ def create_user(username: str, email: str = None, password: str = None, ignore_e
         except dj_exc.ValidationError:
             raise errors.InvalidEmailError(email)
 
-    dj_user = models.CustomUser.objects.create_user(username, email=email, password=password)
+    dj_user = models.CustomUser.objects.create_user(username=username, email=email, password=password)
     dj_user.save()
     dj_user.groups.add(models.UserGroup.objects.get(label=groups.GROUP_ALL))
     dj_user.groups.add(models.UserGroup.objects.get(label=groups.GROUP_USER))
     # Add to log
-    models.UserAccountCreationLog(username=username).save()
+    models.UserAccountCreationLog(user=dj_user).save()
 
     return models.User(dj_user)
 
