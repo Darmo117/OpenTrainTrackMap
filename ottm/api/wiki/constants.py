@@ -12,7 +12,7 @@ CT_MODULE = 'module'
 CT_JS = 'js'
 CT_CSS = 'css'
 CT_JSON = 'json'
-CONTENT_TYPES: tuple[str, ...] = tuple(v for k, v in globals().items() if k.startswith('CT_'))
+CONTENT_TYPES: dict[str, str] = {k: v for k, v in globals().items() if k.startswith('CT_')}
 
 MIME_TYPES = {
     CT_WIKIPAGE: 'text/plain',
@@ -20,4 +20,12 @@ MIME_TYPES = {
     CT_JS: 'text/javascript',
     CT_CSS: 'text/css',
     CT_JSON: 'application/json',
+}
+
+LANGUAGE_CODES = {
+    CT_WIKIPAGE: 'wikicode',
+    CT_MODULE: 'python',
+    CT_JS: 'js',
+    CT_CSS: 'css',
+    CT_JSON: 'json',
 }

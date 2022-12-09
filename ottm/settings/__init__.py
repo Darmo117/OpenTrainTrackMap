@@ -1,21 +1,53 @@
 """This package defines the website’s settings."""
+import datetime
 import json as _json
 import logging as _logging
 import pathlib as _pathlib
 import re as _re
 
+import markdown
+
 
 class UILanguage:
     """Class representing a language of the site’s UI."""
 
-    def __init__(self, language, mappings: dict[str, str]):
+    def __init__(
+            self,
+            language,
+            day_names: list[str],
+            abbr_day_names: list[str],
+            month_names: list[str],
+            abbr_month_names: list[str],
+            am_pm: tuple[str, str],
+            mappings: dict[str, str],
+    ):
         """Create a UI language.
 
         :param language: Related language instance from the database.
         :type language: ottm.models.Language
+        :param day_names: Names of week days.
+        :param abbr_day_names: Abbreviated names of week days.
+        :param month_names: Names of months.
+        :param abbr_month_names: Abbreviated names of months.
+        :param am_pm: AM and PM equivalents for the language.
         :param mappings: Language’s UI translation mappings.
         """
+        if len(day_names) != 7:
+            raise ValueError('day_names expected 7 values')
+        if len(abbr_day_names) != 7:
+            raise ValueError('abbr_day_names expected 7 values')
+        if len(month_names) != 12:
+            raise ValueError('month_names expected 12 values')
+        if len(abbr_month_names) != 12:
+            raise ValueError('abbr_month_names expected 12 values')
+        if len(am_pm) != 2:
+            raise ValueError('am_pm expected 2 values')
         self._language = language
+        self._day_names = day_names
+        self._abbr_day_names = abbr_day_names
+        self._month_names = month_names
+        self._abbr_month_names = abbr_month_names
+        self._am_pm = am_pm
         self._mappings = mappings
 
     @property
@@ -34,9 +66,9 @@ class UILanguage:
         return self._language.writing_direction
 
     @property
-    def date_format(self) -> str:
-        """This language’s date format."""
-        return self._language.date_format
+    def default_datetime_format(self) -> str:
+        """This language’s default datetime format."""
+        return self._language.default_datetime_format.format
 
     def translate(self, key: str, default: str = None, /, **kwargs) -> str:
         """Translate the given key.
@@ -46,7 +78,34 @@ class UILanguage:
         :param kwargs: Translation’s arguments.
         :return: The translated text or the key/default value if it is undefined for the current language.
         """
-        return self._mappings.get(key, default if default is not None else key).format(**kwargs)
+        text = self._mappings.get(key, default if default is not None else key)
+        text = text.replace('license-url', f'https://creativecommons.org/licenses/by-sa/3.0/deed.{self.code}')
+        text = text.format(**kwargs)
+        text = markdown.markdown(text, output_format='html')[3:-4]  # Remove enclosing <p> tags
+        return text
+
+    def format_datetime(self, dt: datetime.datetime, format_: str) -> str:
+        """Format a datetime object according to the given format.
+        All format codes from ``datetime.strftime()`` are available except ``%c``, ``%x`` and ``%X``.
+
+        :param dt: The datetime object to format.
+        :param format_: The desired format.
+        :return: The formatted date.
+        """
+        for c in 'cxX':
+            if f'%{c}' in format_:
+                raise ValueError(f'illegal format code %{c} in format {format_!r}')
+        if '%a' in format_:
+            format_ = format_.replace('%a', self._day_names[dt.weekday()])
+        if '%A' in format_:
+            format_ = format_.replace('%A', self._abbr_day_names[dt.weekday()])
+        if '%b' in format_:
+            format_ = format_.replace('%b', self._month_names[dt.weekday()])
+        if '%B' in format_:
+            format_ = format_.replace('%B', self._abbr_month_names[dt.weekday()])
+        if '%p' in format_:
+            format_ = format_.replace('%p', self._am_pm[dt.hour == 0 or dt.hour > 12])
+        return dt.strftime(format_)
 
 
 SITE_NAME = 'OpenTrainTrackMap'
@@ -80,9 +139,15 @@ def init_languages():
             LOGGER.error(f'Missing translation file for language code {language.code}')
             continue
         with lang_file.open(encoding='utf8') as lang_file:
+            json_obj = _json.load(lang_file)
             LANGUAGES[language.code] = UILanguage(
                 language=language,
-                mappings=_build_mapping(_json.load(lang_file)),
+                day_names=json_obj['day_names'],
+                abbr_day_names=json_obj['abbr_day_names'],
+                month_names=json_obj['month_names'],
+                abbr_month_names=json_obj['abbr_month_names'],
+                am_pm=json_obj['am_pm'],
+                mappings=_build_mapping(json_obj['mappings']),
             )
             LOGGER.info(f'Loaded translations for {language.name} ({language.code})')
     LOGGER.info('Translations loaded.')

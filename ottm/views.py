@@ -44,9 +44,10 @@ def get_tile(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
 def map_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     """OTTM map page handler."""
     user = auth.get_user_from_request(request)
+    language = _get_page_language(request, user)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, auth.get_ip(request))
+        'context': _get_map_page_context(request, user, auth.get_ip(request))
     })
 
 
@@ -56,7 +57,7 @@ def edit_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     user = auth.get_user_from_request(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, action=EDIT_MAP, no_index=True)
+        'context': _get_map_page_context(request, user, action=EDIT_MAP, no_index=True)
     })
 
 
@@ -65,7 +66,7 @@ def history_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     user = auth.get_user_from_request(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, action=MAP_HISTORY, no_index=True)
+        'context': _get_map_page_context(request, user, action=MAP_HISTORY, no_index=True)
     })
 
 
@@ -79,7 +80,7 @@ def page_handler(page_name: str) -> typ.Callable[[dj_wsgi.WSGIRequest], dj_respo
     def handler(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
         user = auth.get_user_from_request(request)
         return dj_scut.render(request, f'ottm/{page_name}.html', context={
-            'context': _get_page_context(user, page_name)
+            'context': _get_page_context(request, user, page_name)
         })
 
     return handler
@@ -107,7 +108,7 @@ def user_profile(request: dj_wsgi.WSGIRequest, username: str) -> dj_response.Htt
     user = auth.get_user_from_request(request)
     target_user = auth.get_user_from_name(username)
     return dj_scut.render(request, 'ottm/user-profile.html', context={
-        'context': _get_user_page_context(user, target_user)
+        'context': _get_user_page_context(request, user, target_user)
     })
 
 
@@ -119,7 +120,7 @@ def user_settings(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:map'))
 
     return dj_scut.render(request, 'ottm/user-settings.html', context={
-        'context': _get_page_context(user, 'user_settings')
+        'context': _get_page_context(request, user, 'user_settings')
     })
 
 
@@ -129,7 +130,7 @@ def user_contributions(request: dj_wsgi.WSGIRequest, username: str) -> dj_respon
     target_user = auth.get_user_from_name(username)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(user, action=MAP_HISTORY)
+        'context': _get_map_page_context(request, user, action=MAP_HISTORY)
     })
 
 
@@ -139,7 +140,7 @@ def user_notes(request: dj_wsgi.WSGIRequest, username: str) -> dj_response.HttpR
     target_user = auth.get_user_from_name(username)
 
     return dj_scut.render(request, 'ottm/user-notes.html', context={
-        'context': _get_page_context(user, 'notes', no_index=True)
+        'context': _get_page_context(request, user, 'notes', no_index=True)
     })
 
 
@@ -156,10 +157,8 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
     site_name = settings.SITE_NAME
     kwargs = request.GET
     user = auth.get_user_from_request(request)
-    if (lang_code := kwargs.get('lang')) and lang_code in settings.LANGUAGES:
-        language = settings.LANGUAGES.get(lang_code)
-    else:
-        language = user.prefered_language
+    language = _get_page_language(request, user)
+    dark_mode = _get_dark_mode_status(request, user)
     page_title = w_pages.get_correct_title(raw_page_title)
     ns, title = w_pages.split_title(page_title)
     action = kwargs.get('action', w_cons.ACTION_SHOW)
@@ -176,6 +175,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                 page=page,
                 user=user,
                 language=language,
+                dark_mode=dark_mode,
                 page_exists=False,
                 js_config=js_config,
             )
@@ -186,6 +186,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                 page=page,
                 user=user,
                 language=language,
+                dark_mode=dark_mode,
                 page_exists=True,
                 js_config=js_config,
                 required_perms=special_page.permissions_required,
@@ -198,6 +199,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                 page=page,
                 user=user,
                 language=language,
+                dark_mode=dark_mode,
                 page_exists=True,
                 js_config=js_config,
                 **data,
@@ -219,21 +221,22 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                     status=200 if page.exists else 404,
                 )
             case w_cons.ACTION_EDIT:
-                context = _wiki_page_edit_context(page, user, language, revision_id, js_config)
+                context = _wiki_page_edit_context(page, user, language, dark_mode, revision_id, js_config)
             case w_cons.ACTION_SUBMIT:
                 form = forms.WikiEditPageForm(request.POST)
                 if not form.is_valid():
-                    context = _wiki_page_edit_context(page, user, language, revision_id, js_config, form=form)
+                    context = _wiki_page_edit_context(page, user, language, dark_mode, revision_id, js_config,
+                                                      form=form)
                 else:
                     try:
                         w_pages.edit_page(request, user, page, form.content, form.comment, form.minor_edit,
                                           form.follow_page, form.section_id)
                     except errors.MissingPermissionError:
-                        context = _wiki_page_edit_context(page, user, language, revision_id, js_config,
+                        context = _wiki_page_edit_context(page, user, language, dark_mode, revision_id, js_config,
                                                           perm_error=True)
                     except errors.ConcurrentWikiEditError:
                         # TODO form containing concurrent page content
-                        context = _wiki_page_edit_context(page, user, language, revision_id, js_config,
+                        context = _wiki_page_edit_context(page, user, language, dark_mode, revision_id, js_config,
                                                           concurrent_edit_error=True)
                     else:
                         # Redirect to normal view
@@ -241,18 +244,19 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                             'raw_page_title': page.full_title,
                         }))
             case w_cons.ACTION_HISTORY:
-                context = _wiki_page_history_context(page, user, language, results_per_page, page_index, js_config)
+                context = _wiki_page_history_context(page, user, language, dark_mode, results_per_page, page_index,
+                                                     js_config)
             case w_cons.ACTION_TALK:
                 # TODO get topics
                 context = None
             case _:
-                context = _show_wiki_page_context(page, user, language, revision_id, results_per_page, page_index,
-                                                  js_config)
+                context = _show_wiki_page_context(page, user, language, dark_mode, revision_id, results_per_page,
+                                                  page_index, js_config)
         status = 200 if context.page.exists else 404
 
     ctxt = {
         'context': context,
-        **w_cons.ACTIONS,
+        **w_cons.__dict__,
         **w_ns.NAMESPACES_DICT,
     }
     return dj_scut.render(request, 'ottm/wiki/page.html', context=ctxt, status=status)
@@ -278,8 +282,39 @@ def _get_referer_url(request: dj_wsgi.WSGIRequest) -> str:
     return request.GET.get('return_to', '/')
 
 
-def _get_page_context(user: models.User, page_id: str, no_index: bool = False,
-                      titles_args: dict[str, str] = None) -> page_context.PageContext:
+def _get_page_language(request: dj_wsgi.WSGIRequest, user: models.User) -> settings.UILanguage:
+    """Return the language for the page.
+
+    :param request: Client request.
+    :param user: Current user.
+    :return: Page’s language.
+    """
+    if (lang_code := request.GET.get('lang')) and lang_code in settings.LANGUAGES:
+        return settings.LANGUAGES.get(lang_code)
+    else:
+        return user.prefered_language
+
+
+def _get_dark_mode_status(request: dj_wsgi.WSGIRequest, user: models.User) -> bool:
+    """Return the dark mode status for the page.
+
+    :param request: Client request.
+    :param user: Current user.
+    :return: True if the dark mode is active, false otherwise.
+    """
+    if 'dark_mode' in request.GET:
+        return bool(request.GET['dark_mode'])
+    else:
+        return user.uses_dark_mode
+
+
+def _get_page_context(
+        request: dj_wsgi.WSGIRequest,
+        user: models.User,
+        page_id: str,
+        no_index: bool = False,
+        titles_args: dict[str, str] = None,
+) -> page_context.PageContext:
     """Return a context object for the given page ID.
 
     :param user: Current user.
@@ -288,12 +323,16 @@ def _get_page_context(user: models.User, page_id: str, no_index: bool = False,
     :param titles_args: Dict object containing values to use in the page title translation.
     :return: A PageContext object.
     """
-    kwargs = _get_base_context_args(user, page_id=page_id, titles_args=titles_args, no_index=no_index)
+    kwargs = _get_base_context_args(request, user, page_id=page_id, titles_args=titles_args, no_index=no_index)
     return page_context.PageContext(**kwargs)
 
 
-def _get_map_page_context(user: models.User, action: str = VIEW_MAP,
-                          no_index: bool = False) -> page_context.MapPageContext:
+def _get_map_page_context(
+        request: dj_wsgi.WSGIRequest,
+        user: models.User,
+        action: str = VIEW_MAP,
+        no_index: bool = False,
+) -> page_context.MapPageContext:
     """Return a context object for the map page.
 
     :param user: Current user.
@@ -324,13 +363,17 @@ def _get_map_page_context(user: models.User, action: str = VIEW_MAP,
     }
 
     for k in translations_keys:
-        js_config['trans'][k] = user.prefered_language.translate(k)
+        js_config['trans'][k] = _get_page_language(request, user).translate(k)
 
-    kwargs = _get_base_context_args(user, no_index=no_index)
+    kwargs = _get_base_context_args(request, user, no_index=no_index)
     return page_context.MapPageContext(**kwargs, map_js_config=js_config)
 
 
-def _get_user_page_context(user: models.User, target_user: models.User) -> page_context.UserPageContext:
+def _get_user_page_context(
+        request: dj_wsgi.WSGIRequest,
+        user: models.User,
+        target_user: models.User,
+) -> page_context.UserPageContext:
     """Return a context object for the user profile page.
 
     :param user: Current user.
@@ -338,12 +381,17 @@ def _get_user_page_context(user: models.User, target_user: models.User) -> page_
     :return: A UserPageContext object.
     """
     titles_rags = {'username': target_user.username}
-    kwargs = _get_base_context_args(user, page_id='user_profile', titles_args=titles_rags)
+    kwargs = _get_base_context_args(request, user, page_id='user_profile', titles_args=titles_rags)
     return page_context.UserPageContext(**kwargs, target_user=target_user)
 
 
-def _get_base_context_args(user: models.User, page_id: str = None, titles_args: dict[str, str] = None,
-                           no_index: bool = False) -> dict[str, typ.Any]:
+def _get_base_context_args(
+        request: dj_wsgi.WSGIRequest,
+        user: models.User,
+        page_id: str = None,
+        titles_args: dict[str, str] = None,
+        no_index: bool = False,
+) -> dict[str, typ.Any]:
     """Return parameters common to all page context objects.
 
     :param user: Current user.
@@ -352,9 +400,10 @@ def _get_base_context_args(user: models.User, page_id: str = None, titles_args: 
     :param no_index: Whether to insert a noindex clause within the HTML page.
     :return: A dict object containing context parameters.
     """
+    language = _get_page_language(request, user)
     if page_id:
-        title = user.prefered_language.translate(f'page.{page_id}.title')
-        tab_title = user.prefered_language.translate(f'page.{page_id}.tab_title')
+        title = language.translate(f'page.{page_id}.title')
+        tab_title = language.translate(f'page.{page_id}.tab_title')
         if titles_args:
             title = title.format(**titles_args)
             tab_title = tab_title.format(**titles_args)
@@ -364,10 +413,10 @@ def _get_base_context_args(user: models.User, page_id: str = None, titles_args: 
     return {
         'title': title,
         'tab_title': tab_title,
-        'site_name': settings.SITE_NAME,
         'no_index': no_index,
         'user': user,
-        'language': user.prefered_language,
+        'language': language,
+        'dark_mode': _get_dark_mode_status(request, user),
     }
 
 
@@ -375,6 +424,7 @@ def _show_wiki_page_context(
         page: models.Page,
         user: models.User,
         language: settings.UILanguage,
+        dark_mode: bool,
         revision_id: int | None,
         results_per_page: int,
         page_index: int,
@@ -385,6 +435,7 @@ def _show_wiki_page_context(
     :param page: Page object.
     :param user: Current user.
     :param language: Page’s language.
+    :param dark_mode: Whether to activate the dark mode.
     :param revision_id: Page revision ID.
     :param results_per_page: Number of results to display per page. Used only for category pages.
     :param page_index: Index of current page. Used only for category pages.
@@ -405,11 +456,11 @@ def _show_wiki_page_context(
         revision = page.revisions.get(id=revision_id)
         archived = True
     return page_context.WikiPageShowActionContext(
-        site_name=settings.SITE_NAME,
         page=page,
         no_index=no_index,
         user=user,
         language=language,
+        dark_mode=dark_mode,
         js_config=js_config,
         content=content,
         revision=revision,
@@ -425,6 +476,7 @@ def _wiki_page_edit_context(
         page: models.Page,
         user: models.User,
         language: settings.UILanguage,
+        dark_mode: bool,
         revision_id: int | None,
         js_config: dict,
         form: forms.WikiEditPageForm = None,
@@ -436,6 +488,7 @@ def _wiki_page_edit_context(
     :param page: Page object.
     :param user: Current user.
     :param language: Page’s language.
+    :param dark_mode: Whether to activate the dark mode.
     :param revision_id: Page revision ID.
     :param js_config: Dict object containing JS config values.
     :param form: Edit form object.
@@ -460,10 +513,10 @@ def _wiki_page_edit_context(
         },
     )
     return page_context.WikiPageEditActionContext(
-        site_name=settings.SITE_NAME,
         page=page,
         user=user,
         language=language,
+        dark_mode=dark_mode,
         js_config=js_config,
         revision=revision,
         archived=archived,
@@ -479,6 +532,7 @@ def _wiki_page_history_context(
         page: models.Page,
         user: models.User,
         language: settings.UILanguage,
+        dark_mode: bool,
         results_per_page: int,
         page_index: int,
         js_config: dict,
@@ -488,6 +542,7 @@ def _wiki_page_history_context(
     :param page: Page object.
     :param user: Current user.
     :param language: Page’s language.
+    :param dark_mode: Whether to activate the dark mode.
     :param results_per_page: Number of revisions to display per page.
     :param page_index: Index of current page.
     :param js_config: Dict object containing JS config values.
@@ -498,10 +553,10 @@ def _wiki_page_history_context(
     else:
         revisions = page.revisions.filter(hidden=False)
     return page_context.WikiPageHistoryActionContext(
-        site_name=settings.SITE_NAME,
         page=page,
         user=user,
         language=language,
+        dark_mode=dark_mode,
         js_config=js_config,
         revisions=revisions,
         revisions_per_page=results_per_page,

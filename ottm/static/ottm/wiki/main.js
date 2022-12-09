@@ -72,4 +72,7 @@
     Config: Config,
     config: new Config(),
   };
+
+  // Apply HLJS on all tagged elements
+  $(".hljs").each((_, element) => hljs.highlightElement(element));
 })();

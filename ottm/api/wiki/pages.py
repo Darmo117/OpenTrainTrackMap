@@ -91,7 +91,7 @@ def render_wikicode(code: str, user: models.User, language: settings.UILanguage)
     :param language: Page’s language.
     :return: The rendered wikicode.
     """
-    pass  # TODO
+    return code  # TODO
 
 
 def get_edit_notice(user: models.User, language: settings.UILanguage) -> str:
@@ -101,7 +101,7 @@ def get_edit_notice(user: models.User, language: settings.UILanguage) -> str:
     :param language: Page’s language.
     :return: The rendered edit notice.
     """
-    return _get_page_notice('EditNotice', user, language)
+    return get_interface_page('EditNotice', user, language)
 
 
 def get_new_page_notice(user: models.User, language: settings.UILanguage) -> str:
@@ -111,22 +111,27 @@ def get_new_page_notice(user: models.User, language: settings.UILanguage) -> str
     :param language: Page’s language.
     :return: The rendered new page notice.
     """
-    return _get_page_notice('NewPageNotice', user, language)
+    return get_interface_page('NewPageNotice', user, language)
 
 
-def _get_page_notice(title: str, user: models.User, language: settings.UILanguage) -> str:
-    """Return the rendered notice from "Interface:<title>/<lang_code>".
+def get_interface_page(title: str, user: models.User = None, language: settings.UILanguage = None,
+                       render: bool = True) -> str:
+    """Return the rendered interface page from "Interface:<title>/<lang_code>" if language is defined,
+    "Interface:<title>" otherwise.
 
-    :param title: Notice page title.
-    :param user: Current user.
-    :param language: Page’s language.
+    :param title: Interface page title.
+    :param user: Current user. May be None if render=False.
+    :param language: Page’s language. May be None if no localized subpage exists.
+    :param render: Whether to render the page’s content.
     :return: The rendered notice.
     """
+    if language:
+        title += f'/{language.code}'
     try:
-        content = models.Page.objects.get(namespace_id=namespaces.NS_INTERFACE.id, title=f'{title}/{language.code}')
+        page = models.Page.objects.get(namespace_id=namespaces.NS_INTERFACE.id, title=title)
     except models.Page.DoesNotExist:
         return ''
-    return render_wikicode(content, user, language)
+    return render_wikicode(page, user, language) if render else page.get_content()
 
 
 @dj_db_trans.atomic

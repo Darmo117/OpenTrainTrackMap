@@ -1,0 +1,16 @@
+{# Parameters: dark_mode: bool, menus: list[ottm.api.wiki.menus.Menu] #}
+{% for menu in menus %}
+  {% if menu.items %}
+    <div {% if menu.id %}id="wiki-nav-menu-{{ menu.id }}"{% endif %}
+         class="card {% if dark_mode %}bg-dark{% else %}bg-light{% endif %} mb-3">
+      <div class="card-header">{{ menu.title }}</div>
+      <div class="card-body">
+        <ul class="list-unstyled">
+          {% for item in menu.items %}
+            <li>{{ item|safe }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+{% endfor %}

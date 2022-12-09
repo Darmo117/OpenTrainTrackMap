@@ -7,7 +7,7 @@
   </p>
   <div class="row row-cols-1 row-cols-md-3">
     <div class="col mb-4">
-      <div class="card h-100">
+      <div class="card {% if context.dark_mode %}bg-dark{% else %}bg-light{% endif %} h-100">
         <div class="card-body">
           <h5 class="card-title"><a href="{% url 'ottm:basics' %}">Basics</a></h5>
           <div class="card-text">
@@ -17,7 +17,7 @@
       </div>
     </div>
     <div class="col mb-4">
-      <div class="card h-100">
+      <div class="card {% if context.dark_mode %}bg-dark{% else %}bg-light{% endif %} h-100">
         <div class="card-body">
           <h5 class="card-title">
             <a href="{% url 'ottm:wiki_page' raw_page_title='Help:Beginners' %}">
@@ -31,7 +31,7 @@
       </div>
     </div>
     <div class="col mb-4">
-      <div class="card h-100">
+      <div class="card {% if context.dark_mode %}bg-dark{% else %}bg-light{% endif %} h-100">
         <div class="card-body">
           <h5 class="card-title"><a href="{% url 'ottm:wiki_main_page' %}">{{ context.site_name }} Wiki</a></h5>
           <div class="card-text">

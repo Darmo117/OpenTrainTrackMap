@@ -1,10 +1,10 @@
 """This module defines the wiki’s namespaces."""
-import dataclasses
+import dataclasses as _dt
 
 SEPARATOR = ':'
 
 
-@dataclasses.dataclass(frozen=True)
+@_dt.dataclass(frozen=True)
 class Namespace:
     """Pages in different namespaces have different behaviors depending on the namespace’s configuration."""
     id: int

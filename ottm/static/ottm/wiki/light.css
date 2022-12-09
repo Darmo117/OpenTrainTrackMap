@@ -1,0 +1,19 @@
+#wiki-article-title, #wiki-footer {
+  border-color: #9d9d9d;
+}
+
+#wiki-footer {
+  background-color: #a9a9a9;
+}
+
+.wiki-red-link {
+  color: #c90c0c;
+}
+
+.wiki-red-link:hover {
+  color: #980c0c;
+}
+
+pre {
+  border-color: #9d9d9d;
+}

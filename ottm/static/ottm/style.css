@@ -15,8 +15,11 @@ html, body {
   font-size: 120%;
 }
 
+#navbar .nav-select {
+  height: initial;
+}
+
 #page-title {
-  background-color: #dbdbdb;
   text-align: center;
   padding: 10px 0 20px;
 }

@@ -58,7 +58,7 @@
 
 {% with form=context.edit_form trans_prefix='form.edit.' %}
   <form
-      action="{% url 'wikipy:page' raw_page_title=context.page.full_title|wiki_url_escape_page_title %}?action=submit"
+      action="{% url 'ottm:wiki_page' raw_page_title=context.page.full_title|wiki_url_escape %}?action=submit"
       method="post"
       id="wiki-{{ form.name|replace:'_,-' }}-form">
     {% if form.warn_unsaved_changes %}

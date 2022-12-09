@@ -21,18 +21,22 @@ class Command(dj_mngmt.BaseCommand):
     def _init_default_languages(self):
         from ... import models
         self.stdout.write('Initializing default languages…')
+        dtf1 = models.DateTimeFormat(format='%B, %d %Y %I:%M:%S %p')
+        dtf1.save()
+        dtf2 = models.DateTimeFormat(format='%d %B %Y %H:%M:%S')
+        dtf2.save()
         models.Language(
             code='en',
             name='English',
             writing_direction='ltr',
-            date_format='M j, Y',
+            default_datetime_format=dtf1,
             available_for_ui=True,
         ).save()
         models.Language(
             code='fr',
             name='Français',
             writing_direction='ltr',
-            date_format='j M Y',
+            default_datetime_format=dtf2,
             available_for_ui=True,
         ).save()
         self.stdout.write('Done.')
@@ -123,6 +127,30 @@ class Command(dj_mngmt.BaseCommand):
  */
 """.strip()
         pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Mobile.css'), content, edit_comment)
+        content = """
+* Navigation
+** MainPage-url|MainPage-name
+** Special:RandomPage|RandomPage-name
+* Contribute
+** Wiki:Forum|Forum
+** Special:RecentChanges|RecentChanges-name
+* Help
+** Help:Help|HelpPage-name
+** Wiki:Templates|Templates-name
+** Help:Conventions|Conventions-name
+** Help:Download|DownloadData-name
+""".strip()
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'SideMenu'), content, edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuNavigation/en'), 'Navigation',
+                        edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuNavigation/fr'), 'Navigation',
+                        edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuContribute/en'), 'Contribute',
+                        edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuContribute/fr'), 'Contribuer',
+                        edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuHelp/en'), 'Help', edit_comment)
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuHelp/fr'), 'Aide', edit_comment)
         # TODO
 
         self.stdout.write('Done.')

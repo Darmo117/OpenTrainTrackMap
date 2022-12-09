@@ -1,9 +1,10 @@
+{% load ottm %}
 {% load wiki %}
 
 {% if context.archived %}
   <div id="wiki-revision-navbox" class="alert alert-info text-center" role="alert">
     <div class="wiki-revision-navbox-message">
-      {% wiki_format_date context.revision.date as revision_date %}
+      {% ottm_format_date context.revision.date as revision_date %}
       {% wiki_inner_link 'User:'|add:context.revision.author.username as user_link %}
       {% wiki_translate 'revision.nav_box.label' user_link=user_link date=revision_date %}
     </div>
@@ -18,7 +19,11 @@
   </div>
 {% endif %}
 
-{{ context.rendered_page_content }}
+{% if context.page.content_type == CT_WIKIPAGE %}
+  {{ context.page_content }}
+{% else %}
+  <pre class="hljs language-{{ context.page_language }}">{{ context.page_content }}</pre>
+{% endif %}
 
 {% if context.page.namespace == NS_CATEGORY %}
   {% if context.cat_subcategories %}

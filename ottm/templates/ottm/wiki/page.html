@@ -1,9 +1,17 @@
 {% extends 'ottm/base.html' %}
 {% load static %}
+{% load ottm %}
 {% load wiki %}
 
 {% block styles %}
   <link href="{% static 'ottm/wiki/style.min.css' %}" rel="stylesheet">
+  {% if context.dark_mode %}
+    <link href="{% static 'ottm/wiki/dark.min.css' %}" rel="stylesheet">
+    <link href="{% static 'ottm/libs/highlight/styles/monokai.min.css' %}" rel="stylesheet">
+  {% else %}
+    <link href="{% static 'ottm/wiki/light.min.css' %}" rel="stylesheet">
+    <link href="{% static 'ottm/libs/highlight/styles/vs.min.css' %}" rel="stylesheet">
+  {% endif %}
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_css %}
     {# Using "with" to avoid warning #}
     {% with path='ottm/wiki/special_pages/css/'|add:context.page.title|add:'.min.css' %}
@@ -15,8 +23,22 @@
     {% wiki_static 'User:'|add:context.user.username|add:'/Common.css' %}
   {% endif %}
 
-  <link rel="stylesheet" href="{% static 'ottm/libs/materialdesign-icons/css/materialdesignicons.min.css' %}">
   {% block head %}{% endblock %}
+{% endblock %}
+
+{% block navbar-center %}
+  <form id="wiki-navbar-search-form" class="form-inline my-2 my-lg-0" method="get"
+        action="{% wiki_inner_link page_title='Special:Search' ignore_current_title=True only_url=True %}">
+    {% wiki_translate 'navbar.search.input.placeholder' as placeholder %}
+    <input type="search" id="wiki-navbar-search-input" class="form-control mr-sm-2" name="query"
+           placeholder="{{ placeholder }}" aria-label="{{ placeholder }}" aria-describedby="wiki-navbar-search-button"
+           accesskey="f">
+    <button class="btn btn-outline-light my-2 my-sm-0" type="submit" id="wiki-navbar-search-button"
+            title="{% wiki_translate 'navbar.search.button.tooltip' %}">
+      <span class="mdi mdi-magnify"></span> {% wiki_translate 'navbar.search.button.label' %}
+    </button>
+    <input type="hidden" name="search_bar" value="1"/>
+  </form>
 {% endblock %}
 
 {% block page-content %}
@@ -24,89 +46,132 @@
     <div id="wiki-toasts-area"></div>
   </div>
 
-  {% block pre-content %}{% endblock %}
+  <div id="wiki-page-content" class="row">
+    <div id="wiki-left-col" class="col-2">
+      {# TODO put in burger menu on mobile (≤ 800px) #}
+      <nav id="wiki-nav-bar-left">
+        <div id="wiki-nav-bar-logo" class="card {% if context.dark_mode %}bg-dark{% else %}bg-light{% endif %} mb-3">
+          <a href="{% url 'ottm:wiki_main_page' %}" title="{% wiki_translate 'menu.side.logo.tooltip' %}">
+            <img class="card-img-top" src="{% static 'ottm/images/wiki_icon.svg' %}" alt="OTTM Wiki Logo">
+          </a>
+        </div>
+        {% wiki_side_menu 'main' %}
+        {% wiki_side_menu 'wiki_tools' %}
+      </nav>
+    </div>
 
-  <main id="wiki-article">
-    {% if context.show_title %}
-      <h1 id="wiki-article-title" {% block title_attr %}{% endblock %}><!--
-        {% if context.action == ACTION_READ %}
-        -->{{ context.page.full_title }}<!--
-          {% if context.page.is_category_hidden %}
-          --> <span id="wiki-maintenance-category-icon" class="mdi mdi-tools"
-                    title="{% wiki_translate 'title.maintenance_category.tooltip' %}"></span><!--
-          {% endif %}
-        {% elif context.action == ACTION_TALK %}
-        -->{% wiki_translate 'title.talk' page_title=context.page.full_title %}<!--
-        {% elif context.action == ACTION_EDIT %}
-          {% if context.page_exists %}
-            {% if context.page.can_user_edit %}
-            -->{% wiki_translate 'title.edit' page_title=context.page.full_title %}<!--
-            {% else %}
-            -->{% wiki_translate 'title.source' page_title=context.page.full_title %}<!--
+    <main id="wiki-article" class="card {% if context.dark_mode %}bg-dark{% else %}bg-light{% endif %} card-body">
+      {% if context.show_title %}
+        <h1 id="wiki-article-title" {% block title_attr %}{% endblock %}><!--
+          {% if context.page.namespace == NS_SPECIAL %}
+          -->{% wiki_translate 'special_pages.'|add:context.page.title %}<!--
+          {% elif context.action == ACTION_SHOW %}
+          -->{{ context.page.full_title }}<!--
+            {% if context.page.is_category_hidden %}
+            --> <span id="wiki-maintenance-category-icon" class="mdi mdi-tools"
+                      title="{% wiki_translate 'title.maintenance_category.tooltip' %}"></span><!--
             {% endif %}
-          {% else %}
-          -->{% wiki_translate 'title.create' page_title=context.page.full_title %}<!--
+          {% elif context.action == ACTION_TALK %}
+          -->{% wiki_translate 'title.talk' page_title=context.page.full_title %}<!--
+          {% elif context.action == ACTION_EDIT %}
+            {% if context.page_exists %}
+              {% if context.page.can_user_edit %}
+              -->{% wiki_translate 'title.edit' page_title=context.page.full_title %}<!--
+              {% else %}
+              -->{% wiki_translate 'title.source' page_title=context.page.full_title %}<!--
+              {% endif %}
+            {% else %}
+            -->{% wiki_translate 'title.create' page_title=context.page.full_title %}<!--
+            {% endif %}
+          {% elif context.mode == ACTION_HISTORY %}
+          -->{% wiki_translate 'title.history' page_title=context.page.full_title %}<!--
           {% endif %}
-        {% elif context.mode == ACTION_HISTORY %}
-        -->{% wiki_translate 'title.history' page_title=context.page.full_title %}<!--
-        {% endif %}
       --></h1>
-    {% endif %}
-
-    {% if context.parent_pages %}
-      <div id="wiki-parent-pages-info" class="text-muted">
-        <span class="mdi mdi-chevron-up"></span>
-        {% for parent_page in context.parent_pages %}
-          {% wiki_inner_link page_title=parent_page.full_title text=parent_page.page_name %}
-          {% if not forloop.last %}|{% endif %}
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    {% if context.is_redirection or context.redirected_from %}
-      <div id="wiki-redirect-info" class="text-muted">
-        {% if context.is_redirection %}
-          {% wiki_translate 'redirection_info.is_redirection' %}
-          {% if context.redirected_from %}<br>{% endif %}
-        {% endif %}
-        {% if context.redirected_from %}
-          {% wiki_inner_link page_title=context.redirected_from no_redirect=True as link %}
-          {% wiki_translate 'redirection_info.redirected_from' link=link %}
-        {% endif %}
-      </div>
-    {% endif %}
-
-    <article id="wiki-content" lang="{{ context.page.content_language.code }}">
-      {% if context.page.namespace == NS_SPECIAL %}
-        {% if not context.page_exists %}
-          {{ context.rendered_page_content }}
-        {% elif context.user_can_read %}
-          {# Using "with" to avoid warning #}
-          {% with path='ottm/wiki/special_pages/'|add:context.page.title|add:'.html' %}
-            {% include path %}
-          {% endwith %}
-        {% else %}
-          {% wiki_translate 'special.error.permission_required' perms=context.required_perms|join:', ' %}
-        {% endif %}
-      {% elif context.action == ACTION_READ %}
-        {% include 'ottm/wiki/read-component.html' %}
-      {% elif context.action == ACTION_TALK %}
-        {% include 'ottm/wiki/talk-component.html' %}
-      {% elif context.action == ACTION_EDIT %}
-        {% include 'ottm/wiki/editor-component.html' %}
-      {% elif context.action == ACTION_HISTORY %}
-        {% include 'ottm/wiki/history-component.html' %}
       {% endif %}
-    </article>
-  </main>
+      {% if context.page.namespace != NS_SPECIAL %}
+      {% endif %}
+
+      {% if context.parent_pages %}
+        <div id="wiki-parent-pages-info" class="text-muted">
+          <span class="mdi mdi-chevron-up"></span>
+          {% for parent_page in context.parent_pages %}
+            {% wiki_inner_link page_title=parent_page.full_title text=parent_page.page_name %}
+            {% if not forloop.last %}|{% endif %}
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      {% if context.is_redirection or context.redirected_from %}
+        <div id="wiki-redirect-info" class="text-muted">
+          {% if context.is_redirection %}
+            {% wiki_translate 'redirection_info.is_redirection' %}
+            {% if context.redirected_from %}<br>{% endif %}
+          {% endif %}
+          {% if context.redirected_from %}
+            {% wiki_inner_link page_title=context.redirected_from url_params='no_redirect=1' as link %}
+            {% wiki_translate 'redirection_info.redirected_from' link=link %}
+          {% endif %}
+        </div>
+      {% endif %}
+
+      <article id="wiki-article-content" lang="{{ context.page.content_language.code }}">
+        {% if context.page.namespace == NS_SPECIAL %}
+          {% if not context.page_exists %}
+            {{ context.page_content }}
+          {% elif context.user_can_read %}
+            {# Using "with" to avoid warning #}
+            {% with path='ottm/wiki/special_pages/'|add:context.page.title|add:'.html' %}
+              {% include path %}
+            {% endwith %}
+          {% else %}
+            {% wiki_translate 'special.error.permission_required' perms=context.required_perms|join:', ' %}
+          {% endif %}
+        {% elif context.action == ACTION_SHOW %}
+          {% include 'ottm/wiki/read-component.html' %}
+        {% elif context.action == ACTION_TALK %}
+          {% include 'ottm/wiki/talk-component.html' %}
+        {% elif context.action == ACTION_EDIT %}
+          {% include 'ottm/wiki/editor-component.html' %}
+        {% elif context.action == ACTION_HISTORY %}
+          {% include 'ottm/wiki/history-component.html' %}
+        {% endif %}
+      </article>
+    </main>
+
+    <div id="wiki-right-col" class="col-2">
+      <nav id="wiki-nav-bar-right">
+        {% wiki_side_menu 'page_tools' %}
+        {% wiki_side_menu 'more' %}
+        {% wiki_side_menu 'categories' %}
+      </nav>
+    </div>
+  </div>
+
   {% block post-content %}{% endblock %}
+
+  <footer id="wiki-footer" class="py-4">
+    <div class="container-fluid">
+      <p class="django-link">
+        Powered by
+        <a href="https://www.djangoproject.com/">
+          <img class="django-logo" src="https://static.djangoproject.com/img/logo-django.42234b631760.svg"
+               alt="Django logo">
+        </a>
+      </p>
+      {% if context.page.last_revision_date %}
+        {% ottm_format_date context.page.last_revision_date as last_revision_date %}
+        <p>{% wiki_translate 'footer.last_edit' date=last_revision_date %}</p>
+      {% endif %}
+      <p>{% wiki_translate 'footer.license' %}</p>
+    </div>
+  </footer>
 {% endblock %}
 
 {% block page-scripts %}
+  <script src="{% static 'ottm/libs/highlight/highlight.min.js' %}"></script>
   <script id="wiki-config-script">window.WIKI_CONFIG = {{ context.wiki_js_config|safe }};</script>
   <script src="{% static 'ottm/libs/jquery.confirmExit.min.js' %}"></script>
   <script src="{% static 'ottm/wiki/main.min.js' %}"></script>
-  <script src="{% static 'ottm/forms.min.js' %}"></script>
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}
     {# Using "with" to avoid warning #}
     {% with path='ottm/wiki/special_pages/js/'|add:context.page.title|add:'.min.js' %}

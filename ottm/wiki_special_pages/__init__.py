@@ -4,6 +4,7 @@ They are used to manage the wiki and may require specific permissions.
 """
 import abc
 import importlib
+import os.path
 import pathlib
 import typing as typ
 
@@ -15,18 +16,21 @@ from .. import models
 class SpecialPage(abc.ABC):
     """Base class for special pages."""
 
-    def __init__(self, name: str, *requires_perms: str, has_custom_css: bool = False, has_custom_js: bool = False):
+    def __init__(self, name: str, *requires_perms: str, has_custom_css: bool = False, has_custom_js: bool = False,
+                 accesskey: str = None):
         """Create a special page.
 
         :param name: Page’s name.
         :param requires_perms: List of permissions required to access this page.
         :param has_custom_css: Whether this page has custom CSS.
         :param has_custom_js: Whether this page has custom JS.
+        :param accesskey: The access key for menu links that point to this page.
         """
         self._name = name
         self._has_custom_css = has_custom_css
         self._has_custom_js = has_custom_js
         self._perms_required = requires_perms
+        self._accesskey = accesskey
 
     @property
     def name(self) -> str:
@@ -47,6 +51,11 @@ class SpecialPage(abc.ABC):
     def permissions_required(self) -> tuple[str, ...]:
         """The permissions required to access this page."""
         return self._perms_required
+
+    @property
+    def access_key(self) -> str | None:
+        """The access key for menu links that point to this page."""
+        return self._accesskey
 
     def can_user_access(self, user: models.User) -> bool:
         """Check whether the given user can access this page."""
@@ -87,9 +96,12 @@ def init():
     # Import all special pages from this package
     for f in pathlib.Path(__file__).parent.glob('_*.py'):
         if f.is_file() and f.name != '__init__.py':
-            module = importlib.import_module('.' + f.name, package=str(pathlib.Path(__file__).parent))
+            module = importlib.import_module('.' + os.path.splitext(f.name)[0], package=__name__)
             for k, v in module.__dict__.items():
-                if issubclass(v, SpecialPage):
+                if k[0] != '_' and isinstance(v, type) and issubclass(v, SpecialPage):
                     # noinspection PyArgumentList
                     sp = v()
                     SPECIAL_PAGES[sp.name] = sp
+
+
+init()

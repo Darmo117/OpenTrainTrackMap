@@ -10,10 +10,15 @@ import django.contrib.auth.models as dj_auth_models
 import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
 import django.db.models as dj_models
+import pytz
 
 from . import model_fields, settings
 from .api import constants, data_types, permissions
 from .api.wiki import constants as w_cons, namespaces
+
+
+class DateTimeFormat(dj_models.Model):
+    format = dj_models.CharField(max_length=50)
 
 
 class Language(dj_models.Model):
@@ -22,8 +27,8 @@ class Language(dj_models.Model):
     code = dj_models.CharField(max_length=20, unique=True)
     name = dj_models.CharField(max_length=100, unique=True)
     writing_direction = dj_models.CharField(max_length=3, choices=tuple((d, d) for d in DIRECTIONS))
-    date_format = dj_models.CharField(max_length=20)
     available_for_ui = dj_models.BooleanField(default=False)
+    default_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
 
     @classmethod
     def get_default(cls) -> Language:
@@ -76,12 +81,14 @@ def username_validator(value: str):
 class User:
     """Wrapper class around CustomUser and AnonymousUser classes."""
 
-    def __init__(self, dj_user: CustomUser):
+    def __init__(self, dj_user: CustomUser, ip: str = None):
         """Create a wrapper around the given user.
 
         :param dj_user: Either a CustomUser or AnonymousUser.
+        :param ip: IP of anonymous user.
         """
         self._user = dj_user
+        self._ip = ip
 
     @property
     def internal_object(self) -> CustomUser:
@@ -101,6 +108,11 @@ class User:
         return self._user.is_anonymous
 
     @property
+    def ip(self) -> str | None:
+        """This user’s IP. May be None if the user is authenticated."""
+        return self._user.ip if not self.is_anonymous else self._ip
+
+    @property
     def username(self) -> str:
         """This user’s username."""
         return self._user.username
@@ -110,6 +122,17 @@ class User:
         """Set this user’s username. User must not be anonymous."""
         self._check_not_anonymous()
         self._user.username = value
+
+    @property
+    def hide_username(self) -> bool:
+        """Whether this user’s username has to be hidden in pages."""
+        return not self.is_anonymous and self._user.hide_username
+
+    @hide_username.setter
+    def hide_username(self, value: bool):
+        """Set whether this user’s username has to be hidden in pages. User must not be anonymous."""
+        self._check_not_anonymous()
+        self._user.hide_username = value
 
     @property
     def password(self) -> str:
@@ -150,6 +173,34 @@ class User:
             raise ValueError(f'invalid language code {value.code}')
 
     @property
+    def prefered_timezone(self) -> pytz.BaseTzInfo:
+        """This user’s prefered timezone."""
+        return pytz.timezone(self._user.prefered_timezone) if not self.is_anonymous else pytz.utc
+
+    @prefered_timezone.setter
+    def prefered_timezone(self, value: pytz.BaseTzInfo):
+        """Set this user’s prefered timezone. User must not be anonymous."""
+        self._check_not_anonymous()
+        self._user.prefered_timezone = value.zone
+
+    @property
+    def prefered_datetime_format(self) -> str:
+        """This user’s prefered datetime format."""
+        if not self.is_anonymous:
+            return self._user.prefered_datetime_format.format
+        else:
+            return self.prefered_language.default_datetime_format
+
+    @prefered_datetime_format.setter
+    def prefered_datetime_format(self, value: int):
+        """Set this user’s prefered datetime format to the one with the given ID. User must not be anonymous."""
+        self._check_not_anonymous()
+        try:
+            self._user.prefered_datetime_format = DateTimeFormat.objects.get(id=value)
+        except DateTimeFormat.DoesNotExist:
+            raise ValueError(f'invalid datetime format ID: {value}')
+
+    @property
     def gender(self) -> data_types.UserGender:
         """This user’s gender."""
         return data_types.GENDERS.get(self._user.gender_code, data_types.GENDER_N)
@@ -159,6 +210,17 @@ class User:
         """Set this user’s gender. User must not be anonymous."""
         self._check_not_anonymous()
         self._user.gender_code = value.label
+
+    @property
+    def uses_dark_mode(self) -> bool:
+        """Whether this user uses dark mode."""
+        return self._user.uses_dark_mode if not self.is_anonymous else False
+
+    @uses_dark_mode.setter
+    def uses_dark_mode(self, value: bool):
+        """Set whether this user uses dark mode. User must not be anonymous."""
+        self._check_not_anonymous()
+        self._user.uses_dark_mode = value
 
     @property
     def block(self) -> UserBlock | None:
@@ -235,12 +297,14 @@ class User:
         return self._user.wiki_messages.count() if not self.is_anonymous else 0
 
     def _check_not_anonymous(self):
-        if not self.is_anonymous:
+        if self.is_anonymous or not self.is_authenticated:
             raise RuntimeError('user is anonymous')
 
 
 class CustomUser(dj_auth_models.AbstractUser):
-    """Custom user class to override the default username validator and add additional data."""
+    """Custom user class to override the default username validator and add additional data.
+    Never edit instances of this model directly, always do it through the ``User`` class.
+    """
     username_validator = username_validator
     hide_username = dj_models.BooleanField(default=False)
     # IP for anonymous accounts
@@ -249,6 +313,9 @@ class CustomUser(dj_auth_models.AbstractUser):
     groups = dj_models.ManyToManyField(UserGroup, related_name='users')
     gender_code = dj_models.CharField(max_length=10, choices=tuple((v, v) for v in data_types.GENDERS.keys()),
                                       default=data_types.GENDER_N.label)
+    uses_dark_mode = dj_models.BooleanField(default=False)
+    prefered_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
+    prefered_timezone = dj_models.CharField(max_length=50, default=pytz.UTC.zone)
 
 
 class UserBlock(dj_models.Model):
@@ -975,7 +1042,7 @@ class Page(dj_models.Model, NonDeletableMixin):
     """Represents a wiki page."""
     namespace_id = dj_models.IntegerField()
     title = dj_models.CharField(max_length=200, validators=[page_title_validator])
-    content_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in w_cons.CONTENT_TYPES),
+    content_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in w_cons.CONTENT_TYPES.values()),
                                        default=w_cons.CT_WIKIPAGE)
     deleted = dj_models.BooleanField(default=False)
     is_category_hidden = dj_models.BooleanField(null=True, blank=True)
@@ -1039,9 +1106,9 @@ class Page(dj_models.Model, NonDeletableMixin):
         """
         block = user.block
         ip_block = None
-        if user.is_anonymous:
+        if user.is_anonymous or not user.is_authenticated:
             try:
-                ip_block = IPBlock.objects.get(ip=user.internal_object.ip)
+                ip_block = IPBlock.objects.get(ip=user.ip)
             except IPBlock.DoesNotExist:
                 pass
         own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
@@ -1064,9 +1131,9 @@ class Page(dj_models.Model, NonDeletableMixin):
         """
         block = user.block
         ip_block = None
-        if user.is_anonymous:
+        if user.is_anonymous or not user.is_authenticated:
             try:
-                ip_block = IPBlock.objects.get(ip=user.internal_object.ip)
+                ip_block = IPBlock.objects.get(ip=user.ip)
             except IPBlock.DoesNotExist:
                 pass
         own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
@@ -1087,6 +1154,12 @@ class Page(dj_models.Model, NonDeletableMixin):
             page_namespace_id=self.namespace_id,
             page_title=self.title,
         ).exists()
+
+    def last_revision_date(self) -> datetime.datetime | None:
+        """Return the date of the latest edit made on this page or None if it does not exist."""
+        if self.exists and (revision := self.revisions.latest()):
+            return revision.date
+        return None
 
     def get_content(self) -> str:
         """Return this page’s content or an empty string if it does not exist."""

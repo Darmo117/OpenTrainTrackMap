@@ -69,7 +69,7 @@ Allowed HTML tags:
 <a></a>
 <abbr></abbr>
 <address></address>
-<area></area>
+<area>
 <article></article>
 <aside></aside>
 <b></b>
@@ -81,7 +81,7 @@ Allowed HTML tags:
 <caption></caption>
 <cite></cite>
 <code></code>
-<col></col>
+<col>
 <colgroup></colgroup>
 <data></data>
 <dd></dd>
@@ -132,4 +132,4 @@ Allowed HTML tags:
 <u></u>
 <ul></ul>
 <var></var>
-<wbr></wbr>
+<wbr>
