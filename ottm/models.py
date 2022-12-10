@@ -109,6 +109,11 @@ class User:
         return self._user.is_anonymous
 
     @property
+    def is_bot(self):
+        """Whether this user is a bot account."""
+        return self._user.is_bot
+
+    @property
     def ip(self) -> str | None:
         """This user’s IP. May be None if the user is authenticated."""
         return self._user.ip if not self.is_anonymous else self._ip
@@ -325,6 +330,7 @@ class CustomUser(dj_auth_models.AbstractUser):
     uses_dark_mode = dj_models.BooleanField(default=False)
     prefered_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
     prefered_timezone = dj_models.CharField(max_length=50, default=pytz.UTC.zone)
+    is_bot = dj_models.BooleanField(default=False)
 
 
 class UserBlock(dj_models.Model):
@@ -902,6 +908,7 @@ class EditGroup(dj_models.Model):
 
     class Meta:
         get_latest_by = 'date'
+        ordering = ('date',)
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
@@ -1017,7 +1024,12 @@ class UnitTranslation(Translation):
 ########
 
 
-class Revision(dj_models.Model):
+class NonDeletableMixin:
+    def delete(self, *args, **kwargs):
+        raise RuntimeError(f'cannot delete instances of {self.__class__.__name__}')
+
+
+class Revision(dj_models.Model, NonDeletableMixin):
     """Base class for all revision models."""
     date = dj_models.DateTimeField(auto_now_add=True)
     author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)
@@ -1025,16 +1037,51 @@ class Revision(dj_models.Model):
     comment_hidden = dj_models.BooleanField(default=False)
     hidden = dj_models.BooleanField(default=False)
     is_minor = dj_models.BooleanField(default=False)
+    is_bot = dj_models.BooleanField(default=False)
     tags = dj_models.ManyToManyField('Tag')
 
     class Meta:
         abstract = True
         get_latest_by = 'date'
+        ordering = ('date',)
 
+    @property
+    def bytes_size(self):
+        return len(self._get_content()[1].encode(encoding='utf8'))
 
-class NonDeletableMixin:
-    def delete(self, *args, **kwargs):
-        raise RuntimeError(f'cannot delete instances of {self.__class__.__name__}')
+    def get_byte_size_diff(self, ignore_hidden: bool):
+        if prev := self.get_previous(ignore_hidden):
+            return self.bytes_size - prev.bytes_size
+        else:
+            return self.bytes_size
+
+    def get_previous(self, ignore_hidden: bool) -> Revision | None:
+        f = dj_models.Q(date__lt=self.date, **{self._get_content()[0]: self._get_content()[1]})
+        if ignore_hidden:
+            f &= dj_models.Q(hidden=False)
+        try:
+            return self._manager().filter(f).latest()
+        except dj_models.ObjectDoesNotExist:
+            return None
+
+    def is_latest(self, ignore_hidden: bool):
+        f = dj_models.Q(date__gt=self.date, **{self._get_content()[0]: self._get_content()[1]})
+        if ignore_hidden:
+            f &= dj_models.Q(hidden=False)
+        return not self._manager().filter(f).exists()
+
+    def is_first(self, ignore_hidden: bool):
+        f = dj_models.Q(date__lt=self.date, **{self._get_content()[0]: self._get_content()[1]})
+        if ignore_hidden:
+            f &= dj_models.Q(hidden=False)
+        return not self._manager().filter(f).exists()
+
+    @classmethod
+    def _manager(cls) -> dj_models.Manager:
+        return cls.objects
+
+    def _get_content(self) -> tuple[str, str]:
+        raise NotImplementedError()
 
 
 #########
@@ -1322,22 +1369,31 @@ class Message(dj_models.Model, NonDeletableMixin):
 #############
 
 
-class PageRevision(Revision, NonDeletableMixin):
+class PageRevision(Revision):
     """A page revision is a version of a page’s content at a given time."""
     page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT, related_name='revisions')
     content = dj_models.TextField()
 
+    def _get_content(self) -> tuple[str, str]:
+        return 'content', self.content
 
-class TopicRevision(Revision, NonDeletableMixin):
+
+class TopicRevision(Revision):
     """A topic revision is a version of a topic’s title at a given time."""
     topic = dj_models.ForeignKey(Topic, on_delete=dj_models.PROTECT, related_name='revisions')
     title = dj_models.CharField(max_length=200)
 
+    def _get_content(self) -> tuple[str, str]:
+        return 'title', self.title
 
-class MessageRevision(Revision, NonDeletableMixin):
+
+class MessageRevision(Revision):
     """A message revision is a version of a message’s content at a given time."""
     message = dj_models.ForeignKey(Message, on_delete=dj_models.PROTECT, related_name='revisions')
     text = dj_models.TextField()
+
+    def _get_content(self) -> tuple[str, str]:
+        return 'text', self.text
 
 
 ########
@@ -1367,6 +1423,7 @@ class PageCreationLog(PageLog):
 
     class Meta:
         get_latest_by = 'date'
+        ordering = ('date',)
 
 
 class PageDeletionLog(PageLog):
@@ -1375,6 +1432,7 @@ class PageDeletionLog(PageLog):
 
     class Meta:
         get_latest_by = 'date'
+        ordering = ('date',)
 
 
 class PageProtectionLog(PageLog):
@@ -1385,6 +1443,7 @@ class PageProtectionLog(PageLog):
 
     class Meta:
         get_latest_by = 'date'
+        ordering = ('date',)
 
 
 class UserLog(Log):
@@ -1400,6 +1459,7 @@ class UserAccountCreationLog(UserLog):
 
     class Meta:
         get_latest_by = 'date'
+        ordering = ('date',)
 
 
 class BlockLogMixin:
@@ -1416,6 +1476,7 @@ class UserBlockLog(UserLog, BlockLogMixin):
 
     class Meta:
         get_latest_by = 'date'
+        ordering = ('date',)
 
 
 class IPBlockLog(Log, BlockLogMixin):
@@ -1425,3 +1486,4 @@ class IPBlockLog(Log, BlockLogMixin):
 
     class Meta:
         get_latest_by = 'date'
+        ordering = ('date',)

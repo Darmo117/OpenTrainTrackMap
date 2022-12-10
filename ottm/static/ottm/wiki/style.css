@@ -52,6 +52,24 @@
   font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
+.wiki-diff-badge {
+  font-size: 1em;
+  font-weight: normal;
+}
+
+.wiki-diff-badge.wiki-diff-important-var {
+  font-weight: bold;
+}
+
+.wiki-hidden {
+  text-decoration: line-through;
+  font-style: italic;
+}
+
+.wiki-revision-action {
+  font-size: 1.2em;
+}
+
 pre {
   border-radius: 5px;
   border-style: solid;

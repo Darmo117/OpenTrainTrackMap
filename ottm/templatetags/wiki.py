@@ -1,4 +1,5 @@
 """This module defines template tags for the wiki."""
+import collections
 import typing as typ
 
 import django.core.paginator as dj_paginator
@@ -7,6 +8,7 @@ import django.utils.safestring as dj_safe
 
 from .ottm import *
 from .. import models, page_context
+from ..api.permissions import *
 from ..api.wiki import constants as w_cons, menus, pages as w_pages, parser, namespaces as w_ns
 
 register = dj_template.Library()
@@ -117,8 +119,8 @@ def wiki_page_menu_item(context: dict[str, typ.Any], action: str) -> str:
         tooltip = wiki_translate(context, f'menu.page.{action}.tooltip')
         css_classes.append(
             {
-                w_cons.ACTION_READ: 'mdi-document-outline',
-                w_cons.ACTION_TALK: 'mdi-forum',
+                w_cons.ACTION_READ: 'mdi-file-document-outline',
+                w_cons.ACTION_TALK: 'mdi-forum-outline',
                 w_cons.ACTION_HISTORY: 'mdi-history',
             }[action]
         )
@@ -199,8 +201,9 @@ def wiki_page_list(context: dict[str, typ.Any], pages: dj_paginator.Paginator, p
     return ''  # TODO
 
 
-@register.simple_tag(takes_context=True)
-def wiki_revisions_list(context: dict[str, typ.Any], revisions: dj_paginator.Paginator, mode: str) -> str:
+@register.inclusion_tag('ottm/wiki/tags/revisions_list.html', takes_context=True)
+def wiki_revisions_list(context: dict[str, typ.Any], revisions: dj_paginator.Paginator, mode: str) \
+        -> dict[str, typ.Any]:
     """Render a list of revisions.
 
     :param context: Page context.
@@ -208,11 +211,102 @@ def wiki_revisions_list(context: dict[str, typ.Any], revisions: dj_paginator.Pag
     :param mode: Specifies how the revisions should be rendered. Either 'history' or 'contributions'.
     :return: The rendered revisions list.
     """
-    return ''  # TODO
+    wiki_context: page_context.WikiPageHistoryActionContext | page_context.WikiSpecialPageContext = \
+        context.get('context')
+    user = wiki_context.user
+    ignore_hidden = not user.has_permission(PERM_WIKI_MASK)
+    Line = collections.namedtuple(
+        'Line', ('actions', 'date', 'page_link', 'flags', 'size', 'size_text', 'variation', 'comment'))
+    lines = []
+    for revision in revisions.get_page(wiki_context.page_index):
+        actions = []
+        if user.has_permission(PERM_WIKI_MASK):
+            actions.append(wiki_inner_link(
+                context,
+                f'Special:Mask/{revision.page.full_title}',
+                text='',
+                tooltip=wiki_translate(context, 'revisions_list.mask.tooltip'),
+                css_classes='mdi mdi-eye-outline wiki-revision-action',
+                ignore_current_title=True,
+            ))
+        if not revision.is_latest(ignore_hidden):
+            actions.append(wiki_inner_link(
+                context,
+                revision.page.full_title,
+                text='',
+                tooltip=wiki_translate(context, 'revisions_list.current.tooltip'),
+                css_classes='mdi mdi-file-arrow-up-down-outline wiki-revision-action',
+                url_params=f'revid={revision.id}&diff=current',
+                ignore_current_title=True,
+            ))
+        else:
+            actions.append(dj_safe.mark_safe(
+                '<span class="mdi mdi-file-arrow-up-down-outline wiki-revision-action"></span>'))
+        if previous := revision.get_previous(ignore_hidden):
+            actions.append(wiki_inner_link(
+                context,
+                revision.page.full_title,
+                text='',
+                tooltip=wiki_translate(context, 'revisions_list.diff.tooltip'),
+                css_classes='mdi mdi-file-arrow-left-right-outline wiki-revision-action',
+                url_params=f'revid={previous.id}&diff=current',
+                ignore_current_title=True,
+            ))
+        else:
+            actions.append(dj_safe.mark_safe(
+                '<span class="mdi mdi-file-arrow-left-right-outline wiki-revision-action"></span>'))
+        is_first = revision.is_first(ignore_hidden)
+        if not is_first:
+            actions.append(wiki_inner_link(
+                context,
+                revision.page.full_title,
+                text='',
+                tooltip=wiki_translate(context, 'revisions_list.cancel.tooltip'),
+                css_classes='mdi mdi-undo wiki-revision-action',
+                ignore_current_title=True,
+            ))
+        else:
+            actions.append(dj_safe.mark_safe(
+                '<span class="mdi mdi-undo wiki-revision-action"></span>'))
+        if not is_first and user.has_permission(PERM_WIKI_REVERT):
+            actions.append(wiki_inner_link(
+                context,
+                revision.page.full_title,
+                text='',
+                tooltip=wiki_translate(context, 'revisions_list.revert.tooltip', nb=0),  # TODO
+                css_classes='mdi mdi-undo-variant wiki-revision-action',
+                ignore_current_title=True,
+            ))
+
+        match mode:
+            case 'history':
+                page_link = _format_username(context, revision.author)
+            case 'contributions':
+                page_link = wiki_inner_link(context, revision.page.full_title, ignore_current_title=True)
+            case _:
+                raise ValueError(f'invalid revision list mode {mode!r}')
+
+        date = ottm_format_date(context, revision.date)
+        flags = []
+        if revision.is_minor:
+            flags.append((wiki_translate(context, 'revisions_list.flag.minor.label'),
+                          wiki_translate(context, 'revisions_list.flag.minor.tooltip')))
+        if revision.is_bot:
+            flags.append((wiki_translate(context, 'revisions_list.flag.bot.label'),
+                          wiki_translate(context, 'revisions_list.flag.bot.tooltip')))
+        variation = revision.get_byte_size_diff(ignore_hidden=ignore_hidden)
+        size = revision.bytes_size
+        size_text = wiki_translate(context, 'revisions_list.size.label', n=size)
+        comment = _format_comment(context, revision.comment, revision.comment_hidden)
+
+        lines.append(Line(actions, date, page_link, flags, size, size_text, variation, comment))
+    return {
+        'lines': lines,
+    }
 
 
 @register.inclusion_tag('ottm/wiki/tags/topics.html', takes_context=True)
-def wiki_render_topics(context: dict[str, typ.Any], topics: dj_paginator.Paginator) -> str:
+def wiki_render_topics(context: dict[str, typ.Any], topics: dj_paginator.Paginator) -> dict[str, typ.Any]:
     """Render a list of revisions.
 
     :param context: Page context.
@@ -240,8 +334,7 @@ def wiki_format_log_entry(context: dict[str, typ.Any], log_entry: models.Log) ->
                 context,
                 'log.page_creation',
                 date=formatted_date,
-                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
-                                     ignore_current_title=True),
+                user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
             )
         case models.PageDeletionLog(performer=performer, page=page, reason=reason):
@@ -249,10 +342,9 @@ def wiki_format_log_entry(context: dict[str, typ.Any], log_entry: models.Log) ->
                 context,
                 'log.page_creation',
                 date=formatted_date,
-                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
-                                     ignore_current_title=True),
+                user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
-                reason=reason,
+                reason=_format_comment(context, reason, False),
             )
         case models.PageProtectionLog(performer=performer, page=page, reason=reason, end_date=end_date,
                                       protection_level=protection_level):
@@ -260,20 +352,18 @@ def wiki_format_log_entry(context: dict[str, typ.Any], log_entry: models.Log) ->
                 context,
                 'log.page_protection',
                 date=formatted_date,
-                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
-                                     ignore_current_title=True),
+                user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
                 group=protection_level.label,
                 until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
-                reason=reason,
+                reason=_format_comment(context, reason, False),
             )
         case models.UserAccountCreationLog(user=user):
             return wiki_translate(
                 context,
                 'log.user_account_creation',
                 date=formatted_date,
-                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(user.username),
-                                     ignore_current_title=True),
+                user=_format_username(context, user),
             )
         case models.UserBlockLog(performer=performer, reason=reason, end_date=end_date,
                                  allow_messages_on_own_user_page=allow_messages_on_own_user_page,
@@ -282,14 +372,12 @@ def wiki_format_log_entry(context: dict[str, typ.Any], log_entry: models.Log) ->
                 context,
                 'log.user_block',
                 date=formatted_date,
-                performer=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
-                                          ignore_current_title=True),
-                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(user.username),
-                                     ignore_current_title=True),
+                performer=_format_username(context, performer),
+                user=_format_username(context, user),
                 edit_settings=str(allow_editing_own_settings).lower(),
                 post_messages=str(allow_messages_on_own_user_page).lower(),
                 until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
-                reason=reason,
+                reason=_format_comment(context, reason, False),
             )
         case models.IPBlockLog(performer=performer, reason=reason, end_date=end_date,
                                allow_messages_on_own_user_page=allow_messages_on_own_user_page,
@@ -298,14 +386,12 @@ def wiki_format_log_entry(context: dict[str, typ.Any], log_entry: models.Log) ->
                 context,
                 'log.ip_block',
                 date=formatted_date,
-                performer=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
-                                          ignore_current_title=True),
-                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(ip),
-                                     ignore_current_title=True),
+                performer=_format_username(context, performer),
+                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(ip), ignore_current_title=True),
                 create_accounts=str(allow_account_creation).lower(),
                 post_messages=str(allow_messages_on_own_user_page).lower(),
                 until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
-                reason=reason,
+                reason=_format_comment(context, reason, False),
             )
 
 
@@ -319,3 +405,18 @@ def wiki_side_menu(context: dict[str, typ.Any], menu_id: str) -> dict[str, typ.A
     """
     wiki_context: page_context.WikiPageContext = context.get('context')
     return {'menus': menus.get_menus(wiki_context, menu_id), 'dark_mode': wiki_context.dark_mode}
+
+
+def _format_username(context: dict[str, typ.Any], user: models.CustomUser) -> str:
+    if user.hide_username:
+        return f'<span class="wiki-hidden">{wiki_translate(context, "username_hidden")}</span>'
+    else:
+        return wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(user.username),
+                               ignore_current_title=True)
+
+
+def _format_comment(context: dict[str, typ.Any], comment: str, hide: bool) -> str:
+    if hide:
+        return f'<span class="wiki-hidden">{wiki_translate(context, "comment_hidden")}</span>'
+    else:
+        return f'<span class="font-italic">({comment})</span>' if comment else ''

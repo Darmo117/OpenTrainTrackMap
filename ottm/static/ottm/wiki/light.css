@@ -22,6 +22,10 @@
   color: #980c0c;
 }
 
+.wiki-hidden {
+  color: gray;
+}
+
 pre {
   border-color: #9d9d9d;
 }

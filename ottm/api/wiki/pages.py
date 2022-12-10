@@ -178,6 +178,7 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
         comment=utils.escape_html(comment),
         is_minor=minor_edit,
         content=content,
+        is_bot=author.is_bot,
     ).save()
     if author.is_authenticated:
         follow_page(author, page, follow)

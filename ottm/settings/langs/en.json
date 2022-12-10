@@ -400,15 +400,47 @@
         "last_edit": "Page last edited on {date}.",
         "license": "All text on this wiki is available under the [CC BY-SA 4.0](license-url) unless stated otherwise."
       },
+      "revisions_list": {
+        "mask": {
+          "tooltip": "Mask/Unmask"
+        },
+        "diff": {
+          "tooltip": "Difference with previous version"
+        },
+        "current": {
+          "tooltip": "Difference with current version"
+        },
+        "cancel": {
+          "tooltip": "Cancel"
+        },
+        "revert": {
+          "tooltip": "Revert {nb} revision(s)"
+        },
+        "size": {
+          "label": "{n} byte(s)"
+        },
+        "flag": {
+          "minor": {
+            "label": "m",
+            "tooltip": "Minor edit"
+          },
+          "bot": {
+            "label": "b",
+            "tooltip": "Bot edit"
+          }
+        }
+      },
       "log": {
         "page_creation": "({date}) {user} has created {page}.",
-        "page_deletion": "({date}) {user} has deleted {page}. *({reason})*",
-        "page_protection": "({date}) {user} has changed the protection status of {page} to group {group}. ({until}) *({reason})*",
+        "page_deletion": "({date}) {user} has deleted {page}. {reason}",
+        "page_protection": "({date}) {user} has changed the protection status of {page} to group {group}. ({until}) {reason}",
         "user_account_creation": "({date}) User account {user} has been created.",
-        "user_block": "({date}) {performer} has blocked user {user}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] ({until}) *({reason})*",
-        "ip_block": "({date}) {performer} has blocked IP {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) *({reason})*",
+        "user_block": "({date}) {performer} has blocked user {user}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] ({until}) {reason}",
+        "ip_block": "({date}) {performer} has blocked IP {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) {reason}",
         "infinite": "infinite"
-      }
+      },
+      "username_hidden": "Username hidden",
+      "comment_hidden": "Comment hidden"
     }
   }
 }

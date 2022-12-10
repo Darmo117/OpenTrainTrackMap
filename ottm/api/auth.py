@@ -85,13 +85,15 @@ def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest) -
 
 
 @dj_db_trans.atomic
-def create_user(username: str, email: str = None, password: str = None, ignore_email: bool = False) -> models.User:
+def create_user(username: str, email: str = None, password: str = None, ignore_email: bool = False,
+                is_bot: bool = False) -> models.User:
     """Create a new user account.
 
     :param username: User’s username.
     :param email: User’s email address.
     :param password: User’s password.
-    :param ignore_email: Whether to ignore the email address. Reserved for internal dummy users.
+    :param ignore_email: Whether to ignore the email address. Reserved for internal bot users.
+    :param is_bot: Whether this user is a bot account.
     :return: A new user object.
     :raise InvalidUsernameError: If the username is invalid.
     :raise DuplicateUsernameError: If the username is already taken.
@@ -120,6 +122,7 @@ def create_user(username: str, email: str = None, password: str = None, ignore_e
         password=password,
         prefered_language=language,
         prefered_datetime_format=language.default_datetime_format,
+        is_bot=is_bot,
     )
     dj_user.save()
     dj_user.groups.add(models.UserGroup.objects.get(label=groups.GROUP_ALL))

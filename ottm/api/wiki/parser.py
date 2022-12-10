@@ -34,7 +34,7 @@ class Parser:
         else:
             page_exists = page.exists and not page.deleted
 
-        link_text = text or page.full_title
+        link_text = page.full_title if text is None else text
 
         if current_page_title == page.full_title and not anchor and not url_params:
             return f'<strong class="wiki-recursive-link">{link_text}</strong>' if not only_url else ''

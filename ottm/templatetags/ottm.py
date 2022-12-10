@@ -35,4 +35,4 @@ def ottm_format_date(context: dict[str, _typ.Any], date: _dt.datetime) -> str:
     date = date.astimezone(ottm_context.user.prefered_timezone)
     formated_date = ottm_context.language.format_datetime(date, ottm_context.user.prefered_datetime_format)
     iso_date = date.strftime('%Y-%m-%d %H:%M:%S%z')
-    return _dj_safe.mark_safe(f'<time id="last_edit_date" datetime="{iso_date}">{formated_date}</time>')
+    return _dj_safe.mark_safe(f'<time datetime="{iso_date}">{formated_date}</time>')

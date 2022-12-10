@@ -30,6 +30,10 @@ body {
   color: #ce2c2c;
 }
 
+.wiki-hidden {
+  color: gray;
+}
+
 pre {
   border-color: #b7b7b7;
 }
