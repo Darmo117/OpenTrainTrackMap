@@ -1,5 +1,6 @@
 """This module defines all user groups."""
 GROUP_SUPERUSER = 'superuser'
+GROUP_GROUPS_MANAGER = 'groups_manager'
 GROUP_ADMINISTRATOR = 'administrator'
 GROUP_WIKI_ADMINISTRATOR = 'wiki_administrator'
 GROUP_PATROLLER = 'patroller'

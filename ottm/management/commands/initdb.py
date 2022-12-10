@@ -50,8 +50,12 @@ class Command(dj_mngmt.BaseCommand):
             permissions=(PERM_EDIT_SCHEMA,),
         ).save()
         models.UserGroup(
+            label=GROUP_GROUPS_MANAGER,
+            permissions=(PERM_EDIT_USER_GROUPS,),
+        ).save()
+        models.UserGroup(
             label=GROUP_ADMINISTRATOR,
-            permissions=(PERM_EDIT_USER_GROUPS, PERM_BLOCK_USERS),
+            permissions=(PERM_BLOCK_USERS,),
         ).save()
         models.UserGroup(
             label=GROUP_WIKI_ADMINISTRATOR,
