@@ -315,6 +315,7 @@ class WikiPageEditActionContext(WikiPageContext):
             new_page_notice: str = None,
             perm_error: bool = False,
             concurrent_edit_error: bool = False,
+            edit_protection_log_entry: _models.PageProtectionLog = None,
     ):
         """Create a page context for wiki pages.
 
@@ -331,6 +332,7 @@ class WikiPageEditActionContext(WikiPageContext):
         :param new_page_notice: Rendered new page notice. May be None.
         :param perm_error: Whether the user lacks the permission to edit wiki pages.
         :param concurrent_edit_error: Whether another edit was made before submitting.
+        :param edit_protection_log_entry: The page’s PageProtectionLog entry if it exists.
         """
         super().__init__(
             page=page,
@@ -350,6 +352,7 @@ class WikiPageEditActionContext(WikiPageContext):
         self._new_page_notice = new_page_notice
         self._perm_error = perm_error
         self._concurrent_edit_error = concurrent_edit_error
+        self._edit_protection_log_entry = edit_protection_log_entry
 
     @property
     def archived(self) -> bool:
@@ -378,6 +381,10 @@ class WikiPageEditActionContext(WikiPageContext):
     @property
     def concurrent_edit_error(self) -> bool:
         return self._concurrent_edit_error
+
+    @property
+    def edit_protection_log_entry(self) -> _models.PageProtectionLog | None:
+        return self._edit_protection_log_entry
 
 
 class WikiPageTalkActionContext(WikiPageContext):

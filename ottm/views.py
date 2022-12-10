@@ -528,6 +528,7 @@ def _wiki_page_edit_context(
         new_page_notice=w_pages.get_new_page_notice(user, language) if not page.exists else None,
         perm_error=perm_error,
         concurrent_edit_error=concurrent_edit_error,
+        edit_protection_log_entry=w_pages.get_page_protection_log_entry(page),
     )
 
 

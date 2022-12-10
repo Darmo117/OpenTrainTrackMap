@@ -41,10 +41,10 @@
 {% with edit_protection=context.page.get_edit_protection %}{# Cached to avoid making several DB requests #}
   {% if edit_protection %}
     <div class="wiki-edit-interface-warning-box alert alert-warning" role="alert">
-      <p>
-        {% wiki_translate 'group.'|add:edit_protection.protection_level as group_name %}
-        {% wiki_translate 'form.edit.protection_warning' group_name=group_name reason=edit_protection.reason %}
+      <p class="center">
+        {% wiki_translate 'page.edit.protection_warning' group_name=edit_protection.protection_level.label reason=edit_protection.reason|default_if_none:'-' %}
       </p>
+      {% wiki_translate 'page.edit.log_entry' %}<br>
       {% wiki_format_log_entry context.edit_protection_log_entry %}
     </div>
   {% endif %}

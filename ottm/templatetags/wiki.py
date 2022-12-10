@@ -5,9 +5,9 @@ import django.core.paginator as dj_paginator
 import django.template as dj_template
 import django.utils.safestring as dj_safe
 
-from . import ottm
+from .ottm import *
 from .. import models, page_context
-from ..api.wiki import menus, pages as w_pages, parser, constants as w_cons
+from ..api.wiki import constants as w_cons, menus, pages as w_pages, parser, namespaces as w_ns
 
 register = dj_template.Library()
 
@@ -27,7 +27,7 @@ def wiki_translate(context: dict[str, typ.Any], key: str, **kwargs) -> str:
     :param kwargs: Translation’s arguments.
     :return: The translated text or the key in it is undefined for the current language.
     """
-    return ottm.ottm_translate(context, 'wiki.' + key, **kwargs)
+    return ottm_translate(context, 'wiki.' + key, **kwargs)
 
 
 @register.simple_tag(takes_context=True)
@@ -223,14 +223,90 @@ def wiki_render_topics(context: dict[str, typ.Any], topics: dj_paginator.Paginat
 
 
 @register.simple_tag(takes_context=True)
-def wiki_format_log_entry(context: dict[str, typ.Any], log_entry) -> str:
+def wiki_format_log_entry(context: dict[str, typ.Any], log_entry: models.Log) -> str:
     """Format a log entry.
 
     :param context: Page context.
     :param log_entry: The log entry to format.
     :return: The formatted log entry.
     """
-    return ''  # TODO
+    if not isinstance(log_entry, models.Log):
+        raise TypeError(f'expected instance of {models.Log} class, got {type(log_entry)}')
+
+    formatted_date = ottm_format_date(context, log_entry.date)
+    match log_entry:
+        case models.PageCreationLog(performer=performer, page=page):
+            return wiki_translate(
+                context,
+                'log.page_creation',
+                date=formatted_date,
+                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
+                                     ignore_current_title=True),
+                page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
+            )
+        case models.PageDeletionLog(performer=performer, page=page, reason=reason):
+            return wiki_translate(
+                context,
+                'log.page_creation',
+                date=formatted_date,
+                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
+                                     ignore_current_title=True),
+                page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
+                reason=reason,
+            )
+        case models.PageProtectionLog(performer=performer, page=page, reason=reason, end_date=end_date,
+                                      protection_level=protection_level):
+            return wiki_translate(
+                context,
+                'log.page_protection',
+                date=formatted_date,
+                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
+                                     ignore_current_title=True),
+                page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
+                group=protection_level.label,
+                until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
+                reason=reason,
+            )
+        case models.UserAccountCreationLog(user=user):
+            return wiki_translate(
+                context,
+                'log.user_account_creation',
+                date=formatted_date,
+                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(user.username),
+                                     ignore_current_title=True),
+            )
+        case models.UserBlockLog(performer=performer, reason=reason, end_date=end_date,
+                                 allow_messages_on_own_user_page=allow_messages_on_own_user_page,
+                                 user=user, allow_editing_own_settings=allow_editing_own_settings):
+            return wiki_translate(
+                context,
+                'log.user_block',
+                date=formatted_date,
+                performer=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
+                                          ignore_current_title=True),
+                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(user.username),
+                                     ignore_current_title=True),
+                edit_settings=str(allow_editing_own_settings).lower(),
+                post_messages=str(allow_messages_on_own_user_page).lower(),
+                until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
+                reason=reason,
+            )
+        case models.IPBlockLog(performer=performer, reason=reason, end_date=end_date,
+                               allow_messages_on_own_user_page=allow_messages_on_own_user_page,
+                               ip=ip, allow_account_creation=allow_account_creation):
+            return wiki_translate(
+                context,
+                'log.ip_block',
+                date=formatted_date,
+                performer=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(performer.username),
+                                          ignore_current_title=True),
+                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(ip),
+                                     ignore_current_title=True),
+                create_accounts=str(allow_account_creation).lower(),
+                post_messages=str(allow_messages_on_own_user_page).lower(),
+                until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
+                reason=reason,
+            )
 
 
 @register.inclusion_tag('ottm/wiki/tags/side_menu.html', takes_context=True)

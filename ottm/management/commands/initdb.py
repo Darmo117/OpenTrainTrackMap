@@ -108,7 +108,8 @@ class Command(dj_mngmt.BaseCommand):
         pages.edit_page(None, wiki_user, pages.get_page(ns, title), content,
                         edit_comment)
         pages.protect_page(wiki_user, pages.get_page(ns, title),
-                           models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATOR))
+                           models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATOR),
+                           reason='Page with high traffic.')
         content = """
 /*
  * Put the wiki’s global JavaScript here. It will be loaded on every wiki page, regardless of device.

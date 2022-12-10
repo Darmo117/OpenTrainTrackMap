@@ -80,8 +80,9 @@ class UILanguage:
         """
         text = self._mappings.get(key, default if default is not None else key)
         text = text.replace('license-url', f'https://creativecommons.org/licenses/by-sa/3.0/deed.{self.code}')
-        text = text.format(**kwargs)
+        # Parse Markdown before kwargs substitution to avoid formatting them.
         text = markdown.markdown(text, output_format='html')[3:-4]  # Remove enclosing <p> tags
+        text = text.format(**kwargs)
         return text
 
     def format_datetime(self, dt: datetime.datetime, format_: str) -> str:

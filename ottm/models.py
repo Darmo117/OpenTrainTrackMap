@@ -1364,24 +1364,32 @@ class PageLog(Log):
 
 class PageCreationLog(PageLog):
     """New entries are added each time a page is created."""
-    pass
+
+    class Meta:
+        get_latest_by = 'date'
 
 
 class PageDeletionLog(PageLog):
     """New entries are added each time a page is deleted."""
     reason = dj_models.CharField(max_length=200, null=True, blank=True)
 
+    class Meta:
+        get_latest_by = 'date'
+
 
 class PageProtectionLog(PageLog):
     """New entries are added each time a page’s protection status changes."""
     end_date = dj_models.DateTimeField(null=True, blank=True)
     reason = dj_models.TextField(null=True, blank=True)
-    protection_level = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
+    protection_level = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
+
+    class Meta:
+        get_latest_by = 'date'
 
 
 class UserLog(Log):
     """Base class for user-related operations."""
-    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, null=True)
+    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)
 
     class Meta:
         abstract = True
@@ -1389,12 +1397,9 @@ class UserLog(Log):
 
 class UserAccountCreationLog(UserLog):
     """New entries are added each time a user account is created."""
-    pass
 
-
-class UserAccountDeletionLog(UserLog):
-    """New entries are added each time a user account is deleted."""
-    pass
+    class Meta:
+        get_latest_by = 'date'
 
 
 class BlockLogMixin:
@@ -1409,8 +1414,14 @@ class UserBlockLog(UserLog, BlockLogMixin):
     """New entries are added each time a user’s block status changes."""
     allow_editing_own_settings = dj_models.BooleanField()
 
+    class Meta:
+        get_latest_by = 'date'
+
 
 class IPBlockLog(Log, BlockLogMixin):
     """New entries are added each time an IP address’ block status changes."""
     ip = dj_models.CharField(max_length=39)
     allow_account_creation = dj_models.BooleanField()
+
+    class Meta:
+        get_latest_by = 'date'

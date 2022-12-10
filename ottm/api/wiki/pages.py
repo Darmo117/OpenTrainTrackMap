@@ -6,7 +6,7 @@ import django.core.handlers.wsgi as dj_wsgi
 import django.db.transaction as dj_db_trans
 
 from . import constants, namespaces
-from .. import auth, errors, groups, permissions
+from .. import auth, errors, groups, permissions, utils
 from ... import models, settings
 
 MAIN_PAGE_TITLE = namespaces.NS_WIKI.get_full_page_title('Main Page')
@@ -175,7 +175,7 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
     models.PageRevision(
         page=page,
         author=author.internal_object,
-        comment=comment,
+        comment=utils.escape_html(comment),
         is_minor=minor_edit,
         content=content,
     ).save()
@@ -261,6 +261,7 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
         pass
     else:
         pp.delete()
+    reason = utils.escape_html(reason)
     if protection_level.label != groups.GROUP_ALL:
         models.PageProtection(
             page_namespace_id=page.namespace_id,
@@ -276,3 +277,21 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
         reason=reason,
         protection_level=protection_level,
     ).save()
+
+
+def get_page_protection_log_entry(page: models.Page) -> models.PageProtectionLog | None:
+    """Return the latest page protection log entry for the given page.
+
+    :param page: The page.
+    :return: The log entry or None if there is none.
+    """
+    try:
+        pp = models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
+    except models.PageProtection.DoesNotExist:
+        return None
+    if pp.end_date and pp.end_date >= datetime.datetime.now():
+        return None
+    try:
+        return models.PageProtectionLog.objects.filter(page=page).latest()
+    except models.PageProtectionLog.DoesNotExist:
+        return None
