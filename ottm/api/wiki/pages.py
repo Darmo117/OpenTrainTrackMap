@@ -269,3 +269,10 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
             reason=reason,
             protection_level=protection_level,
         ).save()
+    models.PageProtectionLog(
+        performer=author.internal_object,
+        page=page,
+        end_date=until,
+        reason=reason,
+        protection_level=protection_level,
+    ).save()

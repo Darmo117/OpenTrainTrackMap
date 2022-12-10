@@ -1374,7 +1374,7 @@ class PageDeletionLog(PageLog):
 
 class PageProtectionLog(PageLog):
     """New entries are added each time a page’s protection status changes."""
-    end_date = dj_models.DateTimeField()
+    end_date = dj_models.DateTimeField(null=True, blank=True)
     reason = dj_models.TextField(null=True, blank=True)
     protection_level = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
 
