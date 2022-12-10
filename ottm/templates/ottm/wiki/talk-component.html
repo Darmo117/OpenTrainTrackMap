@@ -1,0 +1,9 @@
+{% load wiki %}
+
+{% if context.topics.count %}
+  {% wiki_render_topics context.topics %}
+{% else %}
+  <div id="wiki-talk-noresult" class="alert alert-info text-center" role="alert">
+    {% wiki_translate 'page.info.no_talks' %}
+  </div>
+{% endif %}

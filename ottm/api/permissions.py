@@ -15,5 +15,6 @@ PERM_WIKI_MASK = 'wiki_mask'
 PERM_WIKI_EDIT_FILTERS = 'wiki_edit_filters'
 PERM_WIKI_BLOCK_USERS = 'wiki_block_users'
 PERM_WIKI_EDIT_USER_PAGES = 'wiki_edit_user_pages'
+PERM_WIKI_EDIT_INTERFACE = 'wiki_edit_interface'
 
 PERMS: tuple[str, ...] = tuple(v for k, v in globals().items() if k.startswith('PERM_'))

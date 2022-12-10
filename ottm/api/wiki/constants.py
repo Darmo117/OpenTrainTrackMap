@@ -1,9 +1,10 @@
 """This module defines constants used by the wiki."""
-ACTION_SHOW = 'show'
+ACTION_READ = 'read'
 ACTION_EDIT = 'edit'
 ACTION_SUBMIT = 'submit'
 ACTION_HISTORY = 'history'
 ACTION_TALK = 'talk'
+ACTION_INFO = 'info'
 ACTION_RAW = 'raw'
 ACTIONS: dict[str, str] = {k: v for k, v in globals().items() if k.startswith('ACTION_')}
 

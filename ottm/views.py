@@ -161,7 +161,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
     dark_mode = _get_dark_mode_status(request, user)
     page_title = w_pages.get_correct_title(raw_page_title)
     ns, title = w_pages.split_title(page_title)
-    action = kwargs.get('action', w_cons.ACTION_SHOW)
+    action = kwargs.get('action', w_cons.ACTION_READ)
     page = w_pages.get_page(ns, title)
     js_config = w_pages.get_js_config(page, action)
     results_per_page = kwargs.get('results_per_page', 20)
@@ -247,7 +247,10 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                 context = _wiki_page_history_context(page, user, language, dark_mode, results_per_page, page_index,
                                                      js_config)
             case w_cons.ACTION_TALK:
-                # TODO get topics
+                context = _wiki_page_talk_context(page, user, language, dark_mode, results_per_page, page_index,
+                                                  js_config)
+            case w_cons.ACTION_INFO:
+                # TODO gather page info
                 context = None
             case _:
                 context = _show_wiki_page_context(page, user, language, dark_mode, revision_id, results_per_page,
@@ -505,7 +508,7 @@ def _wiki_page_edit_context(
     form = form or forms.WikiEditPageForm(
         user=user,
         language=language,
-        disabled=page.can_user_edit(user),
+        disabled=not page.can_user_edit(user),
         warn_unsaved_changes=True,
         initial={
             'content': page.get_content(),
@@ -525,6 +528,45 @@ def _wiki_page_edit_context(
         new_page_notice=w_pages.get_new_page_notice(user, language) if not page.exists else None,
         perm_error=perm_error,
         concurrent_edit_error=concurrent_edit_error,
+    )
+
+
+def _wiki_page_talk_context(
+        page: models.Page,
+        user: models.User,
+        language: settings.UILanguage,
+        dark_mode: bool,
+        results_per_page: int,
+        page_index: int,
+        js_config: dict,
+) -> page_context.WikiPageTalkActionContext:
+    """Create a wiki page talk context object.
+
+    :param page: Page object.
+    :param user: Current user.
+    :param language: Page’s language.
+    :param dark_mode: Whether to activate the dark mode.
+    :param results_per_page: Number of topics to display per page.
+    :param page_index: Index of current page.
+    :param js_config: Dict object containing JS config values.
+    :return: A WikiPageContext object.
+    """
+    if page.exists:
+        if user.has_permission(permissions.PERM_WIKI_MASK):
+            topics = page.topics.all()
+        else:
+            topics = page.topics.filter(deleted=False)
+    else:
+        topics = []
+    return page_context.WikiPageTalkActionContext(
+        page=page,
+        user=user,
+        language=language,
+        dark_mode=dark_mode,
+        js_config=js_config,
+        topics=topics,
+        topics_per_page=results_per_page,
+        page_index=page_index,
     )
 
 
@@ -548,10 +590,13 @@ def _wiki_page_history_context(
     :param js_config: Dict object containing JS config values.
     :return: A WikiPageContext object.
     """
-    if user.has_permission(permissions.PERM_WIKI_MASK):
-        revisions = page.revisions.all()
+    if page.exists:
+        if user.has_permission(permissions.PERM_WIKI_MASK):
+            revisions = page.revisions.all()
+        else:
+            revisions = page.revisions.filter(hidden=False)
     else:
-        revisions = page.revisions.filter(hidden=False)
+        revisions = []
     return page_context.WikiPageHistoryActionContext(
         page=page,
         user=user,

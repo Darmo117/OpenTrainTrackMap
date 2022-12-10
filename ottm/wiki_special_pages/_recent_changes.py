@@ -11,7 +11,7 @@ class SpecialPageRecentChanges(_SP):
     """This special page lists all recent page edits."""
 
     def __init__(self):
-        super().__init__(name='RecentChanges', accesskey='r')
+        super().__init__(name='RecentChanges', accesskey='c')
 
     def _process_request(self, request: _dj_wsgi.WSGIRequest, *args: str, **kwargs: str) -> dict[str, _typ.Any]:
         user = _auth.get_user_from_request(request)

@@ -259,7 +259,7 @@ class WikiPageShowActionContext(WikiPageContext):
             user=user,
             language=language,
             dark_mode=dark_mode,
-            action=w_cons.ACTION_SHOW,
+            action=w_cons.ACTION_READ,
             show_title=show_title,
             page_exists=page.exists,
             js_config=js_config,
@@ -380,6 +380,54 @@ class WikiPageEditActionContext(WikiPageContext):
         return self._concurrent_edit_error
 
 
+class WikiPageTalkActionContext(WikiPageContext):
+    def __init__(
+            self,
+            page: _models.Page,
+            user: _models.User,
+            language: settings.UILanguage,
+            dark_mode: bool,
+            js_config: dict[str, _typ.Any],
+            topics: list[_models.Topic],
+            page_index: int = 1,
+            topics_per_page: int = 20,
+    ):
+        """Create a page context for wiki pages’ history.
+
+        :param page: Wiki page object.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param dark_mode: Whether to activate the dark mode.
+        :param js_config: Dict object containing the wiki’s JS config.
+         It is converted to a JSON object before being inserted in the HTML page.
+        :param topics: List of page talk topics.
+        :param page_index: Current pagination index.
+        :param topics_per_page: Number of topics to display per page.
+        """
+        super().__init__(
+            page=page,
+            no_index=True,
+            user=user,
+            language=language,
+            dark_mode=dark_mode,
+            action=w_cons.ACTION_TALK,
+            show_title=True,
+            page_exists=page.exists,
+            js_config=js_config,
+        )
+        self._topics = dj_paginator.Paginator(topics, topics_per_page)
+        self._page_index = page_index
+        self._topics_per_page = topics_per_page
+
+    @property
+    def topics(self) -> dj_paginator.Paginator:
+        return self._topics
+
+    @property
+    def page_index(self) -> int:
+        return self._page_index
+
+
 class WikiPageHistoryActionContext(WikiPageContext):
     def __init__(
             self,
@@ -498,7 +546,7 @@ class WikiSpecialPageContext(WikiPageContext):
             user=user,
             language=language,
             dark_mode=dark_mode,
-            action=w_cons.ACTION_SHOW,
+            action=w_cons.ACTION_READ,
             show_title=True,
             page_exists=page_exists,
             js_config=js_config

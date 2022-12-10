@@ -54,3 +54,7 @@ html, body {
   font-size: 200%;
   margin-right: 10px;
 }
+
+.center {
+  text-align: center;
+}

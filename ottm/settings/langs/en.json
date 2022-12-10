@@ -313,6 +313,47 @@
               }
             }
           }
+        },
+        "page": {
+          "read": {
+            "label": "Read",
+            "tooltip": "Read the page"
+          },
+          "talk": {
+            "label": "Talk",
+            "tooltip": "Discuss about this page"
+          },
+          "source": {
+            "label": "Source",
+            "tooltip": "View the source of this page"
+          },
+          "edit": {
+            "label": "Edit",
+            "tooltip": "Edit the contents of this page"
+          },
+          "create": {
+            "label": "Create",
+            "tooltip": "Create this page"
+          },
+          "history": {
+            "label": "History",
+            "tooltip": "See the edit history of this page"
+          }
+        }
+      },
+      "page": {
+        "title": {
+          "talk": "Discussions about “{page_title}”",
+          "source": "Source of “{page_title}”",
+          "edit": "Editing page “{page_title}”",
+          "create": "Creating page “{page_title}”",
+          "history": "Revision history of “{page_title}”"
+        },
+        "info": {
+          "no_talks": "This page has no discussions yet."
+        },
+        "error": {
+          "no_history": "This page has no history as it does not exist."
         }
       },
       "link": {

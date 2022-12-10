@@ -7,7 +7,7 @@ import django.utils.safestring as dj_safe
 
 from . import ottm
 from .. import models, page_context
-from ..api.wiki import menus, pages as w_pages, parser
+from ..api.wiki import menus, pages as w_pages, parser, constants as w_cons
 
 register = dj_template.Library()
 
@@ -86,6 +86,65 @@ def wiki_inner_link(
 
 
 @register.simple_tag(takes_context=True)
+def wiki_page_menu_item(context: dict[str, typ.Any], action: str) -> str:
+    """Render a page menu item.
+
+    :param context: Page context.
+    :param action: Menu item’s action.
+    :return: The render item.
+    """
+    wiki_context: page_context.WikiPageContext = context.get('context')
+    page_title = wiki_context.page.full_title
+    css_classes = ['col-2', 'page-menu-item', 'mdi']
+    if action == wiki_context.action:
+        css_classes.append('selected')
+    if action == w_cons.ACTION_EDIT:
+        if wiki_context.page_exists:
+            if wiki_context.can_user_edit:
+                text = wiki_translate(context, f'menu.page.edit.label')
+                tooltip = wiki_translate(context, f'menu.page.edit.tooltip')
+                css_classes.append('mdi-file-document-edit-outline')
+            else:
+                text = wiki_translate(context, f'menu.page.source.label')
+                tooltip = wiki_translate(context, f'menu.page.source.tooltip')
+                css_classes.append('mdi-xml')
+        else:
+            css_classes.append('mdi-file-document-plus-outline')
+            text = wiki_translate(context, f'menu.page.create.label')
+            tooltip = wiki_translate(context, f'menu.page.create.tooltip')
+    else:
+        text = wiki_translate(context, f'menu.page.{action}.label')
+        tooltip = wiki_translate(context, f'menu.page.{action}.tooltip')
+        css_classes.append(
+            {
+                w_cons.ACTION_READ: 'mdi-document-outline',
+                w_cons.ACTION_TALK: 'mdi-forum',
+                w_cons.ACTION_HISTORY: 'mdi-history',
+            }[action]
+        )
+    access_key = {
+        w_cons.ACTION_READ: 'r',
+        w_cons.ACTION_TALK: 't',
+        w_cons.ACTION_EDIT: 'e',
+        w_cons.ACTION_HISTORY: 'h',
+    }[action]
+    if action == w_cons.ACTION_READ:
+        params = {}
+    else:
+        params = {'action': action}
+    link = parser.Parser.format_internal_link(
+        page_title,
+        wiki_context.language,
+        text=text,
+        tooltip=tooltip,
+        url_params=params,
+        css_classes=css_classes,
+        access_key=access_key,
+    )
+    return dj_safe.mark_safe(link)
+
+
+@register.simple_tag(takes_context=True)
 def wiki_static(context: dict[str, typ.Any], page_title: str) -> str:
     """Return the static resource link for the given wiki page.
 
@@ -150,6 +209,17 @@ def wiki_revisions_list(context: dict[str, typ.Any], revisions: dj_paginator.Pag
     :return: The rendered revisions list.
     """
     return ''  # TODO
+
+
+@register.inclusion_tag('ottm/wiki/tags/topics.html', takes_context=True)
+def wiki_render_topics(context: dict[str, typ.Any], topics: dj_paginator.Paginator) -> str:
+    """Render a list of revisions.
+
+    :param context: Page context.
+    :param topics: A Paginator object containing the topics.
+    :return: The rendered topics list.
+    """
+    return {}  # TODO
 
 
 @register.simple_tag(takes_context=True)

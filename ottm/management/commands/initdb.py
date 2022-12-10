@@ -56,7 +56,7 @@ class Command(dj_mngmt.BaseCommand):
         models.UserGroup(
             label=GROUP_WIKI_ADMINISTRATOR,
             permissions=(PERM_WIKI_DELETE, PERM_WIKI_RENAME, PERM_WIKI_MASK, PERM_WIKI_EDIT_FILTERS,
-                         PERM_WIKI_BLOCK_USERS, PERM_WIKI_EDIT_USER_PAGES),
+                         PERM_WIKI_BLOCK_USERS, PERM_WIKI_EDIT_USER_PAGES, PERM_WIKI_PROTECT),
         ).save()
         models.UserGroup(
             label=GROUP_PATROLLER,
@@ -100,8 +100,10 @@ class Command(dj_mngmt.BaseCommand):
 
         ns, title = pages.split_title(pages.MAIN_PAGE_TITLE)
         content = f'Welcome to {settings.SITE_NAME}’s wiki!'
-        pages.edit_page(None, wiki_user, pages.get_page(ns, title), content, edit_comment)
-
+        pages.edit_page(None, wiki_user, pages.get_page(ns, title), content,
+                        edit_comment)
+        pages.protect_page(wiki_user, pages.get_page(ns, title),
+                           models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATOR))
         content = """
 /*
  * Put the wiki’s global JavaScript here. It will be loaded on every wiki page, regardless of device.

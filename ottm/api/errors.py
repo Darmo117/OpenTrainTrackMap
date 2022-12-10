@@ -33,3 +33,19 @@ class MissingPermissionError(RuntimeError):
 
 class ConcurrentWikiEditError(RuntimeError):
     pass
+
+
+class EditSpecialPageError(RuntimeError):
+    pass
+
+
+class ProtectSpecialPageError(RuntimeError):
+    pass
+
+
+class FollowSpecialPageError(RuntimeError):
+    pass
+
+
+class AnonymousFollowPageError(RuntimeError):
+    pass

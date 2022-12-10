@@ -13,7 +13,8 @@ import django.db.models as dj_models
 import pytz
 
 from . import model_fields, settings
-from .api import constants, data_types, permissions
+from .api import constants, data_types
+from .api.permissions import *
 from .api.wiki import constants as w_cons, namespaces
 
 
@@ -262,6 +263,14 @@ class User:
         :return: True if the user has the permission, false otherwise.
         """
         return any(g.has_permission(perm) for g in self._user.groups.all())
+
+    def is_in_group(self, group: UserGroup) -> bool:
+        """Check whether this user is in the given group.
+
+        :param group: The group.
+        :return: True if the user is in the group, false otherwise.
+        """
+        return self._user.groups.filter(id=group.id).exists()
 
     def notes_count(self) -> int:
         """Return the total number of notes created by this user."""
@@ -1096,53 +1105,79 @@ class Page(dj_models.Model, NonDeletableMixin):
     def can_user_edit(self, user: User) -> bool:
         f"""Check whether the given user can edit this page.
 
-        A user can edit a page if the following conditions are met:
-            - They can edit the page’s namespace.
-            - AND they are logged in and not blocked, or they are logged out and their IP address is not blocked.
-            - OR the page is their own user page or they have the {permissions.PERM_WIKI_EDIT_USER_PAGES} permission.
+        A user `cannot` edit a page if any of the following conditions is met:
+            - They cannot edit the page’s namespace.
+            - They are logged in and blocked.
+            - They are not logged in and their IP is blocked.
+            - The page is a user page but not theirs and they do not have the {PERM_WIKI_EDIT_USER_PAGES} permission.
+            - The page is protected an they do not have the {PERM_WIKI_PROTECT} permission.
 
         :param user: The user.
         :return: True if the user can edit, false otherwise.
         """
+        if not self.namespace.can_user_edit_pages(user):
+            return False
+
+        now = datetime.datetime.now()
         block = user.block
-        ip_block = None
-        if user.is_anonymous or not user.is_authenticated:
+        if block and (not block.end_date or block.end_date >= now):
+            return False
+
+        if not user.is_authenticated:
             try:
                 ip_block = IPBlock.objects.get(ip=user.ip)
             except IPBlock.DoesNotExist:
-                pass
-        own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
-        now = datetime.datetime.now()
-        return (self.namespace.can_user_edit_pages(user)
-                and (block is None or block.end_date < now)
-                and (ip_block is None or ip_block.end_date < now)
-                and (not own_page or user.has_permission(permissions.PERM_WIKI_EDIT_USER_PAGES)))
+                ip_block = None
+            if ip_block and (not ip_block.end_date or ip_block.end_date >= now):
+                return False
+
+        try:
+            pp = PageProtection.objects.get(page_namespace_id=self.namespace_id, page_title=self.title)
+        except PageProtection.DoesNotExist:
+            pp = None
+        if pp and ((pp.end_date and pp.end_date >= now or not pp.end_date)
+                   and not user.is_in_group(pp.protection_level)):
+            return False
+
+        if (self.namespace == namespaces.NS_USER
+                and self.base_name != user.username
+                and not user.has_permission(PERM_WIKI_EDIT_USER_PAGES)):
+            return False
+
+        return True
 
     def can_user_post_messages(self, user: User) -> bool:
         """Check whether the given user can post messages on this page.
 
-        A user can post a message if the following conditions are met:
-            - The namespace is editable.
-            - AND they are logged in and not blocked, or they are logged out and their IP address is not blocked.
-            - OR they can post messages on their own user page.
+        A user `cannot` post a message if any of the following conditions is met:
+            - The namespace is not editable.
+            - They are logged in and blocked, and they are not on their user page or cannot post messages on it.
+            - They are not logged in and their IP is blocked, and they are not on their user page \
+             or cannot post messages on it.
 
         :param user: The user.
         :return: True if the user can post messages, false otherwise.
         """
+        if not self.namespace.is_editable:
+            return False
+
+        now = datetime.datetime.now()
         block = user.block
-        ip_block = None
-        if user.is_anonymous or not user.is_authenticated:
+        own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
+        if (block and (not block.end_date or block.end_date >= now)
+                and (not own_page or not block.allow_messages_on_own_user_page)):
+            return False
+
+        if not user.is_authenticated:
             try:
                 ip_block = IPBlock.objects.get(ip=user.ip)
             except IPBlock.DoesNotExist:
-                pass
-        own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
-        now = datetime.datetime.now()
-        return (self.namespace.is_editable
-                and (block is None or block.end_date < now
-                     or (own_page and block.allow_messages_on_own_user_page))
-                and (ip_block is None or ip_block.end_date < now
-                     or (own_page and ip_block.allow_messages_on_own_user_page)))
+                ip_block = None
+            if (ip_block and (not ip_block.end_date or ip_block.end_date >= now)
+                    and (not own_page or not ip_block.allow_messages_on_own_user_page)):
+                return False
+
+        return True
 
     def is_user_following(self, user: User) -> bool:
         """Check whether the given agent is following this page, whether it exists or not.
@@ -1150,10 +1185,16 @@ class Page(dj_models.Model, NonDeletableMixin):
         :param user: The user.
         :return: True if the user follows this page, false otherwise.
         """
-        return not user.is_anonymous and user.internal_object.followed_pages.filter(
-            page_namespace_id=self.namespace_id,
-            page_title=self.title,
-        ).exists()
+        if user.is_anonymous:
+            return False
+        try:
+            pp = user.internal_object.followed_pages.get(
+                page_namespace_id=self.namespace_id,
+                page_title=self.title,
+            )
+        except PageFollowStatus.DoesNotExist:
+            return False
+        return not pp.end_date or pp.end_date >= datetime.datetime.now()
 
     def last_revision_date(self) -> datetime.datetime | None:
         """Return the date of the latest edit made on this page or None if it does not exist."""
@@ -1210,9 +1251,12 @@ class PageProtection(dj_models.Model):
     # No foreign key to Page as it allows protecting non-existent pages.
     page_namespace_id = dj_models.IntegerField()
     page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
-    end_date = dj_models.DateTimeField()
+    end_date = dj_models.DateTimeField(null=True, blank=True)
     reason = dj_models.TextField(null=True, blank=True)
-    protection_level = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
+    protection_level = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
+
+    class Meta:
+        unique_together = ('page_namespace_id', 'page_title')
 
 
 class PageFollowStatus(dj_models.Model):
@@ -1253,6 +1297,7 @@ class Topic(dj_models.Model, NonDeletableMixin):
     page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT, related_name='topics')
     author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='wiki_topics')
     date = dj_models.DateTimeField(auto_now_add=True)
+    deleted = dj_models.BooleanField(default=False)
 
     def get_title(self) -> str:
         """Return the title of this topic or an empty string if it does not exist."""
@@ -1265,6 +1310,7 @@ class Message(dj_models.Model, NonDeletableMixin):
     author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='wiki_messages')
     date = dj_models.DateTimeField(auto_now_add=True)
     response_to = dj_models.ForeignKey('self', on_delete=dj_models.PROTECT, related_name='responses', null=True)
+    deleted = dj_models.BooleanField(default=False)
 
     def get_content(self) -> str:
         """Return the content of this message or an empty string if it does not exist."""

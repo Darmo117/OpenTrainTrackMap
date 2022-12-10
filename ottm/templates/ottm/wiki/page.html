@@ -65,30 +65,37 @@
         <h1 id="wiki-article-title" {% block title_attr %}{% endblock %}><!--
           {% if context.page.namespace == NS_SPECIAL %}
           -->{% wiki_translate 'special_pages.'|add:context.page.title %}<!--
-          {% elif context.action == ACTION_SHOW %}
+          {% elif context.action == ACTION_READ %}
           -->{{ context.page.full_title }}<!--
             {% if context.page.is_category_hidden %}
             --> <span id="wiki-maintenance-category-icon" class="mdi mdi-tools"
                       title="{% wiki_translate 'title.maintenance_category.tooltip' %}"></span><!--
             {% endif %}
           {% elif context.action == ACTION_TALK %}
-          -->{% wiki_translate 'title.talk' page_title=context.page.full_title %}<!--
-          {% elif context.action == ACTION_EDIT %}
+          -->{% wiki_translate 'page.title.talk' page_title=context.page.full_title %}<!--
+          {% elif context.action == ACTION_EDIT or context.action == ACTION_SUBMIT %}
             {% if context.page_exists %}
-              {% if context.page.can_user_edit %}
-              -->{% wiki_translate 'title.edit' page_title=context.page.full_title %}<!--
+              {% if context.can_user_edit %}
+              -->{% wiki_translate 'page.title.edit' page_title=context.page.full_title %}<!--
               {% else %}
-              -->{% wiki_translate 'title.source' page_title=context.page.full_title %}<!--
+              -->{% wiki_translate 'page.title.source' page_title=context.page.full_title %}<!--
               {% endif %}
             {% else %}
-            -->{% wiki_translate 'title.create' page_title=context.page.full_title %}<!--
+            -->{% wiki_translate 'page.title.create' page_title=context.page.full_title %}<!--
             {% endif %}
-          {% elif context.mode == ACTION_HISTORY %}
-          -->{% wiki_translate 'title.history' page_title=context.page.full_title %}<!--
+          {% elif context.action == ACTION_HISTORY %}
+          -->{% wiki_translate 'page.title.history' page_title=context.page.full_title %}<!--
           {% endif %}
       --></h1>
       {% endif %}
       {% if context.page.namespace != NS_SPECIAL %}
+        <div id="wiki-page-menu" class="row" style="padding-left: 15px; padding-right: 15px">
+          {% wiki_page_menu_item ACTION_READ %}
+          {% wiki_page_menu_item ACTION_TALK %}
+          <div class="col"></div>
+          {% wiki_page_menu_item ACTION_EDIT %}
+          {% wiki_page_menu_item ACTION_HISTORY %}
+        </div>
       {% endif %}
 
       {% if context.parent_pages %}
@@ -126,11 +133,11 @@
           {% else %}
             {% wiki_translate 'special.error.permission_required' perms=context.required_perms|join:', ' %}
           {% endif %}
-        {% elif context.action == ACTION_SHOW %}
+        {% elif context.action == ACTION_READ %}
           {% include 'ottm/wiki/read-component.html' %}
         {% elif context.action == ACTION_TALK %}
           {% include 'ottm/wiki/talk-component.html' %}
-        {% elif context.action == ACTION_EDIT %}
+        {% elif context.action == ACTION_EDIT or context.action == ACTION_SUBMIT %}
           {% include 'ottm/wiki/editor-component.html' %}
         {% elif context.action == ACTION_HISTORY %}
           {% include 'ottm/wiki/history-component.html' %}

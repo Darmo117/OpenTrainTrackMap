@@ -11,13 +11,32 @@
 }
 
 #wiki-article-title {
+  border-bottom-width: 5px;
+  border-bottom-style: solid;
+}
+
+#wiki-page-menu {
+  padding-bottom: 0.5em;
+}
+
+#wiki-page-menu a.page-menu-item {
+  text-align: center;
+  cursor: pointer;
   border-bottom-width: 3px;
   border-bottom-style: solid;
 }
 
+#wiki-page-menu a.page-menu-item:not(.selected) {
+  border-color: rgba(0, 0, 0, 0);
+}
+
+#wiki-page-menu a.page-menu-item:hover {
+  text-decoration: none;
+}
+
 #wiki-footer {
   font-size: 0.8em;
-  border-top-width: 3px;
+  border-top-width: 5px;
   border-top-style: solid;
 }
 
@@ -27,6 +46,10 @@
 
 #wiki-footer .django-link img.django-logo {
   height: 1.5em;
+}
+
+#wiki-edit-form {
+  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 pre {

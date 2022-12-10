@@ -1,11 +1,12 @@
 """This module defines functions to interact with the wiki’s database."""
+import datetime
 import urllib.parse
 
 import django.core.handlers.wsgi as dj_wsgi
 import django.db.transaction as dj_db_trans
 
 from . import constants, namespaces
-from .. import auth, errors, permissions
+from .. import auth, errors, groups, permissions
 from ... import models, settings
 
 MAIN_PAGE_TITLE = namespaces.NS_WIKI.get_full_page_title('Main Page')
@@ -148,10 +149,13 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
     :param minor_edit: Whether to mark this revision as minor.
     :param follow: Whether the user wants to follow the page.
     :param section_id: ID of the edited page section. Not yet available.
+    :raise EditSpecialPageError: If the page is in the "Special" namespace.
     :raise MissingPermissionError: If the user cannot edit the page.
     :raise ConcurrentWikiEditError: If another edit was made on the same page before this edit.
     :raise ValueError: If the request is None and the user is anonymous.
     """
+    if page.namespace == namespaces.NS_SPECIAL:
+        raise errors.EditSpecialPageError()
     if not page.can_user_edit(author):
         raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
     if False:  # TODO check if another edit was made while editing
@@ -175,7 +179,8 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
         is_minor=minor_edit,
         content=content,
     ).save()
-    follow_page(author, page, follow)
+    if author.is_authenticated:
+        follow_page(author, page, follow)
 
 
 def _get_page_content_type(page: models.Page) -> str:
@@ -194,27 +199,73 @@ def _get_page_content_type(page: models.Page) -> str:
 
 
 @dj_db_trans.atomic
-def follow_page(user: models.User, page: models.Page, follow: bool) -> bool:
+def follow_page(user: models.User, page: models.Page, follow: bool, until: datetime.datetime = None):
     """Make a user follow/unfollow the given page.
 
     :param user: The user.
     :param page: The page to add/remove to the user’s follow list.
     :param follow: Whether to add or remove the page from the user’s follow list.
+    :param until: Date after which the follow status will be removed.
     :return: True if the operation was successful, false otherwise.
+    :raise AnonymousFollowPageError: If the user is not logged in.
+    :raise FollowSpecialPageError: If the page is in the "Special" namespace.
     """
-    if user.is_anonymous:
-        return False
-    user_follows = page.is_user_following(user)
-    if follow and not user_follows:
+    if user.is_anonymous or not user.is_authenticated:
+        raise errors.AnonymousFollowPageError()
+    if page.namespace == namespaces.NS_SPECIAL:
+        raise errors.FollowSpecialPageError()
+
+    def delete_follow():
+        try:
+            user.internal_object.followed_pages.get(
+                page_namespace_id=page.namespace_id,
+                page_title=page.title,
+            ).delete()
+        except models.PageFollowStatus.DoesNotExist:
+            pass
+
+    if follow:
+        delete_follow()
         models.PageFollowStatus(
             user=user.internal_object,
             page_namespace_id=page.namespace_id,
             page_title=page.title,
+            end_date=until,
         ).save()
-    elif not follow and user_follows:
-        try:
-            models.PageFollowStatus.objects.get(user=user, page_namespace_id=page.namespace_id,
-                                                page_title=page.title).delete()
-        except models.PageFollowStatus.DoesNotExist:
-            return False
-    return True
+    elif not follow:
+        delete_follow()
+
+
+@dj_db_trans.atomic
+def protect_page(author: models.User, page: models.Page, protection_level: models.UserGroup, reason: str = None,
+                 until: datetime.datetime = None):
+    f"""Change the protection status of the given page.
+    If a the page is already protected, the status will be replaced by the new one.
+
+    :param author: User performing the action.
+    :param page: The page.
+    :param protection_level: The new protection level. If the new level is {groups.GROUP_ALL},
+        any pre-existing protection will be removed.
+    :param reason: The reason behind the new protection status.
+    :param until: The date until which the page will be protected. If None, the protection will never end.
+    :raise MissingPermissionError: If the user does not have the {permissions.PERM_WIKI_PROTECT} permission.
+    :raise ProtectSpecialPageError: If the page is in the "Special" namespace.
+    """
+    if not author.has_permission(permissions.PERM_WIKI_PROTECT):
+        raise errors.MissingPermissionError(permissions.PERM_WIKI_PROTECT)
+    if page.namespace == namespaces.NS_SPECIAL:
+        raise errors.ProtectSpecialPageError()
+    try:
+        pp = models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
+    except models.PageProtection.DoesNotExist:
+        pass
+    else:
+        pp.delete()
+    if protection_level.label != groups.GROUP_ALL:
+        models.PageProtection(
+            page_namespace_id=page.namespace_id,
+            page_title=page.title,
+            end_date=until,
+            reason=reason,
+            protection_level=protection_level,
+        ).save()

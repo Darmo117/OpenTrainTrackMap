@@ -10,6 +10,14 @@ body {
   border-color: #b7b7b7;
 }
 
+#wiki-page-menu a.page-menu-item.selected {
+  border-color: #4646ff;
+}
+
+#wiki-page-menu a.page-menu-item:hover:not(.selected) {
+  border-color: #9d9d9d;
+}
+
 #wiki-footer {
   background-color: #2e3338;
 }
