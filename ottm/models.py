@@ -1085,8 +1085,8 @@ class Page(dj_models.Model, NonDeletableMixin):
 
     @property
     def base_name(self) -> str:
-        """Page’s base name. If the namespace allows subpages, it is the value before the first '/'."""
-        if '/' in self.title and self.namespace.allows_subpages:
+        """Page’s base name. If the namespace allows subpages or is "Special", it is the value before the first '/'."""
+        if '/' in self.title and (self.namespace.allows_subpages or self.namespace == namespaces.NS_SPECIAL):
             return self.title.split('/')[0]
         return self.title
 

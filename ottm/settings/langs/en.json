@@ -237,6 +237,7 @@
         },
         "DeletePage": {
           "title": "Delete a page",
+          "title_page": "Delete “{page}”",
           "menu": {
             "label": "Delete",
             "tooltip": "Delete this page"
@@ -244,6 +245,7 @@
         },
         "RenamePage": {
           "title": "Rename a page",
+          "title_page": "Rename “{page}”",
           "menu": {
             "label": "Rename",
             "tooltip": "Rename this page"
@@ -251,6 +253,7 @@
         },
         "ProtectPage": {
           "title": "Protect a page",
+          "title_page": "Change protection level of “{page}”",
           "menu": {
             "label": "Protect",
             "tooltip": "Protect this page"
@@ -258,6 +261,7 @@
         },
         "SubPages": {
           "title": "List subpages",
+          "title_page": "Subpages of “{page}”",
           "menu": {
             "label": "Subpages",
             "tooltip": "List the subpages of this page"
@@ -265,6 +269,7 @@
         },
         "LinkedPages": {
           "title": "Linked pages",
+          "title_page": "Pages linking to “{page}”",
           "menu": {
             "label": "Linked pages",
             "tooltip": "List the pages that link to this page"
@@ -272,9 +277,35 @@
         },
         "Logs": {
           "title": "Logs",
+          "title_page": "Log entries for “{page}”",
+          "title_user": "Log entries for “{user}”",
           "menu": {
             "label": "Page logs",
             "tooltip": "Display the logs for this page"
+          }
+        },
+        "Contributions": {
+          "title": "Wiki contributions",
+          "title_user": "Wiki contributions of user {username}",
+          "menu": {
+            "label": "Wiki contributions",
+            "tooltip": "Display the contributions to the wiki of this user"
+          }
+        },
+        "Block": {
+          "title": "Block a user",
+          "title_user": "Block user {username}",
+          "menu": {
+            "label": "Block",
+            "tooltip": "Block this user"
+          }
+        },
+        "SendEmail": {
+          "title": "Send an email to a user",
+          "title_user": "Send an email to user {username}",
+          "menu": {
+            "label": "Send an email",
+            "tooltip": "Send an email to this user"
           }
         }
       },

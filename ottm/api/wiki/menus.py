@@ -85,6 +85,13 @@ def _get_builtin_menu(page_context: pc.WikiPageContext, menu_id: str) -> Menu:
                         items.append({'title': 'Special:RenamePage', 'subpage': page.full_title})
                 if user.has_permission(PERM_WIKI_PROTECT):
                     items.append({'title': 'Special:ProtectPage', 'subpage': page.full_title})
+            if page.namespace == NS_USER:
+                username = page.base_name
+                items.append({'title': 'Special:Contributions', 'subpage': NS_USER.get_full_page_title(username)})
+                if user.has_permission(PERM_WIKI_BLOCK_USERS):
+                    items.append({'title': 'Special:Block', 'subpage': NS_USER.get_full_page_title(username)})
+                if user.is_authenticated:
+                    items.append({'title': 'Special:SendEmail', 'subpage': NS_USER.get_full_page_title(username)})
             items.append({'title': 'Special:SubPages', 'subpage': page.full_title + '/'})
         case 'more':
             if page.namespace != NS_SPECIAL:
