@@ -293,7 +293,9 @@ def _get_page_language(request: dj_wsgi.WSGIRequest, user: models.User) -> setti
     :return: Page’s language.
     """
     if (lang_code := request.GET.get('lang')) and lang_code in settings.LANGUAGES:
-        return settings.LANGUAGES.get(lang_code)
+        return settings.LANGUAGES[lang_code]
+    elif (lang_code := request.COOKIES.get('language')) and lang_code in settings.LANGUAGES:
+        return settings.LANGUAGES[lang_code]
     else:
         return user.prefered_language
 
@@ -307,6 +309,8 @@ def _get_dark_mode_status(request: dj_wsgi.WSGIRequest, user: models.User) -> bo
     """
     if 'dark_mode' in request.GET:
         return bool(request.GET['dark_mode'])
+    if 'dark_mode' in request.COOKIES:
+        return request.COOKIES['dark_mode'] == 'true'
     else:
         return user.uses_dark_mode
 

@@ -97,6 +97,9 @@
       },
       "log_out": {
         "label": "Log out"
+      },
+      "dark_mode": {
+        "label": "Dark mode"
       }
     },
     "alert": {

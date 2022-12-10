@@ -26,6 +26,10 @@
   color: gray;
 }
 
+.dropdown-menu, .dropdown-menu .dropdown-item {
+  cursor: pointer;
+}
+
 pre {
   border-color: #9d9d9d;
 }

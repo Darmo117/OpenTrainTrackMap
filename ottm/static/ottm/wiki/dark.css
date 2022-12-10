@@ -34,6 +34,21 @@ body {
   color: gray;
 }
 
+input, select {
+  background-color: #242a2d !important;
+  color: #fff !important;
+}
+
+.dropdown-menu, .dropdown-menu .dropdown-item {
+  background-color: #343a40;
+  color: #fff !important;
+  cursor: pointer;
+}
+
+.dropdown-menu .dropdown-item:hover {
+  background-color: #4d565d;
+}
+
 pre {
   border-color: #b7b7b7;
 }

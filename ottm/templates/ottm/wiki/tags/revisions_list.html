@@ -1,6 +1,7 @@
-<ul>
+{# TODO pagination #}
+<ul class="wiki-page-revisions">
   {% for line in lines %}
-    <li>
+    <li class="wiki-page-revision">
       ({{ line.actions|join:' | ' }})
       {{ line.date }} ·
       {{ line.page_link|safe }} ·

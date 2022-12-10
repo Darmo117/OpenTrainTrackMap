@@ -5,8 +5,44 @@
  */
 class OTTM {
   constructor() {
+    this.#hookSettingsDropdownBehavior();
+    this.#hookDarkModeCallback();
+    this.#hookLanguageSelectorCallback();
     this.setReferer();
     this.setAccessKeys();
+  }
+
+  #hookSettingsDropdownBehavior() {
+    const $button = $("#navbar-logged-out-settings");
+    const $parent = $button.parent();
+    const $menu = $parent.find(".dropdown-menu");
+    $button.on("click", () => {
+      $parent.toggleClass("show");
+      $menu.toggleClass("show");
+    });
+    $("body").on("click", e => {
+      // noinspection JSCheckFunctionSignatures
+      if (!$.contains($parent[0], e.target)) {
+        $parent.removeClass("show");
+        $menu.removeClass("show");
+      }
+    });
+  }
+
+  #hookDarkModeCallback() {
+    $("#dark-mode-checkbox").on("click", e => {
+      const checked = $(e.target).prop("checked");
+      Cookies.set('dark_mode', checked);
+      location.reload();
+    });
+  }
+
+  #hookLanguageSelectorCallback() {
+    $("#nav-language-select").on("change", e => {
+      const langCode = $(e.target).val();
+      Cookies.set('language', langCode);
+      location.reload();
+    });
   }
 
   /**
@@ -50,6 +86,7 @@ class OTTM {
    */
   static setReturnTo($link, path, args) {
     const url = new URL($link.prop("href"));
+    // TODO use URLSearchParams
     url.search = "return_to=" + encodeURIComponent(path);
     if (args) {
       url.search += "&" + $.map(Object.entries(args), e => `${e[0]}=${e[1]}`).join("&");
