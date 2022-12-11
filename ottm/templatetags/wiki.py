@@ -1,7 +1,8 @@
 """This module defines template tags for the wiki."""
 import collections
-import typing as typ
+import urllib.parse
 
+import django.core.handlers.wsgi as dj_wsgi
 import django.core.paginator as dj_paginator
 import django.template as dj_template
 import django.utils.safestring as dj_safe
@@ -9,7 +10,7 @@ import django.utils.safestring as dj_safe
 from .ottm import *
 from .. import models, page_context
 from ..api.permissions import *
-from ..api.wiki import constants as w_cons, menus, pages as w_pages, parser, namespaces as w_ns
+from ..api.wiki import constants as w_cons, menus, namespaces as w_ns, pages as w_pages, parser
 
 register = dj_template.Library()
 
@@ -21,7 +22,7 @@ def wiki_url_escape(value: str) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def wiki_translate(context: dict[str, typ.Any], key: str, **kwargs) -> str:
+def wiki_translate(context: TemplateContext, key: str, **kwargs) -> str:
     """Translate the given key. The prefix 'wiki.' is appended automatically.
 
     :param context: Page context.
@@ -34,7 +35,7 @@ def wiki_translate(context: dict[str, typ.Any], key: str, **kwargs) -> str:
 
 @register.simple_tag(takes_context=True)
 def wiki_inner_link(
-        context: dict[str, typ.Any],
+        context: TemplateContext,
         page_title: str,
         text: str = None,
         tooltip: str = None,
@@ -88,7 +89,7 @@ def wiki_inner_link(
 
 
 @register.simple_tag(takes_context=True)
-def wiki_page_menu_item(context: dict[str, typ.Any], action: str) -> str:
+def wiki_page_menu_item(context: TemplateContext, action: str) -> str:
     """Render a page menu item.
 
     :param context: Page context.
@@ -147,7 +148,7 @@ def wiki_page_menu_item(context: dict[str, typ.Any], action: str) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def wiki_static(context: dict[str, typ.Any], page_title: str) -> str:
+def wiki_static(context: TemplateContext, page_title: str) -> str:
     """Return the static resource link for the given wiki page.
 
     :param context: Page context.
@@ -158,7 +159,7 @@ def wiki_static(context: dict[str, typ.Any], page_title: str) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def wiki_diff_link(context: dict[str, typ.Any], revision: models.PageRevision, against: str,
+def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, against: str,
                    show_nav_link: bool = True) -> str:
     """Render a revision’s diff link.
 
@@ -179,7 +180,7 @@ def wiki_diff_link(context: dict[str, typ.Any], revision: models.PageRevision, a
 
 
 @register.simple_tag(takes_context=True)
-def wiki_revision_comment(context: dict[str, typ.Any], revision: models.PageRevision) -> str:
+def wiki_revision_comment(context: TemplateContext, revision: models.PageRevision) -> str:
     """Format a revision’s comment.
 
     :param context: Page context.
@@ -190,7 +191,7 @@ def wiki_revision_comment(context: dict[str, typ.Any], revision: models.PageRevi
 
 
 @register.simple_tag(takes_context=True)
-def wiki_page_list(context: dict[str, typ.Any], pages: dj_paginator.Paginator, paginate: bool = True) -> str:
+def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, paginate: bool = True) -> str:
     """Render a list of pages.
 
     :param context: Page context.
@@ -202,8 +203,8 @@ def wiki_page_list(context: dict[str, typ.Any], pages: dj_paginator.Paginator, p
 
 
 @register.inclusion_tag('ottm/wiki/tags/revisions_list.html', takes_context=True)
-def wiki_revisions_list(context: dict[str, typ.Any], revisions: dj_paginator.Paginator, mode: str) \
-        -> dict[str, typ.Any]:
+def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Paginator, mode: str) \
+        -> TemplateContext:
     """Render a list of revisions.
 
     :param context: Page context.
@@ -306,7 +307,7 @@ def wiki_revisions_list(context: dict[str, typ.Any], revisions: dj_paginator.Pag
 
 
 @register.inclusion_tag('ottm/wiki/tags/topics.html', takes_context=True)
-def wiki_render_topics(context: dict[str, typ.Any], topics: dj_paginator.Paginator) -> dict[str, typ.Any]:
+def wiki_render_topics(context: TemplateContext, topics: dj_paginator.Paginator) -> TemplateContext:
     """Render a list of revisions.
 
     :param context: Page context.
@@ -317,7 +318,7 @@ def wiki_render_topics(context: dict[str, typ.Any], topics: dj_paginator.Paginat
 
 
 @register.simple_tag(takes_context=True)
-def wiki_format_log_entry(context: dict[str, typ.Any], log_entry: models.Log) -> str:
+def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> str:
     """Format a log entry.
 
     :param context: Page context.
@@ -396,7 +397,7 @@ def wiki_format_log_entry(context: dict[str, typ.Any], log_entry: models.Log) ->
 
 
 @register.inclusion_tag('ottm/wiki/tags/side_menu.html', takes_context=True)
-def wiki_side_menu(context: dict[str, typ.Any], menu_id: str) -> dict[str, typ.Any]:
+def wiki_side_menu(context: TemplateContext, menu_id: str) -> TemplateContext:
     """Format the menu with the given ID.
 
     :param context: Page context.
@@ -407,7 +408,34 @@ def wiki_side_menu(context: dict[str, typ.Any], menu_id: str) -> dict[str, typ.A
     return {'menus': menus.get_menus(wiki_context, menu_id), 'dark_mode': wiki_context.dark_mode}
 
 
-def _format_username(context: dict[str, typ.Any], user: models.CustomUser) -> str:
+@register.simple_tag(takes_context=True)
+def wiki_pagination(context: TemplateContext, paginator: dj_paginator.Paginator) -> str:
+    wiki_context: page_context.WikiPageContext = context.get('context')
+    # noinspection PyUnresolvedReferences
+    page_index = wiki_context.page_index
+    items = []
+    for index in paginator.get_elided_page_range(page_index, on_each_side=2):
+        if isinstance(index, int):
+            url = wiki_add_url_params(context, page=index)
+            active = 'active' if index == page_index else ''
+            items.append(f'<li class="page-item {active}"><a class="page-link" href="{url}">{index}</a></li>')
+        else:
+            items.append(f'<li class="page-item disabled"><a class="page-link" href="#">{index}</a></li>')
+
+    return dj_safe.mark_safe('<nav><ul class="pagination justify-content-center">' + ''.join(items) + '</ul></nav>')
+
+
+@register.simple_tag(takes_context=True)
+def wiki_add_url_params(context: TemplateContext, **kwargs) -> str:
+    request: dj_wsgi.WSGIRequest = context['request']
+    url_path = request.path
+    get_params = {k: v for k, v in request.GET.items()}
+    get_params.update(kwargs)
+    url_params = urllib.parse.urlencode(get_params)
+    return url_path + ('?' + url_params if url_params else '')
+
+
+def _format_username(context: TemplateContext, user: models.CustomUser) -> str:
     if user.hide_username:
         return f'<span class="wiki-hidden">{wiki_translate(context, "username_hidden")}</span>'
     else:
@@ -415,7 +443,7 @@ def _format_username(context: dict[str, typ.Any], user: models.CustomUser) -> st
                                ignore_current_title=True)
 
 
-def _format_comment(context: dict[str, typ.Any], comment: str, hide: bool) -> str:
+def _format_comment(context: TemplateContext, comment: str, hide: bool) -> str:
     if hide:
         return f'<span class="wiki-hidden">{wiki_translate(context, "comment_hidden")}</span>'
     else:

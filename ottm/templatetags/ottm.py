@@ -8,10 +8,11 @@ import django.utils.safestring as _dj_safe
 from .. import page_context as _pc
 
 register = _dj_template.Library()
+TemplateContext = dict[str, _typ.Any]
 
 
 @register.simple_tag(takes_context=True)
-def ottm_translate(context: dict[str, _typ.Any], key: str, **kwargs) -> str:
+def ottm_translate(context: TemplateContext, key: str, **kwargs) -> str:
     """Translate the given key.
 
     :param context: Page context.
@@ -24,7 +25,7 @@ def ottm_translate(context: dict[str, _typ.Any], key: str, **kwargs) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def ottm_format_date(context: dict[str, _typ.Any], date: _dt.datetime) -> str:
+def ottm_format_date(context: TemplateContext, date: _dt.datetime) -> str:
     """Format the given date according to the context’s language.
 
     :param context: Page context.

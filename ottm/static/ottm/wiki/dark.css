@@ -49,6 +49,14 @@ input, select {
   background-color: #4d565d;
 }
 
+.pagination > .page-item:not(.active) > .page-link {
+  background-color: #343a40 !important;
+}
+
+.pagination > .page-item:not(.active) > .page-link:hover {
+  background-color: #1d2124 !important;
+}
+
 pre {
   border-color: #b7b7b7;
 }

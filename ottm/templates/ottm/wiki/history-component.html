@@ -1,7 +1,9 @@
 {% load wiki %}
 
 {% if context.page_exists %}
+  {% wiki_pagination context.revisions %}
   {% wiki_revisions_list context.revisions mode='history' %}
+  {% wiki_pagination context.revisions %}
 {% else %}
   <div id="wiki-history-noresult" class="alert alert-danger text-center" role="alert">
     {% wiki_translate 'page.error.no_history' %}
