@@ -1,0 +1,1854 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.3.0">
+  <zoom_level>10</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1520</x>
+      <y>350</y>
+      <w>220</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>Thing
+«abstract»
+--
+existence_period: DateInterval
+qid: String [0,1]
+sources: String [0,1]
+comment: String [0,1]</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1560</x>
+      <y>510</y>
+      <w>140</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>Geometry
+«abstract»
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>1070</x>
+      <y>90</y>
+      <w>380</w>
+      <h>300</h>
+    </coordinates>
+    <panel_attributes>*Legend*
+
+Classes with «Enum» have a specific number of instances, all of which are protected.
+
+Properties:
+- [n,m]: multiplicity. If absent, it is equivalent to [1,1].
+- Bold: value must be unique.
+- {T}: temporal property
+- {NDMU}: no date means unknown value
+
+Colors:
+- Blue: inherits Geometry
+- Orange: inherits Enum
+
+A class with a dashed border is a reference to a class defined elsewhere in the diagram.
+style=wordwrap
+bg=yellow</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1620</x>
+      <y>460</y>
+      <w>30</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1570</x>
+      <y>690</y>
+      <w>120</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>Node
+--
+latitude: Float
+longitude: Float
+altitude: Float
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1620</x>
+      <y>550</y>
+      <w>30</w>
+      <h>160</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;140.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1260</x>
+      <y>660</y>
+      <w>330</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=3,*
+r1=nodes
+m2=*
+r2=polygons</panel_attributes>
+    <additional_attributes>310.0;70.0;10.0;70.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1880</x>
+      <y>710</y>
+      <w>180</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>Polyline
+«abstract»
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1660</x>
+      <y>550</y>
+      <w>330</w>
+      <h>180</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;310.0;160.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1130</x>
+      <y>790</y>
+      <w>190</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>Volume
+«abstract»
+--
+ruin: Boolean [0,1] {T}
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1220</x>
+      <y>660</y>
+      <w>30</w>
+      <h>150</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;130.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>3140</x>
+      <y>800</y>
+      <w>150</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>ElectrificationSystem
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>3100</x>
+      <y>890</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>CurrentType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>3100</x>
+      <y>960</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>TrackUseType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2500</x>
+      <y>770</y>
+      <w>320</w>
+      <h>250</h>
+    </coordinates>
+    <panel_attributes>TrackSection
+--
+name: String [0,1] {T}
+direction: String
+maximum_speed: Unit [0,1] {T,NDMU}
+electrified: Boolean {T}
+tension: Unit [0,1] {T}
+crosses_road: String [0,1] {T}
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2050</x>
+      <y>720</y>
+      <w>500</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;480.0;10.0;480.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2810</x>
+      <y>960</y>
+      <w>310</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=use_type {T,NDMU}
+m2=*
+r2=track_sections</panel_attributes>
+    <additional_attributes>290.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2810</x>
+      <y>800</y>
+      <w>350</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=electrification_system {T}
+m2=*
+r2=track_sections</panel_attributes>
+    <additional_attributes>330.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2810</x>
+      <y>890</y>
+      <w>310</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=current_type {T}
+m2=*
+r2=track_sections</panel_attributes>
+    <additional_attributes>290.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2530</x>
+      <y>1110</y>
+      <w>250</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>ConventionalTrackSection
+--
+gauges: Unit [1,*]
+has_tire_rollways: Boolean  [0,1] {T}
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2650</x>
+      <y>1010</y>
+      <w>30</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;100.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2580</x>
+      <y>1290</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>RailFerryRouteSection
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2650</x>
+      <y>1220</y>
+      <w>30</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>3070</x>
+      <y>1100</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>TractionType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>3070</x>
+      <y>1170</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>RailType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>3070</x>
+      <y>1240</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>TieType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2770</x>
+      <y>1100</y>
+      <w>320</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=traction_type {T}
+m2=*
+r2=track_sections
+</panel_attributes>
+    <additional_attributes>300.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2770</x>
+      <y>1170</y>
+      <w>320</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=rail_type {T,NDMU}
+m2=*
+r2=track_sections
+</panel_attributes>
+    <additional_attributes>300.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2750</x>
+      <y>1220</y>
+      <w>340</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=tie_type {T}
+m2=*
+r2=track_sections
+</panel_attributes>
+    <additional_attributes>320.0;40.0;10.0;40.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2160</x>
+      <y>1040</y>
+      <w>140</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>MonorailTrackType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2270</x>
+      <y>930</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>MonorailTrackSection
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2420</x>
+      <y>930</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>80.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2150</x>
+      <y>920</y>
+      <w>140</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=1
+r1=type
+m2=*
+r2=track_sections</panel_attributes>
+    <additional_attributes>80.0;120.0;80.0;20.0;120.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2270</x>
+      <y>810</y>
+      <w>160</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>GLTTrackSection
+--
+guided: Boolean
+bg=cyan
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2420</x>
+      <y>820</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>80.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2270</x>
+      <y>980</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>VALTrackSection
+bg=cyan
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2270</x>
+      <y>880</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>MaglevTrackSection
+bg=cyan
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2420</x>
+      <y>990</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>80.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2420</x>
+      <y>880</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>80.0;10.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1370</x>
+      <y>790</y>
+      <w>250</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>Building
+--
+name: String [0,1] {T}
+floors: Int [0,1] {T,NDMU}
+basement_floors: Int [0,1] {T,NDMU}
+height: Unit [0,1] {T,NDMU}
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1310</x>
+      <y>820</y>
+      <w>80</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;60.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1080</x>
+      <y>1140</y>
+      <w>160</w>
+      <h>60</h>
+    </coordinates>
+    <panel_attributes>BuildingMaterial
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1460</x>
+      <y>1000</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>BuildingType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1660</x>
+      <y>870</y>
+      <w>130</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>BuildingUseType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1230</x>
+      <y>880</y>
+      <w>280</w>
+      <h>310</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=walls_material
+m2=*
+r2=buildings</panel_attributes>
+    <additional_attributes>10.0;280.0;200.0;280.0;200.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1510</x>
+      <y>880</y>
+      <w>90</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=type {T}
+m2=*
+r2=buildings</panel_attributes>
+    <additional_attributes>10.0;120.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1610</x>
+      <y>800</y>
+      <w>230</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=type {T,NDMU}
+m2=*
+r2=buildings</panel_attributes>
+    <additional_attributes>110.0;70.0;110.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1990</x>
+      <y>790</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>WallSection
+bg=cyan
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1850</x>
+      <y>790</y>
+      <w>110</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Gate
+bg=cyan
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2030</x>
+      <y>740</y>
+      <w>30</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1890</x>
+      <y>740</y>
+      <w>30</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;50.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1990</x>
+      <y>930</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>WallMaterial
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2030</x>
+      <y>810</y>
+      <w>110</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=material
+m2=*
+r2=wall_sections</panel_attributes>
+    <additional_attributes>10.0;120.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>490</x>
+      <y>1000</y>
+      <w>140</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>TrackInfrastructure
+«abstract»
+bg=cyan
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>570</x>
+      <y>850</y>
+      <w>610</w>
+      <h>170</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>590.0;10.0;10.0;150.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1320</x>
+      <y>1300</y>
+      <w>150</w>
+      <h>170</h>
+    </coordinates>
+    <panel_attributes>Infrastructure
+--
+name: String [0,1] {T}</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>580</x>
+      <y>1300</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>BridgeSectionType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>470</x>
+      <y>1340</y>
+      <w>170</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>BridgeSectionStructure
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1170</x>
+      <y>990</y>
+      <w>120</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>BridgePier
+--
+number: Int [0,1]
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1210</x>
+      <y>850</y>
+      <w>30</w>
+      <h>160</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;140.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1210</x>
+      <y>1030</y>
+      <w>110</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=material
+m2=*
+r2=bridge_piers</panel_attributes>
+    <additional_attributes>10.0;110.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>900</x>
+      <y>1000</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>BridgeAbutment
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1010</x>
+      <y>990</y>
+      <w>190</w>
+      <h>170</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=material
+m2=*
+r2=bridge_abutments</panel_attributes>
+    <additional_attributes>120.0;150.0;120.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>950</x>
+      <y>850</y>
+      <w>280</w>
+      <h>170</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>260.0;10.0;10.0;150.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1280</x>
+      <y>980</y>
+      <w>220</w>
+      <h>340</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=infrastructures
+m2=*
+r2=bridge_piers</panel_attributes>
+    <additional_attributes>100.0;320.0;100.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>950</x>
+      <y>1020</y>
+      <w>390</w>
+      <h>380</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=infrastructures
+m2=*
+r2=bridge_abutments</panel_attributes>
+    <additional_attributes>370.0;350.0;10.0;350.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>600</x>
+      <y>1170</y>
+      <w>170</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>BridgeSection
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>590</x>
+      <y>1040</y>
+      <w>110</w>
+      <h>150</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;90.0;130.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>760</x>
+      <y>1170</y>
+      <w>340</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=material
+m2=*
+r2=bridge_sections</panel_attributes>
+    <additional_attributes>320.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>750</x>
+      <y>1190</y>
+      <w>590</w>
+      <h>250</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=infrastructures
+m2=*
+r2=bridge_sections</panel_attributes>
+    <additional_attributes>570.0;220.0;10.0;220.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>610</x>
+      <y>1190</y>
+      <w>130</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=type
+m2=*
+r2=bridge_sections</panel_attributes>
+    <additional_attributes>10.0;110.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>470</x>
+      <y>1170</y>
+      <w>150</w>
+      <h>190</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=structure
+m2=*
+r2=bridge_sections</panel_attributes>
+    <additional_attributes>40.0;170.0;40.0;20.0;130.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>220</x>
+      <y>1170</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>TunnelSection
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>270</x>
+      <y>1040</y>
+      <w>270</w>
+      <h>150</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>250.0;10.0;10.0;130.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>230</x>
+      <y>1190</y>
+      <w>1110</w>
+      <h>290</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=infrastructures
+m2=*
+r2=tunnel_sections</panel_attributes>
+    <additional_attributes>1090.0;260.0;10.0;260.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>290</x>
+      <y>1270</y>
+      <w>170</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>TunnelSectionMaterial
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>330</x>
+      <y>1170</y>
+      <w>180</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=material {T,NDMU}
+m2=1
+r2=tunnel_sections</panel_attributes>
+    <additional_attributes>40.0;100.0;40.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>320</x>
+      <y>840</y>
+      <w>240</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>ManeuverStructure
+--
+tracks_number: Int {T}
+moving_part_present: Boolean {T}
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>430</x>
+      <y>900</y>
+      <w>120</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>100.0;100.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>350</x>
+      <y>670</y>
+      <w>190</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>Turntable
+--
+is_bridge: Boolean [0,1] {T}
+max_rotation_angle: Float
+bg=cyan
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>550</x>
+      <y>690</y>
+      <w>180</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>TransferTable
+--
+has_pit: Boolean [0,1] {T}
+bg=cyan
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>490</x>
+      <y>730</y>
+      <w>100</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;110.0;80.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>430</x>
+      <y>730</y>
+      <w>30</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;110.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>150</x>
+      <y>670</y>
+      <w>180</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>Earthwork
+«Model»
+--
+has_pit: Boolean [0,1] {T}
+bg=cyan
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>250</x>
+      <y>730</y>
+      <w>150</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>130.0;110.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>200</x>
+      <y>530</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>EarthworkType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>250</x>
+      <y>550</y>
+      <w>100</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=type {T}
+m2=*
+r2=earthworks</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;120.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>950</x>
+      <y>600</y>
+      <w>100</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>Surface
+«abstract»
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>880</x>
+      <y>520</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Platform
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1000</x>
+      <y>520</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Dock
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1040</x>
+      <y>610</y>
+      <w>140</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>120.0;30.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1020</x>
+      <y>540</y>
+      <w>50</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;60.0;30.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>920</x>
+      <y>540</y>
+      <w>70</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>50.0;60.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>770</x>
+      <y>690</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>SurfaceMaterial
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>820</x>
+      <y>600</y>
+      <w>150</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=material {T,NDMU}
+m2=*
+r2=surfaces</panel_attributes>
+    <additional_attributes>10.0;90.0;10.0;20.0;130.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2480</x>
+      <y>0</y>
+      <w>120</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>Operator
+--
+name: Localized</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2110</x>
+      <y>10</y>
+      <w>130</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>OperatorType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2480</x>
+      <y>180</y>
+      <w>120</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>OperatedEntity
+--
+name: Localized</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2530</x>
+      <y>40</y>
+      <w>130</w>
+      <h>160</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=opened_by
+m2=*
+r2=opened_entities</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;140.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2590</x>
+      <y>0</y>
+      <w>200</w>
+      <h>220</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=operators {T}
+m2=*
+r2=operated_entities</panel_attributes>
+    <additional_attributes>10.0;20.0;180.0;20.0;180.0;190.0;10.0;190.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2230</x>
+      <y>10</y>
+      <w>270</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=type {T,NDMU}
+m2=*
+r2=operators</panel_attributes>
+    <additional_attributes>10.0;20.0;250.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2380</x>
+      <y>310</y>
+      <w>80</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Site</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2370</x>
+      <y>450</y>
+      <w>110</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>SiteType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2410</x>
+      <y>220</y>
+      <w>150</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>130.0;10.0;10.0;90.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2410</x>
+      <y>330</y>
+      <w>80</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=type {T}
+m2=*
+r2=sites</panel_attributes>
+    <additional_attributes>10.0;120.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1690</x>
+      <y>310</y>
+      <w>710</w>
+      <h>250</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=objects {T}
+m2=*
+r2=sites</panel_attributes>
+    <additional_attributes>10.0;220.0;550.0;220.0;550.0;20.0;690.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2620</x>
+      <y>310</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Line</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2530</x>
+      <y>220</y>
+      <w>160</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;140.0;90.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2450</x>
+      <y>300</y>
+      <w>190</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=sites
+m2=*
+r2=lines</panel_attributes>
+    <additional_attributes>10.0;20.0;170.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2660</x>
+      <y>330</y>
+      <w>120</w>
+      <h>460</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=track_sections
+m2=*
+r2=lines</panel_attributes>
+    <additional_attributes>10.0;440.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>950</x>
+      <y>670</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Area
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1040</x>
+      <y>650</y>
+      <w>140</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>120.0;10.0;10.0;30.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1850</x>
+      <y>930</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>GateMaterial
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1890</x>
+      <y>810</y>
+      <w>80</w>
+      <h>140</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=material
+m2=*
+r2=gates</panel_attributes>
+    <additional_attributes>10.0;120.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>160</x>
+      <y>1010</y>
+      <w>2460</w>
+      <h>500</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=track_infrastructures
+m2=*
+r2=track_sections</panel_attributes>
+    <additional_attributes>330.0;30.0;10.0;80.0;10.0;480.0;2350.0;480.0;2350.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>720</x>
+      <y>1010</y>
+      <w>140</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>TrackCoverSection
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>780</x>
+      <y>1030</y>
+      <w>320</w>
+      <h>150</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=material
+m2=*
+r2=track_cover_sections</panel_attributes>
+    <additional_attributes>300.0;120.0;10.0;120.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>620</x>
+      <y>1010</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;100.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>0</x>
+      <y>1000</y>
+      <w>200</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>TrackInfrastructureUseType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>190</x>
+      <y>990</y>
+      <w>320</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=*
+r1=usage {T}
+m2=*
+r2=track_infrastructures</panel_attributes>
+    <additional_attributes>10.0;20.0;300.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1430</x>
+      <y>620</y>
+      <w>120</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>PolygonHole
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1290</x>
+      <y>620</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;140.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1290</x>
+      <y>640</y>
+      <w>160</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=-&gt;
+m1=1
+r1=parent
+m2=*
+r2=holes</panel_attributes>
+    <additional_attributes>10.0;20.0;140.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2510</x>
+      <y>590</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>TrackType
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2560</x>
+      <y>610</y>
+      <w>110</w>
+      <h>180</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=type {T}
+m2=*
+r2=track_section</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;160.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1680</x>
+      <y>710</y>
+      <w>220</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=2,*
+r1=nodes
+m2=*
+r2=polylines</panel_attributes>
+    <additional_attributes>10.0;20.0;200.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>2400</x>
+      <y>550</y>
+      <w>40</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>??
+bg=red</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2430</x>
+      <y>560</y>
+      <w>100</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=.</panel_attributes>
+    <additional_attributes>80.0;30.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1730</x>
+      <y>40</y>
+      <w>780</w>
+      <h>360</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;340.0;760.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1730</x>
+      <y>190</y>
+      <w>770</w>
+      <h>240</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;220.0;750.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1460</x>
+      <y>450</y>
+      <w>700</w>
+      <h>940</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>280.0;10.0;680.0;10.0;680.0;920.0;10.0;920.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>120</x>
+      <y>590</y>
+      <w>40</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>??
+bg=red</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>130</x>
+      <y>530</y>
+      <w>90</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=.</panel_attributes>
+    <additional_attributes>70.0;10.0;10.0;60.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>130</x>
+      <y>610</y>
+      <w>40</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=.</panel_attributes>
+    <additional_attributes>20.0;70.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>2190</x>
+      <y>750</y>
+      <w>160</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Guided Light Transit
+bg=yellow</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2250</x>
+      <y>770</y>
+      <w>120</w>
+      <h>60</h>
+    </coordinates>
+    <panel_attributes>lt=.</panel_attributes>
+    <additional_attributes>100.0;40.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1160</x>
+      <y>620</y>
+      <w>140</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>Polygon
+«abstract»
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1220</x>
+      <y>550</y>
+      <w>390</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>370.0;10.0;10.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1270</x>
+      <y>510</y>
+      <w>100</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>Note
+--
+text: String</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1360</x>
+      <y>510</y>
+      <w>220</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=1,*
+r1=geometries
+m2=*
+r2=notes</panel_attributes>
+    <additional_attributes>200.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2180</x>
+      <y>580</y>
+      <w>130</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>Enum
+«abstract»
+--
+label: String
+name: Localized
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+</diagram>
