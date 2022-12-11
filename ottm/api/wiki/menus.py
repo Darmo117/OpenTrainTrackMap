@@ -100,7 +100,8 @@ def _get_builtin_menu(page_context: pc.WikiPageContext, menu_id: str) -> Menu:
                 if hasattr(page_context, 'revision') and page_context.revision and page_context.action == ACTION_READ:
                     items.append({'title': page.full_title, 'label': 'permalink',
                                   'args': {'revid': page_context.revision.id}})
-                items.append({'title': page.full_title, 'label': 'page_info', 'args': {'action': 'info'}})
+                if page_context.page_exists:
+                    items.append({'title': page.full_title, 'label': 'page_info', 'args': {'action': 'info'}})
                 items.append({'title': 'Special:Logs', 'subpage': page.full_title})
         case 'categories':
             pass  # TODO
