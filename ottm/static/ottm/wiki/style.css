@@ -70,6 +70,10 @@
   font-size: 1.2em;
 }
 
+h2 {
+  margin-top: 1rem;
+}
+
 pre {
   border-radius: 5px;
   border-style: solid;

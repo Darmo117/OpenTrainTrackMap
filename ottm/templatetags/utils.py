@@ -15,3 +15,9 @@ def replace(value: str, pattern: str) -> str:
     """
     needle, repl = pattern.split(',', maxsplit=1)
     return value.replace(needle, repl)
+
+
+@register.filter
+def concat(value, v) -> str:
+    """Concatenate two values as strings."""
+    return str(value) + str(v)

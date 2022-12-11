@@ -85,6 +85,8 @@
             {% endif %}
           {% elif context.action == ACTION_HISTORY %}
           -->{% wiki_translate 'page.title.history' page_title=context.page.full_title %}<!--
+          {% elif context.action == ACTION_INFO %}
+          -->{% wiki_translate 'page.title.info' page_title=context.page.full_title %}<!--
           {% endif %}
       --></h1>
       {% endif %}
@@ -141,6 +143,8 @@
           {% include 'ottm/wiki/editor-component.html' %}
         {% elif context.action == ACTION_HISTORY %}
           {% include 'ottm/wiki/history-component.html' %}
+        {% elif context.action == ACTION_INFO %}
+          {% include 'ottm/wiki/info-component.html' %}
         {% endif %}
       </article>
     </main>

@@ -13,7 +13,7 @@ import django.db.models as dj_models
 import pytz
 
 from . import model_fields, settings
-from .api import constants, data_types
+from .api import constants, data_types, utils
 from .api.permissions import *
 from .api.wiki import constants as w_cons, namespaces
 
@@ -1149,6 +1149,11 @@ class Page(dj_models.Model, NonDeletableMixin):
         """Whether this pages exists in the database."""
         return self.pk is not None
 
+    @property
+    def default_sort_key(self) -> str:
+        """This page’s default sort key."""
+        return self.title
+
     def can_user_edit(self, user: User) -> bool:
         f"""Check whether the given user can edit this page.
 
@@ -1165,7 +1170,7 @@ class Page(dj_models.Model, NonDeletableMixin):
         if not self.namespace.can_user_edit_pages(user):
             return False
 
-        now = datetime.datetime.now()
+        now = utils.now()
         block = user.block
         if block and (not block.end_date or block.end_date >= now):
             return False
@@ -1208,7 +1213,7 @@ class Page(dj_models.Model, NonDeletableMixin):
         if not self.namespace.is_editable:
             return False
 
-        now = datetime.datetime.now()
+        now = utils.now()
         block = user.block
         own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
         if (block and (not block.end_date or block.end_date >= now)
@@ -1241,7 +1246,7 @@ class Page(dj_models.Model, NonDeletableMixin):
             )
         except PageFollowStatus.DoesNotExist:
             return False
-        return not pp.end_date or pp.end_date >= datetime.datetime.now()
+        return not pp.end_date or pp.end_date >= utils.now()
 
     def last_revision_date(self) -> datetime.datetime | None:
         """Return the date of the latest edit made on this page or None if it does not exist."""

@@ -4,6 +4,8 @@ from __future__ import annotations
 import dataclasses
 import datetime
 
+from . import utils
+
 
 class DateInterval:
     """TimeInterval objects represent time intervals whose bounds may be fuzzy.
@@ -109,7 +111,7 @@ class DateInterval:
         :param other: The property to check against.
         :return: True if the time intervals are overlapping; False otherwise; None if it cannot be evaluated.
         """
-        now = datetime.datetime.now()
+        now = utils.now()
         self_end = now if self.is_current else self.end_date
         other_end = now if other.is_current else other.end_date
         return (
@@ -151,7 +153,7 @@ class DateInterval:
         """The time delta between the start and end dates. May be None if any of them is undefined.
         If end date is undefined but still_exists is True, the current date will be used.
         """
-        end = datetime.datetime.now() if self.is_current else self.end_date
+        end = utils.now() if self.is_current else self.end_date
         return (self.start_date - end) if self.start_date and end else None
 
     def __str__(self):

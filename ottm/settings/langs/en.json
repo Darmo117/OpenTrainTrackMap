@@ -381,17 +381,49 @@
           "source": "Source of “{page_title}”",
           "edit": "Editing page “{page_title}”",
           "create": "Creating page “{page_title}”",
-          "history": "Revision history of “{page_title}”"
+          "history": "Revision history of “{page_title}”",
+          "info": "Information for “{page_title}”"
         },
         "edit": {
           "protection_warning": "**This page is protected.<br>** Reason: *{reason}*",
           "log_entry": "Log entry:"
         },
         "info": {
-          "no_talks": "This page has no discussions yet."
+          "no_talks": "This page has no discussions yet.",
+          "basic_info": {
+            "title": "Basic information",
+            "page_title": "Page title",
+            "page_id": "Page ID",
+            "namespace_name": "Namespace name",
+            "namespace_id": "Namespace ID",
+            "default_sort_key": "Default sort key",
+            "size": "Size in bytes",
+            "content_language": "Content language",
+            "content_type": "Content type",
+            "follow_list_nb": "Number of users following this page",
+            "redirects_nb": "Number of redirections to this page",
+            "subpages_nb": "Number of subpages"
+          },
+          "protection": {
+            "title": "Edit protection status",
+            "namespace_perms": "Permissions required from namespace",
+            "user_group": "Required user group",
+            "see_logs": "See the protections log for this page."
+          },
+          "edit_history": {
+            "title": "Edit history",
+            "creator": "Page creator",
+            "creation_date": "Page creation date",
+            "last_editor": "Last editor",
+            "last_edit_date": "Date of last edit",
+            "total_edits_nb": "Total number of edits",
+            "recent_edits_nb": "Number of recent edits (last {nb} days)",
+            "recent_distinct_editors_nb": "Number of recent editors (last {nb} days)"
+          }
         },
         "error": {
-          "no_history": "This page has no history as it does not exist."
+          "no_history": "This page has no history as it does not exist.",
+          "no_info": "Cannot fetch information on this page as it does not exist."
         }
       },
       "link": {

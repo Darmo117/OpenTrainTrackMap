@@ -251,10 +251,9 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                 context = _wiki_page_talk_context(page, user, language, dark_mode, results_per_page, page_index,
                                                   js_config)
             case w_cons.ACTION_INFO:
-                # TODO gather page info
-                context = None
+                context = _wiki_page_info_context(page, user, language, dark_mode, js_config)
             case _:
-                context = _show_wiki_page_context(page, user, language, dark_mode, revision_id, results_per_page,
+                context = _wiki_page_read_context(page, user, language, dark_mode, revision_id, results_per_page,
                                                   page_index, js_config)
         status = 200 if context.page.exists else 404
 
@@ -428,7 +427,7 @@ def _get_base_context_args(
     }
 
 
-def _show_wiki_page_context(
+def _wiki_page_read_context(
         page: models.Page,
         user: models.User,
         language: settings.UILanguage,
@@ -477,6 +476,33 @@ def _show_wiki_page_context(
         cat_pages=cat_pages,
         cat_results_per_page=results_per_page,
         cat_page_index=page_index,
+    )
+
+
+def _wiki_page_info_context(
+        page: models.Page,
+        user: models.User,
+        language: settings.UILanguage,
+        dark_mode: bool,
+        js_config: dict,
+) -> page_context.WikiPageInfoActionContext:
+    """Create a wiki page info context object.
+
+    :param page: Page object.
+    :param user: Current user.
+    :param language: Page’s language.
+    :param dark_mode: Whether to activate the dark mode.
+    :param js_config: Dict object containing JS config values.
+    :return: A WikiPageContext object.
+    """
+    return page_context.WikiPageInfoActionContext(
+        page=page,
+        user=user,
+        language=language,
+        dark_mode=dark_mode,
+        js_config=js_config,
+        revisions=page.revisions.all(),
+        protection=page.get_edit_protection(),
     )
 
 

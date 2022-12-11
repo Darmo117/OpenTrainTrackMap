@@ -165,10 +165,9 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
             author = auth.get_or_create_anonymous_account_from_request(request)
         else:
             raise ValueError('missing request')
-    # Set content type to correct value
-    if (ct := _get_page_content_type(page)) != page.content_type:
-        page.content_type = ct
     if not page.exists:
+        # Set content type
+        page.content_type = _get_page_content_type(page)
         page.save()
         # Add to log
         models.PageCreationLog(performer=author.internal_object, page=page).save()
@@ -290,7 +289,7 @@ def get_page_protection_log_entry(page: models.Page) -> models.PageProtectionLog
         pp = models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
     except models.PageProtection.DoesNotExist:
         return None
-    if pp.end_date and pp.end_date >= datetime.datetime.now():
+    if pp.end_date and pp.end_date >= utils.now():
         return None
     try:
         return models.PageProtectionLog.objects.filter(page=page).latest()

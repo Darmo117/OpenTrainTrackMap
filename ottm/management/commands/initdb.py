@@ -46,28 +46,28 @@ class Command(dj_mngmt.BaseCommand):
         self.stdout.write('Creating default user groups…')
 
         models.UserGroup(
-            label=GROUP_SUPERUSER,
+            label=GROUP_SUPERUSERS,
             permissions=(PERM_EDIT_SCHEMA,),
         ).save()
         models.UserGroup(
-            label=GROUP_GROUPS_MANAGER,
+            label=GROUP_GROUPS_MANAGERS,
             permissions=(PERM_EDIT_USER_GROUPS,),
         ).save()
         models.UserGroup(
-            label=GROUP_ADMINISTRATOR,
+            label=GROUP_ADMINISTRATORS,
             permissions=(PERM_BLOCK_USERS,),
         ).save()
         models.UserGroup(
-            label=GROUP_WIKI_ADMINISTRATOR,
+            label=GROUP_WIKI_ADMINISTRATORS,
             permissions=(PERM_WIKI_DELETE, PERM_WIKI_RENAME, PERM_WIKI_MASK, PERM_WIKI_EDIT_FILTERS,
                          PERM_WIKI_BLOCK_USERS, PERM_WIKI_EDIT_USER_PAGES, PERM_WIKI_PROTECT, PERM_WIKI_EDIT_INTERFACE),
         ).save()
         models.UserGroup(
-            label=GROUP_PATROLLER,
+            label=GROUP_PATROLLERS,
             permissions=(PERM_REVERT,),
         ).save()
         models.UserGroup(
-            label=GROUP_WIKI_PATROLLER,
+            label=GROUP_WIKI_PATROLLERS,
             permissions=(PERM_WIKI_REVERT,),
         ).save()
         models.UserGroup(
@@ -79,7 +79,7 @@ class Command(dj_mngmt.BaseCommand):
             permissions=(),  # Empty because it is just a tagging group
         ).save()
         models.UserGroup(
-            label=GROUP_USER,
+            label=GROUP_USERS,
             permissions=(PERM_EDIT_OBJECTS,),
         ).save()
         models.UserGroup(
@@ -100,7 +100,7 @@ class Command(dj_mngmt.BaseCommand):
         password = models.CustomUser.objects.make_random_password(length=50)
         wiki_user = auth.create_user('Wiki Setup', password=password, ignore_email=True, is_bot=True)
         wiki_user.internal_object.groups.add(models.UserGroup.objects.get(label=GROUP_WIKI_AUTOPATROLLED))
-        wiki_user.internal_object.groups.add(models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATOR))
+        wiki_user.internal_object.groups.add(models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS))
         edit_comment = 'Wiki setup.'
 
         ns, title = pages.split_title(pages.MAIN_PAGE_TITLE)
@@ -108,7 +108,7 @@ class Command(dj_mngmt.BaseCommand):
         pages.edit_page(None, wiki_user, pages.get_page(ns, title), content,
                         edit_comment)
         pages.protect_page(wiki_user, pages.get_page(ns, title),
-                           models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATOR),
+                           models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS),
                            reason='Page with high traffic.')
         content = """
 /*

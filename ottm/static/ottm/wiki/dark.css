@@ -13,3 +13,7 @@
 .wiki-red-link:hover {
   color: #c92525;
 }
+
+.wiki-hidden {
+  color: gray;
+}

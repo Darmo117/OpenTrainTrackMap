@@ -1,11 +1,14 @@
 """This module defines all page context classes."""
 import abc
+import datetime
 import json as _json
 import typing as _typ
 
 import django.core.paginator as dj_paginator
+import django.db.models as dj_models
 
 from . import forms, models as _models, settings
+from .api import utils
 from .api.wiki import constants as w_cons, pages
 
 
@@ -299,6 +302,74 @@ class WikiPageShowActionContext(WikiPageContext):
     @property
     def cat_page_index(self) -> int:
         return self._cat_page_index
+
+
+class WikiPageInfoActionContext(WikiPageContext):
+    def __init__(
+            self,
+            page: _models.Page,
+            user: _models.User,
+            language: settings.UILanguage,
+            dark_mode: bool,
+            js_config: dict[str, _typ.Any],
+            revisions: dj_models.QuerySet[_models.PageRevision],
+            protection: _models.PageProtection | None,
+    ):
+        """Create a page info context for wiki pages.
+
+        :param page: Wiki page object.
+        :param user: Current user.
+        :param language: Page’s language.
+        :param dark_mode: Whether to activate the dark mode.
+        :param js_config: Dict object containing the wiki’s JS config.
+         It is converted to a JSON object before being inserted in the HTML page.
+        :param revisions: List of revisions for the page.
+        :param protection: Protection status of the page.
+        """
+        super().__init__(
+            page=page,
+            no_index=True,
+            user=user,
+            language=language,
+            dark_mode=dark_mode,
+            action=w_cons.ACTION_INFO,
+            show_title=True,
+            page_exists=page.exists,
+            js_config=js_config,
+        )
+        self._revisions = revisions
+        self._recent_revisions = revisions.filter(date__gte=utils.now() - datetime.timedelta(days=self.recent_range))
+        self._recent_editors_nb = self._recent_revisions.aggregate(
+            dj_models.Count('author', distinct=True))['author__count']
+        self._protection = protection
+
+    @property
+    def recent_range(self) -> int:
+        return 30
+
+    @property
+    def revisions(self) -> dj_models.QuerySet[_models.PageRevision]:
+        return self._revisions
+
+    @property
+    def recent_revisions(self) -> dj_models.QuerySet[_models.PageRevision]:
+        return self._recent_revisions
+
+    @property
+    def recent_editors_nb(self) -> int:
+        return self._recent_editors_nb
+
+    @property
+    def last_revision(self) -> _models.PageRevision:
+        return self._revisions[len(self._revisions) - 1]
+
+    @property
+    def first_revision(self) -> _models.PageRevision:
+        return self._revisions[0]
+
+    @property
+    def protection(self) -> _models.PageProtection | None:
+        return self._protection
 
 
 class WikiPageEditActionContext(WikiPageContext):

@@ -126,7 +126,7 @@ def create_user(username: str, email: str = None, password: str = None, ignore_e
     )
     dj_user.save()
     dj_user.groups.add(models.UserGroup.objects.get(label=groups.GROUP_ALL))
-    dj_user.groups.add(models.UserGroup.objects.get(label=groups.GROUP_USER))
+    dj_user.groups.add(models.UserGroup.objects.get(label=groups.GROUP_USERS))
     # Add to log
     models.UserAccountCreationLog(user=dj_user).save()
 
