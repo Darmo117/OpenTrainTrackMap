@@ -31,7 +31,7 @@
       </tr>
       <tr>
         <th scope="row">{% wiki_translate 'page.info.basic_info.size' %}</th>
-        <td>{{ context.last_revision.bytes_size }}</td>
+        <td>{% ottm_format_number context.last_revision.bytes_size %}</td>
       </tr>
       <tr>
         <th scope="row">{% wiki_translate 'page.info.basic_info.content_language' %}</th>
@@ -49,15 +49,15 @@
       </tr>
       <tr>
         <th scope="row">{% wiki_translate 'page.info.basic_info.follow_list_nb' %}</th>
-        <td>{# TODO #}</td>
+        <td>{% ottm_format_number 0 %}{# TODO #}</td>
       </tr>
       <tr>
         <th scope="row">{% wiki_translate 'page.info.basic_info.redirects_nb' %}</th>
-        <td>{# TODO #}</td>
+        <td>{% ottm_format_number 0 %}{# TODO #}</td>
       </tr>
       <tr>
         <th scope="row">{% wiki_translate 'page.info.basic_info.subpages_nb' %}</th>
-        <td>{# TODO #}</td>
+        <td>{% ottm_format_number 0 %}{# TODO #}</td>
       </tr>
     </tbody>
   </table>
@@ -140,15 +140,15 @@
       </tr>
       <tr>
         <th scope="row">{% wiki_translate 'page.info.edit_history.total_edits_nb' %}</th>
-        <td>{{ context.revisions|length }}</td>
+        <td>{% ottm_format_number context.revisions|length %}</td>
       </tr>
       <tr>
         <th scope="row">{% wiki_translate 'page.info.edit_history.recent_edits_nb' nb=context.recent_range %}</th>
-        <td>{{ context.recent_revisions|length }}</td>
+        <td>{% ottm_format_number context.recent_revisions|length %}</td>
       </tr>
       <tr>
         <th scope="row">{% wiki_translate 'page.info.edit_history.recent_distinct_editors_nb' nb=context.recent_range %}</th>
-        <td>{{ context.recent_editors_nb }}</td>
+        <td>{% ottm_format_number context.recent_editors_nb %}</td>
       </tr>
     </tbody>
   </table>

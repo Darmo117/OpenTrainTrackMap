@@ -37,3 +37,17 @@ def ottm_format_date(context: TemplateContext, date: _dt.datetime) -> str:
     formated_date = ottm_context.language.format_datetime(date, ottm_context.user.prefered_datetime_format)
     iso_date = date.strftime('%Y-%m-%d %H:%M:%S%z')
     return _dj_safe.mark_safe(f'<time datetime="{iso_date}">{formated_date}</time>')
+
+
+@register.simple_tag(takes_context=True)
+def ottm_format_number(context: TemplateContext, n: int | float, value_only: bool = False) -> str:
+    """Format the given number according to the context’s language.
+
+    :param context: Page context.
+    :param n: Number to format. May be an int or float.
+    :param value_only: Whether to only return the formatted value.
+    :return: The formatted number.
+    """
+    ottm_context: _pc.PageContext = context['context']
+    s = ottm_context.language.format_number(n)
+    return _dj_safe.mark_safe(f'<data value="{n}">{s}</data>') if not value_only else s

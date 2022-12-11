@@ -9,6 +9,10 @@
     "janv.", "févr.", "mars", "avr.", "mai", "juin", "juill.", "aout", "sept.", "oct.", "nov.", "déc."
   ],
   "am_pm": ["AM", "PM"],
+  "number_format": {
+    "decimal_sep": ",",
+    "thousands_sep": "\u202f"
+  },
   "mappings": {
     "page": {
       "edit": {

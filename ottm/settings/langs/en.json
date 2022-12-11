@@ -7,6 +7,10 @@
   ],
   "abbr_month_names": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   "am_pm": ["AM", "PM"],
+  "number_format": {
+    "decimal_sep": ".",
+    "thousands_sep": ","
+  },
   "mappings": {
     "page": {
       "edit": {

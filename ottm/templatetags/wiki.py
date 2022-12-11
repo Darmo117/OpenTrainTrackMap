@@ -187,7 +187,7 @@ def wiki_revision_comment(context: TemplateContext, revision: models.PageRevisio
     :param revision: The revision to render the comment of.
     :return: The formatted comment.
     """
-    return ''  # TODO
+    return _format_comment(context, revision.comment, revision.comment_hidden)
 
 
 @register.simple_tag(takes_context=True)
@@ -217,7 +217,9 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     user = wiki_context.user
     ignore_hidden = not user.has_permission(PERM_WIKI_MASK)
     Line = collections.namedtuple(
-        'Line', ('actions', 'date', 'page_link', 'flags', 'size', 'size_text', 'variation', 'comment'))
+        'Line',
+        ('actions', 'date', 'page_link', 'flags', 'size', 'size_text', 'variation', 'variation_text', 'comment')
+    )
     lines = []
     for revision in revisions.get_page(wiki_context.page_index):
         actions = []
@@ -295,12 +297,13 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
         if revision.is_bot:
             flags.append((wiki_translate(context, 'revisions_list.flag.bot.label'),
                           wiki_translate(context, 'revisions_list.flag.bot.tooltip')))
-        variation = revision.get_byte_size_diff(ignore_hidden=ignore_hidden)
-        size = revision.bytes_size
+        size = ottm_format_number(context, revision.bytes_size, value_only=True)
         size_text = wiki_translate(context, 'revisions_list.size.label', n=size)
+        variation = revision.get_byte_size_diff(ignore_hidden=ignore_hidden)
+        variation_text = ('+' if variation > 0 else '') + ottm_format_number(context, variation, value_only=True)
         comment = _format_comment(context, revision.comment, revision.comment_hidden)
 
-        lines.append(Line(actions, date, page_link, flags, size, size_text, variation, comment))
+        lines.append(Line(actions, date, page_link, flags, size, size_text, variation, variation_text, comment))
     return {
         'lines': lines,
     }

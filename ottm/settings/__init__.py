@@ -2,6 +2,7 @@
 import datetime
 import json as _json
 import logging as _logging
+import math
 import pathlib as _pathlib
 import re as _re
 
@@ -19,6 +20,8 @@ class UILanguage:
             month_names: list[str],
             abbr_month_names: list[str],
             am_pm: tuple[str, str],
+            decimal_sep: str,
+            thousands_sep: str,
             mappings: dict[str, str],
     ):
         """Create a UI language.
@@ -48,6 +51,8 @@ class UILanguage:
         self._month_names = month_names
         self._abbr_month_names = abbr_month_names
         self._am_pm = am_pm
+        self._decimal_sep = decimal_sep
+        self._thousands_sep = thousands_sep
         self._mappings = mappings
 
     @property
@@ -108,6 +113,17 @@ class UILanguage:
             format_ = format_.replace('%p', self._am_pm[dt.hour == 0 or dt.hour > 12])
         return dt.strftime(format_)
 
+    def format_number(self, n: int | float) -> str:
+        """Format a number according to this language’s format.
+
+        :param n: The number to format.
+        :return: The formatted number.
+        """
+        s = str(n)
+        dec_part = s.split('.')[1] if '.' in s else ''
+        int_part = ('{:,}'.format(math.floor(n))).replace(',', self._thousands_sep)
+        return int_part + (self._decimal_sep + dec_part if dec_part else '')
+
 
 SITE_NAME = 'OpenTrainTrackMap'
 DEFAULT_LANGUAGE_CODE = 'en'
@@ -148,6 +164,8 @@ def init_languages():
                 month_names=json_obj['month_names'],
                 abbr_month_names=json_obj['abbr_month_names'],
                 am_pm=json_obj['am_pm'],
+                decimal_sep=json_obj['number_format']['decimal_sep'],
+                thousands_sep=json_obj['number_format']['thousands_sep'],
                 mappings=_build_mapping(json_obj['mappings']),
             )
             LOGGER.info(f'Loaded translations for {language.name} ({language.code})')

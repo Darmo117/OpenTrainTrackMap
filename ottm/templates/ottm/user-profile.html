@@ -46,15 +46,15 @@
       </tr>
       <tr>
         <td>{% ottm_translate 'page.user_profile.statistics.notes_count_label' %}</td>
-        <td>{{ context.target_user.notes_count }}</td>
+        <td>{% ottm_format_number context.target_user.notes_count %}</td>
       </tr>
       <tr>
         <td>{% ottm_translate 'page.user_profile.statistics.edits_count_label' %}</td>
-        <td>{{ context.target_user.edits_count }}</td>
+        <td>{% ottm_format_number context.target_user.edits_count %}</td>
       </tr>
       <tr>
         <td>{% ottm_translate 'page.user_profile.statistics.wiki_edits_count_label' %}</td>
-        <td>{{ context.target_user.wiki_edits_count }}</td>
+        <td>{% ottm_format_number context.target_user.wiki_edits_count %}</td>
       </tr>
     </tbody>
   </table>

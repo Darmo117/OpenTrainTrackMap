@@ -14,7 +14,7 @@
       ·
       <data data-unit="bytes" value="{{ line.variation }}"
             class="wiki-diff-badge badge {% if line.variation > 0 %}badge-success{% else %}badge-danger{% endif %} {% if line.variation > 500 %}wiki-diff-important-var{% endif %}">
-        {% if line.variation > 0 %}+{% endif %}{{ line.variation }}
+        {{ line.variation_text }}
       </data>
       {% if line.comment %}
         · {{ line.comment|safe }}
