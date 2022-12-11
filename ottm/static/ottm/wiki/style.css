@@ -48,8 +48,8 @@
   height: 1.5em;
 }
 
-#wiki-edit-form {
-  font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+#wiki-edit-form input[type="text"], #wiki-edit-form textarea {
+  font-family: "SFMono-Regular", "Menlo", "Monaco", "Consolas", "Liberation Mono", "Courier New", monospace;
 }
 
 .wiki-diff-badge {

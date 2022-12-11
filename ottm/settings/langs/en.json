@@ -389,8 +389,45 @@
           "info": "Information for “{page_title}”"
         },
         "edit": {
+          "revision_warning": {
+            "edit": "You are editing an archived version of this page published on {date}.\n\nIf you publish your changes, all subsequent revisions will be reverted.",
+            "view": "You are viewing the source of this page as it was published on {date}."
+          },
           "protection_warning": "**This page is protected.<br>** Reason: *{reason}*",
-          "log_entry": "Log entry:"
+          "log_entry": "Log entry:",
+          "form": {
+            "content": {
+              "label": "Page content"
+            },
+            "comment": {
+              "label": "Edit comment",
+              "tooltip": "Enter a brief edit summary"
+            },
+            "minor_edit": {
+              "label": "Minor edit",
+              "tooltip": "Mark as a minor edit"
+            },
+            "follow_page": {
+              "label": "Follow this page",
+              "tooltip": "Add this page to your follow list"
+            },
+            "hidden_category": {
+              "label": "Hidden category",
+              "tooltip": "Mark this category as hidden"
+            },
+            "submit": {
+              "label": "Publish changes"
+            },
+            "preview": {
+              "label": "Preview"
+            },
+            "diff": {
+              "label": "Show differences"
+            },
+            "cancel": {
+              "label": "Cancel"
+            }
+          }
         },
         "info": {
           "no_talks": "This page has no discussions yet.",

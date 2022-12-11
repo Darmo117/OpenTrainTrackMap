@@ -116,6 +116,10 @@ class WikiEditPageForm(_WikiForm):
         label='follow_page',
         required=False
     )
+    hidden_category = dj_forms.BooleanField(
+        label='hidden_category',
+        required=False
+    )
     # ID of the page section being edited (optional).
     section_id = dj_forms.CharField(
         widget=dj_forms.HiddenInput(),
@@ -140,5 +144,9 @@ class WikiEditPageForm(_WikiForm):
             self.fields['follow_page'].widget.attrs['disabled'] = True
         if disabled:
             self.fields['content'].widget.attrs['disabled'] = True
-        if language:
-            self.fields['comment'].widget.attrs['placeholder'] = language.translate('form.edit.comment.tooltip')
+        self.fields['content'].widget.attrs['id'] = 'wiki-edit-form-content'
+        self.fields['comment'].widget.attrs['id'] = 'wiki-edit-form-comment'
+        self.fields['minor_edit'].widget.attrs['id'] = 'wiki-edit-form-minor-edit'
+        self.fields['follow_page'].widget.attrs['id'] = 'wiki-edit-form-follow-page'
+        self.fields['hidden_category'].widget.attrs['id'] = 'wiki-edit-form-hidden-category'
+        self.fields['section_id'].widget.attrs['id'] = 'wiki-edit-form-section-id'
