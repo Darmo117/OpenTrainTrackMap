@@ -50,7 +50,7 @@
     <div id="wiki-left-col" class="col-2">
       {# TODO put in burger menu on mobile (≤ 800px) #}
       <nav id="wiki-nav-bar-left">
-        <div id="wiki-nav-bar-logo" class="card {% if context.dark_mode %}bg-dark{% else %}bg-light{% endif %} mb-3">
+        <div id="wiki-nav-bar-logo" class="card mb-3">
           <a href="{% url 'ottm:wiki_main_page' %}" title="{% wiki_translate 'menu.side.logo.tooltip' %}">
             <img class="card-img-top" src="{% static 'ottm/images/wiki_icon.svg' %}" alt="OTTM Wiki Logo">
           </a>
@@ -60,7 +60,7 @@
       </nav>
     </div>
 
-    <main id="wiki-article" class="card {% if context.dark_mode %}bg-dark{% else %}bg-light{% endif %} card-body">
+    <main id="wiki-article" class="card card-body">
       {% if context.show_title %}
         <h1 id="wiki-article-title" {% block title_attr %}{% endblock %}><!--
           {% if context.page.namespace == NS_SPECIAL %}

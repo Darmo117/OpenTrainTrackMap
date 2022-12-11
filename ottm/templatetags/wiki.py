@@ -405,7 +405,7 @@ def wiki_side_menu(context: TemplateContext, menu_id: str) -> TemplateContext:
     :return: The formatted menu.
     """
     wiki_context: page_context.WikiPageContext = context.get('context')
-    return {'menus': menus.get_menus(wiki_context, menu_id), 'dark_mode': wiki_context.dark_mode}
+    return {'menus': menus.get_menus(wiki_context, menu_id)}
 
 
 @register.simple_tag(takes_context=True)
