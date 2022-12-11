@@ -1,3 +1,15 @@
 #wiki-article-title, #wiki-footer {
   border-color: #888;
 }
+
+.alert-warning a:not(:hover, .wiki-red-link) {
+  color: #315c81;
+}
+
+.wiki-red-link {
+  color: #e02424;
+}
+
+.wiki-red-link:hover {
+  color: #c92525;
+}

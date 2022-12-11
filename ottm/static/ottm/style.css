@@ -55,6 +55,10 @@ html, body {
   margin-right: 10px;
 }
 
+.dropdown-menu, .dropdown-menu .dropdown-item {
+  cursor: pointer;
+}
+
 .center {
   text-align: center;
 }
