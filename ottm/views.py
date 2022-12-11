@@ -1,11 +1,12 @@
 """This module defines all page view handlers."""
 import typing as typ
 
+from django.conf import settings as dj_settings
+import django.contrib.auth.models as dj_auth_models
 import django.core.handlers.wsgi as dj_wsgi
 import django.http.response as dj_response
 import django.shortcuts as dj_scut
 import requests
-from django.conf import settings as dj_settings
 
 from . import forms, models, page_context, settings, wiki_special_pages
 from .api import auth, errors, permissions, utils
@@ -439,7 +440,7 @@ def _wiki_page_read_context(
         results_per_page: int,
         page_index: int,
         js_config: dict,
-) -> page_context.WikiPageShowActionContext:
+) -> page_context.WikiPageReadActionContext:
     """Create a wiki page context object.
 
     :param page: Page object.
@@ -453,10 +454,10 @@ def _wiki_page_read_context(
     :return: A WikiPageContext object.
     """
     no_index = not page.exists
-    content = w_pages.render_wikicode(page.get_content(), user, language)
     cat_subcategories = []
     cat_pages = []
     if revision_id is None:
+        content = w_pages.render_wikicode(page.get_content(), user, language)
         revision = page.revisions.latest() if page.exists else None
         archived = False
         if page.namespace == w_ns.NS_CATEGORY:
@@ -464,12 +465,13 @@ def _wiki_page_read_context(
             cat_pages = list(models.PageCategory.pages_for_category(page.full_title))
     else:
         revision = page.revisions.get(id=revision_id)
+        content = w_pages.render_wikicode(revision.content, user, language)
         archived = True
     if not page.exists:
         no_page_notice = w_pages.get_no_page_notice(user, language)
     else:
         no_page_notice = None
-    return page_context.WikiPageShowActionContext(
+    return page_context.WikiPageReadActionContext(
         page=page,
         no_index=no_index,
         user=user,
@@ -509,7 +511,7 @@ def _wiki_page_info_context(
         language=language,
         dark_mode=dark_mode,
         js_config=js_config,
-        revisions=page.revisions.all(),
+        revisions=page.revisions.all() if page.exists else dj_auth_models.EmptyManager(models.PageRevision),
         protection=page.get_edit_protection(),
     )
 
@@ -597,14 +599,14 @@ def _wiki_page_talk_context(
         else:
             topics = page.topics.filter(deleted=False)
     else:
-        topics = []
+        topics = dj_auth_models.EmptyManager(models.TopicRevision)
     return page_context.WikiPageTalkActionContext(
         page=page,
         user=user,
         language=language,
         dark_mode=dark_mode,
         js_config=js_config,
-        topics=topics,
+        topics=topics.order_by('-date'),
         topics_per_page=results_per_page,
         page_index=page_index,
     )
@@ -636,14 +638,14 @@ def _wiki_page_history_context(
         else:
             revisions = page.revisions.filter(hidden=False)
     else:
-        revisions = []
+        revisions = dj_auth_models.EmptyManager(models.PageRevision)
     return page_context.WikiPageHistoryActionContext(
         page=page,
         user=user,
         language=language,
         dark_mode=dark_mode,
         js_config=js_config,
-        revisions=revisions,
+        revisions=revisions.order_by('-date'),
         revisions_per_page=results_per_page,
         page_index=page_index,
     )

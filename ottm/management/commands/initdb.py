@@ -1,4 +1,7 @@
 """This module defines a command that initializes the database."""
+import threading
+import time
+
 import django.core.management.base as dj_mngmt
 
 from ...api import auth
@@ -107,6 +110,11 @@ class Command(dj_mngmt.BaseCommand):
         content = f'Welcome to {settings.SITE_NAME}’s wiki!'
         pages.edit_page(None, wiki_user, pages.get_page(ns, title), content,
                         edit_comment)
+        # TEST
+        pages.edit_page(None, wiki_user, pages.get_page(ns, title), 'plop',
+                        edit_comment)
+        for pr in models.PageRevision.objects.all():
+            print(pr.date)
         pages.protect_page(wiki_user, pages.get_page(ns, title),
                            models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS),
                            reason='Page with high traffic.')

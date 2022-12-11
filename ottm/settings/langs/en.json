@@ -388,6 +388,17 @@
           "history": "Revision history of “{page_title}”",
           "info": "Information for “{page_title}”"
         },
+        "read": {
+          "revision_nav_box": {
+            "label": "Revision by {user_link} on {date}",
+            "diff_previous": "Go to previous revision",
+            "diff_current": "Go to current revision",
+            "diff_next": "Go to next revision"
+          }
+        },
+        "talk": {
+          "no_talks": "This page has no discussions yet."
+        },
         "edit": {
           "revision_warning": {
             "edit": "You are editing an archived version of this page published on {date}.\n\nIf you publish your changes, all subsequent revisions will be reverted.",
@@ -429,8 +440,11 @@
             }
           }
         },
+        "history": {
+          "no_history": "This page has no history as it does not exist."
+        },
         "info": {
-          "no_talks": "This page has no discussions yet.",
+          "no_info": "Cannot fetch information on this page as it does not exist.",
           "basic_info": {
             "title": "Basic information",
             "page_title": "Page title",
@@ -461,10 +475,6 @@
             "recent_edits_nb": "Number of recent edits (last {nb} days)",
             "recent_distinct_editors_nb": "Number of recent editors (last {nb} days)"
           }
-        },
-        "error": {
-          "no_history": "This page has no history as it does not exist.",
-          "no_info": "Cannot fetch information on this page as it does not exist."
         }
       },
       "link": {

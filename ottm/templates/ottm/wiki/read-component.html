@@ -3,19 +3,19 @@
 
 {% if context.archived %}
   <div id="wiki-revision-navbox" class="alert alert-info text-center" role="alert">
-    <div class="wiki-revision-navbox-message">
+    <div id="wiki-revision-navbox-message">
       {% ottm_format_date context.revision.date as revision_date %}
-      {% wiki_inner_link 'User:'|add:context.revision.author.username as user_link %}
-      {% wiki_translate 'revision.nav_box.label' user_link=user_link date=revision_date %}
-    </div>
-    <div class="wiki-revision-navbox-diffnav">
-      {% wiki_diff_link context.revision against='previous' show_nav_link=True %}
-      | {% wiki_diff_link context.revision against='current' show_nav_link=True %}
-      | {% wiki_diff_link context.revision against='next' show_nav_link=True %}
+      {% wiki_inner_link page_title='User:'|add:context.revision.author.username text=context.revision.author.username as user_link %}
+      {% wiki_translate 'page.read.revision_nav_box.label' user_link=user_link date=revision_date %}
     </div>
     {% if context.revision.comment %}
       {% wiki_revision_comment context.revision %}
     {% endif %}
+    <nav id="wiki-revision-navbox-diff-nav">
+      {% wiki_diff_link context.revision against='previous' %}
+      | {% wiki_diff_link context.revision against='current' %}
+      | {% wiki_diff_link context.revision against='next' %}
+    </nav>
   </div>
 {% endif %}
 

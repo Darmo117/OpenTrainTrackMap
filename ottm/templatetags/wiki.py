@@ -159,24 +159,57 @@ def wiki_static(context: TemplateContext, page_title: str) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, against: str,
-                   show_nav_link: bool = True) -> str:
+def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, against: str) -> str:
     """Render a revision’s diff link.
 
     :param context: Page context.
     :param revision: Revision to get data from.
     :param against:
-    :param show_nav_link:
     :return: The rendered diff link.
     """
+    wiki_context: page_context.WikiPageReadActionContext = context.get('context')
+    page = wiki_context.page
+    ignore_hidden = not wiki_context.user.has_permission(PERM_WIKI_MASK)
+
     match against:
         case 'previous':
-            pass
+            prev_r = revision.get_previous(ignore_hidden)
+            text = ('<span class="mdi mdi-arrow-left-thick"></span> '
+                    + wiki_translate(context, 'page.read.revision_nav_box.diff_previous'))
+            if prev_r:
+                link = wiki_inner_link(context, page.full_title, text, url_params=f'revid={prev_r.id}')
+                diff = wiki_inner_link(context, page.full_title, '', url_params=f'revid={prev_r.id}&diff={revision.id}',
+                                       css_classes='mdi mdi-file-compare')
+                text = f'{link} ({diff})'
+            else:
+                text = f'{text} (<span class="mdi mdi-file-compare"></span>)'
         case 'current':
-            pass
+            current_r = page.get_latest_revision()
+            text = ('<span class="mdi mdi-arrow-up-thick"></span> '
+                    + wiki_translate(context, 'page.read.revision_nav_box.diff_current'))
+            if current_r.id != revision.id:
+                link = wiki_inner_link(context, page.full_title, text, url_params=f'revid={current_r.id}')
+                diff = wiki_inner_link(context, page.full_title, '',
+                                       url_params=f'revid={revision.id}&diff={current_r.id}',
+                                       css_classes='mdi mdi-file-compare')
+                text = f'{link} ({diff})'
+            else:
+                text = f'{text} (<span class="mdi mdi-file-compare"></span>)'
         case 'next':
-            pass
-    return ''  # TODO
+            next_r = revision.get_next(ignore_hidden)
+            text = (wiki_translate(context, 'page.read.revision_nav_box.diff_next')
+                    + ' <span class="mdi mdi-arrow-right-thick"></span>')
+            if next_r:
+                link = wiki_inner_link(context, page.full_title, text, url_params=f'revid={next_r.id}')
+                diff = wiki_inner_link(context, page.full_title, '', url_params=f'revid={revision.id}&diff={next_r.id}',
+                                       css_classes='mdi mdi-file-compare')
+                text = f'{link} ({diff})'
+            else:
+                text = f'{text} (<span class="mdi mdi-file-compare"></span>)'
+        case _:
+            raise ValueError(f'invalid value {against}')
+
+    return dj_safe.mark_safe(text)
 
 
 @register.simple_tag(takes_context=True)
@@ -187,7 +220,7 @@ def wiki_revision_comment(context: TemplateContext, revision: models.PageRevisio
     :param revision: The revision to render the comment of.
     :return: The formatted comment.
     """
-    return _format_comment(context, revision.comment, revision.comment_hidden)
+    return dj_safe.mark_safe(_format_comment(context, revision.comment, revision.comment_hidden))
 
 
 @register.simple_tag(takes_context=True)
@@ -215,6 +248,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     wiki_context: page_context.WikiPageHistoryActionContext | page_context.WikiSpecialPageContext = \
         context.get('context')
     user = wiki_context.user
+    page = wiki_context.page
     ignore_hidden = not user.has_permission(PERM_WIKI_MASK)
     Line = collections.namedtuple(
         'Line',
@@ -223,6 +257,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     lines = []
     for revision in revisions.get_page(wiki_context.page_index):
         actions = []
+
         if user.has_permission(PERM_WIKI_MASK):
             actions.append(wiki_inner_link(
                 context,
@@ -232,6 +267,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 css_classes='mdi mdi-eye-outline wiki-revision-action',
                 ignore_current_title=True,
             ))
+
         if not revision.is_latest(ignore_hidden):
             actions.append(wiki_inner_link(
                 context,
@@ -239,12 +275,13 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 text='',
                 tooltip=wiki_translate(context, 'revisions_list.current.tooltip'),
                 css_classes='mdi mdi-file-arrow-up-down-outline wiki-revision-action',
-                url_params=f'revid={revision.id}&diff=current',
+                url_params=f'revid={revision.id}&diff={page.get_latest_revision().id}',
                 ignore_current_title=True,
             ))
         else:
             actions.append(dj_safe.mark_safe(
                 '<span class="mdi mdi-file-arrow-up-down-outline wiki-revision-action"></span>'))
+
         if previous := revision.get_previous(ignore_hidden):
             actions.append(wiki_inner_link(
                 context,
@@ -252,15 +289,16 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 text='',
                 tooltip=wiki_translate(context, 'revisions_list.diff.tooltip'),
                 css_classes='mdi mdi-file-arrow-left-right-outline wiki-revision-action',
-                url_params=f'revid={previous.id}&diff=current',
+                url_params=f'revid={previous.id}&diff={revision.id}',
                 ignore_current_title=True,
             ))
         else:
             actions.append(dj_safe.mark_safe(
                 '<span class="mdi mdi-file-arrow-left-right-outline wiki-revision-action"></span>'))
+
         is_first = revision.is_first(ignore_hidden)
         if not is_first:
-            actions.append(wiki_inner_link(
+            actions.append(wiki_inner_link(  # TODO URL params
                 context,
                 revision.page.full_title,
                 text='',
@@ -269,14 +307,14 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 ignore_current_title=True,
             ))
         else:
-            actions.append(dj_safe.mark_safe(
-                '<span class="mdi mdi-undo wiki-revision-action"></span>'))
+            actions.append(dj_safe.mark_safe('<span class="mdi mdi-undo wiki-revision-action"></span>'))
+
         if not is_first and user.has_permission(PERM_WIKI_REVERT):
-            actions.append(wiki_inner_link(
+            actions.append(wiki_inner_link(  # TODO URL params
                 context,
                 revision.page.full_title,
                 text='',
-                tooltip=wiki_translate(context, 'revisions_list.revert.tooltip', nb=0),  # TODO
+                tooltip=wiki_translate(context, 'revisions_list.revert.tooltip', nb=0),  # TODO number of revisions
                 css_classes='mdi mdi-undo-variant wiki-revision-action',
                 ignore_current_title=True,
             ))
@@ -289,7 +327,12 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
             case _:
                 raise ValueError(f'invalid revision list mode {mode!r}')
 
-        date = ottm_format_date(context, revision.date)
+        date = wiki_inner_link(
+            context,
+            page_title=page.full_title,
+            text=ottm_format_date(context, revision.date),
+            url_params=f'revid={revision.id}',
+        )
         flags = []
         if revision.is_minor:
             flags.append((wiki_translate(context, 'revisions_list.flag.minor.label'),
@@ -462,7 +505,7 @@ def _format_username(context: TemplateContext, user: models.CustomUser) -> str:
         return f'<span class="wiki-hidden">{wiki_translate(context, "username_hidden")}</span>'
     else:
         return wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(user.username),
-                               ignore_current_title=True)
+                               text=user.username, ignore_current_title=True)
 
 
 def _format_comment(context: TemplateContext, comment: str, hide: bool) -> str:

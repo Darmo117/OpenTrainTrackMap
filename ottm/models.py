@@ -1055,8 +1055,17 @@ class Revision(dj_models.Model, NonDeletableMixin):
         else:
             return self.bytes_size
 
+    def get_next(self, ignore_hidden: bool) -> Revision | None:
+        f = dj_models.Q(date__gt=self.date, **{self._get_object()[0]: self._get_object()[1]})
+        if ignore_hidden:
+            f &= dj_models.Q(hidden=False)
+        try:
+            return self._manager().filter(f).earliest()
+        except dj_models.ObjectDoesNotExist:
+            return None
+
     def get_previous(self, ignore_hidden: bool) -> Revision | None:
-        f = dj_models.Q(date__lt=self.date, **{self._get_content()[0]: self._get_content()[1]})
+        f = dj_models.Q(date__lt=self.date, **{self._get_object()[0]: self._get_object()[1]})
         if ignore_hidden:
             f &= dj_models.Q(hidden=False)
         try:
@@ -1065,13 +1074,13 @@ class Revision(dj_models.Model, NonDeletableMixin):
             return None
 
     def is_latest(self, ignore_hidden: bool):
-        f = dj_models.Q(date__gt=self.date, **{self._get_content()[0]: self._get_content()[1]})
+        f = dj_models.Q(date__gt=self.date, **{self._get_object()[0]: self._get_object()[1]})
         if ignore_hidden:
             f &= dj_models.Q(hidden=False)
         return not self._manager().filter(f).exists()
 
     def is_first(self, ignore_hidden: bool):
-        f = dj_models.Q(date__lt=self.date, **{self._get_content()[0]: self._get_content()[1]})
+        f = dj_models.Q(date__lt=self.date, **{self._get_object()[0]: self._get_object()[1]})
         if ignore_hidden:
             f &= dj_models.Q(hidden=False)
         return not self._manager().filter(f).exists()
@@ -1079,6 +1088,9 @@ class Revision(dj_models.Model, NonDeletableMixin):
     @classmethod
     def _manager(cls) -> dj_models.Manager:
         return cls.objects
+
+    def _get_object(self) -> tuple[str, typ.Any]:
+        raise NotImplementedError()
 
     def _get_content(self) -> tuple[str, str]:
         raise NotImplementedError()
@@ -1248,17 +1260,23 @@ class Page(dj_models.Model, NonDeletableMixin):
             return False
         return not pp.end_date or pp.end_date >= utils.now()
 
-    def last_revision_date(self) -> datetime.datetime | None:
-        """Return the date of the latest edit made on this page or None if it does not exist."""
-        if self.exists and (revision := self.revisions.latest()):
-            return revision.date
+    def get_latest_revision(self) -> PageRevision | None:
+        """Return the latest visible revision of this page."""
+        if self.exists and (revision := self.revisions.filter(hidden=False).latest()):
+            return revision
         return None
 
-    def get_content(self) -> str:
+    def last_revision_date(self) -> datetime.datetime | None:
+        """Return the date of the latest visible edit made on this page or None if it does not exist."""
+        if r := self.get_latest_revision():
+            return r.date
+        return None
+
+    def get_content(self) -> str | None:
         """Return this page’s content or an empty string if it does not exist."""
-        if self.exists and (revision := self.revisions.latest()):
-            return revision.content
-        return ''
+        if r := self.get_latest_revision():
+            return r.content
+        return None
 
     def get_edit_protection(self) -> PageProtection | None:
         """Return the page protection status for this page if it is protected, None otherwise."""
@@ -1379,6 +1397,9 @@ class PageRevision(Revision):
     page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT, related_name='revisions')
     content = dj_models.TextField()
 
+    def _get_object(self) -> tuple[str, typ.Any]:
+        return 'page', self.page
+
     def _get_content(self) -> tuple[str, str]:
         return 'content', self.content
 
@@ -1388,6 +1409,9 @@ class TopicRevision(Revision):
     topic = dj_models.ForeignKey(Topic, on_delete=dj_models.PROTECT, related_name='revisions')
     title = dj_models.CharField(max_length=200)
 
+    def _get_object(self) -> tuple[str, typ.Any]:
+        return 'topic', self.topic
+
     def _get_content(self) -> tuple[str, str]:
         return 'title', self.title
 
@@ -1396,6 +1420,9 @@ class MessageRevision(Revision):
     """A message revision is a version of a message’s content at a given time."""
     message = dj_models.ForeignKey(Message, on_delete=dj_models.PROTECT, related_name='revisions')
     text = dj_models.TextField()
+
+    def _get_object(self) -> tuple[str, typ.Any]:
+        return 'message', self.message
 
     def _get_content(self) -> tuple[str, str]:
         return 'text', self.text

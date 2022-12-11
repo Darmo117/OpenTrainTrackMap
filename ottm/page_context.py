@@ -219,7 +219,7 @@ class WikiPageContext(PageContext, abc.ABC):  # TODO parent pages
         return self._js_config
 
 
-class WikiPageShowActionContext(WikiPageContext):
+class WikiPageReadActionContext(WikiPageContext):
     def __init__(
             self,
             page: _models.Page,
