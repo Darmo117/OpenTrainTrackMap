@@ -465,6 +465,10 @@ def _wiki_page_read_context(
     else:
         revision = page.revisions.get(id=revision_id)
         archived = True
+    if not page.exists:
+        no_page_notice = w_pages.get_no_page_notice(user, language)
+    else:
+        no_page_notice = None
     return page_context.WikiPageShowActionContext(
         page=page,
         no_index=no_index,
@@ -479,6 +483,7 @@ def _wiki_page_read_context(
         cat_pages=cat_pages,
         cat_results_per_page=results_per_page,
         cat_page_index=page_index,
+        no_page_notice=no_page_notice,
     )
 
 

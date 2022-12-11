@@ -19,6 +19,14 @@
   </div>
 {% endif %}
 
+{% if not context.page_exists %}
+  <div id="wiki-no-page-notice">
+    <div id="wiki-no-page-notice-{{ context.page.namespace_id }}" class="alert alert-warning" role="alert">
+      {{ context.no_page_notice }}
+    </div>
+  </div>
+{% endif %}
+
 {% if context.page.content_type == CT_WIKIPAGE %}
   {{ context.page_content }}
 {% else %}

@@ -115,6 +115,16 @@ def get_new_page_notice(user: models.User, language: settings.UILanguage) -> str
     return get_interface_page('NewPageNotice', user, language)
 
 
+def get_no_page_notice(user: models.User, language: settings.UILanguage) -> str:
+    """Return the rendered edit notice from "Interface:NoPageNotice/<lang_code>".
+
+    :param user: Current user.
+    :param language: Page’s language.
+    :return: The rendered no page notice.
+    """
+    return get_interface_page('NoPageNotice', user, language)
+
+
 def get_interface_page(title: str, user: models.User = None, language: settings.UILanguage = None,
                        render: bool = True) -> str:
     """Return the rendered interface page from "Interface:<title>/<lang_code>" if language is defined,
@@ -132,7 +142,7 @@ def get_interface_page(title: str, user: models.User = None, language: settings.
         page = models.Page.objects.get(namespace_id=namespaces.NS_INTERFACE.id, title=title)
     except models.Page.DoesNotExist:
         return ''
-    return render_wikicode(page, user, language) if render else page.get_content()
+    return render_wikicode(page.get_content(), user, language) if render else page.get_content()
 
 
 @dj_db_trans.atomic

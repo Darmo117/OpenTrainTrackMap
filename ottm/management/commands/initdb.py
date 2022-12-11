@@ -159,6 +159,18 @@ class Command(dj_mngmt.BaseCommand):
                         edit_comment)
         pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuHelp/en'), 'Help', edit_comment)
         pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuHelp/fr'), 'Aide', edit_comment)
+        content = 'You are editing the page.'
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'EditNotice/en'), content, edit_comment)
+        content = 'Vous êtes en train de modifier la page.'
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'EditNotice/fr'), content, edit_comment)
+        content = 'You are creating a new page.'
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NewPageNotice/en'), content, edit_comment)
+        content = 'Vous êtes en train de créer une nouvelle page.'
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NewPageNotice/fr'), content, edit_comment)
+        content = 'This page does not exist.'
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NoPageNotice/en'), content, edit_comment)
+        content = 'Cette page n’existe page.'
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NoPageNotice/fr'), content, edit_comment)
         # TODO
 
         self.stdout.write('Done.')

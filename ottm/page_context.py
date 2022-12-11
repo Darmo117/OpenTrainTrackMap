@@ -235,6 +235,7 @@ class WikiPageShowActionContext(WikiPageContext):
             cat_pages: list[_models.Page] = None,
             cat_page_index: int = 1,
             cat_results_per_page: int = 20,
+            no_page_notice: str = None,
     ):
         """Create a page context for wiki pages.
 
@@ -254,6 +255,7 @@ class WikiPageShowActionContext(WikiPageContext):
          Only used if the page is a category.
         :param cat_page_index: Current pagination index. Only used if the page is a category.
         :param cat_results_per_page: Number of pages per page to display. Only used if the page is a category.
+        :param no_page_notice: The rendered notice if the page does not exist.
         """
         show_title = page.full_title != pages.MAIN_PAGE_TITLE
         super().__init__(
@@ -274,6 +276,7 @@ class WikiPageShowActionContext(WikiPageContext):
         self._cat_pages = dj_paginator.Paginator(cat_pages or [], cat_results_per_page)
         self._cat_page_index = cat_page_index
         self._cat_page_index = min(cat_page_index, self._cat_pages.num_pages)
+        self._no_page_notice = no_page_notice
 
     @property
     def page_content(self) -> str:
@@ -302,6 +305,10 @@ class WikiPageShowActionContext(WikiPageContext):
     @property
     def cat_page_index(self) -> int:
         return self._cat_page_index
+
+    @property
+    def no_page_notice(self) -> str | None:
+        return self._no_page_notice
 
 
 class WikiPageInfoActionContext(WikiPageContext):

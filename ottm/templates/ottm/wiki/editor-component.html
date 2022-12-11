@@ -2,38 +2,40 @@
 {% load utils %}
 {% load wiki %}
 
-{% if context.new_page_notice %}
-  <div class="wiki-edit-new-page-notice-{{ context.page.namespace_id }}">
-    {{ context.new_page_notice|safe }}
+{% if not context.page_exists and context.can_user_edit %}
+  <div class="wiki-edit-new-page-notice">
+    <div id="wiki-edit-new-page-notice-{{ context.page.namespace_id }}" class="alert alert-primary" role="alert">
+      {{ context.new_page_notice|safe }}
+    </div>
   </div>
 {% endif %}
 
 <div id="wiki-edit-notice">
-  <div id="wiki-edit-notice-{{ context.page.namespace_id }}">
+  <div id="wiki-edit-notice-{{ context.page.namespace_id }}" class="alert alert-secondary" role="alert">
     {% if context.edit_notice %}
       {{ context.edit_notice|safe }}
     {% endif %}
   </div>
 </div>
 
-{% if context.archived and context.can_user_edit_page %}
-  <div class="wiki-edit-diff-warning-box alert alert-warning" role="alert">
+{% if context.archived and context.can_user_edit %}
+  <div id="wiki-edit-diff-warning-box" class="alert alert-warning" role="alert">
     {% wiki_translate 'form.edit.revision_warning' %}
   </div>
 {% endif %}
 
-{% if context.page.namespace == NS_INTERFACE and context.can_user_edit_page %}
+{% if context.page.namespace == NS_INTERFACE and context.can_user_edit %}
   <div class="wiki-edit-interface-warning-box alert alert-warning" role="alert">
     {% wiki_translate 'form.edit.interface_warning' %}
   </div>
 {% endif %}
 
 {% if context.permission_error %}
-  <div class="wiki-edit-interface-permission-error-box alert alert-danger" role="alert">
+  <div id="wiki-edit-interface-permission-error-box" class="alert alert-danger" role="alert">
     {% wiki_translate 'form.edit.permission_error' %}
   </div>
 {% elif context.concurrent_edit_error %}
-  <div class="wiki-edit-interface-concurrent-edit-error-box alert alert-danger" role="alert">
+  <div id="wiki-edit-interface-concurrent-edit-error-box" class="alert alert-danger" role="alert">
     {% wiki_translate 'form.edit.concurrent_edit_error' %}
   </div>
 {% endif %}
@@ -50,12 +52,6 @@
   {% endif %}
 {% endwith %}
 
-{% if not context.page_exists and context.can_user_edit_page %}
-  <div class="wiki-edit-diff-error-box alert alert-default" role="alert">
-    {{ context.new_page_notice|safe }}
-  </div>
-{% endif %}
-
 {% with form=context.edit_form trans_prefix='form.edit.' %}
   <form
       action="{% url 'ottm:wiki_page' raw_page_title=context.page.full_title|wiki_url_escape %}?action=submit"
@@ -71,11 +67,11 @@
       <div class="wiki-ace-editor" id="{{ form.content.id_for_label }}-ace"
            data-ace-target="{{ form.content.id_for_label }}"
            data-content-type="{{ context.page.content_type }}"
-           {% if not context.can_user_edit_page %}data-disabled="1"{% endif %}></div>
+           {% if not context.can_user_edit %}data-disabled="1"{% endif %}></div>
       {{ form.content }}
     </div>
 
-    {% if context.can_user_edit_page %}
+    {% if context.can_user_edit %}
       <div class="form-group">
         <label for="{{ form.comment.id_for_label }}">
           {% wiki_translate trans_prefix|add:'comment.label' %}
