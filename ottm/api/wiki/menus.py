@@ -1,9 +1,10 @@
 import dataclasses
 
 from . import pages, parser
+from .constants import *
 from .namespaces import *
 from ..permissions import *
-from ... import page_context as pc, wiki_special_pages as wsp, settings
+from ... import page_context as pc, settings, wiki_special_pages as wsp
 
 
 @dataclasses.dataclass(frozen=True)
@@ -96,10 +97,10 @@ def _get_builtin_menu(page_context: pc.WikiPageContext, menu_id: str) -> Menu:
         case 'more':
             if page.namespace != NS_SPECIAL:
                 items.append({'title': 'Special:LinkedPages', 'subpage': page.full_title})
-                if hasattr(page_context, 'revision') and page_context.revision:
+                if hasattr(page_context, 'revision') and page_context.revision and page_context.action == ACTION_READ:
                     items.append({'title': page.full_title, 'label': 'permalink',
                                   'args': {'revid': page_context.revision.id}})
-                    items.append({'title': page.full_title, 'label': 'page_info', 'args': {'action': 'info'}})
+                items.append({'title': page.full_title, 'label': 'page_info', 'args': {'action': 'info'}})
                 items.append({'title': 'Special:Logs', 'subpage': page.full_title})
         case 'categories':
             pass  # TODO
