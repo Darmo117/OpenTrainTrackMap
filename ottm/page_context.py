@@ -267,9 +267,10 @@ class WikiPageShowActionContext(WikiPageContext):
         self._content = content
         self._revision = revision
         self._archived = archived
-        self._cat_subcategories = dj_paginator.Paginator(cat_subcategories or [], cat_results_per_page)
+        self._cat_subcategories = cat_subcategories or []
         self._cat_pages = dj_paginator.Paginator(cat_pages or [], cat_results_per_page)
         self._cat_page_index = cat_page_index
+        self._cat_page_index = min(cat_page_index, self._cat_pages.num_pages)
 
     @property
     def page_content(self) -> str:
@@ -288,7 +289,7 @@ class WikiPageShowActionContext(WikiPageContext):
         return self._revision
 
     @property
-    def cat_subcategories(self) -> dj_paginator.Paginator:
+    def cat_subcategories(self) -> list[_models.Page]:
         return self._cat_subcategories
 
     @property
@@ -423,7 +424,7 @@ class WikiPageTalkActionContext(WikiPageContext):
             js_config=js_config,
         )
         self._topics = dj_paginator.Paginator(topics, topics_per_page)
-        self._page_index = page_index
+        self._page_index = min(page_index, self._topics.num_pages)
         self._topics_per_page = topics_per_page
 
     @property
@@ -471,7 +472,7 @@ class WikiPageHistoryActionContext(WikiPageContext):
             js_config=js_config,
         )
         self._revisions = dj_paginator.Paginator(revisions, revisions_per_page)
-        self._page_index = page_index
+        self._page_index = min(page_index, self._revisions.num_pages)
 
     @property
     def revisions(self) -> dj_paginator.Paginator:

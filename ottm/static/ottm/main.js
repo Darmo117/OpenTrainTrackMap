@@ -16,9 +16,10 @@ class OTTM {
     const $button = $("#navbar-logged-out-settings");
     const $parent = $button.parent();
     const $menu = $parent.find(".dropdown-menu");
-    $button.on("click", () => {
+    $button.on("click", e => {
       $parent.toggleClass("show");
       $menu.toggleClass("show");
+      e.preventDefault();
     });
     $("body").on("click", e => {
       // noinspection JSCheckFunctionSignatures

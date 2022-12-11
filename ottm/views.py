@@ -154,24 +154,27 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
             'raw_page_title': w_pages.url_encode_page_title(w_pages.MAIN_PAGE_TITLE)
         }))
-    site_name = settings.SITE_NAME
-    kwargs = request.GET
+    get_params = request.GET
     user = auth.get_user_from_request(request)
     language = _get_page_language(request, user)
     dark_mode = _get_dark_mode_status(request, user)
     page_title = w_pages.get_correct_title(raw_page_title)
     ns, title = w_pages.split_title(page_title)
-    action = kwargs.get('action', w_cons.ACTION_READ)
+    action = get_params.get('action', w_cons.ACTION_READ)
+    if action not in w_cons.ACTIONS.values():
+        action = w_cons.ACTION_READ
     page = w_pages.get_page(ns, title)
     js_config = w_pages.get_js_config(page, action)
-    results_per_page = kwargs.get('results_per_page', 20)
-    page_index = kwargs.get('page', 1)
+    results_per_page = get_params.get('results_per_page', 20)
+    try:
+        page_index = int(get_params.get('page', 1))
+    except ValueError:
+        page_index = 1
 
     if ns == w_ns.NS_SPECIAL:
         special_page = wiki_special_pages.SPECIAL_PAGES.get(title)
         if special_page is None:
             context = page_context.WikiSpecialPageContext(
-                site_name=site_name,
                 page=page,
                 user=user,
                 language=language,
@@ -182,7 +185,6 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
             status = 404
         elif not special_page.can_user_access(user):
             context = page_context.WikiSpecialPageContext(
-                site_name=site_name,
                 page=page,
                 user=user,
                 language=language,
@@ -193,9 +195,8 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
             )
             status = 403
         else:
-            data = special_page.process_request(request, title, **kwargs)
+            data = special_page.process_request(request, title, **get_params)
             context = page_context.WikiSpecialPageContext(
-                site_name=site_name,
                 page=page,
                 user=user,
                 language=language,
@@ -207,7 +208,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
             status = 200
 
     else:
-        revid: str | None = kwargs.get('revid')
+        revid: str | None = get_params.get('revid')
         if revid and revid.isascii() and revid.isnumeric():
             revision_id = int(revid)
         else:
@@ -307,8 +308,8 @@ def _get_dark_mode_status(request: dj_wsgi.WSGIRequest, user: models.User) -> bo
     :param user: Current user.
     :return: True if the dark mode is active, false otherwise.
     """
-    if 'dark_mode' in request.GET:
-        return bool(request.GET['dark_mode'])
+    if (dark_mode := request.GET.get('dark_mode')) and dark_mode and dark_mode.isascii() and dark_mode.isnumeric():
+        return bool(int(dark_mode))
     if 'dark_mode' in request.COOKIES:
         return request.COOKIES['dark_mode'] == 'true'
     else:
