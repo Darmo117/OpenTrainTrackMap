@@ -1,7 +1,5 @@
 """This module defines a command that initializes the database."""
-import threading
-import time
-
+import django.db.transaction as dj_db_trans
 import django.core.management.base as dj_mngmt
 
 from ...api import auth
@@ -13,6 +11,7 @@ from ...api.wiki import namespaces as w_ns, pages
 class Command(dj_mngmt.BaseCommand):
     help = 'Initializes the database'
 
+    @dj_db_trans.atomic
     def handle(self, *args, **options):
         self.stdout.write('Initializing DB…')
         self._init_default_languages()
@@ -106,15 +105,12 @@ class Command(dj_mngmt.BaseCommand):
         wiki_user.internal_object.groups.add(models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS))
         edit_comment = 'Wiki setup.'
 
+        content = 'This user is a bot used to setup the wiki.'
+        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_USER, wiki_user.username), content, edit_comment)
+
         ns, title = pages.split_title(pages.MAIN_PAGE_TITLE)
         content = f'Welcome to {settings.SITE_NAME}’s wiki!'
-        pages.edit_page(None, wiki_user, pages.get_page(ns, title), content,
-                        edit_comment)
-        # TEST
-        pages.edit_page(None, wiki_user, pages.get_page(ns, title), 'plop',
-                        edit_comment)
-        for pr in models.PageRevision.objects.all():
-            print(pr.date)
+        pages.edit_page(None, wiki_user, pages.get_page(ns, title), content, edit_comment)
         pages.protect_page(wiki_user, pages.get_page(ns, title),
                            models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS),
                            reason='Page with high traffic.')
