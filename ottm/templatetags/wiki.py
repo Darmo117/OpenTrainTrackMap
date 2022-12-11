@@ -413,6 +413,12 @@ def wiki_side_menu(context: TemplateContext, menu_id: str) -> TemplateContext:
 
 @register.simple_tag(takes_context=True)
 def wiki_pagination(context: TemplateContext, paginator: dj_paginator.Paginator) -> str:
+    """Render a the pagination list for the given paginator object.
+
+    :param context: Page context.
+    :param paginator: The paginator object.
+    :return: The rendered pagination list.
+    """
     wiki_context: page_context.WikiPageContext = context.get('context')
     # noinspection PyUnresolvedReferences
     page_index = wiki_context.page_index
@@ -425,11 +431,24 @@ def wiki_pagination(context: TemplateContext, paginator: dj_paginator.Paginator)
         else:
             items.append(f'<li class="page-item disabled"><a class="page-link" href="#">{index}</a></li>')
 
-    return dj_safe.mark_safe('<nav><ul class="pagination justify-content-center">' + ''.join(items) + '</ul></nav>')
+    nav = '<nav><ul class="pagination justify-content-center">' + ''.join(items) + '</ul></nav>'
+    numbers = []
+    for nb in [20, 50, 100, 200, 500]:
+        url = wiki_add_url_params(context, results_per_page=nb)
+        tooltip = wiki_translate(context, 'pagination.per_page_item.tooltip', nb=nb)
+        numbers.append(f'<li class="page-item" title="{tooltip}"><a class="page-link" href="{url}">{nb}</a></li>')
+    number_per_page_list = '<ul class="pagination justify-content-center">' + ''.join(numbers) + '</ul>'
+    return dj_safe.mark_safe(nav + number_per_page_list)
 
 
 @register.simple_tag(takes_context=True)
 def wiki_add_url_params(context: TemplateContext, **kwargs) -> str:
+    """Return the current URL with the specified parameters added to it.
+
+    :param context: Page context.
+    :param kwargs: Parameters to add to the URL.
+    :return: The new URL.
+    """
     request: dj_wsgi.WSGIRequest = context['request']
     url_path = request.path
     get_params = {k: v for k, v in request.GET.items()}

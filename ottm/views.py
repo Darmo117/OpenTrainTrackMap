@@ -8,7 +8,7 @@ import requests
 from django.conf import settings as dj_settings
 
 from . import forms, models, page_context, settings, wiki_special_pages
-from .api import auth, errors, permissions
+from .api import auth, errors, permissions, utils
 from .api.wiki import constants as w_cons, namespaces as w_ns, pages as w_pages
 
 VIEW_MAP = 'show'
@@ -165,9 +165,12 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
         action = w_cons.ACTION_READ
     page = w_pages.get_page(ns, title)
     js_config = w_pages.get_js_config(page, action)
-    results_per_page = get_params.get('results_per_page', 20)
     try:
-        page_index = int(get_params.get('page', 1))
+        results_per_page = utils.clamp(int(get_params.get('results_per_page', 50)), mini=20, maxi=500)
+    except ValueError:
+        results_per_page = 50
+    try:
+        page_index = utils.clamp(int(get_params.get('page', 1)), mini=1)
     except ValueError:
         page_index = 1
 

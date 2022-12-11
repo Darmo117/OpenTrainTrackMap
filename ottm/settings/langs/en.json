@@ -478,6 +478,11 @@
         "ip_block": "({date}) {performer} has blocked IP {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) {reason}",
         "infinite": "infinite"
       },
+      "pagination": {
+        "per_page_item": {
+          "tooltip": "Display {nb} results per page"
+        }
+      },
       "username_hidden": "Username hidden",
       "comment_hidden": "Comment hidden"
     }
