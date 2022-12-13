@@ -1,10 +1,10 @@
 import dataclasses
 
-from . import pages, parser
+from . import pages, parser, special_pages as w_sp
 from .constants import *
 from .namespaces import *
 from ..permissions import *
-from ... import page_context as pc, settings, wiki_special_pages as wsp
+from ... import page_context as pc, settings
 
 
 @dataclasses.dataclass(frozen=True)
@@ -60,7 +60,7 @@ def _get_menu_item_label(item_label: str, language: settings.UILanguage) -> str 
             return language.translate('wiki.main_page_title')
         case label if item_label.endswith('-name'):
             label = label[:-5]
-            if wsp.SPECIAL_PAGES.get(label):
+            if w_sp.SPECIAL_PAGES.get(label):
                 return None
             return NS_INTERFACE.get_full_page_title(f'MenuItem{label}/{language.code}')
         case label:
@@ -123,7 +123,7 @@ def _get_menu_object(language, id_: str, title: str, items: list[dict[str, str |
         if not item.get('label') and ns == NS_SPECIAL:
             label = language.translate(f'wiki.special_page.{p_title}.menu.label')
             tooltip = language.translate(f'wiki.special_page.{p_title}.menu.tooltip')
-            if sp := wsp.SPECIAL_PAGES.get(p_title):
+            if sp := w_sp.SPECIAL_PAGES.get(p_title):
                 access_key = sp.access_key
         elif not item.get('label') and ns == NS_INTERFACE:
             label = pages.get_interface_page(p_title, None, language, render=False)

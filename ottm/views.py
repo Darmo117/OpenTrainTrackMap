@@ -8,9 +8,9 @@ import django.http.response as dj_response
 import django.shortcuts as dj_scut
 import requests
 
-from . import forms, models, page_context, settings, wiki_special_pages
+from . import forms, models, page_context, settings
 from .api import auth, errors, permissions, utils
-from .api.wiki import constants as w_cons, namespaces as w_ns, pages as w_pages
+from .api.wiki import constants as w_cons, namespaces as w_ns, pages as w_pages, special_pages as w_sp
 
 VIEW_MAP = 'show'
 EDIT_MAP = 'edit'
@@ -176,7 +176,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
         page_index = 1
 
     if ns == w_ns.NS_SPECIAL:
-        special_page = wiki_special_pages.SPECIAL_PAGES.get(title)
+        special_page = w_sp.SPECIAL_PAGES.get(title)
         if special_page is None:
             context = page_context.WikiSpecialPageContext(
                 page=page,

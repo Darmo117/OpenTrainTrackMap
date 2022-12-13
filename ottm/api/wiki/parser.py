@@ -2,9 +2,9 @@
 import urllib.parse
 
 import django.shortcuts as dj_scut
-from . import namespaces, pages
+from . import namespaces, pages, special_pages
 from .constants import *
-from ... import settings, wiki_special_pages
+from ... import settings
 
 
 class Parser:
@@ -30,7 +30,7 @@ class Parser:
         url_params = url_params or {}
         page = pages.get_page(*pages.split_title(page_title))
         if page.namespace == namespaces.NS_SPECIAL:
-            page_exists = wiki_special_pages.SPECIAL_PAGES.get(page.base_name) is not None
+            page_exists = special_pages.SPECIAL_PAGES.get(page.base_name) is not None
         else:
             page_exists = page.exists and not page.deleted
 

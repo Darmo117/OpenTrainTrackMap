@@ -10,7 +10,7 @@ import typing as typ
 
 import django.core.handlers.wsgi as dj_wsgi
 
-from .. import models
+from ottm import models
 
 
 class SpecialPage(abc.ABC):
