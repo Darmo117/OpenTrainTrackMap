@@ -200,6 +200,10 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
             status = 403
         else:
             data = special_page.process_request(request, title, **get_params)
+            if isinstance(data, w_sp.Redirect):
+                return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
+                    'raw_page_title': w_pages.url_encode_page_title(data.page_title),
+                }))
             context = page_context.WikiSpecialPageContext(
                 page=page,
                 user=user,
@@ -246,7 +250,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                     else:
                         # Redirect to normal view
                         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
-                            'raw_page_title': page.full_title,
+                            'raw_page_title': w_pages.url_encode_page_title(page.full_title),
                         }))
             case w_cons.ACTION_HISTORY:
                 context = _wiki_page_history_context(page, user, language, dark_mode, results_per_page, page_index,

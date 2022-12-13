@@ -4,7 +4,7 @@ import typing as _typ
 from django.core.handlers import wsgi as _dj_wsgi
 
 from . import SpecialPage as _SP
-from ottm.api import auth as _auth
+from ... import auth as _auth
 
 
 class SpecialPageContributions(_SP):

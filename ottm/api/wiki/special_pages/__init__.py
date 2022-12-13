@@ -3,6 +3,7 @@ Special pages are pages that are not stored in the database.
 They are used to manage the wiki and may require specific permissions.
 """
 import abc
+import dataclasses
 import importlib
 import os.path
 import pathlib
@@ -10,7 +11,12 @@ import typing as typ
 
 import django.core.handlers.wsgi as dj_wsgi
 
-from ottm import models
+from .... import models
+
+
+@dataclasses.dataclass(frozen=True)
+class Redirect:
+    page_title: str
 
 
 class SpecialPage(abc.ABC):
@@ -61,7 +67,8 @@ class SpecialPage(abc.ABC):
         """Check whether the given user can access this page."""
         return all(user.has_permission(p) for p in self.permissions_required)
 
-    def process_request(self, request: dj_wsgi.WSGIRequest, title: str, **kwargs: str) -> dict[str, typ.Any]:
+    def process_request(self, request: dj_wsgi.WSGIRequest, title: str, **kwargs: str) \
+            -> dict[str, typ.Any] | Redirect:
         """Process the given client request.
 
         :param request: The client request.
@@ -69,14 +76,18 @@ class SpecialPage(abc.ABC):
         :param kwargs: Page’s GET parameters.
         :return: A dict object containing parameters to pass to the page context object.
         """
+        data = self._process_request(request, *title.split('/'), **kwargs)
+        if isinstance(data, Redirect):
+            return data
         return {
             'has_custom_css': self.has_custom_css,
             'has_custom_js': self.has_custom_js,
-            **self._process_request(request, *title.split('/'), **kwargs),
+            **data,
         }
 
     @abc.abstractmethod
-    def _process_request(self, request: dj_wsgi.WSGIRequest, *args: str, **kwargs: str) -> dict[str, typ.Any]:
+    def _process_request(self, request: dj_wsgi.WSGIRequest, *args: str, **kwargs: str) \
+            -> dict[str, typ.Any] | Redirect:
         """Process the given client request.
 
         :param request: The client request.
