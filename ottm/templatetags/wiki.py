@@ -514,7 +514,8 @@ def wiki_add_url_params(context: TemplateContext, **kwargs) -> str:
     :param kwargs: Parameters to add to the URL.
     :return: The new URL.
     """
-    request: dj_wsgi.WSGIRequest = context['request']
+    wiki_context: page_context.WikiPageContext = context.get('context')
+    request: dj_wsgi.WSGIRequest = wiki_context.request_params.request
     url_path = request.path
     get_params = {k: v for k, v in request.GET.items()}
     get_params.update(kwargs)
