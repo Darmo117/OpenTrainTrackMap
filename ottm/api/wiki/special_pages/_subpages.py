@@ -32,6 +32,7 @@ class SpecialPageSubpages(_SP):
         if title := '/'.join(args):
             target_page = pages.get_page(*pages.split_title(title))
             subpages = target_page.get_subpages()
+            form = _Form(initial={'page_name': target_page.full_title})
         paginator = dj_paginator.Paginator(subpages, params.results_per_page)
         return {
             'title_key': 'title_page' if target_page else 'title',
@@ -54,4 +55,4 @@ class _Form(forms.WikiForm):
     )
 
     def __init__(self, post=None, initial=None):
-        super().__init__('subpages', False, post, initial)
+        super().__init__('select_page', False, post, initial)

@@ -43,6 +43,7 @@ class SpecialPageContributions(_SP):
                     contributions = query_set.all()
                 else:
                     contributions = query_set.filter(hidden=False)
+                form = _Form(initial={'username': target_user.username})
         paginator = dj_paginator.Paginator(contributions.reverse(), params.results_per_page)
         return {
             'title_key': 'title_user' if target_user else 'title',
@@ -66,4 +67,4 @@ class _Form(forms.WikiForm):
     )
 
     def __init__(self, post=None, initial=None):
-        super().__init__('contributions', False, post, initial)
+        super().__init__('select_user', False, post, initial)

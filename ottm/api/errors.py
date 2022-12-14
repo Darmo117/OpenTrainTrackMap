@@ -17,6 +17,10 @@ class InvalidEmailError(ValueError):
     pass
 
 
+class PageDoesNotExistError(RuntimeError):
+    pass
+
+
 class MissingPermissionError(RuntimeError):
     def __init__(self, *missing_perms: str):
         """Create a permission error.

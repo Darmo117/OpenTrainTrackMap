@@ -188,7 +188,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
             data = special_page.process_request(request_params, title)
             if isinstance(data, w_sp.Redirect):
                 return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
-                    'raw_page_title': data.page_title,
+                    'raw_page_title': w_pages.url_encode_page_title(data.page_title),
                 }))
             context = page_context.WikiSpecialPageContext(
                 request_params,

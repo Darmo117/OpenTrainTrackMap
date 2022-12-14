@@ -118,6 +118,7 @@ class WikiEditPageForm(WikiForm):
     comment = dj_forms.CharField(
         label='comment',
         max_length=200,
+        strip=True,
         required=False
     )
     minor_edit = dj_forms.BooleanField(

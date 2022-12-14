@@ -56,6 +56,14 @@ class UILanguage:
         self._mappings = mappings
 
     @property
+    def internal_language(self):
+        """The underlying language instance.
+
+        :rtype: ottm.models.Language
+        """
+        return self._language
+
+    @property
     def code(self) -> str:
         """This language’s code."""
         return self._language.code

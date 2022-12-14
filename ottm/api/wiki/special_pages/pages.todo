@@ -1,9 +1,9 @@
-~- Contributions
-~- RandomPage
+V- Contributions
+V- RandomPage
 ~- RecentChanges
 X- UploadFile
 X- SpecialPages
-~- SubPages
+V- SubPages
 X- LinkedPages
 X- Logs
 X- DeletePage
@@ -11,5 +11,5 @@ X- RenamePage
 X- ProtectPage
 X- Block
 X- SendEmail
-X- ChangePageLanguage
+~- ChangePageLanguage
 X- ChangePageContentType

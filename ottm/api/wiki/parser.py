@@ -39,7 +39,9 @@ class Parser:
         if current_page_title == page.full_title and not anchor and not url_params:
             return f'<strong class="wiki-recursive-link">{link_text}</strong>' if not only_url else ''
 
-        url = dj_scut.reverse('ottm:wiki_page', kwargs={'raw_page_title': page.full_title})
+        url = dj_scut.reverse('ottm:wiki_page', kwargs={
+            'raw_page_title': pages.url_encode_page_title(page.full_title)
+        })
         link_tooltip = tooltip or page.full_title
 
         if page_exists or no_red_link or url_params.get('action') in (ACTION_TALK, ACTION_HISTORY, ACTION_INFO):

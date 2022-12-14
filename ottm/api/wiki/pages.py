@@ -42,12 +42,12 @@ def get_correct_title(raw_title: str) -> str:
 
 
 def url_encode_page_title(title: str) -> str:
-    """Escape all URL special characters from the given page title.
+    """Replace spaces by underscores.
 
     :param title: Page title to encode.
     :return: The encoded page title.
     """
-    return urllib.parse.quote(title.replace(' ', '_'), safe='/:')
+    return title.replace(' ', '_')
 
 
 def get_page(ns: namespaces.Namespace, title: str) -> models.Page:
@@ -236,6 +236,38 @@ def _get_page_content_type(page: models.Page) -> str:
         if page.title.endswith('.json'):
             return constants.CT_JSON
     return constants.CT_WIKIPAGE
+
+
+@dj_db_trans.atomic
+def set_page_content_language(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Page,
+                              language: settings.UILanguage, reason: str):
+    """Change the content language of the given page.
+
+    :param request: Client request.
+    :param author: User performing the action.
+    :param page: Page to alter.
+    :param language: New content language.
+    :param reason: Reason for the change.
+    :raise PageDoesNotExistError: If the page does not exist.
+    :raise EditSpecialPageError: If the page is in the "Special" namespace.
+    :raise MissingPermissionError: If the user cannot edit the page.
+    """
+    if not page.exists:
+        raise errors.PageDoesNotExistError(page.full_title)
+    if page.namespace == namespaces.NS_SPECIAL:
+        raise errors.EditSpecialPageError()
+    if not page.can_user_edit(author):
+        raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
+    if author.is_anonymous:
+        author = auth.get_or_create_anonymous_account_from_request(request)
+    page.content_language = language.internal_language
+    page.save()
+    models.PageContentLanguageLog(
+        performer=author.internal_object,
+        page=page,
+        language=page.content_language,
+        reason=reason,
+    ).save()
 
 
 @dj_db_trans.atomic

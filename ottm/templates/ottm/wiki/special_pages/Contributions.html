@@ -1,7 +1,6 @@
 {% load wiki %}
 
+{% include 'ottm/include/form.html' with form=context.form prefix='wiki.special_page.Contributions.' %}
 {% if context.target_user %}
   {% wiki_revisions_list context.contributions mode='contributions' %}
-{% else %}
-  {% include 'ottm/include/form.html' with form=context.form prefix='wiki.special_page.Contributions.' %}
 {% endif %}

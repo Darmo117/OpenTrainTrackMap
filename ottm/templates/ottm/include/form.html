@@ -1,7 +1,7 @@
 {# Parameters: form: ottm.forms.CustomForm, prefix: str #}
 {% load ottm %}
 
-{% with trans_prefix=prefix|add:'form.' %}
+{% with trans_prefix=prefix|add:'form.'|add:form.name|add:'.' %}
   {% if context.global_errors %}
     <div class="alert alert-danger form-errors-alert" role="alert">
       {% ottm_translate 'form.global_error.title' %}
@@ -12,7 +12,7 @@
       </ul>
     </div>
   {% endif %}
-  <form method="post" id="{{ form.name }}">
+  <form method="post" id="{{ form.name }}" style="margin-bottom: 1em">
     {% csrf_token %}
     {% if form.warn_unsaved_changes %}
       <input type="hidden" name="warn-unsaved" value="1">

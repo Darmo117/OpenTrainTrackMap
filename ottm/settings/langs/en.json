@@ -277,15 +277,17 @@
             "tooltip": "List the subpages of this page"
           },
           "form": {
-            "page": {
-              "label": "Page to list the subpages of:",
-              "error": {
-                "page_invalid_title": "Invalid page title!",
-                "required": "Missing page title!"
+            "select_page": {
+              "page": {
+                "label": "Page to list the subpages of:",
+                "error": {
+                  "page_invalid_title": "Invalid page title!",
+                  "required": "Missing page title!"
+                }
+              },
+              "submit": {
+                "label": "List subpages"
               }
-            },
-            "submit": {
-              "label": "List subpages"
             }
           },
           "no_results": "No results."
@@ -316,18 +318,20 @@
           },
           "user_links": "User page: {username}",
           "form": {
-            "username": {
-              "label": "Username of the user to display the contributions of:",
+            "select_user": {
+              "username": {
+                "label": "Username of the user to display the contributions of:",
+                "error": {
+                  "invalid": "Invalid username!",
+                  "required": "Missing username!"
+                }
+              },
+              "submit": {
+                "label": "Show contributions"
+              },
               "error": {
-                "invalid": "Invalid username!",
-                "required": "Missing username!"
+                "user_does_not_exist": "User does not exist!"
               }
-            },
-            "submit": {
-              "label": "Show contributions"
-            },
-            "error": {
-              "user_does_not_exist": "User does not exist!"
             }
           }
         },
@@ -345,6 +349,39 @@
           "menu": {
             "label": "Send an email",
             "tooltip": "Send an email to this user"
+          }
+        },
+        "ChangePageLanguage": {
+          "title": "Change page content language",
+          "title_page": "Change content language of page “{value}”",
+          "title_done": "Changed content language of page “{value}”",
+          "done": "Content language of page {page} changed to {language_name} ({language_code}).",
+          "form": {
+            "set_page_language": {
+              "page": {
+                "label": "Page:",
+                "error": {
+                  "page_invalid_title": "Invalid page name!",
+                  "required": "Missing page name!"
+                }
+              },
+              "content_language": {
+                "label": "Content language:",
+                "error": {
+                  "invalid_choice": "Invalid language!"
+                }
+              },
+              "reason": {
+                "label": "Reason:"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "You do not have the permissions required to edit this page.",
+                "page_does_not_exist": "This page does not exist."
+              }
+            }
           }
         }
       },
@@ -370,6 +407,10 @@
           "page_tools": {
             "title": "Page tools",
             "item": {
+              "special_page": {
+                "label": "Special page",
+                "tooltip": "Reset this special page"
+              },
               "user_page": {
                 "label": "User page",
                 "tooltip": "Go to the user’s page"
@@ -608,6 +649,7 @@
         "page_deletion": "({date}) {user} has deleted {page}. {reason}",
         "page_protection": "({date}) {user} has changed the protection status of {page} to group {group}. ({until}) {reason}",
         "user_account_creation": "({date}) User account {user} has been created.",
+        "page_content_language": "({date}) {user} changed content language of {page} to {language_name} ({language_code}). {reason}",
         "user_block": "({date}) {performer} has blocked user {user}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] ({until}) {reason}",
         "ip_block": "({date}) {performer} has blocked IP {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) {reason}",
         "infinite": "infinite"

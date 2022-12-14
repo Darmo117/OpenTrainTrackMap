@@ -1506,6 +1506,16 @@ class PageProtectionLog(PageLog):
         ordering = ('date',)
 
 
+class PageContentLanguageLog(PageLog):
+    """New entries are added each time the content language of a page is modified."""
+    language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
+    reason = dj_models.TextField(null=True, blank=True)
+
+    class Meta:
+        get_latest_by = 'date'
+        ordering = ('date',)
+
+
 class UserLog(Log):
     """Base class for user-related operations."""
     user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)

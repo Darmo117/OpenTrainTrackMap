@@ -9,15 +9,9 @@ import django.utils.safestring as dj_safe
 from .ottm import *
 from .. import models, page_context
 from ..api.permissions import *
-from ..api.wiki import constants as w_cons, menus, namespaces as w_ns, pages as w_pages, parser
+from ..api.wiki import constants as w_cons, menus, namespaces as w_ns, parser
 
 register = dj_template.Library()
-
-
-@register.filter
-def wiki_url_escape(value: str) -> str:
-    """Convert the given page name to a URL-safe value."""
-    return dj_safe.mark_safe(w_pages.url_encode_page_title(value))
 
 
 @register.simple_tag(takes_context=True)
@@ -420,6 +414,17 @@ def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> st
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
                 group=protection_level.label,
                 until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
+                reason=_format_comment(context, reason, False),
+            )
+        case models.PageContentLanguageLog(performer=performer, page=page, language=language, reason=reason):
+            return wiki_translate(
+                context,
+                'log.page_content_language',
+                date=formatted_date,
+                user=_format_username(context, performer),
+                page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
+                language_name=language.name,
+                language_code=language.code,
                 reason=_format_comment(context, reason, False),
             )
         case models.UserAccountCreationLog(user=user):
