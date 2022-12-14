@@ -234,7 +234,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                             form.cleaned_data['section_id']
                         )
                     except errors.MissingPermissionError:
-                        context = _wiki_page_edit_context(request_params, page, revision_id, js_config, perm_error=True)
+                        context = _wiki_page_edit_context(request_params, page, revision_id, js_config)
                     except errors.ConcurrentWikiEditError:
                         # TODO form containing concurrent page content
                         context = _wiki_page_edit_context(request_params, page, revision_id, js_config,
@@ -458,7 +458,6 @@ def _wiki_page_edit_context(
         revision_id: int | None,
         js_config: dict,
         form: forms.WikiEditPageForm = None,
-        perm_error: bool = False,
         concurrent_edit_error: bool = False,
 ) -> page_context.WikiPageEditActionContext:
     """Create a wiki page editing context object.
@@ -468,7 +467,6 @@ def _wiki_page_edit_context(
     :param revision_id: Page revision ID.
     :param js_config: Dict object containing JS config values.
     :param form: Edit form object.
-    :param perm_error: Whether the user lacks the permission to edit wiki pages.
     :param concurrent_edit_error: Whether another edit was made before submitting.
     :return: A WikiPageContext object.
     """
@@ -500,7 +498,7 @@ def _wiki_page_edit_context(
         edit_form=form,
         edit_notice=w_pages.get_edit_notice(user, language, page),
         new_page_notice=w_pages.get_new_page_notice(user, language, page) if not page.exists else None,
-        perm_error=perm_error,
+        perm_error=not page.can_user_edit(user),
         concurrent_edit_error=concurrent_edit_error,
         edit_protection_log_entry=w_pages.get_page_protection_log_entry(page),
     )

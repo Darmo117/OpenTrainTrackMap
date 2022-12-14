@@ -390,7 +390,7 @@ class WikiPageEditActionContext(WikiPageContext):
         :param request_params: Page request parameters.
         :param page: Wiki page object.
         :param js_config: Dict object containing the wiki’s JS config.
-         It is converted to a JSON object before being inserted in the HTML page.
+            It is converted to a JSON object before being inserted in the HTML page.
         :param revision: A revision of the page. May be None.
         :param archived: Whether the revision is not the current one.
         :param edit_form: Editing form.
