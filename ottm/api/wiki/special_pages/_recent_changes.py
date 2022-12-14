@@ -5,6 +5,7 @@ from django.core.handlers import wsgi as _dj_wsgi
 
 from . import SpecialPage as _SP
 from ... import auth as _auth
+from .... import requests
 
 
 class SpecialPageRecentChanges(_SP):
@@ -13,7 +14,7 @@ class SpecialPageRecentChanges(_SP):
     def __init__(self):
         super().__init__(name='RecentChanges', accesskey='c')
 
-    def _process_request(self, request: _dj_wsgi.WSGIRequest, *args: str, **kwargs: str) -> dict[str, _typ.Any]:
-        user = _auth.get_user_from_request(request)
+    def _process_request(self, params: requests.RequestParams, *args: str, ) -> dict[str, _typ.Any]:
+        user = _auth.get_user_from_request(params.request)
         target_user = _auth.get_user_from_name(args[0]) if len(args) else user
         # TODO

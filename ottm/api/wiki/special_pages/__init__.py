@@ -9,9 +9,7 @@ import os.path
 import pathlib
 import typing as typ
 
-import django.core.handlers.wsgi as dj_wsgi
-
-from .... import models
+from .... import models, requests
 
 
 @dataclasses.dataclass(frozen=True)
@@ -67,16 +65,14 @@ class SpecialPage(abc.ABC):
         """Check whether the given user can access this page."""
         return all(user.has_permission(p) for p in self.permissions_required)
 
-    def process_request(self, request: dj_wsgi.WSGIRequest, title: str, **kwargs: str) \
-            -> dict[str, typ.Any] | Redirect:
+    def process_request(self, params: requests.RequestParams, title: str) -> dict[str, typ.Any] | Redirect:
         """Process the given client request.
 
-        :param request: The client request.
+        :param params: Page’s request parameters.
         :param title: Page’s full title. The title will be split around '/'.
-        :param kwargs: Page’s GET parameters.
         :return: A dict object containing parameters to pass to the page context object.
         """
-        data = self._process_request(request, *title.split('/'), **kwargs)
+        data = self._process_request(params, *title.split('/')[1:])
         if isinstance(data, Redirect):
             return data
         return {
@@ -86,13 +82,11 @@ class SpecialPage(abc.ABC):
         }
 
     @abc.abstractmethod
-    def _process_request(self, request: dj_wsgi.WSGIRequest, *args: str, **kwargs: str) \
-            -> dict[str, typ.Any] | Redirect:
+    def _process_request(self, params: requests.RequestParams, *args: str) -> dict[str, typ.Any] | Redirect:
         """Process the given client request.
 
-        :param request: The client request.
+        :param params: Page’s request parameters.
         :param args: Page’s arguments.
-        :param kwargs: Page’s GET parameters.
         :return: A dict object containing parameters to pass to the page context object.
         """
         pass

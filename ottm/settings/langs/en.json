@@ -244,7 +244,7 @@
         },
         "DeletePage": {
           "title": "Delete a page",
-          "title_page": "Delete “{page}”",
+          "title_page": "Delete “{value}”",
           "menu": {
             "label": "Delete",
             "tooltip": "Delete this page"
@@ -252,7 +252,7 @@
         },
         "RenamePage": {
           "title": "Rename a page",
-          "title_page": "Rename “{page}”",
+          "title_page": "Rename “{value}”",
           "menu": {
             "label": "Rename",
             "tooltip": "Rename this page"
@@ -260,7 +260,7 @@
         },
         "ProtectPage": {
           "title": "Protect a page",
-          "title_page": "Change protection level of “{page}”",
+          "title_page": "Change protection level of “{value}”",
           "menu": {
             "label": "Protect",
             "tooltip": "Protect this page"
@@ -268,7 +268,7 @@
         },
         "SubPages": {
           "title": "List subpages",
-          "title_page": "Subpages of “{page}”",
+          "title_page": "Subpages of “{value}”",
           "menu": {
             "label": "Subpages",
             "tooltip": "List the subpages of this page"
@@ -276,7 +276,7 @@
         },
         "LinkedPages": {
           "title": "Linked pages",
-          "title_page": "Pages linking to “{page}”",
+          "title_page": "Pages linking to “{value}”",
           "menu": {
             "label": "Linked pages",
             "tooltip": "List the pages that link to this page"
@@ -284,8 +284,8 @@
         },
         "Logs": {
           "title": "Logs",
-          "title_page": "Log entries for “{page}”",
-          "title_user": "Log entries for “{user}”",
+          "title_page": "Log entries for page “{value}”",
+          "title_user": "Log entries for user “{value}”",
           "menu": {
             "label": "Page logs",
             "tooltip": "Display the logs for this page"
@@ -293,7 +293,7 @@
         },
         "Contributions": {
           "title": "Wiki contributions",
-          "title_user": "Wiki contributions of user {username}",
+          "title_user": "Wiki contributions of user “{value}”",
           "menu": {
             "label": "Wiki contributions",
             "tooltip": "Display the contributions to the wiki of this user"
@@ -301,7 +301,7 @@
         },
         "Block": {
           "title": "Block a user",
-          "title_user": "Block user {username}",
+          "title_user": "Block user “{value}”",
           "menu": {
             "label": "Block",
             "tooltip": "Block this user"
@@ -309,7 +309,7 @@
         },
         "SendEmail": {
           "title": "Send an email to a user",
-          "title_user": "Send an email to user {username}",
+          "title_user": "Send an email to user “{value}”",
           "menu": {
             "label": "Send an email",
             "tooltip": "Send an email to this user"

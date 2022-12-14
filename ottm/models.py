@@ -1272,11 +1272,11 @@ class Page(dj_models.Model, NonDeletableMixin):
             return r.date
         return None
 
-    def get_content(self) -> str | None:
+    def get_content(self) -> str:
         """Return this page’s content or an empty string if it does not exist."""
         if r := self.get_latest_revision():
             return r.content
-        return None
+        return ''
 
     def get_edit_protection(self) -> PageProtection | None:
         """Return the page protection status for this page if it is protected, None otherwise."""

@@ -64,7 +64,7 @@
       {% if context.show_title %}
         <h1 id="wiki-article-title" {% block title_attr %}{% endblock %}><!--
           {% if context.page.namespace == NS_SPECIAL %}
-          -->{% wiki_translate 'special_pages.'|add:context.page.title %}<!--
+          -->{% wiki_translate 'special_page.'|add:context.page.base_name|add:'.'|add:context.title_key value=context.title_value %}<!--
           {% elif context.action == ACTION_READ %}
           -->{{ context.page.full_title }}<!--
             {% if context.page.is_category_hidden %}
@@ -127,9 +127,9 @@
         {% if context.page.namespace == NS_SPECIAL %}
           {% if not context.page_exists %}
             {{ context.page_content }}
-          {% elif context.user_can_read %}
+          {% elif context.can_user_read %}
             {# Using "with" to avoid warning #}
-            {% with path='ottm/wiki/special_pages/'|add:context.page.title|add:'.html' %}
+            {% with path='ottm/wiki/special_pages/'|add:context.page.base_name|add:'.html' %}
               {% include path %}
             {% endwith %}
           {% else %}

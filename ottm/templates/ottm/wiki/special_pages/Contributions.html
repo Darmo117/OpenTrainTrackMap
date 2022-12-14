@@ -1,0 +1,9 @@
+{% load wiki %}
+
+{% if context.target_user %}
+  {% wiki_pagination context.contributions %}
+  {% wiki_revisions_list context.contributions mode='contributions' %}
+  {% wiki_pagination context.contributions %}
+{% else %}
+  TODO {# TODO form #}
+{% endif %}

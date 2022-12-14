@@ -6,7 +6,7 @@ from django.core.handlers import wsgi as _dj_wsgi
 
 from . import SpecialPage as _SP, Redirect
 from .. import namespaces, pages
-from .... import models
+from .... import models, requests
 
 
 class SpecialPageRandomPage(_SP):
@@ -15,8 +15,7 @@ class SpecialPageRandomPage(_SP):
     def __init__(self):
         super().__init__(name='RandomPage', accesskey='x')
 
-    def _process_request(self, request: _dj_wsgi.WSGIRequest, *args: str, **kwargs: str) \
-            -> dict[str, _typ.Any] | Redirect:
+    def _process_request(self, params: requests.RequestParams, *args: str) -> dict[str, _typ.Any] | Redirect:
         content_namespaces = [ns_id for ns_id, ns in namespaces.NAMESPACE_IDS.items() if ns.is_content]
         query_set = models.Page.objects.filter(namespace_id__in=content_namespaces)
         if query_set.count() != 0:

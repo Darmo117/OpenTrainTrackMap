@@ -7,7 +7,7 @@ import typing as _typ
 import django.core.paginator as dj_paginator
 import django.db.models as dj_models
 
-from . import forms, models as _models, settings
+from . import forms, models as _models, settings, requests
 from .api import utils
 from .api.wiki import constants as w_cons, pages
 
@@ -17,28 +17,25 @@ class PageContext:
 
     def __init__(
             self,
+            request_params: requests.RequestParams,
             tab_title: str | None,
             title: str | None,
             no_index: bool,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
+            max_page_index: int = None,
     ):
         """Create a generic page context.
 
+        :param request_params: Page request parameters.
         :param tab_title: Title of the browser’s tab.
         :param title: Page’s title.
         :param no_index: Whether to insert a noindex clause within the HTML page.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
+        :param max_page_index: Maximum page index. May be None if the page does not have pagination.
         """
+        self._request_params = request_params
         self._tab_title = tab_title
         self._title = title
         self._no_index = no_index
-        self._user = user
-        self._language = language
-        self._dark_mode = dark_mode
+        self._max_page_index = max_page_index
 
     @property
     def site_name(self) -> str:
@@ -58,11 +55,11 @@ class PageContext:
 
     @property
     def user(self) -> _models.User:
-        return self._user
+        return self._request_params.user
 
     @property
     def language(self) -> settings.UILanguage:
-        return self._language
+        return self._request_params.ui_language
 
     @property
     def ui_languages(self) -> list[settings.UILanguage]:
@@ -70,38 +67,42 @@ class PageContext:
 
     @property
     def dark_mode(self) -> bool:
-        return self._dark_mode
+        return self._request_params.dark_mode
+
+    @property
+    def results_per_page(self) -> int:
+        return self._request_params.results_per_page
+
+    @property
+    def page_index(self) -> int:
+        if self._max_page_index:
+            return min(self._request_params.page_index, self._max_page_index)
+        return self._request_params.page_index
 
 
 class MapPageContext(PageContext):
     def __init__(
             self,
+            request_params: requests.RequestParams,
             tab_title: str | None,
             title: str | None,
             no_index: bool,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
             map_js_config: dict[str, _typ.Any],
     ):
         """Create a page context for map pages.
 
+        :param request_params: Page request parameters.
         :param tab_title: Title of the browser’s tab.
         :param title: Page’s title.
         :param no_index: Whether to insert a noindex clause within the HTML page.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
         :param map_js_config: Dict object containing map’s JS config.
          It is converted to a JSON object before being inserted in the HTML page.
         """
         super().__init__(
+            request_params,
             tab_title=tab_title,
             title=title,
             no_index=no_index,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
         )
         self._map_js_config = _json.dumps(map_js_config)
 
@@ -113,31 +114,25 @@ class MapPageContext(PageContext):
 class UserPageContext(PageContext):
     def __init__(
             self,
+            request_params: requests.RequestParams,
             tab_title: str | None,
             title: str | None,
             no_index: bool,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
             target_user: _models.User,
     ):
         """Create a page context for user pages.
 
+        :param request_params: Page request parameters.
         :param tab_title: Title of the browser’s tab.
         :param title: Page’s title.
         :param no_index: Whether to insert a noindex clause within the HTML page.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
         :param target_user: User of the requested page.
         """
         super().__init__(
+            request_params,
             tab_title=tab_title,
             title=title,
             no_index=no_index,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
         )
         self._target_user = target_user
 
@@ -149,39 +144,33 @@ class UserPageContext(PageContext):
 class WikiPageContext(PageContext, abc.ABC):  # TODO parent pages
     def __init__(
             self,
+            request_params: requests.RequestParams,
             page: _models.Page,
             no_index: bool,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
-            action: str,
             show_title: bool,
             page_exists: bool,
             js_config: dict[str, _typ.Any],
+            max_page_index: int = None,
     ):
         """Create a page context for wiki pages.
 
+        :param request_params: Page request parameters.
         :param page: Wiki page object.
         :param no_index: Whether to insert a noindex clause within the HTML page.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
-        :param action: Page action.
         :param show_title: Whether the page title should be displayed.
         :param page_exists: Whether the page exists.
         :param js_config: Dict object containing the wiki’s JS config.
-         It is converted to a JSON object before being inserted in the HTML page.
+            It is converted to a JSON object before being inserted in the HTML page.
+        :param max_page_index: Maximum page index. May be None if the page does not have pagination.
         """
         super().__init__(
+            request_params,
             tab_title=page.title,
             title=page.title,
             no_index=no_index,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
+            max_page_index=max_page_index,
         )
         self._page = page
-        self._action = action
         self._show_title = show_title
         self._page_exists = page_exists
         self._js_config = _json.dumps(js_config)
@@ -200,7 +189,7 @@ class WikiPageContext(PageContext, abc.ABC):  # TODO parent pages
 
     @property
     def action(self) -> str:
-        return self._action
+        return self._request_params.wiki_action
 
     @property
     def show_title(self) -> bool:
@@ -222,28 +211,22 @@ class WikiPageContext(PageContext, abc.ABC):  # TODO parent pages
 class WikiPageReadActionContext(WikiPageContext):
     def __init__(
             self,
+            request_params: requests.RequestParams,
             page: _models.Page,
             no_index: bool,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
             js_config: dict[str, _typ.Any],
             content: str,
             revision: _models.PageRevision | None,
             archived: bool,
             cat_subcategories: list[_models.Page] = None,
             cat_pages: list[_models.Page] = None,
-            cat_page_index: int = 1,
-            cat_results_per_page: int = 20,
             no_page_notice: str = None,
     ):
         """Create a page context for wiki pages.
 
+        :param request_params: Page request parameters.
         :param page: Wiki page object.
         :param no_index: Whether to insert a noindex clause within the HTML page.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
         :param js_config: Dict object containing the wiki’s JS config.
          It is converted to a JSON object before being inserted in the HTML page.
         :param content: Rendered page’s content.
@@ -253,29 +236,23 @@ class WikiPageReadActionContext(WikiPageContext):
          Only used if the page is a category.
         :param cat_pages: The list of pages within the category represented by the page.
          Only used if the page is a category.
-        :param cat_page_index: Current pagination index. Only used if the page is a category.
-        :param cat_results_per_page: Number of pages per page to display. Only used if the page is a category.
         :param no_page_notice: The rendered notice if the page does not exist.
         """
+        self._cat_pages = dj_paginator.Paginator(cat_pages or [], request_params.results_per_page)
         show_title = page.full_title != pages.MAIN_PAGE_TITLE
         super().__init__(
+            request_params,
             page=page,
             no_index=no_index,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
-            action=w_cons.ACTION_READ,
             show_title=show_title,
             page_exists=page.exists,
             js_config=js_config,
+            max_page_index=self._cat_pages.num_pages,
         )
         self._content = content
         self._revision = revision
         self._archived = archived
         self._cat_subcategories = cat_subcategories or []
-        self._cat_pages = dj_paginator.Paginator(cat_pages or [], cat_results_per_page)
-        self._cat_page_index = cat_page_index
-        self._cat_page_index = min(cat_page_index, self._cat_pages.num_pages)
         self._no_page_notice = no_page_notice
 
     @property
@@ -303,10 +280,6 @@ class WikiPageReadActionContext(WikiPageContext):
         return self._cat_pages
 
     @property
-    def cat_page_index(self) -> int:
-        return self._cat_page_index
-
-    @property
     def no_page_notice(self) -> str | None:
         return self._no_page_notice
 
@@ -314,32 +287,25 @@ class WikiPageReadActionContext(WikiPageContext):
 class WikiPageInfoActionContext(WikiPageContext):
     def __init__(
             self,
+            request_params: requests.RequestParams,
             page: _models.Page,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
             js_config: dict[str, _typ.Any],
             revisions: dj_models.QuerySet[_models.PageRevision],
             protection: _models.PageProtection | None,
     ):
         """Create a page info context for wiki pages.
 
+        :param request_params: Page request parameters.
         :param page: Wiki page object.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
         :param js_config: Dict object containing the wiki’s JS config.
          It is converted to a JSON object before being inserted in the HTML page.
         :param revisions: List of revisions for the page.
         :param protection: Protection status of the page.
         """
         super().__init__(
+            request_params,
             page=page,
             no_index=True,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
-            action=w_cons.ACTION_INFO,
             show_title=True,
             page_exists=page.exists,
             js_config=js_config,
@@ -382,10 +348,8 @@ class WikiPageInfoActionContext(WikiPageContext):
 class WikiPageEditActionContext(WikiPageContext):
     def __init__(
             self,
+            request_params: requests.RequestParams,
             page: _models.Page,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
             js_config: dict[str, _typ.Any],
             revision: _models.PageRevision | None,
             archived: bool,
@@ -398,10 +362,8 @@ class WikiPageEditActionContext(WikiPageContext):
     ):
         """Create a page context for wiki pages.
 
+        :param request_params: Page request parameters.
         :param page: Wiki page object.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
         :param js_config: Dict object containing the wiki’s JS config.
          It is converted to a JSON object before being inserted in the HTML page.
         :param revision: A revision of the page. May be None.
@@ -414,12 +376,9 @@ class WikiPageEditActionContext(WikiPageContext):
         :param edit_protection_log_entry: The page’s PageProtectionLog entry if it exists.
         """
         super().__init__(
+            request_params,
             page=page,
             no_index=True,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
-            action=w_cons.ACTION_EDIT,
             show_title=True,
             page_exists=page.exists,
             js_config=js_config,
@@ -469,131 +428,94 @@ class WikiPageEditActionContext(WikiPageContext):
 class WikiPageTalkActionContext(WikiPageContext):
     def __init__(
             self,
+            request_params: requests.RequestParams,
             page: _models.Page,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
             js_config: dict[str, _typ.Any],
             topics: list[_models.Topic],
-            page_index: int = 1,
-            topics_per_page: int = 20,
     ):
         """Create a page context for wiki pages’ history.
 
+        :param request_params: Page request parameters.
         :param page: Wiki page object.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
         :param js_config: Dict object containing the wiki’s JS config.
          It is converted to a JSON object before being inserted in the HTML page.
         :param topics: List of page talk topics.
-        :param page_index: Current pagination index.
-        :param topics_per_page: Number of topics to display per page.
         """
+        self._topics = dj_paginator.Paginator(topics, request_params.results_per_page)
         super().__init__(
+            request_params,
             page=page,
             no_index=True,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
-            action=w_cons.ACTION_TALK,
             show_title=True,
             page_exists=page.exists,
             js_config=js_config,
+            max_page_index=self._topics.num_pages,
         )
-        self._topics = dj_paginator.Paginator(topics, topics_per_page)
-        self._page_index = min(page_index, self._topics.num_pages)
-        self._topics_per_page = topics_per_page
 
     @property
     def topics(self) -> dj_paginator.Paginator:
         return self._topics
 
-    @property
-    def page_index(self) -> int:
-        return self._page_index
-
 
 class WikiPageHistoryActionContext(WikiPageContext):
     def __init__(
             self,
+            request_params: requests.RequestParams,
             page: _models.Page,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
             js_config: dict[str, _typ.Any],
             revisions: list[_models.PageRevision],
-            page_index: int = 1,
-            revisions_per_page: int = 20,
     ):
         """Create a page context for wiki pages’ history.
 
+        :param request_params: Page request parameters.
         :param page: Wiki page object.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
         :param js_config: Dict object containing the wiki’s JS config.
          It is converted to a JSON object before being inserted in the HTML page.
         :param revisions: List of page revisions.
-        :param page_index: Current pagination index.
-        :param revisions_per_page: Number of revisions to display per page.
         """
+        self._revisions = dj_paginator.Paginator(revisions, request_params.results_per_page)
         super().__init__(
+            request_params,
             page=page,
             no_index=True,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
-            action=w_cons.ACTION_HISTORY,
             show_title=True,
             page_exists=page.exists,
             js_config=js_config,
+            max_page_index=self._revisions.num_pages,
         )
-        self._revisions = dj_paginator.Paginator(revisions, revisions_per_page)
-        self._page_index = min(page_index, self._revisions.num_pages)
 
     @property
     def revisions(self) -> dj_paginator.Paginator:
         return self._revisions
 
-    @property
-    def page_index(self) -> int:
-        return self._page_index
-
 
 class WikiPageTalkContext(WikiPageContext):
     def __init__(
             self,
+            request_params: requests.RequestParams,
             page: _models.Page,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
             js_config: dict[str, _typ.Any],
             topics: dict[_models.Topic, list[_models.Message]],
     ):
         """Create a page context for wiki talk pages.
 
+        :param request_params: Page request parameters.
         :param page: Wiki page object.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
         :param js_config: Dict object containing the wiki’s JS config.
-         It is converted to a JSON object before being inserted in the HTML page.
+            It is converted to a JSON object before being inserted in the HTML page.
         :param topics: Dict of topics with their associated messages.
         """
         super().__init__(
+            request_params,
             page=page,
             no_index=True,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
-            action=w_cons.ACTION_TALK,
             show_title=True,
             page_exists=page.exists,
             js_config=js_config,
+            max_page_index=1,
         )
         self._topics = topics
-        self._can_user_post_messages = page.can_user_post_messages(user)
+        self._can_user_post_messages = page.can_user_post_messages(request_params.user)
 
     @property
     def topics(self) -> dict[_models.Topic, list[_models.Message]]:
@@ -607,37 +529,42 @@ class WikiPageTalkContext(WikiPageContext):
 class WikiSpecialPageContext(WikiPageContext):
     def __init__(
             self,
+            request_params: requests.RequestParams,
             page: _models.Page,
-            user: _models.User,
-            language: settings.UILanguage,
-            dark_mode: bool,
             page_exists: bool,
             js_config: dict[str, _typ.Any],
+            required_perms: tuple[str, ...] = (),
             **kwargs,
     ):
         """Create a page context for special pages.
 
+        :param request_params: Page request parameters.
         :param page: Wiki page object.
-        :param user: Current user.
-        :param language: Page’s language.
-        :param dark_mode: Whether to activate the dark mode.
         :param page_exists: Whether the page exists.
         :param js_config: Dict object containing the wiki’s JS config.
-         It is converted to a JSON object before being inserted in the HTML page.
+            It is converted to a JSON object before being inserted in the HTML page.
+        :param required_perms: Tuple of all permissions required to access the special page.
         :param kwargs: Special page’s additional parameters.
         """
         super().__init__(
+            request_params,
             page=page,
             no_index=True,
-            user=user,
-            language=language,
-            dark_mode=dark_mode,
-            action=w_cons.ACTION_READ,
             show_title=True,
             page_exists=page_exists,
-            js_config=js_config
+            js_config=js_config,
+            max_page_index=kwargs.get('max_page_index', 1),
         )
+        self._required_perms = required_perms
         self._data = kwargs
+
+    @property
+    def required_perms(self) -> tuple[str, ...]:
+        return self._required_perms
+
+    @property
+    def can_user_read(self) -> bool:
+        return all(self.user.has_permission(p) for p in self._required_perms)
 
     def __getattr__(self, item: str) -> _typ.Any:
         return self._data.get(item)
