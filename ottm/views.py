@@ -362,12 +362,10 @@ def _get_base_context_args(
         title = None
         tab_title = None
     return {
+        'request_params': request_params,
         'title': title,
         'tab_title': tab_title,
         'no_index': no_index,
-        'user': request_params.user,
-        'language': language,
-        'dark_mode': request_params.dark_mode,
     }
 
 
