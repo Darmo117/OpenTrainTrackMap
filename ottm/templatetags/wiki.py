@@ -2,7 +2,6 @@
 import collections
 import urllib.parse
 
-import django.core.handlers.wsgi as dj_wsgi
 import django.core.paginator as dj_paginator
 import django.template as dj_template
 import django.utils.safestring as dj_safe
@@ -515,7 +514,7 @@ def wiki_add_url_params(context: TemplateContext, **kwargs) -> str:
     :return: The new URL.
     """
     wiki_context: page_context.WikiPageContext = context.get('context')
-    request: dj_wsgi.WSGIRequest = wiki_context.request_params.request
+    request = wiki_context.request_params.request
     url_path = request.path
     get_params = {k: v for k, v in request.GET.items()}
     get_params.update(kwargs)
