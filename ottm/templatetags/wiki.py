@@ -224,20 +224,30 @@ def wiki_revision_comment(context: TemplateContext, revision: models.PageRevisio
 
 
 @register.simple_tag(takes_context=True)
-def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, classify: bool = True) -> str:
+def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, classify: bool = True,
+                   paginate: bool = True, no_results_key: str = None) -> str:
     """Render a list of pages.
 
     :param context: Page context.
     :param pages: A Paginator object containing the pages.
     :param classify: Whether to separate the list based on pages’ first character.
+    :param paginate: Whether to add pagination lists.
+    :param no_results_key: Translation key for the message displayed when the paginator is empty.
     :return: The rendered list.
     """
     wiki_context: page_context.WikiPageContext = context.get('context')
-    res = '<ul>\n'
+    if pages.count == 0:
+        message = wiki_translate(context, no_results_key)
+        return dj_safe.mark_safe(f'<div class="alert alert-warning text-center">{message}</div>')
+    if paginate:
+        pagination = wiki_pagination(context, pages)
+    else:
+        pagination = ''
+    res = f'{pagination}\n<ul>\n'
     for page in pages.get_page(wiki_context.page_index):
         link = wiki_inner_link(context, page.full_title)
         res += f'<li>{link}</li>\n'
-    return dj_safe.mark_safe(res + '</ul>')
+    return dj_safe.mark_safe(res + f'</ul>\n{pagination}')
 
 
 @register.inclusion_tag('ottm/wiki/tags/revisions_list.html', takes_context=True)
@@ -355,6 +365,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
         lines.append(Line(actions, date, page_link, flags, size, size_text, variation, variation_text, comment))
     return {
         'lines': lines,
+        'pagination': wiki_pagination(context, revisions),
     }
 
 

@@ -275,7 +275,8 @@
           "menu": {
             "label": "Subpages",
             "tooltip": "List the subpages of this page"
-          }
+          },
+          "no_results": "No results."
         },
         "LinkedPages": {
           "title": "Linked pages",

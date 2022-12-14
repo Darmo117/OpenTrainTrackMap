@@ -1,9 +1,7 @@
 {% load wiki %}
 
 {% if context.target_page %}
-  {% wiki_pagination context.subpages %}
-  {% wiki_page_list context.subpages classify=False %}
-  {% wiki_pagination context.subpages %}
+  {% wiki_page_list context.subpages classify=False no_results_key='special_page.Subpages.no_results' %}
 {% else %}
   {% include 'ottm/include/form.html' with form=context.form prefix='wiki.special_page.Subpages.' %}
 {% endif %}
