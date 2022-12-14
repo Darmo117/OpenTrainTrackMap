@@ -36,11 +36,13 @@
 {% if context.page.namespace == NS_CATEGORY %}
   {% if context.cat_subcategories %}
     <h2>{% wiki_translate 'category.subcategories.title' %}</h2>
-    {% wiki_page_list context.cat_subcategories paginate=False %}
+    {% wiki_page_list context.cat_subcategories %}
   {% endif %}
   {% if context.cat_pages.count != 0 %}
     <h2>{% wiki_translate 'category.pages.title' category_name=context.page.title %}</h2>
+    {% wiki_pagination context.cat_pages %}
     {% wiki_page_list context.cat_pages %}
+    {% wiki_pagination context.cat_pages %}
   {% else %}
     <p class="wiki-empty-category-message">{% wiki_translate 'category.empty' %}</p>
   {% endif %}

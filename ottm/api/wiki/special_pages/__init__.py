@@ -72,8 +72,7 @@ class SpecialPage(abc.ABC):
         :param title: Page’s full title. The title will be split around '/'.
         :return: A dict object containing parameters to pass to the page context object.
         """
-        title_args = [s for s in title.split('/')[1:] if s]  # Remove empty args
-        data = self._process_request(params, title_args)
+        data = self._process_request(params, title.split('/')[1:])
         if isinstance(data, Redirect):
             return data
         return {

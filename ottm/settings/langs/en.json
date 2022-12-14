@@ -359,6 +359,10 @@
               "user_page": {
                 "label": "User page",
                 "tooltip": "Go to the user’s page"
+              },
+              "page": {
+                "label": "Page",
+                "tooltip": "Go to the page"
               }
             }
           },

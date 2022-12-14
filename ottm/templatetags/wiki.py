@@ -224,15 +224,20 @@ def wiki_revision_comment(context: TemplateContext, revision: models.PageRevisio
 
 
 @register.simple_tag(takes_context=True)
-def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, paginate: bool = True) -> str:
+def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, classify: bool = True) -> str:
     """Render a list of pages.
 
     :param context: Page context.
     :param pages: A Paginator object containing the pages.
-    :param paginate: Whether to add pagination buttons.
+    :param classify: Whether to separate the list based on pages’ first character.
     :return: The rendered list.
     """
-    return ''  # TODO
+    wiki_context: page_context.WikiPageContext = context.get('context')
+    res = '<ul>\n'
+    for page in pages.get_page(wiki_context.page_index):
+        link = wiki_inner_link(context, page.full_title)
+        res += f'<li>{link}</li>\n'
+    return dj_safe.mark_safe(res + '</ul>')
 
 
 @register.inclusion_tag('ottm/wiki/tags/revisions_list.html', takes_context=True)

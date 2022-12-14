@@ -1121,6 +1121,7 @@ class Page(dj_models.Model, NonDeletableMixin):
 
     class Meta:
         unique_together = ('namespace_id', 'title')
+        ordering = ('namespace_id', 'title')
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)

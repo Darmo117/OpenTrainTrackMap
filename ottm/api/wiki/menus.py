@@ -94,9 +94,11 @@ def _get_builtin_menu(page_context: pc.WikiPageContext, menu_id: str) -> Menu:
                 if user.is_authenticated:
                     items.append({'title': 'Special:SendEmail', 'subpage': NS_USER.get_full_page_title(username)})
             if page.namespace != NS_SPECIAL:
-                items.append({'title': 'Special:Subpages', 'subpage': page.full_title + '/'})
+                items.append({'title': 'Special:Subpages', 'subpage': page.full_title})
             elif hasattr(page_context, 'target_user') and page_context.target_user:
                 items.append({'title': f'User:{page_context.target_user.username}', 'label': 'user_page'})
+            elif hasattr(page_context, 'target_page') and page_context.target_page:
+                items.append({'title': page_context.target_page.full_title, 'label': 'page'})
         case 'more':
             if page.namespace != NS_SPECIAL:
                 items.append({'title': 'Special:LinkedPages', 'subpage': page.full_title})
