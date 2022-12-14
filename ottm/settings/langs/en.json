@@ -383,6 +383,39 @@
               }
             }
           }
+        },
+        "ChangePageContentType": {
+          "title": "Change page content type",
+          "title_page": "Change content type of page “{value}”",
+          "title_done": "Changed content type of page “{value}”",
+          "done": "Content type of page {page} changed to {content_type}.",
+          "form": {
+            "set_page_content_type": {
+              "page": {
+                "label": "Page:",
+                "error": {
+                  "page_invalid_title": "Invalid page name!",
+                  "required": "Missing page name!"
+                }
+              },
+              "content_type": {
+                "label": "Content type:",
+                "error": {
+                  "invalid_choice": "Invalid content type!"
+                }
+              },
+              "reason": {
+                "label": "Reason:"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "You do not have the permissions required to edit this page.",
+                "page_does_not_exist": "This page does not exist."
+              }
+            }
+          }
         }
       },
       "navbar": {
@@ -648,8 +681,9 @@
         "page_creation": "({date}) {user} has created {page}.",
         "page_deletion": "({date}) {user} has deleted {page}. {reason}",
         "page_protection": "({date}) {user} has changed the protection status of {page} to group {group}. ({until}) {reason}",
-        "user_account_creation": "({date}) User account {user} has been created.",
         "page_content_language": "({date}) {user} changed content language of {page} to {language_name} ({language_code}). {reason}",
+        "page_content_type": "({date}) {user} changed content type of {page} to {content_type}. {reason}",
+        "user_account_creation": "({date}) User account {user} has been created.",
         "user_block": "({date}) {performer} has blocked user {user}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] ({until}) {reason}",
         "ip_block": "({date}) {performer} has blocked IP {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) {reason}",
         "infinite": "infinite"

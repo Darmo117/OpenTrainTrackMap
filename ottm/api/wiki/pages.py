@@ -271,6 +271,38 @@ def set_page_content_language(request: dj_wsgi.WSGIRequest, author: models.User,
 
 
 @dj_db_trans.atomic
+def set_page_content_type(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Page,
+                          content_type: str, reason: str):
+    """Change the content type of the given page.
+
+    :param request: Client request.
+    :param author: User performing the action.
+    :param page: Page to alter.
+    :param content_type: New content type.
+    :param reason: Reason for the change.
+    :raise PageDoesNotExistError: If the page does not exist.
+    :raise EditSpecialPageError: If the page is in the "Special" namespace.
+    :raise MissingPermissionError: If the user cannot edit the page.
+    """
+    if not page.exists:
+        raise errors.PageDoesNotExistError(page.full_title)
+    if page.namespace == namespaces.NS_SPECIAL:
+        raise errors.EditSpecialPageError()
+    if not page.can_user_edit(author):
+        raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
+    if author.is_anonymous:
+        author = auth.get_or_create_anonymous_account_from_request(request)
+    page.content_type = content_type
+    page.save()
+    models.PageContentTypeLog(
+        performer=author.internal_object,
+        page=page,
+        content_type=content_type,
+        reason=reason,
+    ).save()
+
+
+@dj_db_trans.atomic
 def follow_page(user: models.User, page: models.Page, follow: bool, until: datetime.datetime = None):
     """Make a user follow/unfollow the given page.
 

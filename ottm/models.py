@@ -1516,6 +1516,16 @@ class PageContentLanguageLog(PageLog):
         ordering = ('date',)
 
 
+class PageContentTypeLog(PageLog):
+    """New entries are added each time the content type of a page is modified."""
+    content_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in w_cons.CONTENT_TYPES.values()))
+    reason = dj_models.TextField(null=True, blank=True)
+
+    class Meta:
+        get_latest_by = 'date'
+        ordering = ('date',)
+
+
 class UserLog(Log):
     """Base class for user-related operations."""
     user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)

@@ -11,5 +11,5 @@ X- RenamePage
 X- ProtectPage
 X- Block
 X- SendEmail
-~- ChangePageLanguage
-X- ChangePageContentType
+V- ChangePageLanguage
+~- ChangePageContentType

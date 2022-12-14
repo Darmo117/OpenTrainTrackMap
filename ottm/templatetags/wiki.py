@@ -427,6 +427,16 @@ def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> st
                 language_code=language.code,
                 reason=_format_comment(context, reason, False),
             )
+        case models.PageContentTypeLog(performer=performer, page=page, content_type=content_type, reason=reason):
+            return wiki_translate(
+                context,
+                'log.page_content_type',
+                date=formatted_date,
+                user=_format_username(context, performer),
+                page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
+                content_type=content_type,
+                reason=_format_comment(context, reason, False),
+            )
         case models.UserAccountCreationLog(user=user):
             return wiki_translate(
                 context,
