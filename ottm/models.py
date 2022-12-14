@@ -1289,9 +1289,11 @@ class Page(dj_models.Model, NonDeletableMixin):
             return None
 
     def get_redirects(self) -> dj_models.QuerySet[Page]:
+        """Return a query set of all pages that redirect to this page."""
         return Page.objects.filter(redirects_to_namespace_id=self.namespace_id, redirects_to_title=self.title)
 
     def get_subpages(self) -> dj_models.QuerySet[Page]:
+        """Return a query set of all subpages of this page."""
         if not self.namespace.allows_subpages:
             return dj_auth_models.EmptyManager(Page).all()
         return Page.objects.filter(namespace_id=self.namespace_id, title__startswith=self.title + '/')
