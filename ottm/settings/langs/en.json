@@ -276,6 +276,18 @@
             "label": "Subpages",
             "tooltip": "List the subpages of this page"
           },
+          "form": {
+            "page": {
+              "label": "Page to list the subpages of:",
+              "error": {
+                "page_invalid_title": "Invalid page title!",
+                "required": "Missing page title!"
+              }
+            },
+            "submit": {
+              "label": "List subpages"
+            }
+          },
           "no_results": "No results."
         },
         "LinkedPages": {
@@ -307,7 +319,8 @@
             "username": {
               "label": "Username of the user to display the contributions of:",
               "error": {
-                "invalid": "Invalid username!"
+                "invalid": "Invalid username!",
+                "required": "Missing username!"
               }
             },
             "submit": {

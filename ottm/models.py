@@ -1102,7 +1102,7 @@ class Revision(dj_models.Model, NonDeletableMixin):
 
 
 def page_title_validator(value: str):
-    if settings.INVALID_TITLE_REGEX.match(value) or value.startswith(' ') or value.endswith(' '):
+    if settings.INVALID_TITLE_REGEX.search(value) or value.startswith(' ') or value.endswith(' '):
         raise dj_exc.ValidationError('invalid page title', code='page_invalid_title')
 
 

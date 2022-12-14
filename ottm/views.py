@@ -153,7 +153,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
     """
     if not raw_page_title:
         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
-            'raw_page_title': w_pages.url_encode_page_title(w_pages.MAIN_PAGE_TITLE)
+            'raw_page_title': w_pages.MAIN_PAGE_TITLE
         }))
     if raw_page_title.endswith('/'):  # Remove trailing '/'
         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
@@ -188,7 +188,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
             data = special_page.process_request(request_params, title)
             if isinstance(data, w_sp.Redirect):
                 return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
-                    'raw_page_title': w_pages.url_encode_page_title(data.page_title),
+                    'raw_page_title': data.page_title,
                 }))
             context = page_context.WikiSpecialPageContext(
                 request_params,
@@ -233,7 +233,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                     else:
                         # Redirect to normal view
                         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
-                            'raw_page_title': w_pages.url_encode_page_title(page.full_title),
+                            'raw_page_title': page.full_title,
                         }))
             case w_cons.ACTION_HISTORY:
                 context = _wiki_page_history_context(request_params, page, js_config)
