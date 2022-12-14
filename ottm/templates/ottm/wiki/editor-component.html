@@ -63,9 +63,6 @@
   {% endif %}
 {% endwith %}
 
-{% if context.page.namespace.perms_required %}
-{% endif %}
-
 {% with form=context.edit_form trans_prefix='page.edit.form.' %}
   <form action="{% url 'ottm:wiki_page' raw_page_title=context.page.full_title %}?action=submit"
         method="post" id="wiki-edit-form">
