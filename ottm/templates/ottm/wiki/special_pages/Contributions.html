@@ -5,5 +5,5 @@
   {% wiki_revisions_list context.contributions mode='contributions' %}
   {% wiki_pagination context.contributions %}
 {% else %}
-  TODO {# TODO form #}
+  {% include 'ottm/include/form.html' with form=context.form prefix='wiki.special_page.Contributions.' %}
 {% endif %}

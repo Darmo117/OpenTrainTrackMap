@@ -1,17 +1,18 @@
-{# Parameters: context, form, form_name #}
+{# Parameters: form: ottm.forms.CustomForm, prefix: str #}
 {% load ottm %}
 
-{% with trans_prefix='form.'|add:form_name|add:'.' %}
+{% with trans_prefix=prefix|add:'form.' %}
   {% if context.global_errors %}
-    <div class="alert alert-danger">
-      <ul class="list-unstyled">
+    <div class="alert alert-danger form-errors-alert" role="alert">
+      {% ottm_translate 'form.global_error.title' %}
+      <ul class="form-errors">
         {% for error in context.global_errors %}
           <li>{% ottm_translate trans_prefix|add:'error.'|add:error %}</li>
         {% endfor %}
       </ul>
     </div>
   {% endif %}
-  <form method="post" id="{{ form_name }}">
+  <form method="post" id="{{ form.name }}">
     {% csrf_token %}
     {% for field in form %}
       {% with trans_field_prefix=trans_prefix|add:field.label|add:'.' %}

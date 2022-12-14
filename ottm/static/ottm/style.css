@@ -58,3 +58,7 @@ html, body {
 .dropdown-menu, .dropdown-menu .dropdown-item {
   cursor: pointer;
 }
+
+.form-errors-alert .form-errors {
+  margin-bottom: 0;
+}

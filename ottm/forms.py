@@ -1,10 +1,12 @@
 """This module defines website’s forms."""
+import typing as typ
+
 import django.contrib.auth.models as dj_auth
 import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
 import django.forms as dj_forms
 
-from . import models, settings
+from . import models
 
 
 class _CustomForm(dj_forms.Form):
@@ -71,21 +73,23 @@ class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
     )
 
 
-class _WikiForm(_CustomForm):
+class WikiForm(_CustomForm):
     """Base class for wiki forms."""
 
-    def __init__(self, name: str, *args, warn_unsaved_changes: bool, **kwargs):
+    def __init__(self, name: str, warn_unsaved_changes: bool, post=None, initial: dict[str, typ.Any] = None):
         """Create a wiki form.
 
         :param name: Form’s name.
-        :param args: Form’s arguments.
         :param warn_unsaved_changes: Whether to display a warning whenever a user quits
-         the page without submitting this form.
-        :param kwargs: Forms’s named arguments.
+            the page without submitting this form.
+        :param post: A POST dict to populate this form.
+        :param initial: A dict object of initial field values.
         """
-        super().__init__(*args, **kwargs)
+        super().__init__(post, initial=initial)
         self._name = name
         self._warn_unsaved_changes = warn_unsaved_changes
+        for field_name, field in self.fields.items():
+            field.widget.attrs['id'] = f'wiki-{name}-form-{field_name.replace("_", "-")}'
 
     @property
     def name(self) -> str:
@@ -96,7 +100,7 @@ class _WikiForm(_CustomForm):
         return self._warn_unsaved_changes
 
 
-class WikiEditPageForm(_WikiForm):
+class WikiEditPageForm(WikiForm):
     """Form used to edit a wiki page."""
     content = dj_forms.CharField(
         label='content',
@@ -126,27 +130,20 @@ class WikiEditPageForm(_WikiForm):
         required=False
     )
 
-    def __init__(self, *args, user: models.User = None, language: settings.UILanguage = None, disabled: bool = False,
-                 warn_unsaved_changes: bool = True, **kwargs):
+    def __init__(self, user: models.User = None, disabled: bool = False,
+                 warn_unsaved_changes: bool = True, post=None, initial: dict[str, typ.Any] = None):
         """Create a page edit form.
 
-        :param args: Positional arguments.
         :param user: The user to send the form to.
-        :param language: Page’s current language.
         :param disabled: If true, the content field will be disabled and all others will not be generated.
         :param warn_unsaved_changes: Whether to display a warning whenever a user quits
-         the page without submitting this form.
-        :param kwargs: Other named arguments.
+            the page without submitting this form.
+        :param post: A POST dict to populate this form.
+        :param initial: A dict object of initial field values.
         """
-        super().__init__('edit', *args, warn_unsaved_changes=warn_unsaved_changes, **kwargs)
+        super().__init__('edit', warn_unsaved_changes, post, initial)
 
         if user and user.is_anonymous:
             self.fields['follow_page'].widget.attrs['disabled'] = True
         if disabled:
             self.fields['content'].widget.attrs['disabled'] = True
-        self.fields['content'].widget.attrs['id'] = 'wiki-edit-form-content'
-        self.fields['comment'].widget.attrs['id'] = 'wiki-edit-form-comment'
-        self.fields['minor_edit'].widget.attrs['id'] = 'wiki-edit-form-minor-edit'
-        self.fields['follow_page'].widget.attrs['id'] = 'wiki-edit-form-follow-page'
-        self.fields['hidden_category'].widget.attrs['id'] = 'wiki-edit-form-hidden-category'
-        self.fields['section_id'].widget.attrs['id'] = 'wiki-edit-form-section-id'

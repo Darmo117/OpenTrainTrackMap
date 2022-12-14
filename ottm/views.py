@@ -192,7 +192,7 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                 page_exists=True,
                 js_config=js_config,
                 required_perms=special_page.permissions_required,
-                **data,
+                kwargs=data,
             )
             status = 200
 
@@ -467,7 +467,6 @@ def _wiki_page_edit_context(
     language = request_params.ui_language
     form = form or forms.WikiEditPageForm(
         user=user,
-        language=language,
         disabled=not page.can_user_edit(user),
         warn_unsaved_changes=True,
         initial={

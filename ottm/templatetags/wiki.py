@@ -329,9 +329,10 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
 
         date = wiki_inner_link(
             context,
-            page_title=page.full_title,
+            page_title=revision.page.full_title,
             text=ottm_format_date(context, revision.date),
             url_params=f'revid={revision.id}',
+            ignore_current_title=True,
         )
         flags = []
         if revision.is_minor:

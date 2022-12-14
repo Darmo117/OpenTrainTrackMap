@@ -115,6 +115,9 @@
       }
     },
     "form": {
+      "global_error": {
+        "title": "The following errors were encountered:"
+      },
       "sign_up": {
         "username": {
           "label": "Username",
@@ -297,6 +300,21 @@
           "menu": {
             "label": "Wiki contributions",
             "tooltip": "Display the contributions to the wiki of this user"
+          },
+          "user_links": "User page: {username}",
+          "form": {
+            "username": {
+              "label": "Username of the user to display the contributions of:",
+              "error": {
+                "invalid": "Invalid username!"
+              }
+            },
+            "submit": {
+              "label": "Show contributions"
+            },
+            "error": {
+              "user_does_not_exist": "User does not exist!"
+            }
           }
         },
         "Block": {
@@ -336,7 +354,13 @@
             "title": "Wiki tools"
           },
           "page_tools": {
-            "title": "Page tools"
+            "title": "Page tools",
+            "item": {
+              "user_page": {
+                "label": "User page",
+                "tooltip": "Go to the user’s page"
+              }
+            }
           },
           "more": {
             "title": "More",

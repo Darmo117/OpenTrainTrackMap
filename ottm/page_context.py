@@ -512,7 +512,7 @@ class WikiPageTalkContext(WikiPageContext):
             show_title=True,
             page_exists=page.exists,
             js_config=js_config,
-            max_page_index=1,
+            max_page_index=1,  # TODO paginate topics
         )
         self._topics = topics
         self._can_user_post_messages = page.can_user_post_messages(request_params.user)
@@ -534,7 +534,7 @@ class WikiSpecialPageContext(WikiPageContext):
             page_exists: bool,
             js_config: dict[str, _typ.Any],
             required_perms: tuple[str, ...] = (),
-            **kwargs,
+            kwargs: dict[str, _typ.Any] = None,
     ):
         """Create a page context for special pages.
 
@@ -546,6 +546,8 @@ class WikiSpecialPageContext(WikiPageContext):
         :param required_perms: Tuple of all permissions required to access the special page.
         :param kwargs: Special page’s additional parameters.
         """
+        if kwargs is None:
+            kwargs = {}
         super().__init__(
             request_params,
             page=page,
