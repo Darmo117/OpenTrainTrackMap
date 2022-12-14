@@ -177,6 +177,10 @@ class WikiPageContext(PageContext, abc.ABC):  # TODO parent pages
         self._page = page
         self._show_title = show_title
         self._page_exists = page_exists
+        if page.namespace.allows_subpages and '/' in page.title:
+            self._parent_pages = page.get_parent_page_titles()
+        else:
+            self._parent_pages = []
         self._js_config = _json.dumps(js_config)
 
     @property
@@ -206,6 +210,10 @@ class WikiPageContext(PageContext, abc.ABC):  # TODO parent pages
     @property
     def can_user_edit(self) -> bool:
         return self.page.can_user_edit(self.user)
+
+    @property
+    def parent_pages(self) -> list[_models.Page]:
+        return self._parent_pages
 
     @property
     def wiki_js_config(self) -> str:

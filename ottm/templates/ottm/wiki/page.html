@@ -104,7 +104,7 @@
         <div id="wiki-parent-pages-info" class="text-muted">
           <span class="mdi mdi-chevron-up"></span>
           {% for parent_page in context.parent_pages %}
-            {% wiki_inner_link page_title=parent_page.full_title text=parent_page.page_name %}
+            {% wiki_inner_link page_title=parent_page.0 text=parent_page.1 %}
             {% if not forloop.last %}|{% endif %}
           {% endfor %}
         </div>

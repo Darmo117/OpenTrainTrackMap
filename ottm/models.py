@@ -1293,6 +1293,20 @@ class Page(dj_models.Model, NonDeletableMixin):
         """Return a query set of all pages that redirect to this page."""
         return Page.objects.filter(redirects_to_namespace_id=self.namespace_id, redirects_to_title=self.title)
 
+    def get_parent_page_titles(self) -> list[tuple[str, str]]:
+        """Return the list of titles of this page’s parent pages."""
+        if not self.namespace.allows_subpages or '/' not in self.title:
+            return []
+        parts = self.title.split('/')[:-1]
+        titles = []
+        buffer = ''
+        for i in range(len(parts)):
+            if buffer:
+                buffer += '/'
+            buffer += parts[i]
+            titles.append((self.namespace.get_full_page_title(buffer), parts[i]))
+        return titles
+
     def get_subpages(self) -> dj_models.QuerySet[Page]:
         """Return a query set of all subpages of this page."""
         if not self.namespace.allows_subpages:
