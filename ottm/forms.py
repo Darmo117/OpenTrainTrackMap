@@ -13,13 +13,18 @@ from .api.wiki.namespaces import *
 class _CustomForm(dj_forms.Form):
     """Base class for all forms. Applies custom CSS styles to widgets."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, warn_unsaved_changes: bool, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._warn_unsaved_changes = warn_unsaved_changes
         for visible in self.visible_fields():
             if isinstance(visible.field.widget, dj_forms.CheckboxInput):
                 visible.field.widget.attrs['class'] = 'form-check-input'
             else:
                 visible.field.widget.attrs['class'] = 'form-control'
+
+    @property
+    def warn_unsaved_changes(self) -> bool:
+        return self._warn_unsaved_changes
 
 
 class ConfirmPasswordFormMixin:
@@ -33,6 +38,9 @@ class ConfirmPasswordFormMixin:
 
 class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
     """User settings form."""
+
+    def __init__(self, post=None, initial: dict[str, typ.Any] = None):
+        super().__init__(True, post, initial=initial)
 
     @staticmethod
     def username_validator(value: str, anonymous: bool = False):
@@ -56,7 +64,8 @@ class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
     )
     current_email = dj_forms.CharField(
         label='current_email',
-        widget=dj_forms.EmailInput
+        widget=dj_forms.EmailInput,
+        validators=[dj_valid.validate_email]
     )
     new_email = dj_forms.CharField(
         label='new_email',
@@ -89,19 +98,14 @@ class WikiForm(_CustomForm):
         :param post: A POST dict to populate this form.
         :param initial: A dict object of initial field values.
         """
-        super().__init__(post, initial=initial)
+        super().__init__(warn_unsaved_changes, post, initial=initial)
         self._name = name
-        self._warn_unsaved_changes = warn_unsaved_changes
         for field_name, field in self.fields.items():
             field.widget.attrs['id'] = f'wiki-{name}-form-{field_name.replace("_", "-")}'
 
     @property
     def name(self) -> str:
         return self._name
-
-    @property
-    def warn_unsaved_changes(self) -> bool:
-        return self._warn_unsaved_changes
 
 
 class WikiEditPageForm(WikiForm):

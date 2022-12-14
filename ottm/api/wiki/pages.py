@@ -164,7 +164,6 @@ def _get_interface_page(title: str, language: settings.UILanguage = None) -> mod
     """
     if language:
         title += f'/{language.code}'
-    print(title)
     try:
         return models.Page.objects.get(namespace_id=namespaces.NS_INTERFACE.id, title=title)
     except models.Page.DoesNotExist:

@@ -447,6 +447,8 @@
             "view": "You are viewing the source of this page as it was published on {date}."
           },
           "protection_warning": "**This page is protected.<br>** Reason: *{reason}*",
+          "permission_error": "You do not have the permissions required to edit this page.",
+          "concurrent_edit_error": "Another user published a new version of this page while you were editing it. Please compare your version with the new one below before publishing.",
           "log_entry": "Log entry:",
           "form": {
             "content": {

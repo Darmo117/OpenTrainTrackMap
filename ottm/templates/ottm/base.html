@@ -78,7 +78,7 @@
                 <span class="mdi mdi-puzzle"></span> {% ottm_translate 'navbar.contributions.label' %}
               </a>
               <a class="dropdown-item"
-                 href="{% url 'ottm:wiki_page' raw_page_title='Special:Contributions/'|add:context.user.username|wiki_url_escape %}">
+                 href="{% url 'ottm:wiki_page' raw_page_title='Special:Contributions/'|add:context.user.username %}">
                 <span class="mdi mdi-puzzle"></span> {% ottm_translate 'navbar.wiki_contributions.label' %}
               </a>
               <a class="dropdown-item" href="{% url 'ottm:user_settings' %}">
