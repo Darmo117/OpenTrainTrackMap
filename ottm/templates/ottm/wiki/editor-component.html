@@ -6,18 +6,20 @@
 {% if context.can_user_edit %}
   {% if not context.page_exists %}
     <div class="wiki-edit-new-page-notice">
-      <div id="wiki-edit-new-page-notice-{{ context.page.namespace_id }}" class="alert alert-primary" role="alert">
-        {{ context.new_page_notice|safe }}
-      </div>
+      {% if context.new_page_notice %}
+        <div id="wiki-edit-new-page-notice-{{ context.page.namespace_id }}" class="alert alert-primary" role="alert">
+          {{ context.new_page_notice|safe }}
+        </div>
+      {% endif %}
     </div>
   {% endif %}
 
   <div id="wiki-edit-notice">
-    <div id="wiki-edit-notice-{{ context.page.namespace_id }}" class="alert alert-secondary" role="alert">
-      {% if context.edit_notice %}
+    {% if context.edit_notice %}
+      <div id="wiki-edit-notice-{{ context.page.namespace_id }}" class="alert alert-secondary" role="alert">
         {{ context.edit_notice|safe }}
-      {% endif %}
-    </div>
+      </div>
+    {% endif %}
   </div>
 
   {% if context.page.namespace == NS_INTERFACE %}

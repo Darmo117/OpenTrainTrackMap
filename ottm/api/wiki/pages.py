@@ -95,24 +95,26 @@ def render_wikicode(code: str, user: models.User, language: settings.UILanguage)
     return code  # TODO
 
 
-def get_edit_notice(user: models.User, language: settings.UILanguage) -> str:
+def get_edit_notice(user: models.User, language: settings.UILanguage, page: models.Page) -> str:
     """Return the rendered edit notice from "Interface:EditNotice/<lang_code>".
 
     :param user: Current user.
     :param language: Page’s language.
+    :param page: The page that is requesting the notice.
     :return: The rendered edit notice.
     """
-    return get_interface_page('EditNotice', user, language)
+    return get_interface_page(f'EditNotice', user, language, page=page)
 
 
-def get_new_page_notice(user: models.User, language: settings.UILanguage) -> str:
+def get_new_page_notice(user: models.User, language: settings.UILanguage, page: models.Page) -> str:
     """Return the rendered edit notice from "Interface:NewPageNotice/<lang_code>".
 
     :param user: Current user.
     :param language: Page’s language.
+    :param page: The page that is requesting the notice.
     :return: The rendered new page notice.
     """
-    return get_interface_page('NewPageNotice', user, language)
+    return get_interface_page(f'NewPageNotice', user, language, page=page)
 
 
 def get_no_page_notice(user: models.User, language: settings.UILanguage) -> str:
@@ -126,23 +128,47 @@ def get_no_page_notice(user: models.User, language: settings.UILanguage) -> str:
 
 
 def get_interface_page(title: str, user: models.User = None, language: settings.UILanguage = None,
-                       render: bool = True) -> str:
+                       page: models.Page = None, render: bool = True) -> str:
     """Return the rendered interface page from "Interface:<title>/<lang_code>" if language is defined,
     "Interface:<title>" otherwise.
 
     :param title: Interface page title.
     :param user: Current user. May be None if render=False.
     :param language: Page’s language. May be None if no localized subpage exists.
+    :param page: The page that is requesting the notice.
     :param render: Whether to render the page’s content.
     :return: The rendered notice.
     """
+    interface_page = None
+    if page:
+        for i in range(len(page.title)):  # Check if a notice exists for each variant of the page’s title
+            t = f'{title}-{page.namespace_id}-' + (page.title[:-i] if i > 0 else page.title)
+            interface_page = _get_interface_page(t, language)
+            if interface_page:
+                break
+        if not interface_page:  # Check if a notice exists for the page’s namespace
+            interface_page = _get_interface_page(f'{title}-{page.namespace_id}', language)
+    if not interface_page:  # Check if a general notice exists
+        interface_page = _get_interface_page(title, language)
+    if not interface_page:
+        return ''
+    return render_wikicode(interface_page.get_content(), user, language) if render else interface_page.get_content()
+
+
+def _get_interface_page(title: str, language: settings.UILanguage = None) -> models.Page | None:
+    """Return the interface page with the given title.
+
+    :param title: Page’s title.
+    :param language: If present, '/<language.code>' is appended to the title.
+    :return: The page or None if it does not exist.
+    """
     if language:
         title += f'/{language.code}'
+    print(title)
     try:
-        page = models.Page.objects.get(namespace_id=namespaces.NS_INTERFACE.id, title=title)
+        return models.Page.objects.get(namespace_id=namespaces.NS_INTERFACE.id, title=title)
     except models.Page.DoesNotExist:
-        return ''
-    return render_wikicode(page.get_content(), user, language) if render else page.get_content()
+        return None
 
 
 @dj_db_trans.atomic
