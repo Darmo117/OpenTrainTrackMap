@@ -485,8 +485,9 @@ def _wiki_page_edit_context(
         disabled=not page.can_user_edit(user),
         warn_unsaved_changes=True,
         initial={
-            'content': page.get_content(),
+            'content': revision.content if revision else '',
             'follow_page': page.is_user_following(user),
+            'hidden_category': page.is_category_hidden,
         },
     )
     return page_context.WikiPageEditActionContext(

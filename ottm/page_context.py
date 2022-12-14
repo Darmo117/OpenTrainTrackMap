@@ -38,6 +38,10 @@ class PageContext:
         self._max_page_index = max_page_index
 
     @property
+    def request_params(self) -> requests.RequestParams:
+        return self._request_params
+
+    @property
     def site_name(self) -> str:
         return settings.SITE_NAME
 

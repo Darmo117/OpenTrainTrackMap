@@ -135,6 +135,8 @@ def wiki_page_menu_item(context: TemplateContext, action: str) -> str:
         params = {}
     else:
         params = {'action': action}
+    if action in (w_cons.ACTION_EDIT, w_cons.ACTION_READ) and wiki_context.request_params.get.get('revid'):
+        params['revid'] = wiki_context.request_params.get.get('revid')
     link = parser.Parser.format_internal_link(
         page_title,
         wiki_context.language,
@@ -187,14 +189,14 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
             current_r = page.get_latest_revision()
             text = ('<span class="mdi mdi-arrow-up-thick"></span> '
                     + wiki_translate(context, 'page.read.revision_nav_box.diff_current'))
+            link = wiki_inner_link(context, page.full_title, text, ignore_current_title=True)
             if current_r.id != revision.id:
-                link = wiki_inner_link(context, page.full_title, text, url_params=f'revid={current_r.id}')
                 diff = wiki_inner_link(context, page.full_title, '',
                                        url_params=f'revid={revision.id}&diff={current_r.id}',
                                        css_classes='mdi mdi-file-compare')
                 text = f'{link} ({diff})'
             else:
-                text = f'{text} (<span class="mdi mdi-file-compare"></span>)'
+                text = f'{link} (<span class="mdi mdi-file-compare"></span>)'
         case 'next':
             next_r = revision.get_next(ignore_hidden)
             text = (wiki_translate(context, 'page.read.revision_nav_box.diff_next')
