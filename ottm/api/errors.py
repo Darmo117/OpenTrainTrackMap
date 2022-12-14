@@ -49,3 +49,7 @@ class FollowSpecialPageError(RuntimeError):
 
 class AnonymousFollowPageError(RuntimeError):
     pass
+
+
+class NotACategoryPageError(RuntimeError):
+    pass

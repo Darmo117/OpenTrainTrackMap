@@ -217,13 +217,22 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
             case w_cons.ACTION_EDIT:
                 context = _wiki_page_edit_context(request_params, page, revision_id, js_config)
             case w_cons.ACTION_SUBMIT:
-                form = forms.WikiEditPageForm(request.POST)
+                form = forms.WikiEditPageForm(post=request.POST)
                 if not form.is_valid():
                     context = _wiki_page_edit_context(request_params, page, revision_id, js_config, form=form)
                 else:
                     try:
-                        w_pages.edit_page(request, request_params.user, page, form.content, form.comment,
-                                          form.minor_edit, form.follow_page, form.section_id)
+                        w_pages.edit_page(
+                            request,
+                            request_params.user,
+                            page,
+                            form.cleaned_data['content'],
+                            form.cleaned_data['comment'],
+                            form.cleaned_data['minor_edit'],
+                            form.cleaned_data['follow_page'],
+                            form.cleaned_data['hidden_category'],
+                            form.cleaned_data['section_id']
+                        )
                     except errors.MissingPermissionError:
                         context = _wiki_page_edit_context(request_params, page, revision_id, js_config, perm_error=True)
                     except errors.ConcurrentWikiEditError:

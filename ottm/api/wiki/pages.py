@@ -147,7 +147,8 @@ def get_interface_page(title: str, user: models.User = None, language: settings.
 
 @dj_db_trans.atomic
 def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: models.Page, content: str,
-              comment: str = None, minor_edit: bool = False, follow: bool = False, section_id: str = None):
+              comment: str = None, minor_edit: bool = False, follow: bool = False, hidden_category: bool = False,
+              section_id: str = None):
     """Submit a new revision for the given page.
     If the page does not exist, it is created.
 
@@ -158,9 +159,11 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
     :param comment: Edit’s comment.
     :param minor_edit: Whether to mark this revision as minor.
     :param follow: Whether the user wants to follow the page.
+    :param hidden_category: Whether the page should be a hidden category.
     :param section_id: ID of the edited page section. Not yet available.
     :raise EditSpecialPageError: If the page is in the "Special" namespace.
     :raise MissingPermissionError: If the user cannot edit the page.
+    :raise NotACategoryPageError: If 'hidden_category' is true but the page is not a category.
     :raise ConcurrentWikiEditError: If another edit was made on the same page before this edit.
     :raise ValueError: If the request is None and the user is anonymous.
     """
@@ -168,6 +171,8 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
         raise errors.EditSpecialPageError()
     if not page.can_user_edit(author):
         raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
+    if hidden_category and page.namespace != namespaces.NS_CATEGORY:
+        raise errors.NotACategoryPageError()
     if False:  # TODO check if another edit was made while editing
         raise errors.ConcurrentWikiEditError()
     if request:

@@ -263,7 +263,6 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     wiki_context: page_context.WikiPageHistoryActionContext | page_context.WikiSpecialPageContext = \
         context.get('context')
     user = wiki_context.user
-    page = wiki_context.page
     ignore_hidden = not user.has_permission(PERM_WIKI_MASK)
     Line = collections.namedtuple(
         'Line',
@@ -290,7 +289,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 text='',
                 tooltip=wiki_translate(context, 'revisions_list.current.tooltip'),
                 css_classes='mdi mdi-file-arrow-up-down-outline wiki-revision-action',
-                url_params=f'revid={revision.id}&diff={page.get_latest_revision().id}',
+                url_params=f'revid={revision.id}&diff={revision.page.get_latest_revision().id}',
                 ignore_current_title=True,
             ))
         else:
