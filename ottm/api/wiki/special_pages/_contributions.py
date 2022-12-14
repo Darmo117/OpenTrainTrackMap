@@ -22,7 +22,7 @@ class SpecialPageContributions(_SP):
     def __init__(self):
         super().__init__(name='Contributions', accesskey='c')
 
-    def _process_request(self, params: requests.RequestParams, *args: str) -> dict[str, _typ.Any] | Redirect:
+    def _process_request(self, params: requests.RequestParams, args: list[str]) -> dict[str, _typ.Any] | Redirect:
         user = _auth.get_user_from_request(params.request)
         form = _Form()
         if params.post:

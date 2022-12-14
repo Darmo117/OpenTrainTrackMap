@@ -88,7 +88,7 @@ def _get_builtin_menu(page_context: pc.WikiPageContext, menu_id: str) -> Menu:
                     items.append({'title': 'Special:ProtectPage', 'subpage': page.full_title})
             if page.namespace == NS_USER:
                 username = page.base_name
-                items.append({'title': 'Special:Contributions', 'subpage': NS_USER.get_full_page_title(username)})
+                items.append({'title': 'Special:Contributions', 'subpage': username})
                 if user.has_permission(PERM_WIKI_BLOCK_USERS):
                     items.append({'title': 'Special:Block', 'subpage': NS_USER.get_full_page_title(username)})
                 if user.is_authenticated:
