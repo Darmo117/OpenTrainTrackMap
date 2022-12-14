@@ -3,7 +3,7 @@
 {% if context.topics.count %}
   {% wiki_render_topics context.topics %}
 {% else %}
-  <div id="wiki-talk-no-results" class="alert alert-info text-center" role="alert">
+  <div id="wiki-talk-no-results" class="alert alert-secondary text-center" role="alert">
     {% wiki_translate 'page.talk.no_talks' %}
   </div>
 {% endif %}
