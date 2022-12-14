@@ -155,6 +155,10 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
             'raw_page_title': w_pages.url_encode_page_title(w_pages.MAIN_PAGE_TITLE)
         }))
+    if raw_page_title.endswith('/'):  # Remove trailing '/'
+        return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
+            'raw_page_title': raw_page_title[:-1]
+        }))
     request_params = requests.RequestParams(request)
     page_title = w_pages.get_correct_title(raw_page_title)
     ns, title = w_pages.split_title(page_title)
