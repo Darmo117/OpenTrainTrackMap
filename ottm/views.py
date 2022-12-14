@@ -482,6 +482,7 @@ def _wiki_page_edit_context(
     language = request_params.ui_language
     form = form or forms.WikiEditPageForm(
         user=user,
+        page=page,
         disabled=not page.can_user_edit(user),
         warn_unsaved_changes=True,
         initial={

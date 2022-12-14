@@ -88,29 +88,29 @@
       </div>
 
       <div class="form-group text-center">
-        <div class="custom-control custom-checkbox custom-control-inline"
+        <div class="form-check form-check-inline"
              title="{% wiki_translate trans_prefix|add:'minor_edit.tooltip' %}">
           {{ form.minor_edit }}
-          <label for="{{ form.minor_edit.id_for_label }}" class="custom-control-label">
+          <label for="{{ form.minor_edit.id_for_label }}" class="form-check-label">
             {% wiki_translate trans_prefix|add:'minor_edit.label' %}
           </label>
         </div>
 
         {% if not context.user.is_anonymous %}
-          <div class="custom-control custom-checkbox custom-control-inline"
+          <div class="form-check form-check-inline"
                title="{% wiki_translate trans_prefix|add:'follow_page.tooltip' %}">
             {{ form.follow_page }}
-            <label for="{{ form.follow_page.id_for_label }}" class="custom-control-label">
+            <label for="{{ form.follow_page.id_for_label }}" class="form-check-label">
               {% wiki_translate trans_prefix|add:'follow_page.label' %}
             </label>
           </div>
         {% endif %}
 
         {% if context.page.namespace == NS_CATEGORY %}
-          <div class="custom-control custom-checkbox custom-control-inline"
+          <div class="form-check form-check-inline"
                title="{% wiki_translate trans_prefix|add:'hidden_category.tooltip' %}">
             {{ form.hidden_category }}
-            <label for="{{ form.hidden_category.id_for_label }}" class="custom-control-label">
+            <label for="{{ form.hidden_category.id_for_label }}" class="form-check-label">
               {% wiki_translate trans_prefix|add:'hidden_category.label' %}
             </label>
           </div>

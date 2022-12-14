@@ -7,6 +7,7 @@ import django.core.validators as dj_valid
 import django.forms as dj_forms
 
 from . import models
+from .api.wiki.namespaces import *
 
 
 class _CustomForm(dj_forms.Form):
@@ -15,7 +16,10 @@ class _CustomForm(dj_forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for visible in self.visible_fields():
-            visible.field.widget.attrs['class'] = 'form-control'
+            if isinstance(visible.field.widget, dj_forms.CheckboxInput):
+                visible.field.widget.attrs['class'] = 'form-check-input'
+            else:
+                visible.field.widget.attrs['class'] = 'form-control'
 
 
 class ConfirmPasswordFormMixin:
@@ -130,11 +134,12 @@ class WikiEditPageForm(WikiForm):
         required=False
     )
 
-    def __init__(self, user: models.User = None, disabled: bool = False,
+    def __init__(self, user: models.User = None, page: models.Page = None, disabled: bool = False,
                  warn_unsaved_changes: bool = True, post=None, initial: dict[str, typ.Any] = None):
         """Create a page edit form.
 
         :param user: The user to send the form to.
+        :param page: The page this form will be associated to.
         :param disabled: If true, the content field will be disabled and all others will not be generated.
         :param warn_unsaved_changes: Whether to display a warning whenever a user quits
             the page without submitting this form.
@@ -145,5 +150,7 @@ class WikiEditPageForm(WikiForm):
 
         if user and user.is_anonymous:
             self.fields['follow_page'].widget.attrs['disabled'] = True
+        if page and page.namespace != NS_CATEGORY:
+            self.fields['hidden_category'].widget.attrs['disabled'] = True
         if disabled:
             self.fields['content'].widget.attrs['disabled'] = True

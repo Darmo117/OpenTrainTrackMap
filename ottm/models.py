@@ -1317,7 +1317,7 @@ class PageCategory(dj_models.Model):
         :param cat_title: Category’s title.
         :return: A QuerySet of Page objects.
         """
-        return Page.objects.filter(categories__cat_title=cat_title, namespace_id=namespaces.NS_CATEGORY)
+        return Page.objects.filter(categories__cat_title=cat_title, namespace_id=namespaces.NS_CATEGORY.id)
 
     @staticmethod
     def pages_for_category(cat_title: str) -> dj_models.QuerySet[Page]:
@@ -1327,7 +1327,7 @@ class PageCategory(dj_models.Model):
         :return: A QuerySet of Page objects.
         """
         return Page.objects.filter(dj_models.Q(categories__cat_title=cat_title)
-                                   & ~dj_models.Q(namespace_id=namespaces.NS_CATEGORY))
+                                   & ~dj_models.Q(namespace_id=namespaces.NS_CATEGORY.id))
 
 
 class PageProtection(dj_models.Model):
