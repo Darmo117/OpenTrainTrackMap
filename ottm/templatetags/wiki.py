@@ -470,8 +470,10 @@ def wiki_pagination(context: TemplateContext, paginator: dj_paginator.Paginator)
     for index in paginator.get_elided_page_range(page_index, on_each_side=2):
         if isinstance(index, int):
             url = wiki_add_url_params(context, page=index)
+            tooltip = wiki_translate(context, 'pagination.page.tooltip', page=index)
             active = 'active' if index == page_index else ''
-            items.append(f'<li class="page-item {active}"><a class="page-link" href="{url}">{index}</a></li>')
+            items.append(
+                f'<li class="page-item {active}" title="{tooltip}"><a class="page-link" href="{url}">{index}</a></li>')
         else:
             items.append(f'<li class="page-item disabled"><a class="page-link" href="#">{index}</a></li>')
 
@@ -480,7 +482,9 @@ def wiki_pagination(context: TemplateContext, paginator: dj_paginator.Paginator)
     for nb in [20, 50, 100, 200, 500]:
         url = wiki_add_url_params(context, results_per_page=nb)
         tooltip = wiki_translate(context, 'pagination.per_page_item.tooltip', nb=nb)
-        numbers.append(f'<li class="page-item" title="{tooltip}"><a class="page-link" href="{url}">{nb}</a></li>')
+        active = 'active' if nb == paginator.per_page else ''
+        numbers.append(
+            f'<li class="page-item {active}" title="{tooltip}"><a class="page-link" href="{url}">{nb}</a></li>')
     number_per_page_list = '<ul class="pagination justify-content-center">' + ''.join(numbers) + '</ul>'
     return dj_safe.mark_safe(nav + number_per_page_list)
 

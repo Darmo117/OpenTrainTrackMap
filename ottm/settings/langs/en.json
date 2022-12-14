@@ -550,6 +550,9 @@
         "infinite": "infinite"
       },
       "pagination": {
+        "page": {
+          "tooltip": "Go to page {page}"
+        },
         "per_page_item": {
           "tooltip": "Display {nb} results per page"
         }
