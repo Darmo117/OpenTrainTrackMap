@@ -1115,6 +1115,9 @@ class Page(dj_models.Model, NonDeletableMixin):
     deleted = dj_models.BooleanField(default=False)
     is_category_hidden = dj_models.BooleanField(null=True, blank=True)
     content_language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
+    # May redirect to non-existent page
+    redirects_to_namespace_id = dj_models.IntegerField(null=True, blank=True)
+    redirects_to_title = dj_models.CharField(max_length=200, validators=[page_title_validator], null=True, blank=True)
 
     class Meta:
         unique_together = ('namespace_id', 'title')
@@ -1284,6 +1287,14 @@ class Page(dj_models.Model, NonDeletableMixin):
             return PageProtection.objects.get(page_namespace_id=self.namespace_id, page_title=self.title)
         except PageProtection.DoesNotExist:
             return None
+
+    def get_redirects(self) -> dj_models.QuerySet[Page]:
+        return Page.objects.filter(redirects_to_namespace_id=self.namespace_id, redirects_to_title=self.title)
+
+    def get_subpages(self) -> dj_models.QuerySet[Page]:
+        if not self.namespace.allows_subpages:
+            return dj_auth_models.EmptyManager(Page).all()
+        return Page.objects.filter(namespace_id=self.namespace_id, title__startswith=self.title + '/')
 
 
 class PageCategory(dj_models.Model):

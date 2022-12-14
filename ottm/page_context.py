@@ -291,6 +291,9 @@ class WikiPageInfoActionContext(WikiPageContext):
             page: _models.Page,
             js_config: dict[str, _typ.Any],
             revisions: dj_models.QuerySet[_models.PageRevision],
+            followers_nb: int,
+            redirects_nb: int,
+            subpages_nb: int,
             protection: _models.PageProtection | None,
     ):
         """Create a page info context for wiki pages.
@@ -300,6 +303,9 @@ class WikiPageInfoActionContext(WikiPageContext):
         :param js_config: Dict object containing the wiki’s JS config.
          It is converted to a JSON object before being inserted in the HTML page.
         :param revisions: List of revisions for the page.
+        :param followers_nb: Number of users that follow the page.
+        :param redirects_nb: Number of redirects to this page.
+        :param subpages_nb: Number of subpages of this page.
         :param protection: Protection status of the page.
         """
         super().__init__(
@@ -314,6 +320,9 @@ class WikiPageInfoActionContext(WikiPageContext):
         self._recent_revisions = revisions.filter(date__gte=utils.now() - datetime.timedelta(days=self.recent_range))
         self._recent_editors_nb = self._recent_revisions.aggregate(
             dj_models.Count('author', distinct=True))['author__count']
+        self._followers_nb = followers_nb
+        self._redirects_nb = redirects_nb
+        self._subpages_nb = subpages_nb
         self._protection = protection
 
     @property
@@ -339,6 +348,18 @@ class WikiPageInfoActionContext(WikiPageContext):
     @property
     def first_revision(self) -> _models.PageRevision:
         return self._revisions[0]
+
+    @property
+    def followers_nb(self) -> int:
+        return self._followers_nb
+
+    @property
+    def redirects_nb(self) -> int:
+        return self._redirects_nb
+
+    @property
+    def subpages_nb(self) -> int:
+        return self._subpages_nb
 
     @property
     def protection(self) -> _models.PageProtection | None:

@@ -426,11 +426,15 @@ def _wiki_page_info_context(request_params: requests.RequestParams, page: models
     :param js_config: Dict object containing JS config values.
     :return: A WikiPageContext object.
     """
+    statuses = models.PageFollowStatus.objects.filter(page_namespace_id=page.namespace_id, page_title=page.title)
     return page_context.WikiPageInfoActionContext(
         request_params,
         page=page,
         js_config=js_config,
         revisions=page.revisions.all() if page.exists else dj_auth_models.EmptyManager(models.PageRevision),
+        followers_nb=statuses.count(),
+        redirects_nb=page.get_redirects().count(),
+        subpages_nb=page.get_subpages().count(),
         protection=page.get_edit_protection(),
     )
 

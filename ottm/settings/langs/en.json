@@ -269,7 +269,7 @@
             "tooltip": "Protect this page"
           }
         },
-        "SubPages": {
+        "Subpages": {
           "title": "List subpages",
           "title_page": "Subpages of “{value}”",
           "menu": {
@@ -471,33 +471,76 @@
           "no_info": "Cannot fetch information on this page as it does not exist.",
           "basic_info": {
             "title": "Basic information",
-            "page_title": "Page title",
-            "page_id": "Page ID",
-            "namespace_name": "Namespace name",
-            "namespace_id": "Namespace ID",
-            "default_sort_key": "Default sort key",
-            "size": "Size in bytes",
-            "content_language": "Content language",
-            "content_type": "Content type",
-            "follow_list_nb": "Number of users following this page",
-            "redirects_nb": "Number of redirections to this page",
-            "subpages_nb": "Number of subpages"
+            "page_title": {
+              "label": "Page title"
+            },
+            "page_id": {
+              "label": "Page ID"
+            },
+            "namespace_name": {
+              "label": "Namespace name"
+            },
+            "namespace_id": {
+              "label": "Namespace ID"
+            },
+            "default_sort_key": {
+              "label": "Default sort key"
+            },
+            "size": {
+              "label": "Size in bytes"
+            },
+            "content_language": {
+              "label": "Content language"
+            },
+            "content_type": {
+              "label": "Content type"
+            },
+            "follow_list_nb": {
+              "label": "Number of users following this page",
+              "link": "list of users"
+            },
+            "redirects_nb": {
+              "label": "Number of redirections to this page",
+              "link": "linked pages"
+            },
+            "subpages_nb": {
+              "label": "Number of subpages",
+              "link": "list of subpages"
+            }
           },
           "protection": {
             "title": "Edit protection status",
-            "namespace_perms": "Permissions required from namespace",
-            "user_group": "Required user group",
+            "namespace_perms": {
+              "label": "Permissions required from namespace"
+            },
+            "user_group": {
+              "label": "Required user group"
+            },
             "see_logs": "See the protections log for this page."
           },
           "edit_history": {
             "title": "Edit history",
-            "creator": "Page creator",
-            "creation_date": "Page creation date",
-            "last_editor": "Last editor",
-            "last_edit_date": "Date of last edit",
-            "total_edits_nb": "Total number of edits",
-            "recent_edits_nb": "Number of recent edits (last {nb} days)",
-            "recent_distinct_editors_nb": "Number of recent editors (last {nb} days)"
+            "creator": {
+              "label": "Page creator"
+            },
+            "creation_date": {
+              "label": "Page creation date"
+            },
+            "last_editor": {
+              "label": "Last editor"
+            },
+            "last_edit_date": {
+              "label": "Date of last edit"
+            },
+            "total_edits_nb": {
+              "label": "Total number of edits"
+            },
+            "recent_edits_nb": {
+              "label": "Number of recent edits (last {nb} days)"
+            },
+            "recent_distinct_editors_nb": {
+              "label": "Number of recent editors (last {nb} days)"
+            }
           }
         }
       },
