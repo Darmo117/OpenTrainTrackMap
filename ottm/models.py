@@ -314,6 +314,12 @@ class User:
         if self.is_anonymous or not self.is_authenticated:
             raise RuntimeError('user is anonymous')
 
+    def __eq__(self, other: User):
+        return self.internal_object == other.internal_object
+
+    def __hash__(self):
+        return hash(self.internal_object)
+
 
 class CustomUser(dj_auth_models.AbstractUser):
     """Custom user class to override the default username validator and add additional data.

@@ -16,10 +16,12 @@
     <span class="mdi mdi-puzzle"></span>
     <a href="{% url 'ottm:wiki_page' raw_page_title='Special:Contributions/'|add:context.target_user.username %}">
       {% ottm_translate 'page.user_profile.subtitle.wiki_contributions' %}</a>
-    <span class="badge badge-secondary">{{ context.target_user.wiki_edits_count }}</span> |
-    <span class="mdi mdi-cog"></span>
-    <a href="{% url 'ottm:user_settings' %}">
-      {% ottm_translate 'page.user_profile.subtitle.settings' %}
-    </a>
+    <span class="badge badge-secondary">{{ context.target_user.wiki_edits_count }}</span>
+    {% if context.target_user == context.user %}
+      | <span class="mdi mdi-cog"></span>
+      <a href="{% url 'ottm:user_settings' %}">
+        {% ottm_translate 'page.user_profile.subtitle.settings' %}
+      </a>
+    {% endif %}
   </div>
 {% endblock %}

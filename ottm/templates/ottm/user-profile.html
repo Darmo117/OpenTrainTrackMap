@@ -10,15 +10,22 @@
 {% block container-content %}
   <h2>{% ottm_translate 'page.user_profile.statistics.title' %}</h2>
   <table class="table table-striped table-hover">
+    <colgroup>
+      <col style="width: 40%">
+    </colgroup>
     <tbody>
       <tr>
         <th scope="row">{% ottm_translate 'page.user_profile.statistics.account_creation_date_label' %}</th>
         <td>{% ottm_format_date context.target_user.internal_object.date_joined %}</td>
       </tr>
       <tr>
-        <th scope="row">{% ottm_translate 'page.user_profile.statistics.admin_label' %}</th>
+        <th scope="row">{% ottm_translate 'page.user_profile.statistics.groups' %}</th>
+        <td>{{ context.user_groups|join:', ' }}</td>
+      </tr>
+      <tr>
+        <th scope="row">{% ottm_translate 'page.user_profile.statistics.bot' %}</th>
         <td>
-          {% if context.target_user.is_admin %}
+          {% if context.target_user.is_bot %}
             <span class="mdi mdi-check-bold text-success"></span>
           {% else %}
             <span class="mdi mdi-close-thick text-danger"></span>

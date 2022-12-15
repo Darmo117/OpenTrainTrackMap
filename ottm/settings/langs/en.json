@@ -105,7 +105,8 @@
         },
         "statistics": {
           "title": "Statistics",
-          "admin_label": "Administrator",
+          "groups": "Groups",
+          "bot": "Bot?",
           "account_creation_date_label": "Rail mapper since",
           "notes_count_label": "Number of notes",
           "edits_count_label": "Number of edits",
