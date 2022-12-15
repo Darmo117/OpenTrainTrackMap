@@ -107,7 +107,23 @@ def signup_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
 
 def login_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     """Login page handler."""
-    pass  # TODO
+    request_params = requests.RequestParams(request)
+    global_errors = []
+    if not request_params.user.is_authenticated:
+        if request_params.post:
+            form = forms.LoginForm(post=request_params.post)
+            if form.is_valid():
+                # All errors should have been handled by the form already
+                if auth.log_in(request, form.cleaned_data['username'], form.cleaned_data['password']):
+                    return dj_response.HttpResponseRedirect(request_params.return_to)
+                global_errors.append('invalid_credentials')
+        else:
+            form = forms.LoginForm()
+    else:
+        form = None
+    return dj_scut.render(request, 'ottm/login.html', context={
+        'context': _vh.get_login_page_context(request_params, form, global_errors)
+    })
 
 
 def logout_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:

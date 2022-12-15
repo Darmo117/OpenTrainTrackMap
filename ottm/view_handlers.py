@@ -97,6 +97,27 @@ def get_sign_up_page_context(
     )
 
 
+def get_login_page_context(
+        request_params: requests.RequestParams,
+        form: forms.SignUpForm = None,
+        global_errors: list[str] = None,
+) -> page_context.LoginPageContext:
+    """Return a context object for the sign up page.
+
+    :param request_params: Request parameters.
+    :param form: Login form.
+    :param global_errors: List of global form errors.
+    :return: A LoginPageContext object.
+    """
+    return page_context.LoginPageContext(
+        request_params,
+        **_get_title_args(request_params, page_id='log_in'),
+        no_index=False,
+        form=form,
+        global_errors=global_errors,
+    )
+
+
 def get_user_page_context(
         request_params: requests.RequestParams,
         target_user: models.User,

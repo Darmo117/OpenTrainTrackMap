@@ -200,8 +200,8 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
         raise errors.NotACategoryPageError()
     if False:  # TODO check if another edit was made while editing
         raise errors.ConcurrentWikiEditError()
-    if request:
-        if author.is_anonymous:
+    if author.is_anonymous:
+        if request:
             author = auth.get_or_create_anonymous_account_from_request(request)
         else:
             raise ValueError('missing request')

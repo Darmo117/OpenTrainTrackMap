@@ -124,7 +124,7 @@ class SignUpPageContext(PageContext):
             no_index: bool,
             form: forms.SignUpForm = None,
     ):
-        """Create a page context for user pages.
+        """Create a page context for the sign up page.
 
         :param request_params: Page request parameters.
         :param tab_title: Title of the browser’s tab.
@@ -151,14 +151,16 @@ class LoginPageContext(PageContext):
             tab_title: str | None,
             title: str | None,
             no_index: bool,
-            form: forms.SignUpForm = None,
+            form: forms.LoginForm = None,
+            global_errors: list[str] = None,
     ):
-        """Create a page context for user pages.
+        """Create a page context for the login page.
 
         :param request_params: Page request parameters.
         :param tab_title: Title of the browser’s tab.
         :param title: Page’s title.
-        :param form: The sign up form.
+        :param form: The login form.
+        :param global_errors: List of global form errors.
         """
         super().__init__(
             request_params,
@@ -167,10 +169,15 @@ class LoginPageContext(PageContext):
             no_index=no_index,
         )
         self._form = form
+        self._global_errors = global_errors
 
     @property
-    def sign_up_form(self) -> forms.SignUpForm | None:
+    def login_form(self) -> forms.LoginForm | None:
         return self._form
+
+    @property
+    def global_errors(self) -> list[str]:
+        return self._global_errors
 
 
 class UserPageContext(PageContext):

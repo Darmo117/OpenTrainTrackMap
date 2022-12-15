@@ -68,7 +68,6 @@ class SignUpForm(_CustomForm, ConfirmPasswordFormMixin):
 
     username = _dj_forms.CharField(
         label='username',
-        min_length=1,
         max_length=_dj_auth.AbstractUser._meta.get_field('username').max_length,
         strip=True,
         required=True,
@@ -83,7 +82,6 @@ class SignUpForm(_CustomForm, ConfirmPasswordFormMixin):
     )
     password = _dj_forms.CharField(
         label='password',
-        min_length=1,
         max_length=_dj_auth.AbstractUser._meta.get_field('password').max_length,
         strip=True,
         required=True,
@@ -91,8 +89,26 @@ class SignUpForm(_CustomForm, ConfirmPasswordFormMixin):
     )
     password_confirm = _dj_forms.CharField(
         label='password_confirm',
-        min_length=1,
         max_length=_dj_auth.AbstractUser._meta.get_field('password').max_length,
+        strip=True,
+        required=True,
+        widget=_dj_forms.PasswordInput(),
+    )
+
+
+class LoginForm(_CustomForm, ConfirmPasswordFormMixin):
+    """Login form."""
+
+    def __init__(self, post=None, initial: dict[str, _typ.Any] = None):
+        super().__init__('log_in', False, post, initial=initial)
+
+    username = _dj_forms.CharField(
+        label='username',
+        strip=True,
+        required=True,
+    )
+    password = _dj_forms.CharField(
+        label='password',
         strip=True,
         required=True,
         widget=_dj_forms.PasswordInput(),

@@ -37,7 +37,24 @@
       },
       "log_in": {
         "title": "Log in",
-        "tab_title": "Log in"
+        "tab_title": "Log in",
+        "already_logged_in": "You are already logged in.",
+        "form": {
+          "log_in": {
+            "username": {
+              "label": "Username"
+            },
+            "password": {
+              "label": "Password"
+            },
+            "submit": {
+              "label": "Log in"
+            },
+            "error": {
+              "invalid_credentials": "Invalid username or password."
+            }
+          }
+        }
       },
       "sign_up": {
         "title": "Create a new account",
@@ -134,6 +151,18 @@
       },
       "dark_mode": {
         "label": "Dark mode"
+      },
+      "profile": {
+        "label": "Profile"
+      },
+      "contributions": {
+        "label": "Contributions"
+      },
+      "wiki_contributions": {
+        "label": "Wiki contributions"
+      },
+      "settings": {
+        "label": "Settings"
       }
     },
     "alert": {
