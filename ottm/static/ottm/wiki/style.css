@@ -74,6 +74,10 @@
   font-size: 1.2em;
 }
 
+.wiki-columns {
+  column-count: 2;
+}
+
 h2 {
   margin-top: 1rem;
 }

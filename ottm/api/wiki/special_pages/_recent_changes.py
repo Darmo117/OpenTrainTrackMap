@@ -10,7 +10,7 @@ class RecentChangesSpecialPage(_core.SpecialPage):
     """This special page lists all recent page edits."""
 
     def __init__(self):
-        super().__init__(name='RecentChanges', accesskey='c')
+        super().__init__('RecentChanges', accesskey='c', category=_core.Section.LOGS)
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) -> dict[str, _typ.Any]:
         user = _auth.get_user_from_request(params.request)

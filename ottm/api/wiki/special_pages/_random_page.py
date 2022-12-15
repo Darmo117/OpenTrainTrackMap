@@ -11,7 +11,7 @@ class RandomPageSpecialPage(_core.SpecialPage):
     """This special page redirects to a random content page or the main page if none exist."""
 
     def __init__(self):
-        super().__init__(name='RandomPage', accesskey='x')
+        super().__init__('RandomPage', accesskey='x', category=_core.Section.REDIRECTS)
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:

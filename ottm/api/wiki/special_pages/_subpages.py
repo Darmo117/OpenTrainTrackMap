@@ -19,7 +19,7 @@ class SubpagesSpecialPage(_core.SpecialPage):
     """
 
     def __init__(self):
-        super().__init__(name='Subpages', accesskey='u')
+        super().__init__('Subpages', accesskey='u', category=_core.Section.PAGE_LISTS)
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:

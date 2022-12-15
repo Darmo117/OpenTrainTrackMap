@@ -1,0 +1,18 @@
+{% load wiki %}
+
+{% for section_name, pages in context.special_page_sections.items %}
+  {% if pages %}
+    <h2>{% wiki_translate 'special_page.SpecialPages.section.'|add:section_name %}</h2>
+    <ul class="wiki-columns">
+      {% for page in pages %}
+        <li>
+          {% wiki_translate 'special_page.'|add:page.name|add:'.title' as text %}
+          {% wiki_inner_link page_title='Special:'|add:page.name text=text %}
+          {% if page.permissions_required %}
+            <span class="mdi mdi-security" title="{% wiki_translate 'special_page.requires_perms.tooltip' %}"></span>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+{% endfor %}

@@ -20,7 +20,7 @@ class ContributionsSpecialPage(_core.SpecialPage):
     """
 
     def __init__(self):
-        super().__init__(name='Contributions', accesskey='c')
+        super().__init__('Contributions', accesskey='c', category=_core.Section.USERS)
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:

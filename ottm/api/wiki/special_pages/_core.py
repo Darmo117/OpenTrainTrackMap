@@ -1,18 +1,22 @@
+"""Core module of the special_pages package."""
 import abc as _abc
 import dataclasses as _dt
+import enum as _enum
 import typing as _typ
 
 from .... import models as _models, requests as _requests
 
-SECTION_MAINTENANCE = 'maintenance'
-SECTION_PAGE_LISTS = 'page_lists'
-SECTION_USERS = 'users'
-SECTION_LOGS = 'logs'
-SECTION_FILES = 'files'
-SECTION_DATA_TOOLS = 'data_tools'
-SECTION_REDIRECTS = 'redirects'
-SECTION_MOST_USED_PAGES = 'most_used_pages'
-SECTION_OTHER = 'other'
+
+class Section(_enum.Enum):
+    MAINTENANCE = 'maintenance'
+    PAGE_LISTS = 'page_lists'
+    USERS = 'users'
+    LOGS = 'logs'
+    FILES = 'files'
+    DATA_TOOLS = 'data_tools'
+    REDIRECTS = 'redirects'
+    MOST_USED_PAGES = 'most_used_pages'
+    OTHER = 'other'
 
 
 @_dt.dataclass(frozen=True)
@@ -24,7 +28,7 @@ class SpecialPage(_abc.ABC):
     """Base class for special pages."""
 
     def __init__(self, name: str, *requires_perms: str, has_custom_css: bool = False, has_custom_js: bool = False,
-                 accesskey: str = None, category: str = None):
+                 accesskey: str = None, category: Section = None):
         """Create a special page.
 
         :param name: Page’s name.
@@ -67,7 +71,7 @@ class SpecialPage(_abc.ABC):
         return self._accesskey
 
     @property
-    def category(self) -> str | None:
+    def category(self) -> Section | None:
         """This page’s category."""
         return self._category
 

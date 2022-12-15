@@ -246,6 +246,17 @@
           "menu": {
             "label": "Special pages",
             "tooltip": "Show the list of all special pages"
+          },
+          "section": {
+            "maintenance": "Maintenance",
+            "page_lists": "Page lists",
+            "users": "Users and permissions",
+            "logs": "Recent changes and logs",
+            "files": "Files and media",
+            "data_tools": "Data and tools",
+            "redirects": "Redirection special pages",
+            "most_used_pages": "Most used pages",
+            "other": "Other special pages"
           }
         },
         "DeletePage": {
