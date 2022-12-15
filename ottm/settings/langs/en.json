@@ -279,7 +279,7 @@
           "form": {
             "select_page": {
               "page": {
-                "label": "Page to list the subpages of:",
+                "label": "Page:",
                 "error": {
                   "page_invalid_title": "Invalid page title!",
                   "required": "Missing page title!"
@@ -320,7 +320,7 @@
           "form": {
             "select_user": {
               "username": {
-                "label": "Username of the user to display the contributions of:",
+                "label": "Username:",
                 "error": {
                   "invalid": "Invalid username!",
                   "required": "Missing username!"
