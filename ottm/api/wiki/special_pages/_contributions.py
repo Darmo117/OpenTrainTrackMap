@@ -1,18 +1,18 @@
 """This module defines the user contributions special page."""
 import typing as _typ
 
-import django.contrib.auth.models as dj_auth_models
-import django.core.paginator as dj_paginator
-import django.forms as dj_forms
+import django.contrib.auth.models as _dj_auth_models
+import django.core.paginator as _dj_paginator
+import django.forms as _dj_forms
 
-from . import SpecialPage as _SP, Redirect
+from . import _core
 from ..namespaces import *
 from ... import auth as _auth
 from ...permissions import *
-from .... import models, requests, forms
+from .... import models as _models, requests as _requests, forms as _forms
 
 
-class ContributionsSpecialPage(_SP):
+class ContributionsSpecialPage(_core.SpecialPage):
     """This special page lists all contributions of a specific user.
 
     Args: ``/<username:str>``
@@ -22,15 +22,16 @@ class ContributionsSpecialPage(_SP):
     def __init__(self):
         super().__init__(name='Contributions', accesskey='c')
 
-    def _process_request(self, params: requests.RequestParams, args: list[str]) -> dict[str, _typ.Any] | Redirect:
+    def _process_request(self, params: _requests.RequestParams, args: list[str]) \
+            -> dict[str, _typ.Any] | _core.Redirect:
         user = _auth.get_user_from_request(params.request)
         form = _Form()
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
-                return Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["username"]}')
+                return _core.Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["username"]}')
         target_user = None
-        contributions = dj_auth_models.EmptyManager(models.PageRevision)
+        contributions = _dj_auth_models.EmptyManager(_models.PageRevision)
         global_errors = []
         if args:
             target_user = _auth.get_user_from_name(args[0])
@@ -44,7 +45,7 @@ class ContributionsSpecialPage(_SP):
                 else:
                     contributions = query_set.filter(hidden=False)
                 form = _Form(initial={'username': target_user.username})
-        paginator = dj_paginator.Paginator(contributions.reverse(), params.results_per_page)
+        paginator = _dj_paginator.Paginator(contributions.reverse(), params.results_per_page)
         return {
             'title_key': 'title_user' if target_user else 'title',
             'title_value': target_user.username if target_user else None,
@@ -56,14 +57,14 @@ class ContributionsSpecialPage(_SP):
         }
 
 
-class _Form(forms.WikiForm):
-    username = dj_forms.CharField(
+class _Form(_forms.WikiForm):
+    username = _dj_forms.CharField(
         label='username',
         max_length=150,
         min_length=1,
         required=True,
         strip=True,
-        validators=[models.username_validator],
+        validators=[_models.username_validator],
     )
 
     def __init__(self, post=None, initial=None):

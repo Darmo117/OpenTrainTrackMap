@@ -1,17 +1,17 @@
 """This module defines the subpages special page."""
 import typing as _typ
 
-import django.contrib.auth.models as dj_auth_models
-import django.core.paginator as dj_paginator
-import django.forms as dj_forms
+import django.contrib.auth.models as _dj_auth_models
+import django.core.paginator as _dj_paginator
+import django.forms as _dj_forms
 
-from . import SpecialPage as _SP, Redirect
-from .. import pages
+from . import _core
+from .. import pages as _pages
 from ..namespaces import *
-from .... import models, requests, forms
+from .... import models as _models, requests as _requests, forms as _forms
 
 
-class SubpagesSpecialPage(_SP):
+class SubpagesSpecialPage(_core.SpecialPage):
     """This special page lists all subpages of a specific page.
 
     Args: ``/<page_name:str>``
@@ -21,19 +21,20 @@ class SubpagesSpecialPage(_SP):
     def __init__(self):
         super().__init__(name='Subpages', accesskey='u')
 
-    def _process_request(self, params: requests.RequestParams, args: list[str]) -> dict[str, _typ.Any] | Redirect:
+    def _process_request(self, params: _requests.RequestParams, args: list[str]) \
+            -> dict[str, _typ.Any] | _core.Redirect:
         form = _Form()
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
-                return Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["page_name"]}')
+                return _core.Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["page_name"]}')
         target_page = None
-        subpages = dj_auth_models.EmptyManager(models.PageRevision)
+        subpages = _dj_auth_models.EmptyManager(_models.PageRevision)
         if title := '/'.join(args):
-            target_page = pages.get_page(*pages.split_title(title))
+            target_page = _pages.get_page(*_pages.split_title(title))
             subpages = target_page.get_subpages()
             form = _Form(initial={'page_name': target_page.full_title})
-        paginator = dj_paginator.Paginator(subpages, params.results_per_page)
+        paginator = _dj_paginator.Paginator(subpages, params.results_per_page)
         return {
             'title_key': 'title_page' if target_page else 'title',
             'title_value': target_page.full_title if target_page else None,
@@ -44,14 +45,14 @@ class SubpagesSpecialPage(_SP):
         }
 
 
-class _Form(forms.WikiForm):
-    page_name = dj_forms.CharField(
+class _Form(_forms.WikiForm):
+    page_name = _dj_forms.CharField(
         label='page',
         max_length=200,
         min_length=1,
         required=True,
         strip=True,
-        validators=[models.page_title_validator],
+        validators=[_models.page_title_validator],
     )
 
     def __init__(self, post=None, initial=None):

@@ -2,95 +2,11 @@
 Special pages are pages that are not stored in the database.
 They are used to manage the wiki and may require specific permissions.
 """
-import abc
-import dataclasses
-import importlib
-import os.path
-import pathlib
-import typing as typ
+import importlib as _il
+import os.path as _os_path
+import pathlib as _pathlib
 
-from .... import models, requests
-
-
-@dataclasses.dataclass(frozen=True)
-class Redirect:
-    page_title: str
-
-
-class SpecialPage(abc.ABC):
-    """Base class for special pages."""
-
-    def __init__(self, name: str, *requires_perms: str, has_custom_css: bool = False, has_custom_js: bool = False,
-                 accesskey: str = None):
-        """Create a special page.
-
-        :param name: Page’s name.
-        :param requires_perms: List of permissions required to access this page.
-        :param has_custom_css: Whether this page has custom CSS.
-        :param has_custom_js: Whether this page has custom JS.
-        :param accesskey: The access key for menu links that point to this page.
-        """
-        self._name = name
-        self._has_custom_css = has_custom_css
-        self._has_custom_js = has_custom_js
-        self._perms_required = requires_perms
-        self._accesskey = accesskey
-
-    @property
-    def name(self) -> str:
-        """This page’s name."""
-        return self._name
-
-    @property
-    def has_custom_css(self) -> bool:
-        """Whether this page has custom CSS."""
-        return self._has_custom_css
-
-    @property
-    def has_custom_js(self) -> bool:
-        """Whether this page has custom JS."""
-        return self._has_custom_js
-
-    @property
-    def permissions_required(self) -> tuple[str, ...]:
-        """The permissions required to access this page."""
-        return self._perms_required
-
-    @property
-    def access_key(self) -> str | None:
-        """The access key for menu links that point to this page."""
-        return self._accesskey
-
-    def can_user_access(self, user: models.User) -> bool:
-        """Check whether the given user can access this page."""
-        return all(user.has_permission(p) for p in self.permissions_required)
-
-    def process_request(self, params: requests.RequestParams, title: str) -> dict[str, typ.Any] | Redirect:
-        """Process the given client request.
-
-        :param params: Page’s request parameters.
-        :param title: Page’s full title. The title will be split around '/'.
-        :return: A dict object containing parameters to pass to the page context object.
-        """
-        data = self._process_request(params, title.split('/')[1:])
-        if isinstance(data, Redirect):
-            return data
-        return {
-            'has_custom_css': self.has_custom_css,
-            'has_custom_js': self.has_custom_js,
-            **data,
-        }
-
-    @abc.abstractmethod
-    def _process_request(self, params: requests.RequestParams, args: list[str]) -> dict[str, typ.Any] | Redirect:
-        """Process the given client request.
-
-        :param params: Page’s request parameters.
-        :param args: Page’s arguments.
-        :return: A dict object containing parameters to pass to the page context object.
-        """
-        pass
-
+from ._core import *
 
 SPECIAL_PAGES: dict[str, SpecialPage] = {}
 """Collection of all loaded special pages."""
@@ -99,9 +15,9 @@ SPECIAL_PAGES: dict[str, SpecialPage] = {}
 def init():
     """Load and initialize all special pages from this package."""
     # Import all special pages from this package
-    for f in pathlib.Path(__file__).parent.glob('_*.py'):
-        if f.is_file() and f.name != '__init__.py':
-            module = importlib.import_module('.' + os.path.splitext(f.name)[0], package=__name__)
+    for f in _pathlib.Path(__file__).parent.glob('_*.py'):
+        if f.is_file() and f.name not in ('__init__.py', '_core.py'):
+            module = _il.import_module('.' + _os_path.splitext(f.name)[0], package=__name__)
             for k, v in module.__dict__.items():
                 if k[0] != '_' and isinstance(v, type) and issubclass(v, SpecialPage):
                     # noinspection PyArgumentList

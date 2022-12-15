@@ -217,6 +217,9 @@
       "name": "{site_name} Wiki",
       "main_page_title": "Main page",
       "special_page": {
+        "requires_perms": {
+          "tooltip": "This special page requires specific permissions"
+        },
         "RandomPage": {
           "title": "Random page",
           "menu": {
