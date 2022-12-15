@@ -29,8 +29,8 @@ class SpecialPageChangePageLanguage(_SP):
                 target_page = pages.get_page(*pages.split_title(form.cleaned_data['page_name']))
                 content_language = settings.LANGUAGES[form.cleaned_data['content_language']]
                 try:
-                    pages.set_page_content_language(params.request, params.user, target_page, content_language,
-                                                    form.cleaned_data['reason'])
+                    done = pages.set_page_content_language(params.request, params.user, target_page, content_language,
+                                                           form.cleaned_data['reason'])
                 except errors.PageDoesNotExistError:
                     global_errors.append('page_does_not_exist')
                 except errors.MissingPermissionError:
@@ -38,12 +38,15 @@ class SpecialPageChangePageLanguage(_SP):
                 except errors.EditSpecialPageError:
                     global_errors.append('edit_special_page')
                 else:
-                    return {
-                        'title_key': 'title_done',
-                        'title_value': target_page.full_title,
-                        'target_page': target_page,
-                        'content_language': content_language,
-                    }
+                    if done:
+                        return {
+                            'title_key': 'title_done',
+                            'title_value': target_page.full_title,
+                            'target_page': target_page,
+                            'content_language': content_language,
+                        }
+                    else:
+                        global_errors.append('no_changes')
         else:
             if args:
                 target_page = pages.get_page(*pages.split_title('/'.join(args)))

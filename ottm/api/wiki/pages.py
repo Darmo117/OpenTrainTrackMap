@@ -248,6 +248,7 @@ def set_page_content_language(request: dj_wsgi.WSGIRequest, author: models.User,
     :param page: Page to alter.
     :param language: New content language.
     :param reason: Reason for the change.
+    :return: True if the action succeeded, false otherwise.
     :raise PageDoesNotExistError: If the page does not exist.
     :raise EditSpecialPageError: If the page is in the "Special" namespace.
     :raise MissingPermissionError: If the user cannot edit the page.
@@ -260,6 +261,8 @@ def set_page_content_language(request: dj_wsgi.WSGIRequest, author: models.User,
         raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
     if author.is_anonymous:
         author = auth.get_or_create_anonymous_account_from_request(request)
+    if language.internal_language == page.content_language:
+        return False
     page.content_language = language.internal_language
     page.save()
     models.PageContentLanguageLog(
@@ -268,6 +271,7 @@ def set_page_content_language(request: dj_wsgi.WSGIRequest, author: models.User,
         language=page.content_language,
         reason=reason,
     ).save()
+    return True
 
 
 @dj_db_trans.atomic
@@ -280,6 +284,7 @@ def set_page_content_type(request: dj_wsgi.WSGIRequest, author: models.User, pag
     :param page: Page to alter.
     :param content_type: New content type.
     :param reason: Reason for the change.
+    :return: True if the action succeeded, false otherwise.
     :raise PageDoesNotExistError: If the page does not exist.
     :raise EditSpecialPageError: If the page is in the "Special" namespace.
     :raise MissingPermissionError: If the user cannot edit the page.
@@ -292,6 +297,8 @@ def set_page_content_type(request: dj_wsgi.WSGIRequest, author: models.User, pag
         raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
     if author.is_anonymous:
         author = auth.get_or_create_anonymous_account_from_request(request)
+    if content_type == page.content_type:
+        return False
     page.content_type = content_type
     page.save()
     models.PageContentTypeLog(
@@ -300,6 +307,7 @@ def set_page_content_type(request: dj_wsgi.WSGIRequest, author: models.User, pag
         content_type=content_type,
         reason=reason,
     ).save()
+    return True
 
 
 @dj_db_trans.atomic

@@ -355,6 +355,7 @@
           "title": "Change page content language",
           "title_page": "Change content language of page “{value}”",
           "title_done": "Changed content language of page “{value}”",
+          "log_entries": "Related log entries:",
           "done": "Content language of page {page} changed to {language_name} ({language_code}).",
           "form": {
             "set_page_language": {
@@ -379,7 +380,8 @@
               },
               "error": {
                 "missing_permission": "You do not have the permissions required to edit this page.",
-                "page_does_not_exist": "This page does not exist."
+                "page_does_not_exist": "This page does not exist.",
+                "no_changes": "Please select another language."
               }
             }
           }
@@ -388,6 +390,7 @@
           "title": "Change page content type",
           "title_page": "Change content type of page “{value}”",
           "title_done": "Changed content type of page “{value}”",
+          "log_entries": "Related log entries:",
           "done": "Content type of page {page} changed to {content_type}.",
           "form": {
             "set_page_content_type": {
@@ -412,7 +415,8 @@
               },
               "error": {
                 "missing_permission": "You do not have the permissions required to edit this page.",
-                "page_does_not_exist": "This page does not exist."
+                "page_does_not_exist": "This page does not exist.",
+                "no_changes": "Please select another type."
               }
             }
           }

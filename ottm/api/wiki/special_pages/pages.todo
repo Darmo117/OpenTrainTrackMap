@@ -12,4 +12,4 @@ X- ProtectPage
 X- Block
 X- SendEmail
 V- ChangePageLanguage
-~- ChangePageContentType
+V- ChangePageContentType
