@@ -10,7 +10,7 @@ from ... import errors
 from .... import forms, models, requests, settings
 
 
-class SpecialPageChangePageLanguage(_SP):
+class ChangePageLanguageSpecialPage(_SP):
     """This special page lets users change the content language of a page.
 
     Args: ``/<page_name:str>``

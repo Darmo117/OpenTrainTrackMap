@@ -10,7 +10,7 @@ from ... import errors
 from .... import forms, models, requests
 
 
-class SpecialPageChangePageContentType(_SP):
+class ChangePageContentTypeSpecialPage(_SP):
     """This special page lets users change the content type of a page.
 
     Args: ``/<page_name:str>``

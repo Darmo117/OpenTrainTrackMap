@@ -11,7 +11,7 @@ from ..namespaces import *
 from .... import models, requests, forms
 
 
-class SpecialPageSubpages(_SP):
+class SubpagesSpecialPage(_SP):
     """This special page lists all subpages of a specific page.
 
     Args: ``/<page_name:str>``

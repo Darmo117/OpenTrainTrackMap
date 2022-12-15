@@ -8,7 +8,7 @@ from ... import auth as _auth
 from .... import requests
 
 
-class SpecialPageRecentChanges(_SP):
+class RecentChangesSpecialPage(_SP):
     """This special page lists all recent page edits."""
 
     def __init__(self):

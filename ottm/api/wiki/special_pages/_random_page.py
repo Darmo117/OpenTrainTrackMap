@@ -2,14 +2,12 @@
 import random
 import typing as _typ
 
-from django.core.handlers import wsgi as _dj_wsgi
-
-from . import SpecialPage as _SP, Redirect
+from . import Redirect, SpecialPage as _SP
 from .. import namespaces, pages
 from .... import models, requests
 
 
-class SpecialPageRandomPage(_SP):
+class RandomPageSpecialPage(_SP):
     """This special page redirects to a random content page or the main page if none exist."""
 
     def __init__(self):

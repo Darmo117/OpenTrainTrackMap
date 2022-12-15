@@ -12,7 +12,7 @@ from ...permissions import *
 from .... import models, requests, forms
 
 
-class SpecialPageContributions(_SP):
+class ContributionsSpecialPage(_SP):
     """This special page lists all contributions of a specific user.
 
     Args: ``/<username:str>``
