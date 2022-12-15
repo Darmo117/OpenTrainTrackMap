@@ -13,8 +13,8 @@ import django.db.models as _dj_models
 import django.forms as _dj_forms
 from django.http import response as _dj_response
 
-from . import _core, _ottm_handler
-from .. import forms as _forms, models as _models, requests as _requests, settings as _settings
+from . import _core, _ottm_handler, _wiki_base_form
+from .. import models as _models, requests as _requests, settings as _settings
 from ..api import errors as _errors, permissions as _permissions, utils as _utils
 from ..api.wiki import constants as _w_cons, namespaces as _w_ns, pages as _w_pages, special_pages as _w_sp
 
@@ -304,24 +304,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         )
 
 
-class WikiForm(_forms.CustomForm):
-    """Base class for wiki forms."""
-
-    def __init__(self, name: str, warn_unsaved_changes: bool, post=None, initial: dict[str, _typ.Any] = None):
-        """Create a wiki form.
-
-        :param name: Form’s name.
-        :param warn_unsaved_changes: Whether to display a warning whenever a user quits
-            the page without submitting this form.
-        :param post: A POST dict to populate this form.
-        :param initial: A dict object of initial field values.
-        """
-        super().__init__(name, warn_unsaved_changes, post, initial=initial)
-        for field_name, field in self.fields.items():
-            field.widget.attrs['id'] = f'wiki-{name.replace("_", "-")}-form-{field_name.replace("_", "-")}'
-
-
-class WikiEditPageForm(WikiForm):
+class WikiEditPageForm(_wiki_base_form.WikiForm):
     """Form used to edit a wiki page."""
     content = _dj_forms.CharField(
         label='content',
