@@ -4,7 +4,9 @@
 {% load static %}
 
 {% block page-title %}
-  <img src="{% static 'ottm/images/user_avatar.svg' %}" id="user-icon" alt="profile picture"/>
+  <img src="{% static 'ottm/images/user_avatar.svg' %}" id="user-icon"
+       alt="{% ottm_translate 'page.user_profile.picture_tooltip' username=context.target_user.username %}"
+       title="{% ottm_translate 'page.user_profile.picture_tooltip' username=context.target_user.username %}">
 {% endblock %}
 
 {% block container-content %}

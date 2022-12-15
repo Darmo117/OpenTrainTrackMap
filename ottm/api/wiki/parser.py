@@ -58,7 +58,7 @@ class Parser:
 
         if only_url:
             return url
-        return cls._format_link(
+        return cls.format_link(
             url,
             link_text,
             link_tooltip,
@@ -70,7 +70,7 @@ class Parser:
         )
 
     @classmethod
-    def _format_link(
+    def format_link(
             cls,
             url: str,
             text: str,

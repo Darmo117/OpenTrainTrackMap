@@ -70,6 +70,7 @@ class SignUpForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
         strip=True,
         required=True,
         validators=[username_validator],
+        help_text=True,
     )
     email = _dj_forms.CharField(
         label='email',
@@ -77,6 +78,7 @@ class SignUpForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
         strip=True,
         required=True,
         validators=[_dj_valid.validate_email],
+        help_text=True,
     )
     password = _dj_forms.CharField(
         label='password',

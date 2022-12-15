@@ -55,6 +55,10 @@ html, body {
   margin-right: 10px;
 }
 
+#page-header {
+  margin-bottom: 2em;
+}
+
 #user-page-links {
   padding-bottom: 1em;
 }

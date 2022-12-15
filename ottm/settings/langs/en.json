@@ -68,6 +68,7 @@
           "sign_up": {
             "username": {
               "label": "Username",
+              "help": "Choose wisely, you may not be able to change it later!",
               "error": {
                 "invalid": "Invalid username!",
                 "duplicate": "This username is already taken!"
@@ -75,6 +76,7 @@
             },
             "email": {
               "label": "Email",
+              "help": "Never shown publicly",
               "error": {
                 "invalid": "Invalid email address!"
               }
@@ -97,10 +99,13 @@
       "user_profile": {
         "title": "{username}",
         "tab_title": "{username}’s profile",
+        "picture_tooltip": "{username}’s profile picture",
         "subtitle": {
+          "profile": "Profile",
           "notes": "Notes",
           "contributions": "Contributions",
           "wiki_contributions": "Wiki contributions",
+          "wiki_user_page": "Wiki user page",
           "settings": "Settings"
         },
         "statistics": {
@@ -120,8 +125,26 @@
       "user_settings": {
         "title": "Account settings",
         "tab_title": "Account settings",
-        "subtitle": {
-          "profile": "Return to profile"
+        "form": {
+          "user_settings": {
+            "current_email": {
+              "label": "Current email address"
+            },
+            "new_email": {
+              "label": "New email address",
+              "help": "Never shown publicly"
+            },
+            "password": {
+              "label": "New password",
+              "help": "Leave empty to keep unchanged"
+            },
+            "password_confirm": {
+              "label": "Confirm new password"
+            },
+            "submit": {
+              "label": "Save settings"
+            }
+          }
         }
       }
     },
@@ -164,6 +187,9 @@
       "profile": {
         "label": "Profile"
       },
+      "wiki_user_page": {
+        "label": "Wiki user page"
+      },
       "contributions": {
         "label": "Contributions"
       },
@@ -172,14 +198,6 @@
       },
       "settings": {
         "label": "Settings"
-      }
-    },
-    "alert": {
-      "log_in": {
-        "already_logged_in": "**You are already logged in.**\n\nPlease log out before logging in again with another account."
-      },
-      "sign_up": {
-        "already_logged_in": "**You are already logged in with another account.**\n\nPlease log out before creating a new account."
       }
     },
     "form": {
@@ -537,6 +555,10 @@
               "page": {
                 "label": "Page",
                 "tooltip": "Go to the page"
+              },
+              "user_profile": {
+                "label": "User profile",
+                "tooltip": "Go to the user’s profile page"
               }
             }
           },

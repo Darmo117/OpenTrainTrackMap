@@ -74,6 +74,9 @@
               <a class="dropdown-item" href="{% url 'ottm:user_profile' username=context.user.username %}">
                 <span class="mdi mdi-account"></span> {% ottm_translate 'navbar.profile.label' %}
               </a>
+              <a class="dropdown-item" href="{% url 'ottm:wiki_page' raw_page_title='User:'|add:context.user.username %}">
+                <span class="mdi mdi-file-account-outline"></span> {% ottm_translate 'navbar.wiki_user_page.label' %}
+              </a>
               <a class="dropdown-item" href="{% url 'ottm:user_contributions' username=context.user.username %}">
                 <span class="mdi mdi-puzzle"></span> {% ottm_translate 'navbar.contributions.label' %}
               </a>
