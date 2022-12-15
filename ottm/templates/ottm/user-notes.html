@@ -1,12 +1,5 @@
-{% extends 'ottm/not-map.html' %}
+{% extends 'ottm/user-page-base.html' %}
 {% load ottm %}
-
-{% block page-title %}
-  {{ context.user.username }}<br/>
-  <small class="text-muted">
-    {% ottm_translate 'page.user_notes.subtitle' %}
-  </small>
-{% endblock %}
 
 {% block container-content %}
   {# TODO #}

@@ -1,29 +1,10 @@
-{% extends 'ottm/not-map.html' %}
+{% extends 'ottm/user-page-base.html' %}
 {% load ottm %}
 {% load wiki %}
 {% load static %}
 
 {% block page-title %}
-  <img src="{% static 'ottm/images/user_avatar.svg' %}" id="user-icon"
-       alt="profile picture"/> {{ context.target_user.username }}<br>
-  <small class="text-muted">
-    <span class="mdi mdi-message-text"></span>
-    <a href="{% url 'ottm:user_notes' username=context.target_user.username %}">
-      {% ottm_translate 'page.user_profile.subtitle.notes' %}
-    </a> <span class="badge badge-secondary">{{ context.target_user.notes_count }}</span> |
-    <span class="mdi mdi-puzzle"></span>
-    <a href="{% url 'ottm:user_contributions' username=context.target_user.username %}">
-      {% ottm_translate 'page.user_profile.subtitle.contributions' %}
-    </a> <span class="badge badge-secondary">{{ context.target_user.edits_count }}</span> |
-    <span class="mdi mdi-puzzle"></span>
-    <a href="{% url 'ottm:wiki_page' raw_page_title='Special:Contributions/'|add:context.target_user.username %}">
-      {% ottm_translate 'page.user_profile.subtitle.wiki_contributions' %}
-    </a> <span class="badge badge-secondary">{{ context.target_user.wiki_edits_count }}</span> |
-    <span class="mdi mdi-cog"></span>
-    <a href="{% url 'ottm:user_settings' %}">
-      {% ottm_translate 'page.user_profile.subtitle.settings' %}
-    </a>
-  </small>
+  <img src="{% static 'ottm/images/user_avatar.svg' %}" id="user-icon" alt="profile picture"/>
 {% endblock %}
 
 {% block container-content %}
@@ -31,11 +12,11 @@
   <table class="table table-striped table-hover">
     <tbody>
       <tr>
-        <td>{% ottm_translate 'page.user_profile.statistics.account_creation_date_label' %}</td>
+        <th scope="row">{% ottm_translate 'page.user_profile.statistics.account_creation_date_label' %}</th>
         <td>{% ottm_format_date context.target_user.internal_object.date_joined %}</td>
       </tr>
       <tr>
-        <td>{% ottm_translate 'page.user_profile.statistics.admin_label' %}</td>
+        <th scope="row">{% ottm_translate 'page.user_profile.statistics.admin_label' %}</th>
         <td>
           {% if context.target_user.is_admin %}
             <span class="mdi mdi-check-bold text-success"></span>
@@ -45,15 +26,15 @@
         </td>
       </tr>
       <tr>
-        <td>{% ottm_translate 'page.user_profile.statistics.notes_count_label' %}</td>
+        <th scope="row">{% ottm_translate 'page.user_profile.statistics.notes_count_label' %}</th>
         <td>{% ottm_format_number context.target_user.notes_count %}</td>
       </tr>
       <tr>
-        <td>{% ottm_translate 'page.user_profile.statistics.edits_count_label' %}</td>
+        <th scope="row">{% ottm_translate 'page.user_profile.statistics.edits_count_label' %}</th>
         <td>{% ottm_format_number context.target_user.edits_count %}</td>
       </tr>
       <tr>
-        <td>{% ottm_translate 'page.user_profile.statistics.wiki_edits_count_label' %}</td>
+        <th scope="row">{% ottm_translate 'page.user_profile.statistics.wiki_edits_count_label' %}</th>
         <td>{% ottm_format_number context.target_user.wiki_edits_count %}</td>
       </tr>
     </tbody>

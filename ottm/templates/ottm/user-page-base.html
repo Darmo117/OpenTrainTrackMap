@@ -1,0 +1,25 @@
+{% extends 'ottm/not-map.html' %}
+{% load ottm %}
+{% load wiki %}
+{% load static %}
+
+{% block page-header %}
+  <div id="user-page-links" class="text-muted text-center">
+    <span class="mdi mdi-message-text"></span>
+    <a href="{% url 'ottm:user_notes' username=context.target_user.username %}">
+      {% ottm_translate 'page.user_profile.subtitle.notes' %}</a>
+    <span class="badge badge-secondary">{{ context.target_user.notes_count }}</span> |
+    <span class="mdi mdi-puzzle"></span>
+    <a href="{% url 'ottm:user_contributions' username=context.target_user.username %}">
+      {% ottm_translate 'page.user_profile.subtitle.contributions' %}</a>
+    <span class="badge badge-secondary">{{ context.target_user.edits_count }}</span> |
+    <span class="mdi mdi-puzzle"></span>
+    <a href="{% url 'ottm:wiki_page' raw_page_title='Special:Contributions/'|add:context.target_user.username %}">
+      {% ottm_translate 'page.user_profile.subtitle.wiki_contributions' %}</a>
+    <span class="badge badge-secondary">{{ context.target_user.wiki_edits_count }}</span> |
+    <span class="mdi mdi-cog"></span>
+    <a href="{% url 'ottm:user_settings' %}">
+      {% ottm_translate 'page.user_profile.subtitle.settings' %}
+    </a>
+  </div>
+{% endblock %}

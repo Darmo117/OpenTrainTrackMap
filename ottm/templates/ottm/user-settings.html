@@ -1,15 +1,5 @@
-{% extends 'ottm/not-map.html' %}
+{% extends 'ottm/user-page-base.html' %}
 {% load ottm %}
-
-{% block page-title %}
-  {{ context.title }}<br>
-  <small class="text-muted">
-    <span class="mdi mdi-account"></span>
-    <a href="{% url 'ottm:user_profile' username=context.user.username %}">
-      {% ottm_translate 'page.user_settings.subtitle.profile' %}
-    </a>
-  </small>
-{% endblock %}
 
 {% block container-content %}
   {# TODO #}

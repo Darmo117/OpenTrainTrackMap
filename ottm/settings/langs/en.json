@@ -95,7 +95,7 @@
         }
       },
       "user_profile": {
-        "title": "{username}’s profile",
+        "title": "{username}",
         "tab_title": "{username}’s profile",
         "subtitle": {
           "notes": "Notes",
@@ -111,6 +111,10 @@
           "edits_count_label": "Number of edits",
           "wiki_edits_count_label": "Number of wiki edits"
         }
+      },
+      "user_notes": {
+        "title": "{username}’s notes",
+        "tab_title": "{username}’s notes"
       },
       "user_settings": {
         "title": "Account settings",

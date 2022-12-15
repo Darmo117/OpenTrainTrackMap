@@ -8,8 +8,8 @@ import django.core.validators as _dj_valid
 import django.forms as _dj_forms
 from django.http import response as _dj_response
 
-from . import _core, _ottm_handler, _sign_up_page_handler
-from .. import forms as _forms, requests as _requests
+from . import _ottm_handler, _sign_up_page_handler, _user_page_context
+from .. import forms as _forms, models as _models, requests as _requests
 
 
 class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
@@ -25,6 +25,7 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
             self._request_params,
             title,
             tab_title,
+            target_user=self._request_params.user,
         ))
 
 
@@ -66,7 +67,7 @@ class SettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
     )
 
 
-class UserSettingsPageContext(_core.PageContext):
+class UserSettingsPageContext(_user_page_context.UserPageContext):
     """Context class for user settings pages."""
 
     def __init__(
@@ -74,16 +75,18 @@ class UserSettingsPageContext(_core.PageContext):
             request_params: _requests.RequestParams,
             tab_title: str | None,
             title: str | None,
+            target_user: _models.User,
     ):
         """Create a page context for a user’s settings page.
 
         :param request_params: Page request parameters.
         :param tab_title: Title of the browser’s tab.
         :param title: Page’s title.
+        :param target_user: User of the requested page.
         """
         super().__init__(
             request_params,
             tab_title=tab_title,
             title=title,
-            no_index=True,
+            target_user=target_user,
         )

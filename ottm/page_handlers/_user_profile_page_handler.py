@@ -25,7 +25,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
         title, tab_title = self.get_page_titles(page_id='user_profile', titles_args={'username': target_user.username})
         return self.render_page(f'ottm/user-profile.html', _user_page_context.UserPageContext(
             self._request_params,
-            title,
             tab_title,
+            title,
             target_user=target_user,
         ))

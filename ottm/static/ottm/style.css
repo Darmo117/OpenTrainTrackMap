@@ -55,6 +55,10 @@ html, body {
   margin-right: 10px;
 }
 
+#user-page-links {
+  padding-bottom: 1em;
+}
+
 .dropdown-menu, .dropdown-menu .dropdown-item {
   cursor: pointer;
 }
