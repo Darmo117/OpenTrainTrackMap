@@ -69,7 +69,6 @@ class OTTM {
     const linkSelectors = [
       "#nav-login-link",
       "#nav-logout-link",
-      "#nav-signup-link",
     ];
     for (const linkSelector of linkSelectors) {
       const $link = $(linkSelector);

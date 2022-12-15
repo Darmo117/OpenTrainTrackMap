@@ -1,5 +1,6 @@
 {# Parameters: form: ottm.forms.CustomForm, prefix: str #}
 {% load ottm %}
+{% load utils %}
 
 {% with trans_prefix=prefix|add:'form.'|add:form.name|add:'.' %}
   {% if context.global_errors %}
@@ -12,14 +13,14 @@
       </ul>
     </div>
   {% endif %}
-  <form method="post" id="{{ form.name }}" style="margin-bottom: 1em">
+  <form method="post" id="{{ form.name|replace:'_,-' }}" style="margin-bottom: 1em">
     {% csrf_token %}
     {% if form.warn_unsaved_changes %}
       <input type="hidden" name="warn-unsaved" value="1">
     {% endif %}
     {% for field in form %}
       {% with trans_field_prefix=trans_prefix|add:field.label|add:'.' %}
-        <div class="form-group" id="form-{{ field.label }}">
+        <div class="form-group">
           <label for="{{ field.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
           {{ field }}
           {% if field.help_text %}

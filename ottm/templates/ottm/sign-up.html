@@ -1,0 +1,17 @@
+{% extends 'ottm/not-map.html' %}
+{% load static %}
+{% load ottm %}
+
+{% block container-content %}
+  <div class="row justify-content-center">
+    <div class="col-4">
+      {% if context.sign_up_form %}
+        {% include 'ottm/include/form.html' with form=context.sign_up_form prefix='page.sign_up.' %}
+      {% else %}
+        <div class="alert alert-warning text-center" role="alert">
+          {% ottm_translate 'page.sign_up.already_logged_in' %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

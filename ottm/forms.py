@@ -13,14 +13,21 @@ from .api.wiki.namespaces import *
 class _CustomForm(dj_forms.Form):
     """Base class for all forms. Applies custom CSS styles to widgets."""
 
-    def __init__(self, warn_unsaved_changes: bool, *args, **kwargs):
+    def __init__(self, name: str, warn_unsaved_changes: bool, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._name = name
         self._warn_unsaved_changes = warn_unsaved_changes
+        for field_name, field in self.fields.items():
+            field.widget.attrs['id'] = f'{name.replace("_", "-")}-form-{field_name.replace("_", "-")}'
         for visible in self.visible_fields():
             if isinstance(visible.field.widget, dj_forms.CheckboxInput):
                 visible.field.widget.attrs['class'] = 'form-check-input'
             else:
                 visible.field.widget.attrs['class'] = 'form-control'
+
+    @property
+    def name(self) -> str:
+        return self._name
 
     @property
     def warn_unsaved_changes(self) -> bool:
@@ -30,28 +37,31 @@ class _CustomForm(dj_forms.Form):
 class ConfirmPasswordFormMixin:
     """Mixin for forms with a password confirmation field."""
 
+    def clean_password_confirm(self):
+        # noinspection PyUnresolvedReferences
+        if not self.passwords_match():
+            raise dj_exc.ValidationError('passwords do not match', code='passwords_mismatch')
+
     def passwords_match(self) -> bool:
         """Check whether the passwords in the 'password' and 'password_confirm' fields match."""
         cleaned_data = getattr(self, 'cleaned_data')
         return cleaned_data['password'] == cleaned_data['password_confirm']
 
 
-class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
-    """User settings form."""
+class SignUpForm(_CustomForm, ConfirmPasswordFormMixin):
+    """Sign up form."""
 
     def __init__(self, post=None, initial: dict[str, typ.Any] = None):
-        super().__init__(True, post, initial=initial)
+        super().__init__('sign_up', False, post, initial=initial)
 
     @staticmethod
-    def username_validator(value: str, anonymous: bool = False):
+    def username_validator(value: str):
         """Validate the given username. Checks if it is valid and not already taken.
 
         :param value: Username to validate.
-        :param anonymous: Whether the username is for an anonymous user.
-         If false, username cannot start with 'Anonymous-'.
         """
         models.username_validator(value)
-        if not anonymous and value.startswith('Anonymous-'):
+        if value.startswith('Anonymous-'):
             raise dj_exc.ValidationError('invalid username', code='invalid')
         if models.CustomUser.objects.filter(username=value).exists():
             raise dj_exc.ValidationError('duplicate username', code='duplicate')
@@ -60,7 +70,46 @@ class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
         label='username',
         min_length=1,
         max_length=dj_auth.User._meta.get_field('username').max_length,
-        validators=[username_validator]
+        strip=True,
+        required=True,
+        validators=[username_validator],
+    )
+    email = dj_forms.CharField(
+        label='email',
+        widget=dj_forms.EmailInput,
+        strip=True,
+        required=True,
+        validators=[dj_valid.validate_email],
+    )
+    password = dj_forms.CharField(
+        label='password',
+        min_length=1,
+        max_length=dj_auth.User._meta.get_field('password').max_length,
+        strip=True,
+        required=True,
+        widget=dj_forms.PasswordInput(),
+    )
+    password_confirm = dj_forms.CharField(
+        label='password_confirm',
+        min_length=1,
+        max_length=dj_auth.User._meta.get_field('password').max_length,
+        strip=True,
+        required=True,
+        widget=dj_forms.PasswordInput(),
+    )
+
+
+class SettingsForm(_CustomForm, ConfirmPasswordFormMixin):
+    """User settings form."""
+
+    def __init__(self, post=None, initial: dict[str, typ.Any] = None):
+        super().__init__('user_settings', True, post, initial=initial)
+
+    username = dj_forms.CharField(
+        label='username',
+        min_length=1,
+        max_length=dj_auth.User._meta.get_field('username').max_length,
+        validators=[SignUpForm.username_validator]
     )
     current_email = dj_forms.CharField(
         label='current_email',
@@ -98,14 +147,9 @@ class WikiForm(_CustomForm):
         :param post: A POST dict to populate this form.
         :param initial: A dict object of initial field values.
         """
-        super().__init__(warn_unsaved_changes, post, initial=initial)
-        self._name = name
+        super().__init__(name, warn_unsaved_changes, post, initial=initial)
         for field_name, field in self.fields.items():
-            field.widget.attrs['id'] = f'wiki-{name}-form-{field_name.replace("_", "-")}'
-
-    @property
-    def name(self) -> str:
-        return self._name
+            field.widget.attrs['id'] = f'wiki-{name.replace("_", "-")}-form-{field_name.replace("_", "-")}'
 
 
 class WikiEditPageForm(WikiForm):

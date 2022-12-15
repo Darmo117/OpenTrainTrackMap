@@ -1,20 +1,14 @@
 """This module defines all page view handlers."""
 import typing as typ
 
-import django.contrib.auth.models as dj_auth_models
 import django.core.handlers.wsgi as dj_wsgi
 import django.http.response as dj_response
 import django.shortcuts as dj_scut
 import requests
-from django.conf import settings as dj_settings
 
-from . import forms, models, page_context, requests
-from .api import auth, errors, permissions
+from . import forms, page_context, requests, view_handlers as _vh
+from .api import auth, errors
 from .api.wiki import constants as w_cons, namespaces as w_ns, pages as w_pages, special_pages as w_sp
-
-VIEW_MAP = 'show'
-EDIT_MAP = 'edit'
-MAP_HISTORY = 'history'
 
 
 def get_tile(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
@@ -47,7 +41,7 @@ def map_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     request_params = requests.RequestParams(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(request_params)
+        'context': _vh.get_map_page_context(request_params)
     })
 
 
@@ -57,7 +51,7 @@ def edit_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     request_params = requests.RequestParams(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(request_params, action=EDIT_MAP, no_index=True)
+        'context': _vh.get_map_page_context(request_params, action=_vh.EDIT_MAP, no_index=True)
     })
 
 
@@ -66,7 +60,7 @@ def history_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     request_params = requests.RequestParams(request)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(request_params, action=MAP_HISTORY, no_index=True)
+        'context': _vh.get_map_page_context(request_params, action=_vh.MAP_HISTORY, no_index=True)
     })
 
 
@@ -80,7 +74,7 @@ def page_handler(page_name: str) -> typ.Callable[[dj_wsgi.WSGIRequest], dj_respo
     def handler(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
         request_params = requests.RequestParams(request)
         return dj_scut.render(request, f'ottm/{page_name}.html', context={
-            'context': _get_page_context(request_params, page_name)
+            'context': _vh.get_page_context(request_params, page_name)
         })
 
     return handler
@@ -88,7 +82,27 @@ def page_handler(page_name: str) -> typ.Callable[[dj_wsgi.WSGIRequest], dj_respo
 
 def signup_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     """Sign-up page handler."""
-    pass  # TODO
+    request_params = requests.RequestParams(request)
+    if not request_params.user.is_authenticated:
+        if request_params.post:
+            form = forms.SignUpForm(post=request_params.post)
+            if form.is_valid():
+                # All errors should have been handled by the form already
+                user = auth.create_user(
+                    form.cleaned_data['username'],
+                    form.cleaned_data['email'],
+                    form.cleaned_data['password'],
+                )
+                if user:
+                    auth.log_in(request, form.cleaned_data['username'], form.cleaned_data['password'])
+                    return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:help'))
+        else:
+            form = forms.SignUpForm()
+    else:
+        form = None
+    return dj_scut.render(request, 'ottm/sign-up.html', context={
+        'context': _vh.get_sign_up_page_context(request_params, form)
+    })
 
 
 def login_page(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
@@ -109,7 +123,7 @@ def user_profile(request: dj_wsgi.WSGIRequest, username: str) -> dj_response.Htt
     request_params = requests.RequestParams(request)
     target_user = auth.get_user_from_name(username)
     return dj_scut.render(request, 'ottm/user-profile.html', context={
-        'context': _get_user_page_context(request_params, target_user)
+        'context': _vh.get_user_page_context(request_params, target_user)
     })
 
 
@@ -121,7 +135,7 @@ def user_settings(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:map'))
 
     return dj_scut.render(request, 'ottm/user-settings.html', context={
-        'context': _get_page_context(request_params, 'user_settings')
+        'context': _vh.get_page_context(request_params, 'user_settings')
     })
 
 
@@ -131,7 +145,7 @@ def user_contributions(request: dj_wsgi.WSGIRequest, username: str) -> dj_respon
     target_user = auth.get_user_from_name(username)
 
     return dj_scut.render(request, 'ottm/map.html', context={
-        'context': _get_map_page_context(request_params, action=MAP_HISTORY)
+        'context': _vh.get_map_page_context(request_params, action=_vh.MAP_HISTORY)
     })
 
 
@@ -141,7 +155,7 @@ def user_notes(request: dj_wsgi.WSGIRequest, username: str) -> dj_response.HttpR
     target_user = auth.get_user_from_name(username)
 
     return dj_scut.render(request, 'ottm/user-notes.html', context={
-        'context': _get_page_context(request_params, 'notes', no_index=True)
+        'context': _vh.get_page_context(request_params, 'notes', no_index=True)
     })
 
 
@@ -215,11 +229,11 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                     status=200 if page.exists else 404,
                 )
             case w_cons.ACTION_EDIT:
-                context = _wiki_page_edit_context(request_params, page, revision_id, js_config)
+                context = _vh.wiki_page_edit_context(request_params, page, revision_id, js_config)
             case w_cons.ACTION_SUBMIT:
                 form = forms.WikiEditPageForm(post=request.POST)
                 if not form.is_valid():
-                    context = _wiki_page_edit_context(request_params, page, revision_id, js_config, form=form)
+                    context = _vh.wiki_page_edit_context(request_params, page, revision_id, js_config, form=form)
                 else:
                     try:
                         w_pages.edit_page(
@@ -234,24 +248,24 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
                             form.cleaned_data['section_id']
                         )
                     except errors.MissingPermissionError:
-                        context = _wiki_page_edit_context(request_params, page, revision_id, js_config)
+                        context = _vh.wiki_page_edit_context(request_params, page, revision_id, js_config)
                     except errors.ConcurrentWikiEditError:
                         # TODO form containing concurrent page content
-                        context = _wiki_page_edit_context(request_params, page, revision_id, js_config,
-                                                          concurrent_edit_error=True)
+                        context = _vh.wiki_page_edit_context(request_params, page, revision_id, js_config,
+                                                             concurrent_edit_error=True)
                     else:
                         # Redirect to normal view
                         return dj_response.HttpResponseRedirect(dj_scut.reverse('ottm:wiki_page', kwargs={
                             'raw_page_title': page.full_title,
                         }))
             case w_cons.ACTION_HISTORY:
-                context = _wiki_page_history_context(request_params, page, js_config)
+                context = _vh.wiki_page_history_context(request_params, page, js_config)
             case w_cons.ACTION_TALK:
-                context = _wiki_page_talk_context(request_params, page, js_config)
+                context = _vh.wiki_page_talk_context(request_params, page, js_config)
             case w_cons.ACTION_INFO:
-                context = _wiki_page_info_context(request_params, page, js_config)
+                context = _vh.wiki_page_info_context(request_params, page, js_config)
             case _:
-                context = _wiki_page_read_context(request_params, page, revision_id, js_config)
+                context = _vh.wiki_page_read_context(request_params, page, revision_id, js_config)
         status = 200 if context.page.exists else 404
 
     ctxt = {
@@ -270,285 +284,3 @@ def handle404(request: dj_wsgi.WSGIRequest, _) -> dj_response.HttpResponse:
 def handle500(request: dj_wsgi.WSGIRequest) -> dj_response.HttpResponse:
     """500 error page handler."""
     pass  # TODO 500
-
-
-#####################
-# Utility functions #
-#####################
-
-
-def _get_page_context(
-        request_params: requests.RequestParams,
-        page_id: str,
-        no_index: bool = False,
-        titles_args: dict[str, str] = None,
-) -> page_context.PageContext:
-    """Return a context object for the given page ID.
-
-    :param request_params: Request parameters.
-    :param page_id: Page’s ID.
-    :param no_index: Whether to insert a noindex clause within the HTML page.
-    :param titles_args: Dict object containing values to use in the page title translation.
-    :return: A PageContext object.
-    """
-    kwargs = _get_base_context_args(request_params, page_id=page_id, titles_args=titles_args, no_index=no_index)
-    return page_context.PageContext(**kwargs)
-
-
-def _get_map_page_context(
-        request_params: requests.RequestParams,
-        action: str = VIEW_MAP,
-        no_index: bool = False,
-) -> page_context.MapPageContext:
-    """Return a context object for the map page.
-
-    :param request_params: Request parameters.
-    :param action: Map action.
-    :param no_index: Whether to insert a noindex clause within the HTML page.
-    :return: A MapPageContext object.
-    """
-    translations_keys = [
-        'map.controls.layers.standard',
-        'map.controls.layers.black_and_white',
-        'map.controls.layers.satellite_maptiler',
-        'map.controls.layers.satellite_esri',
-        'map.controls.zoom_in.tooltip',
-        'map.controls.zoom_out.tooltip',
-        'map.controls.search.tooltip',
-        'map.controls.search.placeholder',
-        'map.controls.google_maps_button.tooltip',
-        'map.controls.ign_compare_button.label',
-        'map.controls.ign_compare_button.tooltip',
-        'map.controls.edit.new_marker.tooltip',
-        'map.controls.edit.new_line.tooltip',
-        'map.controls.edit.new_polygon.tooltip',
-    ]
-    js_config = {
-        'trans': {},
-        'static_path': dj_settings.STATIC_URL,
-        'edit': 'true' if action == 'edit' else 'false',
-    }
-
-    for k in translations_keys:
-        js_config['trans'][k] = request_params.ui_language.translate(k)
-
-    kwargs = _get_base_context_args(request_params, no_index=no_index)
-    return page_context.MapPageContext(**kwargs, map_js_config=js_config)
-
-
-def _get_user_page_context(
-        request_params: requests.RequestParams,
-        target_user: models.User,
-) -> page_context.UserPageContext:
-    """Return a context object for the user profile page.
-
-    :param request_params: Request parameters.
-    :param target_user: User of the requested page.
-    :return: A UserPageContext object.
-    """
-    titles_rags = {'username': target_user.username}
-    kwargs = _get_base_context_args(request_params, page_id='user_profile', titles_args=titles_rags)
-    return page_context.UserPageContext(**kwargs, target_user=target_user)
-
-
-def _get_base_context_args(
-        request_params: requests.RequestParams,
-        page_id: str = None,
-        titles_args: dict[str, str] = None,
-        no_index: bool = False,
-) -> dict[str, typ.Any]:
-    """Return parameters common to all page context objects.
-
-    :param request_params: Request parameters.
-    :param titles_args: Dict object containing values to use in the page title translation.
-    :param no_index: Whether to insert a noindex clause within the HTML page.
-    :return: A dict object containing context parameters.
-    """
-    language = request_params.ui_language
-    if page_id:
-        title = language.translate(f'page.{page_id}.title')
-        tab_title = language.translate(f'page.{page_id}.tab_title')
-        if titles_args:
-            title = title.format(**titles_args)
-            tab_title = tab_title.format(**titles_args)
-    else:
-        title = None
-        tab_title = None
-    return {
-        'request_params': request_params,
-        'title': title,
-        'tab_title': tab_title,
-        'no_index': no_index,
-    }
-
-
-def _wiki_page_read_context(
-        request_params: requests.RequestParams,
-        page: models.Page,
-        revision_id: int | None,
-        js_config: dict,
-) -> page_context.WikiPageReadActionContext:
-    """Create a wiki page context object.
-
-    :param request_params: Request parameters.
-    :param page: Page object.
-    :param revision_id: Page revision ID.
-    :param js_config: Dict object containing JS config values.
-    :return: A WikiPageContext object.
-    """
-    user = request_params.user
-    language = request_params.ui_language
-    no_index = not page.exists
-    cat_subcategories = []
-    cat_pages = []
-    if revision_id is None:
-        content = w_pages.render_wikicode(page.get_content(), user, language)
-        revision = page.revisions.latest() if page.exists else None
-        archived = False
-        if page.namespace == w_ns.NS_CATEGORY:
-            cat_subcategories = list(models.PageCategory.subcategories_for_category(page.full_title))
-            cat_pages = list(models.PageCategory.pages_for_category(page.full_title))
-    else:
-        revision = page.revisions.get(id=revision_id)
-        content = w_pages.render_wikicode(revision.content, user, language)
-        archived = True
-    if not page.exists:
-        no_page_notice = w_pages.get_no_page_notice(user, language)
-    else:
-        no_page_notice = None
-    return page_context.WikiPageReadActionContext(
-        request_params,
-        page=page,
-        no_index=no_index,
-        js_config=js_config,
-        content=content,
-        revision=revision,
-        archived=archived,
-        cat_subcategories=cat_subcategories,
-        cat_pages=cat_pages,
-        no_page_notice=no_page_notice,
-    )
-
-
-def _wiki_page_info_context(request_params: requests.RequestParams, page: models.Page, js_config: dict) \
-        -> page_context.WikiPageInfoActionContext:
-    """Create a wiki page info context object.
-
-    :param request_params: Request parameters.
-    :param page: Page object.
-    :param js_config: Dict object containing JS config values.
-    :return: A WikiPageContext object.
-    """
-    statuses = models.PageFollowStatus.objects.filter(page_namespace_id=page.namespace_id, page_title=page.title)
-    return page_context.WikiPageInfoActionContext(
-        request_params,
-        page=page,
-        js_config=js_config,
-        revisions=page.revisions.all() if page.exists else dj_auth_models.EmptyManager(models.PageRevision),
-        followers_nb=statuses.count(),
-        redirects_nb=page.get_redirects().count(),
-        subpages_nb=page.get_subpages().count(),
-        protection=page.get_edit_protection(),
-    )
-
-
-def _wiki_page_edit_context(
-        request_params: requests.RequestParams,
-        page: models.Page,
-        revision_id: int | None,
-        js_config: dict,
-        form: forms.WikiEditPageForm = None,
-        concurrent_edit_error: bool = False,
-) -> page_context.WikiPageEditActionContext:
-    """Create a wiki page editing context object.
-
-    :param request_params: Request parameters.
-    :param page: Page object.
-    :param revision_id: Page revision ID.
-    :param js_config: Dict object containing JS config values.
-    :param form: Edit form object.
-    :param concurrent_edit_error: Whether another edit was made before submitting.
-    :return: A WikiPageContext object.
-    """
-    if revision_id is None:
-        revision = page.revisions.latest() if page.exists else None
-        archived = False
-    else:
-        revision = page.revisions.get(id=revision_id)
-        archived = True
-    user = request_params.user
-    language = request_params.ui_language
-    form = form or forms.WikiEditPageForm(
-        user=user,
-        page=page,
-        disabled=not page.can_user_edit(user),
-        warn_unsaved_changes=True,
-        initial={
-            'content': revision.content if revision else '',
-            'follow_page': page.is_user_following(user),
-            'hidden_category': page.is_category_hidden,
-        },
-    )
-    return page_context.WikiPageEditActionContext(
-        request_params,
-        page=page,
-        js_config=js_config,
-        revision=revision,
-        archived=archived,
-        edit_form=form,
-        edit_notice=w_pages.get_edit_notice(user, language, page),
-        new_page_notice=w_pages.get_new_page_notice(user, language, page) if not page.exists else None,
-        perm_error=not page.can_user_edit(user),
-        concurrent_edit_error=concurrent_edit_error,
-        edit_protection_log_entry=w_pages.get_page_protection_log_entry(page),
-    )
-
-
-def _wiki_page_talk_context(request_params: requests.RequestParams, page: models.Page, js_config: dict) \
-        -> page_context.WikiPageTalkActionContext:
-    """Create a wiki page talk context object.
-
-    :param request_params: Request parameters.
-    :param page: Page object.
-    :param js_config: Dict object containing JS config values.
-    :return: A WikiPageContext object.
-    """
-    user = request_params.user
-    if page.exists:
-        if user.has_permission(permissions.PERM_WIKI_MASK):
-            topics = page.topics.all()
-        else:
-            topics = page.topics.filter(deleted=False)
-    else:
-        topics = dj_auth_models.EmptyManager(models.TopicRevision)
-    return page_context.WikiPageTalkActionContext(
-        request_params,
-        page=page,
-        js_config=js_config,
-        topics=topics.order_by('-date'),
-    )
-
-
-def _wiki_page_history_context(request_params: requests.RequestParams, page: models.Page, js_config: dict) \
-        -> page_context.WikiPageHistoryActionContext:
-    """Create a wiki page history context object.
-
-    :param request_params: Request parameters.
-    :param page: Page object.
-    :param js_config: Dict object containing JS config values.
-    :return: A WikiPageContext object.
-    """
-    user = request_params.user
-    if page.exists:
-        if user.has_permission(permissions.PERM_WIKI_MASK):
-            revisions = page.revisions.all()
-        else:
-            revisions = page.revisions.filter(hidden=False)
-    else:
-        revisions = dj_auth_models.EmptyManager(models.PageRevision)
-    return page_context.WikiPageHistoryActionContext(
-        request_params,
-        page=page,
-        js_config=js_config,
-        revisions=revisions.order_by('-date'),
-    )
