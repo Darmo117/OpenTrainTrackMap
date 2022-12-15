@@ -101,33 +101,33 @@
               <span class="mdi mdi-account-plus"></span> {% ottm_translate 'navbar.sign_up.label' %}
             </a>
           </li>
-        {% endif %}
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" id="navbar-logged-out-settings" role="button"
-             aria-haspopup="true" aria-expanded="false">
-            <span class="mdi mdi-cog"></span>
-          </a>
-          {% if context.ui_languages|length > 1 %}
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbar-logged-out-settings">
-              <label class="dropdown-item">
-                <input id="dark-mode-checkbox" type="checkbox" {% if context.dark_mode %}checked{% endif %}>
-                {% ottm_translate 'navbar.dark_mode.label' %}
-              </label>
-              <div class="dropdown-item" title="{% ottm_translate 'navbar.language_select.tooltip' %}">
-                <label for="nav-language-select" class="sr-only">
-                  {% ottm_translate 'navbar.language_select.label' %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbar-logged-out-settings" role="button"
+               aria-haspopup="true" aria-expanded="false">
+              <span class="mdi mdi-cog"></span>
+            </a>
+            {% if context.ui_languages|length > 1 %}
+              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbar-logged-out-settings">
+                <label class="dropdown-item">
+                  <input id="dark-mode-checkbox" type="checkbox" {% if context.dark_mode %}checked{% endif %}>
+                  {% ottm_translate 'navbar.dark_mode.label' %}
                 </label>
-                <select id="nav-language-select" class="custom-select nav-select">
-                  {% for lang in context.ui_languages %}
-                    <option {% if lang.code == context.language.code %}selected{% endif %} value="{{ lang.code }}">
-                      {{ lang.name }}
-                    </option>
-                  {% endfor %}
-                </select>
+                <div class="dropdown-item" title="{% ottm_translate 'navbar.language_select.tooltip' %}">
+                  <label for="nav-language-select" class="sr-only">
+                    {% ottm_translate 'navbar.language_select.label' %}
+                  </label>
+                  <select id="nav-language-select" class="custom-select nav-select">
+                    {% for lang in context.ui_languages %}
+                      <option {% if lang.code == context.language.code %}selected{% endif %} value="{{ lang.code }}">
+                        {{ lang.name }}
+                      </option>
+                    {% endfor %}
+                  </select>
+                </div>
               </div>
-            </div>
-          {% endif %}
-        </li>
+            {% endif %}
+          </li>
+        {% endif %}
       </ul>
     </div>
   </nav>
