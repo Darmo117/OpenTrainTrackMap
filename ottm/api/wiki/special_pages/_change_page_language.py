@@ -7,7 +7,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import pages as _pages
 from ... import errors as _errors
-from .... import forms as _forms, models as _models, requests as _requests, settings as _settings
+from .... import models as _models, page_handlers as _ph, requests as _requests, settings as _settings
 
 
 class ChangePageLanguageSpecialPage(_core.SpecialPage):
@@ -74,7 +74,7 @@ class ChangePageLanguageSpecialPage(_core.SpecialPage):
         }
 
 
-class _Form(_forms.WikiForm):
+class _Form(_ph.WikiForm):
     page_name = _dj_forms.CharField(
         label='page',
         max_length=_models.Page._meta.get_field('title').max_length,

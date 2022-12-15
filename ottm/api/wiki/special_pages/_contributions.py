@@ -9,7 +9,7 @@ from . import _core
 from ..namespaces import *
 from ... import auth as _auth
 from ...permissions import *
-from .... import models as _models, requests as _requests, forms as _forms
+from .... import models as _models, page_handlers as _ph, requests as _requests
 
 
 class ContributionsSpecialPage(_core.SpecialPage):
@@ -57,7 +57,7 @@ class ContributionsSpecialPage(_core.SpecialPage):
         }
 
 
-class _Form(_forms.WikiForm):
+class _Form(_ph.WikiForm):
     username = _dj_forms.CharField(
         label='username',
         max_length=_dj_auth_models.AbstractUser._meta.get_field('username').max_length,

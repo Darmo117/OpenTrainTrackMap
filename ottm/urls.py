@@ -11,10 +11,10 @@ urlpatterns = [
     path('sign-up', views.signup_page, name='sign_up'),
     path('log-in', views.login_page, name='log_in'),
     path('log-out', views.logout_page, name='log_out'),
-    path('copyright', views.page_handler('copyright'), name='copyright'),
-    path('help', views.page_handler('help'), name='help'),
-    path('about', views.page_handler('about'), name='about'),
-    path('basics', views.page_handler('basics'), name='basics'),
+    path('copyright', views.get_page_handler('copyright'), name='copyright'),
+    path('help', views.get_page_handler('help'), name='help'),
+    path('about', views.get_page_handler('about'), name='about'),
+    path('basics', views.get_page_handler('basics'), name='basics'),
     path('user/', include([
         path('<str:username>/', include([
             path('', views.user_profile, name='user_profile'),

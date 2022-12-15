@@ -5,8 +5,8 @@
 {% block navbar-left %}
   <li class="nav-item"
       {% if not context.user.is_logged_in %}title="{% ottm_translate 'navbar.edit.signup_title' %}"{% endif %}>
-    <a id="nav-edit-link" class="nav-link{% if not context.user.is_logged_in %} disabled{% endif %}"
-       href="{% url 'ottm:edit' %}" {% if not context.user.is_logged_in %}tabindex="-1"
+    <a id="nav-edit-link" class="nav-link{% if not context.user.is_authenticated %} disabled{% endif %}"
+       href="{% url 'ottm:edit' %}" {% if not context.user.is_authenticated %}tabindex="-1"
        aria-disabled="true" {% endif %}>
       <span class="mdi mdi-pencil"></span> {% ottm_translate 'navbar.edit.label' %}
     </a>

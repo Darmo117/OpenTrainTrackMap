@@ -6,6 +6,11 @@
   <div class="row justify-content-center">
     <div class="col-4">
       {% if context.login_form %}
+        {% if context.edit_warning %}
+          <div class="alert alert-danger text-center" role="alert">
+            {% ottm_translate 'page.log_in.not_logged_in' %}
+          </div>
+        {% endif %}
         {% include 'ottm/include/form.html' with form=context.login_form prefix='page.log_in.' %}
       {% else %}
         <div class="alert alert-warning text-center" role="alert">

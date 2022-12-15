@@ -4,7 +4,7 @@ from . import pages, parser, special_pages as w_sp
 from .constants import *
 from .namespaces import *
 from ..permissions import *
-from ... import page_context as pc, settings
+from ... import page_handlers as _ph, settings
 
 
 @dataclasses.dataclass(frozen=True)
@@ -14,14 +14,14 @@ class Menu:
     items: list[str]
 
 
-def get_menus(page_context: pc.WikiPageContext, menu_id: str) -> list[Menu]:
+def get_menus(page_context: _ph.WikiPageContext, menu_id: str) -> list[Menu]:
     if menu_id == 'main':
         return _get_dynamic_menus(page_context)
     else:
         return [_get_builtin_menu(page_context, menu_id)]
 
 
-def _get_dynamic_menus(page_context: pc.WikiPageContext) -> list[Menu]:
+def _get_dynamic_menus(page_context: _ph.WikiPageContext) -> list[Menu]:
     language = page_context.language
     menu = pages.get_interface_page('SideMenu', render=False)
     menus = []
@@ -67,7 +67,7 @@ def _get_menu_item_label(item_label: str, language: settings.UILanguage) -> str 
             return label
 
 
-def _get_builtin_menu(page_context: pc.WikiPageContext, menu_id: str) -> Menu:
+def _get_builtin_menu(page_context: _ph.WikiPageContext, menu_id: str) -> Menu:
     user = page_context.user
     page = page_context.page
     language = page_context.language

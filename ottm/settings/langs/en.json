@@ -19,6 +19,9 @@
       "history": {
         "tab_title": "History"
       },
+      "contributions": {
+        "tab_title": "{username}’s contributions"
+      },
       "copyright": {
         "title": "Copyright and License",
         "tab_title": "Copyright and License"
@@ -38,6 +41,7 @@
       "log_in": {
         "title": "Log in",
         "tab_title": "Log in",
+        "not_logged_in": "You need to log in to be able to edit the map.",
         "already_logged_in": "You are already logged in.",
         "form": {
           "log_in": {
@@ -91,7 +95,7 @@
         }
       },
       "user_profile": {
-        "title": "",
+        "title": "{username}’s profile",
         "tab_title": "{username}’s profile",
         "subtitle": {
           "notes": "Notes",

@@ -7,7 +7,7 @@ import django.template as dj_template
 import django.utils.safestring as dj_safe
 
 from .ottm import *
-from .. import models, page_context
+from .. import models, page_handlers as _ph
 from ..api.permissions import *
 from ..api.wiki import constants as w_cons, menus, namespaces as w_ns, parser
 
@@ -57,7 +57,7 @@ def wiki_inner_link(
     :param new_tab: Whether to add target="_blank" to link’s tag.
     :return: The rendered link.
     """
-    wiki_context: page_context.WikiPageContext = context.get('context')
+    wiki_context: _ph.WikiPageContext = context.get('context')
     current_title = wiki_context.page.full_title if not ignore_current_title else None
     classes = css_classes.split() if css_classes else []
     if url_params:
@@ -89,7 +89,7 @@ def wiki_page_menu_item(context: TemplateContext, action: str) -> str:
     :param action: Menu item’s action.
     :return: The render item.
     """
-    wiki_context: page_context.WikiPageContext = context.get('context')
+    wiki_context: _ph.WikiPageContext = context.get('context')
     page_title = wiki_context.page.full_title
     css_classes = ['col-2', 'page-menu-item', 'mdi']
     if action == wiki_context.action:
@@ -162,7 +162,7 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
     :param against:
     :return: The rendered diff link.
     """
-    wiki_context: page_context.WikiPageReadActionContext = context.get('context')
+    wiki_context: _ph.WikiPageReadActionContext = context.get('context')
     page = wiki_context.page
     ignore_hidden = not wiki_context.user.has_permission(PERM_WIKI_MASK)
 
@@ -230,7 +230,7 @@ def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, clas
     :param no_results_key: Translation key for the message displayed when the paginator is empty.
     :return: The rendered list.
     """
-    wiki_context: page_context.WikiPageContext = context.get('context')
+    wiki_context: _ph.WikiPageContext = context.get('context')
     if pages.count == 0:
         message = wiki_translate(context, no_results_key)
         return dj_safe.mark_safe(f'<div class="alert alert-warning text-center">{message}</div>')
@@ -255,8 +255,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     :param mode: Specifies how the revisions should be rendered. Either 'history' or 'contributions'.
     :return: The rendered revisions list.
     """
-    wiki_context: page_context.WikiPageHistoryActionContext | page_context.WikiSpecialPageContext = \
-        context.get('context')
+    wiki_context: _ph.WikiPageHistoryActionContext | _ph.WikiSpecialPageContext = context.get('context')
     user = wiki_context.user
     ignore_hidden = not user.has_permission(PERM_WIKI_MASK)
     Line = collections.namedtuple(
@@ -482,7 +481,7 @@ def wiki_side_menu(context: TemplateContext, menu_id: str) -> TemplateContext:
     :param menu_id: Menu’s ID.
     :return: The formatted menu.
     """
-    wiki_context: page_context.WikiPageContext = context.get('context')
+    wiki_context: _ph.WikiPageContext = context.get('context')
     return {'menus': menus.get_menus(wiki_context, menu_id)}
 
 
@@ -494,7 +493,7 @@ def wiki_pagination(context: TemplateContext, paginator: dj_paginator.Paginator)
     :param paginator: The paginator object.
     :return: The rendered pagination list.
     """
-    wiki_context: page_context.WikiPageContext = context.get('context')
+    wiki_context: _ph.WikiPageContext = context.get('context')
     # noinspection PyUnresolvedReferences
     page_index = wiki_context.page_index
     items = []
@@ -528,7 +527,7 @@ def wiki_add_url_params(context: TemplateContext, **kwargs) -> str:
     :param kwargs: Parameters to add to the URL.
     :return: The new URL.
     """
-    wiki_context: page_context.WikiPageContext = context.get('context')
+    wiki_context: _ph.WikiPageContext = context.get('context')
     request = wiki_context.request_params.request
     url_path = request.path
     get_params = {k: v for k, v in request.GET.items()}

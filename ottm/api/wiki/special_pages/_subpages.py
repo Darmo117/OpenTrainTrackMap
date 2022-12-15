@@ -8,7 +8,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import pages as _pages
 from ..namespaces import *
-from .... import models as _models, requests as _requests, forms as _forms
+from .... import models as _models, page_handlers as _ph, requests as _requests
 
 
 class SubpagesSpecialPage(_core.SpecialPage):
@@ -45,7 +45,7 @@ class SubpagesSpecialPage(_core.SpecialPage):
         }
 
 
-class _Form(_forms.WikiForm):
+class _Form(_ph.WikiForm):
     page_name = _dj_forms.CharField(
         label='page',
         max_length=_models.Page._meta.get_field('title').max_length,
