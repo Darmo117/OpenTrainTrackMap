@@ -14,20 +14,22 @@ class OTTM {
 
   #hookSettingsDropdownBehavior() {
     const $button = $("#navbar-logged-out-settings");
-    const $parent = $button.parent();
-    const $menu = $parent.find(".dropdown-menu");
-    $button.on("click", e => {
-      $parent.toggleClass("show");
-      $menu.toggleClass("show");
-      e.preventDefault();
-    });
-    $("body").on("click", e => {
-      // noinspection JSCheckFunctionSignatures
-      if (!$.contains($parent[0], e.target)) {
-        $parent.removeClass("show");
-        $menu.removeClass("show");
-      }
-    });
+    if ($button.length) {
+      const $parent = $button.parent();
+      const $menu = $parent.find(".dropdown-menu");
+      $button.on("click", e => {
+        $parent.toggleClass("show");
+        $menu.toggleClass("show");
+        e.preventDefault();
+      });
+      $("body").on("click", e => {
+        // noinspection JSCheckFunctionSignatures
+        if (!$.contains($parent[0], e.target)) {
+          $parent.removeClass("show");
+          $menu.removeClass("show");
+        }
+      });
+    }
   }
 
   #hookDarkModeCallback() {
