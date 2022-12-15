@@ -1350,7 +1350,7 @@ class PageProtection(dj_models.Model):
     page_namespace_id = dj_models.IntegerField()
     page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
     end_date = dj_models.DateTimeField(null=True, blank=True)
-    reason = dj_models.TextField(null=True, blank=True)
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
     protection_level = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
 
     class Meta:
@@ -1498,7 +1498,7 @@ class PageDeletionLog(PageLog):
 class PageProtectionLog(PageLog):
     """New entries are added each time a page’s protection status changes."""
     end_date = dj_models.DateTimeField(null=True, blank=True)
-    reason = dj_models.TextField(null=True, blank=True)
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
     protection_level = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
 
     class Meta:
@@ -1509,7 +1509,7 @@ class PageProtectionLog(PageLog):
 class PageContentLanguageLog(PageLog):
     """New entries are added each time the content language of a page is modified."""
     language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
-    reason = dj_models.TextField(null=True, blank=True)
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
         get_latest_by = 'date'
@@ -1519,7 +1519,7 @@ class PageContentLanguageLog(PageLog):
 class PageContentTypeLog(PageLog):
     """New entries are added each time the content type of a page is modified."""
     content_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in w_cons.CONTENT_TYPES.values()))
-    reason = dj_models.TextField(null=True, blank=True)
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
         get_latest_by = 'date'

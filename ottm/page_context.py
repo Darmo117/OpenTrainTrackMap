@@ -144,6 +144,35 @@ class SignUpPageContext(PageContext):
         return self._form
 
 
+class LoginPageContext(PageContext):
+    def __init__(
+            self,
+            request_params: requests.RequestParams,
+            tab_title: str | None,
+            title: str | None,
+            no_index: bool,
+            form: forms.SignUpForm = None,
+    ):
+        """Create a page context for user pages.
+
+        :param request_params: Page request parameters.
+        :param tab_title: Title of the browser’s tab.
+        :param title: Page’s title.
+        :param form: The sign up form.
+        """
+        super().__init__(
+            request_params,
+            tab_title=tab_title,
+            title=title,
+            no_index=no_index,
+        )
+        self._form = form
+
+    @property
+    def sign_up_form(self) -> forms.SignUpForm | None:
+        return self._form
+
+
 class UserPageContext(PageContext):
     def __init__(
             self,

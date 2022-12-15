@@ -77,8 +77,7 @@ class ChangePageLanguageSpecialPage(_core.SpecialPage):
 class _Form(_forms.WikiForm):
     page_name = _dj_forms.CharField(
         label='page',
-        max_length=200,
-        min_length=1,
+        max_length=_models.Page._meta.get_field('title').max_length,
         required=True,
         strip=True,
         validators=[_models.page_title_validator],
@@ -90,7 +89,7 @@ class _Form(_forms.WikiForm):
     )
     reason = _dj_forms.CharField(
         label='reason',
-        max_length=200,
+        max_length=_models.PageContentTypeLog._meta.get_field('reason').max_length,
         strip=True,
         required=False
     )

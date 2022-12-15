@@ -60,8 +60,7 @@ class ContributionsSpecialPage(_core.SpecialPage):
 class _Form(_forms.WikiForm):
     username = _dj_forms.CharField(
         label='username',
-        max_length=150,
-        min_length=1,
+        max_length=_dj_auth_models.AbstractUser._meta.get_field('username').max_length,
         required=True,
         strip=True,
         validators=[_models.username_validator],
