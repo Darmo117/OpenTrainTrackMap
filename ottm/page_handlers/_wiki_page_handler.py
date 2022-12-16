@@ -32,7 +32,13 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         super().__init__(request)
         self._raw_page_title = raw_page_title
 
-    def handle_request(self) -> _dj_response.HttpResponse:
+    def _parse_page_title(self) -> _dj_response.HttpResponse | tuple[_w_ns.Namespace, str]:
+        """Parse the page title and return the title as a tuple
+        or a HttpResponse object if it is invalid or not well formatted.
+
+        :return: A HttpResponse object or a tuple containing the page’s namespace and title.
+        """
+        # Redirect to wiki’s main page if title is empty
         if not self._raw_page_title:
             return self.redirect(
                 'ottm:wiki_page',
@@ -40,15 +46,45 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                 get_params=self._request_params.get,
                 raw_page_title=_w_pages.url_encode_page_title(_w_pages.MAIN_PAGE_TITLE),
             )
-        if match := re.search('/+$', self._raw_page_title):  # Remove all trailing '/'
+
+        # Remove all trailing '/'
+        if match := re.search('/+$', self._raw_page_title):
             return self.redirect(
                 'ottm:wiki_page',
                 reverse=True,
                 get_params=self._request_params.get,
                 raw_page_title=self._raw_page_title[:-len(match.group(0))],
             )
-        page_title = _w_pages.get_correct_title(self._raw_page_title)
-        ns, title = _w_pages.split_title(page_title)
+
+        ns, title = _w_pages.split_title(_w_pages.get_correct_title(self._raw_page_title))
+        # Check if title is empty
+        if not title:
+            page = _models.Page(namespace_id=_w_ns.NS_SPECIAL.id, title=title)
+            js_config = _w_pages.get_js_config(page, self._request_params.wiki_action)
+            return self.render_page(
+                'ottm/wiki/page.html',
+                self._page_error_context(page, js_config, empty_title=True),
+                status=400,
+                kwargs={
+                    **_w_cons.__dict__,
+                    **_w_ns.NAMESPACES_DICT,
+                    'MAIN_PAGE_TITLE': _w_pages.MAIN_PAGE_TITLE,
+                })
+
+        # Check if title is invalid
+        if m := _settings.INVALID_TITLE_REGEX.search(title):
+            page = _models.Page(namespace_id=_w_ns.NS_SPECIAL.id, title=title)
+            js_config = _w_pages.get_js_config(page, self._request_params.wiki_action)
+            return self.render_page(
+                'ottm/wiki/page.html',
+                self._page_error_context(page, js_config, char=m.group(1)),
+                status=400,
+                kwargs={
+                    **_w_cons.__dict__,
+                    **_w_ns.NAMESPACES_DICT,
+                    'MAIN_PAGE_TITLE': _w_pages.MAIN_PAGE_TITLE,
+                })
+
         # Redirect to well-formatted page title if necessary
         if self._raw_page_title != (t := _w_pages.url_encode_page_title(ns.get_full_page_title(title))):
             return self.redirect(
@@ -58,20 +94,14 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                 raw_page_title=t,
             )
 
-        # Check if title is valid
-        if _settings.INVALID_TITLE_REGEX.search(title):
-            page = _models.Page(namespace_id=_w_ns.NS_SPECIAL.id, title=title)
-            js_config = _w_pages.get_js_config(page, self._request_params.wiki_action)
-            return self.render_page(
-                'ottm/wiki/page.html',
-                self._page_error_context(page, js_config),
-                status=400,
-                kwargs={
-                    **_w_cons.__dict__,
-                    **_w_ns.NAMESPACES_DICT,
-                    'MAIN_PAGE_TITLE': _w_pages.MAIN_PAGE_TITLE,
-                })
+        return ns, title
 
+    def handle_request(self) -> _dj_response.HttpResponse:
+        result = self._parse_page_title()
+        if isinstance(result, _dj_response.HttpResponse):
+            return result
+
+        ns, title = result
         page = _w_pages.get_page(ns, title)
         js_config = _w_pages.get_js_config(page, self._request_params.wiki_action)
         if ns == _w_ns.NS_SPECIAL:
@@ -178,17 +208,23 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             self,
             page: _models.Page,
             js_config: dict,
+            char: str = None,
+            empty_title: bool = False,
     ) -> WikiPageErrorContext:
         """Create a wiki pagcontexte error context object.
 
         :param page: Page object.
         :param js_config: Dict object containing JS config values.
+        :param empty_title: Whether the page’s title is empty.
         :return: A WikiPageContext object.
+        :param char: The invalid character.
         """
         return WikiPageErrorContext(
             self._request_params,
             page,
             js_config,
+            char=char,
+            empty_title=empty_title,
         )
 
     def _page_read_context(
@@ -505,6 +541,8 @@ class WikiPageErrorContext(WikiPageContext):
             request_params: _requests.RequestParams,
             page: _models.Page,
             js_config: dict[str, _typ.Any],
+            char: str = None,
+            empty_title: bool = False,
     ):
         """Create a page context for a wiki page with an invalid title.
 
@@ -512,6 +550,8 @@ class WikiPageErrorContext(WikiPageContext):
         :param page: Wiki page object.
         :param js_config: Dict object containing the wiki’s JS config.
             It is converted to a JSON object before being inserted in the HTML page.
+        :param char: The invalid character.
+        :param empty_title: Whether the page’s title is empty.
         """
         super().__init__(
             request_params,
@@ -521,10 +561,20 @@ class WikiPageErrorContext(WikiPageContext):
             page_exists=False,
             js_config=js_config,
         )
+        self._char = char
+        self._empty_title = empty_title
 
     @property
     def invalid_title(self) -> bool:
         return True
+
+    @property
+    def char(self) -> str | None:
+        return self._char
+
+    @property
+    def empty_title(self) -> bool:
+        return self._empty_title
 
 
 class WikiPageReadActionContext(WikiPageContext):

@@ -139,7 +139,7 @@ class UILanguage:
 SITE_NAME = 'OpenTrainTrackMap'
 DEFAULT_LANGUAGE_CODE = 'en'
 INVALID_TITLE_REGEX = _re.compile(
-    r'([_#|{}\[\]\x00-\x1f\x7f-\x9f]|^[/\s]|[/\s]$|&[A-Za-z0-9]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;)')
+    r'([_#|{}\[\]\x00-\x1f\x7f-\x9f]|^[:/\s]|[:/\s]$|&[A-Za-z0-9]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;)')
 LANGUAGES: dict[str, UILanguage] = {}
 LOGGER: _logging.Logger
 

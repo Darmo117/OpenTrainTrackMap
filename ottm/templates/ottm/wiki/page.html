@@ -64,7 +64,11 @@
       {% if context.show_title %}
         <h1 id="wiki-article-title" {% block title_attr %}{% endblock %}>
           {% if context.invalid_title %}
-            {% wiki_translate 'special_page.invalid_title.title' %}
+            {% if context.empty_title %}
+              {% wiki_translate 'special_page.empty_title.title' %}
+            {% else %}
+              {% wiki_translate 'special_page.invalid_title.title' %}
+            {% endif %}
           {% elif context.page.namespace == NS_SPECIAL %}
             {% if context.page_exists %}
               {% wiki_translate 'special_page.'|add:context.page.base_name|add:'.'|add:context.title_key value=context.title_value %}
@@ -134,7 +138,11 @@
           {% if context.invalid_title %}
             <div class="alert alert-danger" role="alert">
               {% wiki_inner_link page_title=MAIN_PAGE_TITLE only_url=True as link %}
-              {% wiki_translate 'special_page.invalid_title.message' main_page_url=link %}
+              {% if context.empty_title %}
+                {% wiki_translate 'special_page.empty_title.message' main_page_url=link %}
+              {% else %}
+                {% wiki_translate 'special_page.invalid_title.message' main_page_url=link char=context.char %}
+              {% endif %}
             </div>
           {% elif not context.page_exists %}
             <div class="alert alert-danger" role="alert">
