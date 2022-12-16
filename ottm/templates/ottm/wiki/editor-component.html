@@ -64,7 +64,7 @@
 {% endwith %}
 
 {% with form=context.edit_form trans_prefix='page.edit.form.' %}
-  <form action="{% url 'ottm:wiki_page' raw_page_title=context.page.full_title %}?action=submit"
+  <form action="{% wiki_inner_link page_title=context.page.full_title url_params='action=submit' only_url=True no_red_link=True %}"
         method="post" id="wiki-edit-form">
     {% if form.warn_unsaved_changes %}
       <input type="hidden" name="warn-unsaved" value="1">

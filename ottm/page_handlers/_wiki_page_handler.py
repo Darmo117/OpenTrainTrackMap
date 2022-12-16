@@ -34,15 +34,29 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
 
     def handle_request(self) -> _dj_response.HttpResponse:
         if not self._raw_page_title:
-            return self.redirect('ottm:wiki_page', reverse=True, raw_page_title=_w_pages.MAIN_PAGE_TITLE)
+            return self.redirect(
+                'ottm:wiki_page',
+                reverse=True,
+                get_params=self._request_params.get,
+                raw_page_title=_w_pages.url_encode_page_title(_w_pages.MAIN_PAGE_TITLE),
+            )
         if match := re.search('/+$', self._raw_page_title):  # Remove all trailing '/'
-            return self.redirect('ottm:wiki_page', reverse=True,
-                                 raw_page_title=self._raw_page_title[:-len(match.group(0))])
+            return self.redirect(
+                'ottm:wiki_page',
+                reverse=True,
+                get_params=self._request_params.get,
+                raw_page_title=self._raw_page_title[:-len(match.group(0))],
+            )
         page_title = _w_pages.get_correct_title(self._raw_page_title)
         ns, title = _w_pages.split_title(page_title)
         # Redirect to well-formatted page title if necessary
         if self._raw_page_title != (t := _w_pages.url_encode_page_title(ns.get_full_page_title(title))):
-            return self.redirect('ottm:wiki_page', reverse=True, raw_page_title=t)
+            return self.redirect(
+                'ottm:wiki_page',
+                reverse=True,
+                get_params=self._request_params.get,
+                raw_page_title=t,
+            )
 
         # Check if title is valid
         if _settings.INVALID_TITLE_REGEX.search(title):
@@ -82,8 +96,12 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             else:
                 data = special_page.process_request(self._request_params, title)
                 if isinstance(data, _w_sp.Redirect):
-                    return self.redirect('ottm:wiki_page', reverse=True,
-                                         raw_page_title=_w_pages.url_encode_page_title(data.page_title))
+                    return self.redirect(
+                        'ottm:wiki_page',
+                        reverse=True,
+                        get_params=self._request_params.get,
+                        raw_page_title=_w_pages.url_encode_page_title(data.page_title),
+                    )
                 context = WikiSpecialPageContext(
                     self._request_params,
                     page=page,
@@ -135,7 +153,11 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                                                               concurrent_edit_error=True)
                         else:
                             # Redirect to normal view
-                            return self.redirect('ottm:wiki_page', reverse=True, raw_page_title=page.full_title)
+                            return self.redirect(
+                                'ottm:wiki_page',
+                                reverse=True,
+                                raw_page_title=_w_pages.url_encode_page_title(page.full_title),
+                            )
                 case _w_cons.ACTION_HISTORY:
                     context = self._page_history_context(page, js_config)
                 case _w_cons.ACTION_TALK:
@@ -420,7 +442,7 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
         """
         super().__init__(
             request_params,
-            tab_title=page.title,
+            tab_title=page.full_title,  # FIXME use localized name for special pages and error pages
             title=page.title,
             no_index=no_index,
             max_page_index=max_page_index,
