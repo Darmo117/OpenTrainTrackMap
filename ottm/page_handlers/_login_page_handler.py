@@ -1,8 +1,6 @@
 """This module defines the handler for the login page."""
 from __future__ import annotations
 
-import typing as _typ
-
 import django.forms as _dj_forms
 from django.http import response as _dj_response
 
@@ -44,13 +42,13 @@ class LoginPageHandler(_ottm_handler.OTTMHandler):
 class LoginForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
     """Login form."""
 
-    def __init__(self, post=None, initial: dict[str, _typ.Any] = None):
+    def __init__(self, post=None, initial=None):
         """Create a login form.
 
         :param post: Optional POST dict.
         :param initial: Optional dict to pre-fill the form before render.
         """
-        super().__init__('log_in', False, post, initial=initial)
+        super().__init__('log_in', False, post=post, initial=initial)
 
     username = _dj_forms.CharField(
         label='username',

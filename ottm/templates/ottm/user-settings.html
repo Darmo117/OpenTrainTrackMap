@@ -4,3 +4,16 @@
 {% block container-content %}
   {% include 'ottm/include/form.html' with form=context.form prefix='page.user_settings.' %}
 {% endblock %}
+
+{% block page-scripts %}
+  <script>
+    (function () {
+      const hash = location.hash.substring(1) || "personal-info";
+      $(`#form-tab-${hash}`).addClass("active");
+      $(`#form-panel-${hash}`).addClass("show active");
+      $("#page-content ul[role='tablist'] button[role='tab']").on("click", e => {
+        location.hash = `#${e.target.id.substring(9)}`;
+      });
+    })();
+  </script>
+{% endblock %}

@@ -70,3 +70,7 @@ html, body {
 .form-errors-alert .form-errors {
   margin-bottom: 0;
 }
+
+form fieldset legend {
+  margin-top: 1em;
+}

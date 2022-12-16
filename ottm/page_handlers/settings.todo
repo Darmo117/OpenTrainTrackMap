@@ -1,0 +1,95 @@
+X- personal information
+  X- basic info
+    X- password
+    X- gender
+  X- localization
+    X- language
+  X- emails
+    X- email
+    X- allow users to send emails
+    X- allow new users to send email
+    X- send copy of emails sent to other users
+    X- email user blacklist
+X- appearence
+  X- date and time
+    X- date format
+    X- timezone
+  X- files
+    X- max file size
+    X- thumbnails size
+  X- diffs
+    X- hide page content in diffs
+    X- do not show diff after revert
+  X- advanced
+    X- show hidden categories
+    X- ask confirmation when clicking on revert link
+X- editing
+  X- editor
+    X- mark all edits as minor by default
+    X- warn when no edit comment
+    X- warn when leaving page without submitting changes
+  X- preview
+    X- show preview above the edit form
+    X- show preview without reloading page
+  X- talks
+    X- automatically follow topic when creating topic or posting message
+X- recent changes
+  X- display
+    X- default number of days to show in recent changes and logs
+    X- default number of edits to show in recent changes, page histories and logs
+    X- group edits per page in recent changes and follow list
+  X- mask
+    X- mask minor edits
+    X- mask bot edits
+    X- mask own edits
+    X- mask anonymous edits
+    X- mask authenticated user edits
+    X- mask page categorization
+    X- mask patrolled edits
+X- follow list
+  X- modify
+    X- link to raw/GUI follow list page
+  X- display
+    X- default number of days to show
+    X- default number of edits to show
+  X- mask
+    X- mask minor edits
+    X- mask bot edits
+    X- mask own edits
+    X- mask anonymous edits
+    X- mask authenticated user edits
+    X- mask page categorization
+    X- mask patrolled edits
+  X- followed pages
+    X- add created pages
+    X- add modified pages
+    X- add renamed pages
+    X- add deleted pages
+    X- add pages where revert
+X- search
+  X- general
+    X- default number of results to show
+  X- advanced
+    X- mode: default, strict, prefix
+X- gadgets
+  X- list
+X- notifications
+  X- options
+    X- send: none, immediately, daily summary, weekly summary
+    X- format: HTML, plain text
+  X- events (web/email)
+    X- user page edits
+    X- followed pages edits
+    X- talk mentions
+    X- talk message answers
+    X- talk topic answers
+    X- thanks
+    X- failed connection attempts
+    X- permissions edits
+    X- other user email
+    X- cancelled/reverted edits
+    X- edit count thresholds
+  X- blocked users
+    X- mask notifications from users in list
+  X- muted pages
+    X- mask notifications from pages in list

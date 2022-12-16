@@ -127,12 +127,40 @@
         "tab_title": "Account settings",
         "form": {
           "user_settings": {
-            "current_email": {
-              "label": "Current email address"
+            "tab": {
+              "personal_info": "Personal information",
+              "appearence": "Appearence",
+              "editing": "Editing",
+              "recent_changes": "Recent changes",
+              "follow_list": "Follow list",
+              "search": "Search",
+              "gadgets": "Gadgets",
+              "notifications": "Notifications"
             },
-            "new_email": {
-              "label": "New email address",
-              "help": "Never shown publicly"
+            "fieldset": {
+              "basic_info": "Basic information",
+              "localization": "Localization",
+              "email": "Email address",
+              "skins": "Display",
+              "date_and_time": "Date and time",
+              "files": "Files",
+              "diffs": "Differences",
+              "appearence_advanced": "Advanced options",
+              "editor": "Editor",
+              "preview": "Preview",
+              "talks": "Talks",
+              "rc_display": "Display options",
+              "rc_mask": "Displayed edits",
+              "modify": "Modify the follow list",
+              "fl_display": "Display options",
+              "fl_mask": "Displayed edits",
+              "followed_pages": "Followed pages",
+              "general": "General options",
+              "advanced_search": "Advanced search",
+              "email_options": "Email options",
+              "events": "Events",
+              "blocked_users": "Blocked users",
+              "blocked_pages": "Blocked pages"
             },
             "password": {
               "label": "New password",
@@ -140,6 +168,32 @@
             },
             "password_confirm": {
               "label": "Confirm new password"
+            },
+            "prefered_language": {
+              "label": "Prefered interface language"
+            },
+            "email": {
+              "label": "Email address",
+              "help": "Never shown publicly"
+            },
+            "users_can_send_emails": {
+              "label": "Allow users to send me emails"
+            },
+            "new_users_can_send_emails": {
+              "label": "Allow new users to send me emails"
+            },
+            "send_copy_of_sent_emails": {
+              "label": "Send me a copy of emails I sent"
+            },
+            "email_user_blacklist": {
+              "label": "User blacklist",
+              "help": "List of users that cannot send you emails. One username per line."
+            },
+            "dark_mode": {
+              "label": "Use dark mode"
+            },
+            "prefered_datetime_format": {
+              "label": "Prefered date and time format"
             },
             "submit": {
               "label": "Save settings"

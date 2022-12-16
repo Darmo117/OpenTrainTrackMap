@@ -67,4 +67,4 @@ class _Form(_ph.WikiForm):
     )
 
     def __init__(self, post=None, initial=None):
-        super().__init__('select_user', False, post, initial)
+        super().__init__('select_user', False, post=post, initial=initial)

@@ -95,6 +95,6 @@ class _Form(_ph.WikiForm):
     )
 
     def __init__(self, post=None, initial=None):
-        super().__init__('set_page_language', False, post, initial)
+        super().__init__('set_page_language', False, post=post, initial=initial)
         self.fields['content_language'].choices = tuple(
             (language.code, language.name) for language in _models.Language.objects.order_by('name'))

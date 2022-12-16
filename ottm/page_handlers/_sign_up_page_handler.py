@@ -1,8 +1,6 @@
 """This module defines the handler for the sign up page."""
 from __future__ import annotations
 
-import typing as _typ
-
 import django.contrib.auth.models as _dj_auth
 import django.core.exceptions as _dj_exc
 import django.core.validators as _dj_valid
@@ -49,8 +47,8 @@ class SignUpPageHandler(_ottm_handler.OTTMHandler):
 class SignUpForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
     """Sign up form."""
 
-    def __init__(self, post=None, initial: dict[str, _typ.Any] = None):
-        super().__init__('sign_up', False, post, initial=initial)
+    def __init__(self, post=None, initial=None):
+        super().__init__('sign_up', False, post=post, initial=initial)
 
     @staticmethod
     def username_validator(value: str):

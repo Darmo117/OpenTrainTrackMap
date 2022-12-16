@@ -442,7 +442,7 @@ class WikiEditPageForm(_wiki_base_form.WikiForm):
         :param post: A POST dict to populate this form.
         :param initial: A dict object of initial field values.
         """
-        super().__init__('edit', warn_unsaved_changes, post, initial)
+        super().__init__('edit', warn_unsaved_changes, post=post, initial=initial)
 
         if user and user.is_anonymous:
             self.fields['follow_page'].widget.attrs['disabled'] = True

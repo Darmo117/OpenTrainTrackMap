@@ -95,4 +95,4 @@ class _Form(_ph.WikiForm):
     )
 
     def __init__(self, post=None, initial=None):
-        super().__init__('set_page_content_type', False, post, initial)
+        super().__init__('set_page_content_type', False, post=post, initial=initial)

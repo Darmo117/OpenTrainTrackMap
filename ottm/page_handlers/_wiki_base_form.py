@@ -15,6 +15,6 @@ class WikiForm(_forms.CustomForm):
         :param post: A POST dict to populate this form.
         :param initial: A dict object of initial field values.
         """
-        super().__init__(name, warn_unsaved_changes, post, initial=initial)
+        super().__init__(name, warn_unsaved_changes, post=post, initial=initial)
         for field_name, field in self.fields.items():
             field.widget.attrs['id'] = f'wiki-{name.replace("_", "-")}-form-{field_name.replace("_", "-")}'

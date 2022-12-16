@@ -13,29 +13,79 @@
       </ul>
     </div>
   {% endif %}
-  <form method="post" id="{{ form.name|replace:'_,-' }}" style="margin-bottom: 1em">
+  {% if not form.sections|length_is:1 %}
+    <ul class="nav nav-tabs" role="tablist">
+      {% for section_name, fields in form.sections.items %}
+        <li class="nav-item" role="presentation">
+          <button id="form-tab-{{ section_name|replace:'_,-' }}" class="nav-link" data-toggle="tab"
+                  data-target="#form-panel-{{ section_name|replace:'_,-' }}" type="button" role="tab"
+                  aria-controls="form-panel-{{ section_name|replace:'_,-' }}" aria-selected="false">
+            {% ottm_translate trans_prefix|add:'tab.'|add:section_name %}
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+  <form method="post" id="{{ form.name|replace:'_,-' }}" class="tab-content" style="margin-bottom: 1em">
     {% csrf_token %}
     {% if form.warn_unsaved_changes %}
       <input type="hidden" name="warn-unsaved" value="1">
     {% endif %}
-    {% for field in form %}
-      {% with trans_field_prefix=trans_prefix|add:field.label|add:'.' %}
-        <div class="form-group">
-          <label for="{{ field.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
-          {{ field }}
-          {% if field.help_text %}
-            <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
-          {% endif %}
-          {% if field.errors %}
-            <div class="invalid-feedback" style="display: block">
-              {% for error in field.errors.as_data %}
-                {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
-              {% endfor %}
+    {# @formatter:off #}
+    {% for section_name, fieldsets in form.sections.items %}
+      {% if section_name %}
+        <div id="form-panel-{{ section_name|replace:'_,-' }}" class="tab-pane" role="tabpanel"
+             aria-labelledby="form-tab-{{ section_name|replace:'_,-' }}">
+      {% endif %}
+      {% for fieldset_name, fieldset in fieldsets.items %}
+        {% if fieldset_name %}
+          <fieldset>
+            <legend>{% ottm_translate trans_prefix|add:'fieldset.'|add:fieldset_name %}</legend>
+        {% endif %}
+        {% for field in fieldset %}
+          {% with trans_field_prefix=trans_prefix|add:field.label|add:'.' %}
+            <div {% if field.field.widget.input_type == 'checkbox' %}class="custom-control custom-checkbox"{% endif %}>
+              {% if field.field.widget.input_type == 'checkbox' %}
+                {{ field }}
+                <label for="{{ field.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              {% elif field.field.widget.input_type == 'radio' %}
+                <label>{% ottm_translate trans_field_prefix|add:'label' %}</label>
+                {% for f in field %}
+                  <div class="custom-control custom-radio">
+                    {{ f.tag }}
+                    <label for="{{ f.id_for_label }}" class="custom-control-label">
+                      {% ottm_translate trans_field_prefix|add:f.choice_label|add:'.label' %}
+                    </label>
+                  </div>
+                {% endfor %}
+              {% else %}
+                <label for="{{ field.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+                {{ field }}
+              {% endif %}
+              {% if field.help_text %}
+                <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
+              {% endif %}
+              {% if field.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in field.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
             </div>
-          {% endif %}
+          {% endwith %}
+        {% endfor %}
+        {% if fieldset_name %}
+          </fieldset>
+        {% endif %}
+      {% endfor %}
+      {% if section_name %}
         </div>
-      {% endwith %}
+      {% endif %}
     {% endfor %}
+    {# @formatter:on #}
     <div class="text-center">
       <input type="submit" class="btn btn-primary" value="{% ottm_translate trans_prefix|add:'submit.label' %}">
     </div>

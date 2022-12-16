@@ -55,4 +55,4 @@ class _Form(_ph.WikiForm):
     )
 
     def __init__(self, post=None, initial=None):
-        super().__init__('select_page', False, post, initial)
+        super().__init__('select_page', False, post=post, initial=initial)
