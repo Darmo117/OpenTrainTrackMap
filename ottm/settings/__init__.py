@@ -117,11 +117,11 @@ class UILanguage:
         if '%A' in format_:
             format_ = format_.replace('%A', self._abbr_day_names[dt.weekday()])
         if '%b' in format_:
-            format_ = format_.replace('%b', self._month_names[dt.weekday()])
+            format_ = format_.replace('%b', self._month_names[dt.month - 1])
         if '%B' in format_:
-            format_ = format_.replace('%B', self._abbr_month_names[dt.weekday()])
+            format_ = format_.replace('%B', self._abbr_month_names[dt.month - 1])
         if '%p' in format_:
-            format_ = format_.replace('%p', self._am_pm[dt.hour == 0 or dt.hour > 12])
+            format_ = format_.replace('%p', self._am_pm[dt.hour >= 12])
         return dt.strftime(format_)
 
     def format_number(self, n: int | float) -> str:
