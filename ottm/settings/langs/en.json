@@ -306,6 +306,14 @@
         "requires_perms": {
           "tooltip": "This special page requires specific permissions"
         },
+        "invalid_title": {
+          "title": "Invalid page title",
+          "message": "**The title of the requested page contains invalid characters.**\n\nGo back to the (main page)[{main_page_url}]."
+        },
+        "does_not_exist": {
+          "title": "Special page does not exist",
+          "message": "**This special page does not exist.**\n\nA list of all special pages can be found (here)[{special_pages_link}].\n\nGo back to the (main page)[{main_page_url}]."
+        },
         "RandomPage": {
           "title": "Random page",
           "menu": {
@@ -625,10 +633,9 @@
         },
         "edit": {
           "revision_warning": {
-            "edit": "You are editing an archived version of this page published on {date}.\n\nIf you publish your changes, all subsequent revisions will be reverted.",
-            "view": "You are viewing the source of this page as it was published on {date}."
+            "edit": "**You are editing an archived version of this page published on {date}.**\n\nIf you publish your changes, all subsequent revisions will be reverted."
           },
-          "protection_warning": "**This page is protected.<br>** Reason: *{reason}*",
+          "protection_warning": "**This page is protected.**<br>Reason: *{reason}*",
           "permission_error": "You do not have the permissions required to edit this page.",
           "concurrent_edit_error": "Another user published a new version of this page while you were editing it. Please compare your version with the new one below before publishing.",
           "log_entry": "Log entry:",
@@ -753,7 +760,7 @@
       },
       "footer": {
         "last_edit": "Page last edited on {date}.",
-        "license": "All text on this wiki is available under the [CC BY-SA 4.0](license-url) unless stated otherwise."
+        "license": "All text on this wiki is available under the [CC BY-SA 4.0]({license-url}) unless stated otherwise."
       },
       "revisions_list": {
         "mask": {

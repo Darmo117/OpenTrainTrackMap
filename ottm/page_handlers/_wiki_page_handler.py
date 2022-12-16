@@ -4,6 +4,7 @@ from __future__ import annotations
 import abc as _abc
 import datetime as _dt
 import json as _json
+import re
 import typing as _typ
 
 import django.contrib.auth.models as _dj_auth_models
@@ -34,13 +35,31 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
     def handle_request(self) -> _dj_response.HttpResponse:
         if not self._raw_page_title:
             return self.redirect('ottm:wiki_page', reverse=True, raw_page_title=_w_pages.MAIN_PAGE_TITLE)
-        if self._raw_page_title.endswith('/'):  # Remove trailing '/'
-            return self.redirect('ottm:wiki_page', reverse=True, raw_page_title=self._raw_page_title[:-1])
+        if match := re.search('/+$', self._raw_page_title):  # Remove all trailing '/'
+            return self.redirect('ottm:wiki_page', reverse=True,
+                                 raw_page_title=self._raw_page_title[:-len(match.group(0))])
         page_title = _w_pages.get_correct_title(self._raw_page_title)
         ns, title = _w_pages.split_title(page_title)
+        # Redirect to well-formatted page title if necessary
+        if self._raw_page_title != (t := _w_pages.url_encode_page_title(ns.get_full_page_title(title))):
+            return self.redirect('ottm:wiki_page', reverse=True, raw_page_title=t)
+
+        # Check if title is valid
+        if _settings.INVALID_TITLE_REGEX.search(title):
+            page = _models.Page(namespace_id=_w_ns.NS_SPECIAL.id, title=title)
+            js_config = _w_pages.get_js_config(page, self._request_params.wiki_action)
+            return self.render_page(
+                'ottm/wiki/page.html',
+                self._page_error_context(page, js_config),
+                status=400,
+                kwargs={
+                    **_w_cons.__dict__,
+                    **_w_ns.NAMESPACES_DICT,
+                    'MAIN_PAGE_TITLE': _w_pages.MAIN_PAGE_TITLE,
+                })
+
         page = _w_pages.get_page(ns, title)
         js_config = _w_pages.get_js_config(page, self._request_params.wiki_action)
-
         if ns == _w_ns.NS_SPECIAL:
             special_page = _w_sp.SPECIAL_PAGES.get(page.base_name)
             if special_page is None:
@@ -130,7 +149,25 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         return self.render_page('ottm/wiki/page.html', context, status=status, kwargs={
             **_w_cons.__dict__,
             **_w_ns.NAMESPACES_DICT,
+            'MAIN_PAGE_TITLE': _w_pages.MAIN_PAGE_TITLE,
         })
+
+    def _page_error_context(
+            self,
+            page: _models.Page,
+            js_config: dict,
+    ) -> WikiPageErrorContext:
+        """Create a wiki pagcontexte error context object.
+
+        :param page: Page object.
+        :param js_config: Dict object containing JS config values.
+        :return: A WikiPageContext object.
+        """
+        return WikiPageErrorContext(
+            self._request_params,
+            page,
+            js_config,
+        )
 
     def _page_read_context(
             self,
@@ -138,7 +175,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             revision_id: int | None,
             js_config: dict,
     ) -> WikiPageReadActionContext:
-        """Create a wiki page context object.
+        """Create a wiki page read context object.
 
         :param page: Page object.
         :param revision_id: Page revision ID.
@@ -398,6 +435,10 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
         self._js_config = _json.dumps(js_config)
 
     @property
+    def invalid_title(self) -> bool:
+        return False
+
+    @property
     def site_name(self) -> str:
         return self.language.translate('wiki.name', site_name=_settings.SITE_NAME)
 
@@ -432,6 +473,36 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
     @property
     def wiki_js_config(self) -> str:
         return self._js_config
+
+
+class WikiPageErrorContext(WikiPageContext):
+    """Context class for page errors."""
+
+    def __init__(
+            self,
+            request_params: _requests.RequestParams,
+            page: _models.Page,
+            js_config: dict[str, _typ.Any],
+    ):
+        """Create a page context for a wiki page with an invalid title.
+
+        :param request_params: Page request parameters.
+        :param page: Wiki page object.
+        :param js_config: Dict object containing the wiki’s JS config.
+            It is converted to a JSON object before being inserted in the HTML page.
+        """
+        super().__init__(
+            request_params,
+            page=page,
+            no_index=True,
+            show_title=True,
+            page_exists=False,
+            js_config=js_config,
+        )
+
+    @property
+    def invalid_title(self) -> bool:
+        return True
 
 
 class WikiPageReadActionContext(WikiPageContext):

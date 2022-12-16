@@ -18,12 +18,13 @@ def split_title(title: str) -> tuple[namespaces.Namespace, str]:
     :param title: Full page title.
     :return: A tuple containing the page’s namespace and title.
     """
+    title = title.strip()
     ns_id = 0
     if namespaces.SEPARATOR in title:
         a, b = title.split(namespaces.SEPARATOR, maxsplit=1)
-        if ns := namespaces.NAMESPACE_NAMES.get(a):
+        if ns := namespaces.NAMESPACE_NAMES.get(a.strip()):
             ns_id = ns.id
-            page_title = b
+            page_title = b.strip()
         else:
             page_title = title
     else:
@@ -38,7 +39,7 @@ def get_correct_title(raw_title: str) -> str:
     :param raw_title: A URL-compatible page title.
     :return: The actual page title.
     """
-    return urllib.parse.unquote(raw_title.replace('_', ' '))
+    return urllib.parse.unquote(raw_title.replace('_', ' ')).strip()
 
 
 def url_encode_page_title(title: str) -> str:
