@@ -92,9 +92,12 @@ class UILanguage:
         :return: The translated text or the key/default value if it is undefined for the current language.
         """
         text = self._mappings.get(key, default if default is not None else key)
-        text = text.replace('license-url', f'https://creativecommons.org/licenses/by-sa/3.0/deed.{self.code}')
+        has_several_paragraphs = '\n\n' in text
+        text = text.replace('{license-url}', f'https://creativecommons.org/licenses/by-sa/3.0/deed.{self.code}')
         # Parse Markdown before kwargs substitution to avoid formatting them.
-        text = markdown.markdown(text, output_format='html')[3:-4]  # Remove enclosing <p> tags
+        text = markdown.markdown(text, output_format='html')
+        if not has_several_paragraphs:
+            text = text[3:-4]  # Remove enclosing <p> tags if there is a single paragraph
         text = text.format(**kwargs)
         return text
 
