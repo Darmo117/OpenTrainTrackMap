@@ -308,11 +308,11 @@
         },
         "invalid_title": {
           "title": "Invalid page title",
-          "message": "**The title of the requested page contains invalid characters.**\n\nGo back to the (main page)[{main_page_url}]."
+          "message": "**The title of the requested page contains invalid characters.**\n\nGo back to the [main page]({main_page_url})."
         },
         "does_not_exist": {
           "title": "Special page does not exist",
-          "message": "**This special page does not exist.**\n\nA list of all special pages can be found (here)[{special_pages_link}].\n\nGo back to the (main page)[{main_page_url}]."
+          "message": "**This special page does not exist.**\n\nA list of all special pages can be found [here]({special_pages_link}).\n\nGo back to the [main page]({main_page_url})."
         },
         "RandomPage": {
           "title": "Random page",

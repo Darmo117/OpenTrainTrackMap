@@ -44,7 +44,7 @@ class Parser:
         })
         link_tooltip = tooltip or page.full_title
 
-        if page_exists or no_red_link or url_params.get('action') in (ACTION_TALK, ACTION_HISTORY, ACTION_INFO):
+        if page_exists or no_red_link or url_params.get('action') not in (ACTION_EDIT, ACTION_SUBMIT):
             params = urllib.parse.urlencode(url_params)
             if params:
                 url += '?' + params
