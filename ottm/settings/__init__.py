@@ -132,7 +132,7 @@ class UILanguage:
         """
         s = str(n)
         dec_part = s.split('.')[1] if '.' in s else ''
-        int_part = ('{:,}'.format(math.floor(n))).replace(',', self._thousands_sep)
+        int_part = ('{:,}'.format(math.floor(n))).replace(',', self._thousands_sep).replace('-', '−')
         return int_part + (self._decimal_sep + dec_part if dec_part else '')
 
 

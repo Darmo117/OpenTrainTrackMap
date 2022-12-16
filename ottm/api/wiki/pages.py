@@ -206,20 +206,21 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
             author = auth.get_or_create_anonymous_account_from_request(request)
         else:
             raise ValueError('missing request')
-    if not page.exists:
-        # Set content type
-        page.content_type = _get_page_content_type(page)
-        page.save()
-        # Add to log
-        models.PageCreationLog(performer=author.internal_object, page=page).save()
-    models.PageRevision(
-        page=page,
-        author=author.internal_object,
-        comment=utils.escape_html(comment),
-        is_minor=minor_edit,
-        content=content,
-        is_bot=author.is_bot,
-    ).save()
+    if not page.exists or page.get_content() != content:
+        if not page.exists:
+            # Set content type
+            page.content_type = _get_page_content_type(page)
+            page.save()
+            # Add to log
+            models.PageCreationLog(performer=author.internal_object, page=page).save()
+        models.PageRevision(
+            page=page,
+            author=author.internal_object,
+            comment=utils.escape_html(comment),
+            is_minor=minor_edit,
+            content=content,
+            is_bot=author.is_bot,
+        ).save()
     if author.is_authenticated:
         follow_page(author, page, follow)
 
