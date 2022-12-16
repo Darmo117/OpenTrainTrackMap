@@ -30,3 +30,5 @@ LANGUAGE_CODES = {
     CT_CSS: 'css',
     CT_JSON: 'json',
 }
+
+FILE_PREVIEW_SIZES = ((320, 600), (640, 480), (800, 600), (1024, 768), (1280, 1024), (2560, 2048))

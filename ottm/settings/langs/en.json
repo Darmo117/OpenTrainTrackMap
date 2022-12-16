@@ -130,17 +130,16 @@
             "tab": {
               "personal_info": "Personal information",
               "appearence": "Appearence",
-              "editing": "Editing",
-              "recent_changes": "Recent changes",
-              "follow_list": "Follow list",
-              "search": "Search",
-              "gadgets": "Gadgets",
+              "editing": "Wiki editing",
+              "revisions": "Wiki page revisions",
+              "search": "Wiki search",
+              "gadgets": "Wiki gadgets",
               "notifications": "Notifications"
             },
             "fieldset": {
               "basic_info": "Basic information",
               "localization": "Localization",
-              "email": "Email address",
+              "email": "Email",
               "skins": "Display",
               "date_and_time": "Date and time",
               "files": "Files",
@@ -148,19 +147,16 @@
               "appearence_advanced": "Advanced options",
               "editor": "Editor",
               "preview": "Preview",
-              "talks": "Talks",
-              "rc_display": "Display options",
-              "rc_mask": "Displayed edits",
               "modify": "Modify the follow list",
-              "fl_display": "Display options",
-              "fl_mask": "Displayed edits",
+              "revisions_display": "Display options",
+              "revisions_displayed_edits": "Displayed edits",
               "followed_pages": "Followed pages",
-              "general": "General options",
+              "search_general": "General options",
               "advanced_search": "Advanced search",
               "email_options": "Email options",
               "events": "Events",
               "blocked_users": "Blocked users",
-              "blocked_pages": "Blocked pages"
+              "muted_pages": "Muted pages"
             },
             "password": {
               "label": "New password",
@@ -168,6 +164,19 @@
             },
             "password_confirm": {
               "label": "Confirm new password"
+            },
+            "gender": {
+              "label": "What gender would you like to be described as?",
+              "help": "This option is not mandatory, it is used by the website to address you or to mention you to others using the correct gender. **This information is public.**",
+              "neutral": {
+                "label": "They contribute. (The site will try to use neutral language as much as possible when mentioning you.)"
+              },
+              "feminine": {
+                "label": "She contributes."
+              },
+              "masculine": {
+                "label": "He contributes."
+              }
             },
             "prefered_language": {
               "label": "Prefered interface language"
@@ -183,17 +192,202 @@
               "label": "Allow new users to send me emails"
             },
             "send_copy_of_sent_emails": {
-              "label": "Send me a copy of emails I sent"
+              "label": "Send me a copy of emails I send to users"
             },
             "email_user_blacklist": {
-              "label": "User blacklist",
-              "help": "List of users that cannot send you emails. One username per line."
+              "label": "Prevent these users from sending me emails:",
+              "help": "One username per line."
+            },
+            "custom_css_js": {
+              "label": "Custom CSS/JavaScript wiki pages to apply to all wiki pages:"
+            },
+            "custom_css": {
+              "label": "Custom CSS"
+            },
+            "custom_js": {
+              "label": "Custom JavaScript"
             },
             "dark_mode": {
               "label": "Use dark mode"
             },
             "prefered_datetime_format": {
               "label": "Prefered date and time format"
+            },
+            "server_time": {
+              "label": "Server time:"
+            },
+            "timezone_time": {
+              "label": "Timezone time:"
+            },
+            "prefered_timezone": {
+              "label": "Prefered timezone"
+            },
+            "max_file_preview_size": {
+              "label": "Maximum size of file preview on wiki ”File:” pages"
+            },
+            "thumbnails_size": {
+              "label": "Maximum size of image thumbnails in wiki pages",
+              "help": "Between 100px and 600px"
+            },
+            "show_page_content_in_diffs": {
+              "label": "Show pages’ content below diffs"
+            },
+            "show_diff_after_revert": {
+              "label": "Show diff after revert"
+            },
+            "show_hidden_categories": {
+              "label": "Show hidden categories"
+            },
+            "ask_revert_confirmation": {
+              "label": "Ask for confirmation when clicking on a revert button"
+            },
+            "mark_all_wiki_edits_as_minor": {
+              "label": "Mark all edits as minor"
+            },
+            "warn_when_no_wiki_edit_comment": {
+              "label": "Warn me if I didn’t specify an edit summary"
+            },
+            "warn_when_wiki_edit_not_published": {
+              "label": "Warn me when I quit a page I am editing without publishing"
+            },
+            "show_preview_above_edit_form": {
+              "label": "Show preview above the edit form"
+            },
+            "show_preview_without_reload": {
+              "label": "Show preview without reloading the page"
+            },
+            "edit_follow_list": {
+              "label": "Modify entries of your follow list",
+              "edit_button": "Edit",
+              "edit_raw_button": "Edit raw list",
+              "clear_button": "Clear"
+            },
+            "default_days_nb_in_wiki_edit_lists": {
+              "label": "Number of days to display in recent changes, logs and follow list",
+              "help": "Maximum number: {nb} days"
+            },
+            "default_edits_nb_in_wiki_edit_lists": {
+              "label": "Number of revisions to display in recent changes, logs and follow list",
+              "help": "Maximum number: {nb}"
+            },
+            "group_edits_per_page": {
+              "label": "Group edits per page in recent changes and follow list"
+            },
+            "revisions_displayed_edits": {
+              "text": "Display settings for recent changes and follow list."
+            },
+            "mask_wiki_minor_edits": {
+              "label": "Mask minor edits"
+            },
+            "mask_wiki_bot_edits": {
+              "label": "Mask edits made by bot accounts"
+            },
+            "mask_wiki_own_edits": {
+              "label": "Mask my own edits"
+            },
+            "mask_wiki_anonymous_edits": {
+              "label": "Mask edits made by anonymous users"
+            },
+            "mask_wiki_authenticated_edits": {
+              "label": "Mask edits made by authenticated users"
+            },
+            "mask_wiki_categorization_edits": {
+              "label": "Mask pages categorization"
+            },
+            "mask_wiki_patrolled_edits": {
+              "label": "Mask patrolled edits"
+            },
+            "followed_pages": {
+              "text": "Settings for when to add pages/talk topics to your follow list."
+            },
+            "add_created_pages_to_follow_list": {
+              "label": "Pages I create"
+            },
+            "add_modified_pages_to_follow_list": {
+              "label": "Pages I modify"
+            },
+            "add_renamed_pages_to_follow_list": {
+              "label": "Pages I rename"
+            },
+            "add_deleted_pages_to_follow_list": {
+              "label": "Pages I delete"
+            },
+            "add_reverted_pages_to_follow_list": {
+              "label": "Pages where I revert edits"
+            },
+            "add_created_topics_to_follow_list": {
+              "label": "Topics I create"
+            },
+            "add_replied_to_topics_to_follow_list": {
+              "label": "Topics that I reply to"
+            },
+            "search_default_results_nb": {
+              "label": "Default number of results to display on the search page",
+              "help": "Maximum number: {nb}"
+            },
+            "search_mode": {
+              "label": "Defines the behavior of the search suggestion algorithm.",
+              "default": {
+                "label": "Default (recommended)",
+                "help": "Suggests results that are similar."
+              },
+              "strict": {
+                "label": "Strict",
+                "help": "Only suggests results that exactly match the query."
+              },
+              "prefix": {
+                "label": "Prefix",
+                "help": "Matches the start of page titles."
+              }
+            },
+            "email_update_notification_frequency": {
+              "label": "Notification emails frequency",
+              "none": {
+                "label": "Never"
+              },
+              "immediately": {
+                "label": "Immediately"
+              },
+              "daily": {
+                "label": "Daily summary"
+              },
+              "weekly": {
+                "label": "Weekly summary"
+              }
+            },
+            "html_email_updates": {
+              "label": "Send emails as HTML"
+            },
+            "events": {
+              "text": "Alert me of the following events.",
+              "table": {
+                "header": {
+                  "web": "Web",
+                  "email": "Email",
+                  "notify_user_talk_edits": "New messages on my user talk page",
+                  "notify_followed_pages_edits": "Edits made on pages I follow",
+                  "notify_talk_mentions": "I am mentioned in a message",
+                  "notify_message_answers": "Someone answered one of my messages",
+                  "notify_topic_answers": "Someone posted a message in a topic I created",
+                  "notify_thanks": "Someone thanked me on an edit I made",
+                  "notify_failed_connection_attempts": "A failed connection attempt to my account was made",
+                  "notify_permissions_edit": "One of my user groups/permissions was modified",
+                  "notify_user_email": "A user sent me an email",
+                  "notify_cancelled_edits": "One of my edits was cancelled",
+                  "notify_edit_count_milestones": "I reached a specific edit count milestone"
+                }
+              }
+            },
+            "user_notification_blacklist": {
+              "label": "Ignore notifications from these users.",
+              "help": "One username per line."
+            },
+            "page_notification_blacklist": {
+              "label": "Ignore notifications from these pages.",
+              "help": "One page title per line."
+            },
+            "gadgets": {
+              "text": "Below is a list of wiki gadgets that you can activate on your account."
             },
             "submit": {
               "label": "Save settings"

@@ -15,7 +15,7 @@ import pytz
 from . import model_fields, settings
 from .api import constants, data_types, utils
 from .api.permissions import *
-from .api.wiki import constants as w_cons, namespaces
+from .api.wiki import constants as w_cons, namespaces, search_engine, notifications
 
 
 class DateTimeFormat(dj_models.Model):
@@ -229,6 +229,520 @@ class User:
         self._user.uses_dark_mode = value
 
     @property
+    def users_can_send_emails(self) -> bool:
+        return self._user.users_can_send_emails
+
+    @users_can_send_emails.setter
+    def users_can_send_emails(self, value: bool):
+        self._check_not_anonymous()
+        self._user.users_can_send_emails = value
+
+    @property
+    def new_users_can_send_emails(self) -> bool:
+        return self._user.new_users_can_send_emails
+
+    @new_users_can_send_emails.setter
+    def new_users_can_send_emails(self, value: bool):
+        self._check_not_anonymous()
+        self._user.new_users_can_send_emails = value
+
+    @property
+    def send_copy_of_sent_emails(self) -> bool:
+        return self._user.send_copy_of_sent_emails
+
+    @send_copy_of_sent_emails.setter
+    def send_copy_of_sent_emails(self, value: bool):
+        self._check_not_anonymous()
+        self._user.send_copy_of_sent_emails = value
+
+    @property
+    def email_user_blacklist(self) -> typ.Sequence[str]:
+        return self._user.email_user_blacklist or []
+
+    @email_user_blacklist.setter
+    def email_user_blacklist(self, value: typ.Sequence[str]):
+        self._check_not_anonymous()
+        self._user.email_user_blacklist = value
+
+    @property
+    def max_file_preview_size(self) -> tuple[int, int]:
+        n1, n2 = self._user.max_file_preview_size.split(',')
+        return int(n1), int(n2)
+
+    @max_file_preview_size.setter
+    def max_file_preview_size(self, value: tuple[int, int]):
+        self._check_not_anonymous()
+        self._user.max_file_preview_size = f'{value[0]},{value[1]}'
+
+    @property
+    def thumbnails_size(self) -> int:
+        return self._user.thumbnails_size
+
+    @thumbnails_size.setter
+    def thumbnails_size(self, value: int):
+        self._check_not_anonymous()
+        self._user.thumbnails_size = value
+
+    @property
+    def show_page_content_in_diffs(self) -> bool:
+        return self._user.show_page_content_in_diffs
+
+    @show_page_content_in_diffs.setter
+    def show_page_content_in_diffs(self, value: bool):
+        self._check_not_anonymous()
+        self._user.show_page_content_in_diffs = value
+
+    @property
+    def show_diff_after_revert(self) -> bool:
+        return self._user.show_diff_after_revert
+
+    @show_diff_after_revert.setter
+    def show_diff_after_revert(self, value: bool):
+        self._check_not_anonymous()
+        self._user.show_diff_after_revert = value
+
+    @property
+    def show_hidden_categories(self) -> bool:
+        return self._user.show_hidden_categories
+
+    @show_hidden_categories.setter
+    def show_hidden_categories(self, value: bool):
+        self._check_not_anonymous()
+        self._user.show_hidden_categories = value
+
+    @property
+    def ask_revert_confirmation(self) -> bool:
+        return self._user.ask_revert_confirmation
+
+    @ask_revert_confirmation.setter
+    def ask_revert_confirmation(self, value: bool):
+        self._check_not_anonymous()
+        self._user.ask_revert_confirmation = value
+
+    @property
+    def mark_all_wiki_edits_as_minor(self) -> bool:
+        return self._user.mark_all_wiki_edits_as_minor
+
+    @mark_all_wiki_edits_as_minor.setter
+    def mark_all_wiki_edits_as_minor(self, value: bool):
+        self._check_not_anonymous()
+        self._user.mark_all_wiki_edits_as_minor = value
+
+    @property
+    def warn_when_no_wiki_edit_comment(self) -> bool:
+        return self._user.warn_when_no_wiki_edit_comment
+
+    @warn_when_no_wiki_edit_comment.setter
+    def warn_when_no_wiki_edit_comment(self, value: bool):
+        self._check_not_anonymous()
+        self._user.warn_when_no_wiki_edit_comment = value
+
+    @property
+    def warn_when_wiki_edit_not_published(self) -> bool:
+        return self._user.warn_when_wiki_edit_not_published
+
+    @warn_when_wiki_edit_not_published.setter
+    def warn_when_wiki_edit_not_published(self, value: bool):
+        self._check_not_anonymous()
+        self._user.warn_when_wiki_edit_not_published = value
+
+    @property
+    def show_preview_above_edit_form(self) -> bool:
+        return self._user.show_preview_above_edit_form
+
+    @show_preview_above_edit_form.setter
+    def show_preview_above_edit_form(self, value: bool):
+        self._check_not_anonymous()
+        self._user.show_preview_above_edit_form = value
+
+    @property
+    def show_preview_without_reload(self) -> bool:
+        return self._user.show_preview_without_reload
+
+    @show_preview_without_reload.setter
+    def show_preview_without_reload(self, value: bool):
+        self._check_not_anonymous()
+        self._user.show_preview_without_reload = value
+
+    @property
+    def default_days_nb_in_wiki_edit_lists(self) -> int:
+        return self._user.days_nb_rc_fl_logs
+
+    @default_days_nb_in_wiki_edit_lists.setter
+    def default_days_nb_in_wiki_edit_lists(self, value: int):
+        self._check_not_anonymous()
+        self._user.days_nb_rc_fl_logs = value
+
+    @property
+    def default_edits_nb_in_wiki_edit_lists(self) -> int:
+        return self._user.edits_nb_rc_fl_logs
+
+    @default_edits_nb_in_wiki_edit_lists.setter
+    def default_edits_nb_in_wiki_edit_lists(self, value: int):
+        self._check_not_anonymous()
+        self._user.edits_nb_rc_fl_logs = value
+
+    @property
+    def group_edits_per_page(self) -> bool:
+        return self._user.group_edits_per_page_rc_fl
+
+    @group_edits_per_page.setter
+    def group_edits_per_page(self, value: bool):
+        self._check_not_anonymous()
+        self._user.group_edits_per_page_rc_fl = value
+
+    @property
+    def mask_wiki_minor_edits(self) -> bool:
+        return self._user.mask_wiki_minor_edits
+
+    @mask_wiki_minor_edits.setter
+    def mask_wiki_minor_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.mask_wiki_minor_edits = value
+
+    @property
+    def mask_wiki_bot_edits(self) -> bool:
+        return self._user.mask_wiki_bot_edits
+
+    @mask_wiki_bot_edits.setter
+    def mask_wiki_bot_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.mask_wiki_bot_edits = value
+
+    @property
+    def mask_wiki_own_edits(self) -> bool:
+        return self._user.mask_wiki_own_edits
+
+    @mask_wiki_own_edits.setter
+    def mask_wiki_own_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.mask_wiki_own_edits = value
+
+    @property
+    def mask_wiki_anonymous_edits(self) -> bool:
+        return self._user.mask_wiki_anonymous_edits
+
+    @mask_wiki_anonymous_edits.setter
+    def mask_wiki_anonymous_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.mask_wiki_anonymous_edits = value
+
+    @property
+    def mask_wiki_authenticated_edits(self) -> bool:
+        return self._user.mask_wiki_authenticated_edits
+
+    @mask_wiki_authenticated_edits.setter
+    def mask_wiki_authenticated_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.mask_wiki_authenticated_edits = value
+
+    @property
+    def mask_wiki_categorization_edits(self) -> bool:
+        return self._user.mask_wiki_categorization_edits
+
+    @mask_wiki_categorization_edits.setter
+    def mask_wiki_categorization_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.mask_wiki_categorization_edits = value
+
+    @property
+    def mask_wiki_patrolled_edits(self) -> bool:
+        return self._user.mask_wiki_patrolled_edits
+
+    @mask_wiki_patrolled_edits.setter
+    def mask_wiki_patrolled_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.mask_wiki_patrolled_edits = value
+
+    @property
+    def add_created_pages_to_follow_list(self) -> bool:
+        return self._user.fl_add_created_pages
+
+    @add_created_pages_to_follow_list.setter
+    def add_created_pages_to_follow_list(self, value: bool):
+        self._check_not_anonymous()
+        self._user.fl_add_created_pages = value
+
+    @property
+    def add_modified_pages_to_follow_list(self) -> bool:
+        return self._user.fl_add_modified_pages
+
+    @add_modified_pages_to_follow_list.setter
+    def add_modified_pages_to_follow_list(self, value: bool):
+        self._check_not_anonymous()
+        self._user.fl_add_modified_pages = value
+
+    @property
+    def add_renamed_pages_to_follow_list(self) -> bool:
+        return self._user.fl_add_renamed_pages
+
+    @add_renamed_pages_to_follow_list.setter
+    def add_renamed_pages_to_follow_list(self, value: bool):
+        self._check_not_anonymous()
+        self._user.fl_add_renamed_pages = value
+
+    @property
+    def add_deleted_pages_to_follow_list(self) -> bool:
+        return self._user.fl_add_deleted_pages
+
+    @add_deleted_pages_to_follow_list.setter
+    def add_deleted_pages_to_follow_list(self, value: bool):
+        self._check_not_anonymous()
+        self._user.fl_add_deleted_pages = value
+
+    @property
+    def add_reverted_pages_to_follow_list(self) -> bool:
+        return self._user.fl_add_reverted_pages
+
+    @add_reverted_pages_to_follow_list.setter
+    def add_reverted_pages_to_follow_list(self, value: bool):
+        self._check_not_anonymous()
+        self._user.fl_add_reverted_pages = value
+
+    @property
+    def add_created_topics_to_follow_list(self) -> bool:
+        return self._user.fl_add_created_topics
+
+    @add_created_topics_to_follow_list.setter
+    def add_created_topics_to_follow_list(self, value: bool):
+        self._check_not_anonymous()
+        self._user.fl_add_created_topics = value
+
+    @property
+    def add_replied_to_topics_to_follow_list(self) -> bool:
+        return self._user.fl_add_replied_to_topics
+
+    @add_replied_to_topics_to_follow_list.setter
+    def add_replied_to_topics_to_follow_list(self, value: bool):
+        self._check_not_anonymous()
+        self._user.fl_add_replied_to_topics = value
+
+    @property
+    def search_default_results_nb(self) -> int:
+        return self._user.search_default_results_nb
+
+    @search_default_results_nb.setter
+    def search_default_results_nb(self, value: int):
+        self._check_not_anonymous()
+        self._user.search_default_results_nb = value
+
+    @property
+    def search_mode(self) -> search_engine.SearchMode:
+        return search_engine.SearchMode(self._user.search_mode)
+
+    @search_mode.setter
+    def search_mode(self, value: search_engine.SearchMode):
+        self._check_not_anonymous()
+        self._user.search_mode = value.value
+
+    @property
+    def email_update_notification_frequency(self) -> notifications.NotificationEmailFrequency:
+        return notifications.NotificationEmailFrequency(self._user.notif_email_frequency)
+
+    @email_update_notification_frequency.setter
+    def email_update_notification_frequency(self, value: notifications.NotificationEmailFrequency):
+        self._check_not_anonymous()
+        self._user.notif_email_frequency = value.value
+
+    @property
+    def html_email_updates(self) -> bool:
+        return self._user.html_email_updates
+
+    @html_email_updates.setter
+    def html_email_updates(self, value: bool):
+        self._check_not_anonymous()
+        self._user.html_email_updates = value
+
+    @property
+    def email_notify_user_talk_edits(self) -> bool:
+        return self._user.notif_user_talk_edits_email
+
+    @email_notify_user_talk_edits.setter
+    def email_notify_user_talk_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_user_talk_edits_email = value
+
+    @property
+    def web_notify_followed_pages_edits(self) -> bool:
+        return self._user.notif_followed_pages_edits_web
+
+    @web_notify_followed_pages_edits.setter
+    def web_notify_followed_pages_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_followed_pages_edits_web = value
+
+    @property
+    def email_notify_followed_pages_edits(self) -> bool:
+        return self._user.notif_followed_pages_edits_email
+
+    @email_notify_followed_pages_edits.setter
+    def email_notify_followed_pages_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_followed_pages_edits_email = value
+
+    @property
+    def web_notify_talk_mentions(self) -> bool:
+        return self._user.notif_talk_mentions_web
+
+    @web_notify_talk_mentions.setter
+    def web_notify_talk_mentions(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_talk_mentions_web = value
+
+    @property
+    def email_notify_talk_mentions(self) -> bool:
+        return self._user.notif_talk_mentions_email
+
+    @email_notify_talk_mentions.setter
+    def email_notify_talk_mentions(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_talk_mentions_email = value
+
+    @property
+    def web_notify_message_answers(self) -> bool:
+        return self._user.notif_message_answers_web
+
+    @web_notify_message_answers.setter
+    def web_notify_message_answers(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_message_answers_web = value
+
+    @property
+    def email_notify_message_answers(self) -> bool:
+        return self._user.notif_message_answers_email
+
+    @email_notify_message_answers.setter
+    def email_notify_message_answers(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_message_answers_email = value
+
+    @property
+    def web_notify_topic_answers(self) -> bool:
+        return self._user.notif_topic_answers_web
+
+    @web_notify_topic_answers.setter
+    def web_notify_topic_answers(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_topic_answers_web = value
+
+    @property
+    def email_notify_topic_answers(self) -> bool:
+        return self._user.notif_topic_answers_email
+
+    @email_notify_topic_answers.setter
+    def email_notify_topic_answers(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_topic_answers_email = value
+
+    @property
+    def web_notify_thanks(self) -> bool:
+        return self._user.notif_thanks_web
+
+    @web_notify_thanks.setter
+    def web_notify_thanks(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_thanks_web = value
+
+    @property
+    def email_notify_thanks(self) -> bool:
+        return self._user.notif_thanks_email
+
+    @email_notify_thanks.setter
+    def email_notify_thanks(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_thanks_email = value
+
+    @property
+    def web_notify_failed_connection_attempts(self) -> bool:
+        return self._user.notif_failed_connection_attempts_web
+
+    @web_notify_failed_connection_attempts.setter
+    def web_notify_failed_connection_attempts(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_failed_connection_attempts_web = value
+
+    @property
+    def email_notify_failed_connection_attempts(self) -> bool:
+        return self._user.notif_failed_connection_attempts_email
+
+    @email_notify_failed_connection_attempts.setter
+    def email_notify_failed_connection_attempts(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_failed_connection_attempts_email = value
+
+    @property
+    def notif_permissions_edit_web(self) -> bool:
+        return self._user.notif_permissions_edit_web
+
+    @notif_permissions_edit_web.setter
+    def notif_permissions_edit_web(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_permissions_edit_web = value
+
+    @property
+    def notif_permissions_edit_email(self) -> bool:
+        return self._user.notif_permissions_edit_email
+
+    @notif_permissions_edit_email.setter
+    def notif_permissions_edit_email(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_permissions_edit_email = value
+
+    @property
+    def notif_user_email_web(self) -> bool:
+        return self._user.notif_user_email_web
+
+    @notif_user_email_web.setter
+    def notif_user_email_web(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_user_email_web = value
+
+    @property
+    def web_notify_cancelled_edits(self) -> bool:
+        return self._user.notif_cancelled_edits_web
+
+    @web_notify_cancelled_edits.setter
+    def web_notify_cancelled_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_cancelled_edits_web = value
+
+    @property
+    def email_notify_cancelled_edits(self) -> bool:
+        return self._user.notif_cancelled_edits_email
+
+    @email_notify_cancelled_edits.setter
+    def email_notify_cancelled_edits(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_cancelled_edits_email = value
+
+    @property
+    def web_notify_edit_count_milestones(self) -> bool:
+        return self._user.notif_edit_count_milestones_web
+
+    @web_notify_edit_count_milestones.setter
+    def web_notify_edit_count_milestones(self, value: bool):
+        self._check_not_anonymous()
+        self._user.notif_edit_count_milestones_web = value
+
+    @property
+    def user_notification_blacklist(self) -> typ.Sequence[str]:
+        return self._user.user_notification_blacklist or []
+
+    @user_notification_blacklist.setter
+    def user_notification_blacklist(self, value: list[str]):
+        self._check_not_anonymous()
+        self._user.user_notification_blacklist = value
+
+    @property
+    def page_notification_blacklist(self) -> typ.Sequence[str]:
+        return self._user.page_notification_blacklist or []
+
+    @page_notification_blacklist.setter
+    def page_notification_blacklist(self, value: list[str]):
+        self._check_not_anonymous()
+        self._user.page_notification_blacklist = value
+
+    @property
     def block(self) -> UserBlock | None:
         """This user’s block status or None if the user’s not blocked."""
         if self.is_anonymous:
@@ -321,6 +835,26 @@ class User:
         return hash(self.internal_object)
 
 
+def thumbnail_size_validator(n: int):
+    if not (100 <= n <= 600):
+        raise dj_exc.ValidationError('invalid thumbnail size', code='invalid_thumbnail_size')
+
+
+def days_nb_rc_fl_logs_validator(n: int):
+    if not (1 <= n <= 30):
+        raise dj_exc.ValidationError('invalid number of days', code='invalid_revisions_days_nb')
+
+
+def edits_nb_rc_fl_logs_validator(n: int):
+    if not (1 <= n <= 1000):
+        raise dj_exc.ValidationError('invalid number of edits', code='invalid_revisions_edits_nb')
+
+
+def search_results_nb_validator(n: int):
+    if not (1 <= n <= 50):
+        raise dj_exc.ValidationError('invalid number of search results', code='invalid_search_results_nb')
+
+
 class CustomUser(dj_auth_models.AbstractUser):
     """Custom user class to override the default username validator and add additional data.
     Never edit instances of this model directly, always do it through the ``User`` class.
@@ -337,6 +871,76 @@ class CustomUser(dj_auth_models.AbstractUser):
     prefered_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
     prefered_timezone = dj_models.CharField(max_length=50, default=pytz.UTC.zone)
     is_bot = dj_models.BooleanField(default=False)
+    # Wiki-related
+    users_can_send_emails = dj_models.BooleanField(default=True)
+    new_users_can_send_emails = dj_models.BooleanField(default=True)
+    send_copy_of_sent_emails = dj_models.BooleanField(default=False)
+    email_user_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
+    max_file_preview_size = dj_models.CharField(
+        max_length=15,
+        choices=tuple((f'{n1},{n2}', f'{n1},{n2}') for n1, n2 in w_cons.FILE_PREVIEW_SIZES),
+        default=f'{w_cons.FILE_PREVIEW_SIZES[2][0]},{w_cons.FILE_PREVIEW_SIZES[2][1]}',
+    )
+    thumbnails_size = dj_models.IntegerField(validators=[thumbnail_size_validator], default=200)
+    show_page_content_in_diffs = dj_models.BooleanField(default=True)
+    show_diff_after_revert = dj_models.BooleanField(default=True)
+    show_hidden_categories = dj_models.BooleanField(default=False)
+    ask_revert_confirmation = dj_models.BooleanField(default=True)
+    mark_all_wiki_edits_as_minor = dj_models.BooleanField(default=False)
+    warn_when_no_wiki_edit_comment = dj_models.BooleanField(default=False)
+    warn_when_wiki_edit_not_published = dj_models.BooleanField(default=True)
+    show_preview_above_edit_form = dj_models.BooleanField(default=True)
+    show_preview_without_reload = dj_models.BooleanField(default=True)
+    days_nb_rc_fl_logs = dj_models.IntegerField(validators=[days_nb_rc_fl_logs_validator], default=30)
+    edits_nb_rc_fl_logs = dj_models.IntegerField(validators=[edits_nb_rc_fl_logs_validator], default=50)
+    group_edits_per_page_rc_fl = dj_models.BooleanField(default=False)
+    mask_wiki_minor_edits = dj_models.BooleanField(default=False)
+    mask_wiki_bot_edits = dj_models.BooleanField(default=False)
+    mask_wiki_own_edits = dj_models.BooleanField(default=True)
+    mask_wiki_anonymous_edits = dj_models.BooleanField(default=False)
+    mask_wiki_authenticated_edits = dj_models.BooleanField(default=False)
+    mask_wiki_categorization_edits = dj_models.BooleanField(default=False)
+    mask_wiki_patrolled_edits = dj_models.BooleanField(default=False)
+    fl_add_created_pages = dj_models.BooleanField(default=False)
+    fl_add_modified_pages = dj_models.BooleanField(default=False)
+    fl_add_renamed_pages = dj_models.BooleanField(default=False)
+    fl_add_deleted_pages = dj_models.BooleanField(default=False)
+    fl_add_reverted_pages = dj_models.BooleanField(default=False)
+    fl_add_created_topics = dj_models.BooleanField(default=True)
+    fl_add_replied_to_topics = dj_models.BooleanField(default=False)
+    search_default_results_nb = dj_models.IntegerField(validators=[search_results_nb_validator], default=20)
+    search_mode = dj_models.CharField(
+        max_length=10,
+        choices=tuple((sm.value, sm.value) for sm in search_engine.SearchMode),
+        default=search_engine.SearchMode.DEFAULT.value,
+    )
+    notif_email_frequency = dj_models.CharField(
+        max_length=15,
+        choices=tuple((neu.value, neu.value) for neu in notifications.NotificationEmailFrequency),
+        default=notifications.NotificationEmailFrequency.IMMEDIATELY.value,
+    )
+    html_email_updates = dj_models.BooleanField(default=True)
+    notif_user_talk_edits_email = dj_models.BooleanField(default=True)
+    notif_followed_pages_edits_web = dj_models.BooleanField(default=True)
+    notif_followed_pages_edits_email = dj_models.BooleanField(default=True)
+    notif_talk_mentions_web = dj_models.BooleanField(default=True)
+    notif_talk_mentions_email = dj_models.BooleanField(default=True)
+    notif_message_answers_web = dj_models.BooleanField(default=True)
+    notif_message_answers_email = dj_models.BooleanField(default=True)
+    notif_topic_answers_web = dj_models.BooleanField(default=True)
+    notif_topic_answers_email = dj_models.BooleanField(default=True)
+    notif_thanks_web = dj_models.BooleanField(default=True)
+    notif_thanks_email = dj_models.BooleanField(default=False)
+    notif_failed_connection_attempts_web = dj_models.BooleanField(default=True)
+    notif_failed_connection_attempts_email = dj_models.BooleanField(default=True)
+    notif_permissions_edit_web = dj_models.BooleanField(default=True)
+    notif_permissions_edit_email = dj_models.BooleanField(default=True)
+    notif_user_email_web = dj_models.BooleanField(default=True)
+    notif_cancelled_edits_web = dj_models.BooleanField(default=True)
+    notif_cancelled_edits_email = dj_models.BooleanField(default=False)
+    notif_edit_count_milestones_web = dj_models.BooleanField(default=True)
+    user_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
+    page_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
 
 
 class UserBlock(dj_models.Model):

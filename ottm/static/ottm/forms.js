@@ -31,5 +31,7 @@
 
   if (location.pathname === "/sign-up") {
     passwordConfirm($("#sign-up-form-password"), $("#sign-up-form-password-confirm"));
+  } else if (location.pathname === "/user/settings") {
+    passwordConfirm($("#user-settings-form-password"), $("#user-settings-form-password-confirm"));
   }
 })();

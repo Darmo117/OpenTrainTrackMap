@@ -1,8 +1,1105 @@
 {% extends 'ottm/user-page-base.html' %}
 {% load ottm %}
+{% load wiki %}
 
 {% block container-content %}
-  {% include 'ottm/include/form.html' with form=context.form prefix='page.user_settings.' %}
+  {% with form=context.form trans_prefix='page.user_settings.form.'|add:context.form.name|add:'.' %}
+    {% if context.global_errors %}
+      <div class="alert alert-danger form-errors-alert" role="alert">
+        {% ottm_translate 'form.global_error.title' %}
+        <ul class="form-errors">
+          {% for error in context.global_errors %}
+            <li>{% ottm_translate trans_prefix|add:'error.'|add:error %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
+    <ul class="nav nav-tabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button id="form-tab-personal-info" class="nav-link" data-toggle="tab"
+                data-target="#form-panel-personal-info" type="button" role="tab"
+                aria-controls="form-panel-personal-info" aria-selected="false">
+          {% ottm_translate trans_prefix|add:'tab.personal_info' %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button id="form-tab-appearence" class="nav-link" data-toggle="tab"
+                data-target="#form-panel-appearence" type="button" role="tab"
+                aria-controls="form-panel-appearence" aria-selected="false">
+          {% ottm_translate trans_prefix|add:'tab.appearence' %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button id="form-tab-editing" class="nav-link" data-toggle="tab"
+                data-target="#form-panel-editing" type="button" role="tab"
+                aria-controls="form-panel-editing" aria-selected="false">
+          {% ottm_translate trans_prefix|add:'tab.editing' %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button id="form-tab-revisions" class="nav-link" data-toggle="tab"
+                data-target="#form-panel-revisions" type="button" role="tab"
+                aria-controls="form-panel-revisions" aria-selected="false">
+          {% ottm_translate trans_prefix|add:'tab.revisions' %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button id="form-tab-search" class="nav-link" data-toggle="tab"
+                data-target="#form-panel-search" type="button" role="tab"
+                aria-controls="form-panel-search" aria-selected="false">
+          {% ottm_translate trans_prefix|add:'tab.search' %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button id="form-tab-notifications" class="nav-link" data-toggle="tab"
+                data-target="#form-panel-notifications" type="button" role="tab"
+                aria-controls="form-panel-notifications" aria-selected="false">
+          {% ottm_translate trans_prefix|add:'tab.notifications' %}
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button id="form-tab-gadgets" class="nav-link" data-toggle="tab"
+                data-target="#form-panel-gadgets" type="button" role="tab"
+                aria-controls="form-panel-gadgets" aria-selected="false">
+          {% ottm_translate trans_prefix|add:'tab.gadgets' %}
+        </button>
+      </li>
+    </ul>
+    <form method="post" id="user-settings" class="tab-content" style="margin-bottom: 1em">
+      {% csrf_token %}
+      {% if form.warn_unsaved_changes %}
+        <input type="hidden" name="warn-unsaved" value="1">
+      {% endif %}
+      <div id="form-panel-personal-info" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-personal-info">
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.basic_info' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.password.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.password.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.password }}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
+              {% if form.password.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.password.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.password_confirm.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.password_confirm.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.password_confirm }}
+              {% if form.password_confirm.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.password_confirm.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.gender.label|add:'.' %}
+            <div class="form-group">
+              <label>{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {% for f in form.gender %}
+                <div class="custom-control custom-radio">
+                  {{ f.tag }}
+                  <label for="{{ f.id_for_label }}" class="custom-control-label">
+                    {% ottm_translate trans_field_prefix|add:f.choice_label|add:'.label' %}
+                  </label>
+                </div>
+              {% endfor %}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
+              {% if form.gender.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.gender.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.localization' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.prefered_language.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.prefered_language.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.prefered_language }}
+              {% if form.prefered_language.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.prefered_language.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.email' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.email.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.email.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.email }}
+              {% if form.email.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.email.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.users_can_send_emails.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.users_can_send_emails }}
+                <label for="{{ form.users_can_send_emails.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.users_can_send_emails.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.users_can_send_emails.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.new_users_can_send_emails.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.new_users_can_send_emails }}
+                <label for="{{ form.new_users_can_send_emails.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.new_users_can_send_emails.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.new_users_can_send_emails.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.send_copy_of_sent_emails.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.send_copy_of_sent_emails }}
+                <label for="{{ form.send_copy_of_sent_emails.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.send_copy_of_sent_emails.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.send_copy_of_sent_emails.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.email_user_blacklist.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.email_user_blacklist.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.email_user_blacklist }}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
+              {% if form.email_user_blacklist.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.email_user_blacklist.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+      </div>
+      <div id="form-panel-appearence" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-appearence">
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.skins' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.dark_mode.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.dark_mode }}
+                <label for="{{ form.dark_mode.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.dark_mode.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.dark_mode.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          <p>
+            {% ottm_translate trans_prefix|add:'custom_css_js.label' %}<br>
+            {% ottm_translate trans_prefix|add:'custom_css.label' as text %}
+            {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common.css' text=text ignore_current_title=True %} |
+            {% ottm_translate trans_prefix|add:'custom_js.label' as text %}
+            {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common.js' text=text ignore_current_title=True %}
+          </p>
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.date_and_time' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.prefered_datetime_format.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.prefered_datetime_format.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.prefered_datetime_format }}
+              {% if form.prefered_datetime_format.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.prefered_datetime_format.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          <p>
+            {% ottm_translate trans_prefix|add:'server_time.label' %}<br>
+            {# TODO server time #}
+            {% ottm_translate trans_prefix|add:'timezone_time.label' %}<br>
+            {# TODO timezone time #}
+          </p>
+          {% with trans_field_prefix=trans_prefix|add:form.prefered_timezone.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.prefered_timezone.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.prefered_timezone }}
+              {% if form.prefered_timezone.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.prefered_timezone.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.files' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.max_file_preview_size.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.max_file_preview_size.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.max_file_preview_size }}
+              {% if form.max_file_preview_size.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.max_file_preview_size.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.thumbnails_size.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.thumbnails_size.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.thumbnails_size }}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
+              {% if form.thumbnails_size.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.thumbnails_size.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.diffs' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.show_page_content_in_diffs.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.show_page_content_in_diffs }}
+                <label for="{{ form.show_page_content_in_diffs.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.show_page_content_in_diffs.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.show_page_content_in_diffs.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.show_diff_after_revert.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.show_diff_after_revert }}
+                <label for="{{ form.show_diff_after_revert.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.show_diff_after_revert.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.show_diff_after_revert.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.appearence_advanced' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.show_hidden_categories.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.show_hidden_categories }}
+                <label for="{{ form.show_hidden_categories.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.show_hidden_categories.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.show_hidden_categories.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.ask_revert_confirmation.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.ask_revert_confirmation }}
+                <label for="{{ form.ask_revert_confirmation.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.ask_revert_confirmation.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.ask_revert_confirmation.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+      </div>
+      <div id="form-panel-editing" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-editing">
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.editor' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.mark_all_wiki_edits_as_minor.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.mark_all_wiki_edits_as_minor }}
+                <label for="{{ form.mark_all_wiki_edits_as_minor.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.mark_all_wiki_edits_as_minor.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.mark_all_wiki_edits_as_minor.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.warn_when_no_wiki_edit_comment.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.warn_when_no_wiki_edit_comment }}
+                <label for="{{ form.warn_when_no_wiki_edit_comment.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.warn_when_no_wiki_edit_comment.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.warn_when_no_wiki_edit_comment.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.warn_when_wiki_edit_not_published.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.warn_when_wiki_edit_not_published }}
+                <label for="{{ form.warn_when_wiki_edit_not_published.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.warn_when_wiki_edit_not_published.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.warn_when_wiki_edit_not_published.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.preview' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.show_preview_above_edit_form.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.show_preview_above_edit_form }}
+                <label for="{{ form.show_preview_above_edit_form.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.show_preview_above_edit_form.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.show_preview_above_edit_form.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.show_preview_without_reload.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.show_preview_without_reload }}
+                <label for="{{ form.show_preview_without_reload.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.show_preview_without_reload.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.show_preview_without_reload.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+      </div>
+      <div id="form-panel-revisions" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-revisions">
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.modify' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:'edit_follow_list.' %}
+            <label>{% ottm_translate trans_field_prefix|add:'label' %}</label><br>
+            {% ottm_translate trans_field_prefix|add:'edit_button' as text %}
+            {% wiki_inner_link page_title='Special:EditFollowList' text=text css_classes='btn btn-outline-secondary' ignore_current_title=True %}
+            {% ottm_translate trans_field_prefix|add:'edit_raw_button' as text %}
+            {% wiki_inner_link page_title='Special:EditFollowList/raw' text=text css_classes='btn btn-outline-secondary' ignore_current_title=True %}
+            {% ottm_translate trans_field_prefix|add:'clear_button' as text %}
+            {% wiki_inner_link page_title='Special:EditFollowList/clear' text=text css_classes='btn btn-outline-danger' ignore_current_title=True %}
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.revisions_display' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.default_days_nb_in_wiki_edit_lists.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.default_days_nb_in_wiki_edit_lists.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.default_days_nb_in_wiki_edit_lists }}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' nb=30 %}</small>
+              {% if form.default_days_nb_in_wiki_edit_lists.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.default_days_nb_in_wiki_edit_lists.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.default_edits_nb_in_wiki_edit_lists.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.default_edits_nb_in_wiki_edit_lists.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.default_edits_nb_in_wiki_edit_lists }}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' nb=1000 %}</small>
+              {% if form.default_edits_nb_in_wiki_edit_lists.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.default_edits_nb_in_wiki_edit_lists.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.group_edits_per_page.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.group_edits_per_page }}
+                <label for="{{ form.group_edits_per_page.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.group_edits_per_page.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.group_edits_per_page.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.revisions_displayed_edits' %}</legend>
+          <p>{% ottm_translate trans_prefix|add:'revisions_displayed_edits.text' %}</p>
+          {% with trans_field_prefix=trans_prefix|add:form.mask_wiki_minor_edits.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.mask_wiki_minor_edits }}
+                <label for="{{ form.mask_wiki_minor_edits.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.mask_wiki_minor_edits.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.mask_wiki_minor_edits.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.mask_wiki_bot_edits.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.mask_wiki_bot_edits }}
+                <label for="{{ form.mask_wiki_bot_edits.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.mask_wiki_bot_edits.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.mask_wiki_bot_edits.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.mask_wiki_own_edits.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.mask_wiki_own_edits }}
+                <label for="{{ form.mask_wiki_own_edits.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.mask_wiki_own_edits.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.mask_wiki_own_edits.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.mask_wiki_anonymous_edits.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.mask_wiki_anonymous_edits }}
+                <label for="{{ form.mask_wiki_anonymous_edits.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.mask_wiki_anonymous_edits.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.mask_wiki_anonymous_edits.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.mask_wiki_authenticated_edits.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.mask_wiki_authenticated_edits }}
+                <label for="{{ form.mask_wiki_authenticated_edits.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.mask_wiki_authenticated_edits.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.mask_wiki_authenticated_edits.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.mask_wiki_categorization_edits.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.mask_wiki_categorization_edits }}
+                <label for="{{ form.mask_wiki_categorization_edits.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.mask_wiki_categorization_edits.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.mask_wiki_categorization_edits.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.mask_wiki_patrolled_edits.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.mask_wiki_patrolled_edits }}
+                <label for="{{ form.mask_wiki_patrolled_edits.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.mask_wiki_patrolled_edits.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.mask_wiki_patrolled_edits.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.followed_pages' %}</legend>
+          <p>{% ottm_translate trans_prefix|add:'followed_pages.text' %}</p>
+          {% with trans_field_prefix=trans_prefix|add:form.add_created_pages_to_follow_list.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.add_created_pages_to_follow_list }}
+                <label for="{{ form.add_created_pages_to_follow_list.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.add_created_pages_to_follow_list.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.add_created_pages_to_follow_list.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.add_modified_pages_to_follow_list.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.add_modified_pages_to_follow_list }}
+                <label for="{{ form.add_modified_pages_to_follow_list.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.add_modified_pages_to_follow_list.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.add_modified_pages_to_follow_list.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.add_renamed_pages_to_follow_list.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.add_renamed_pages_to_follow_list }}
+                <label for="{{ form.add_renamed_pages_to_follow_list.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.add_renamed_pages_to_follow_list.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.add_renamed_pages_to_follow_list.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.add_deleted_pages_to_follow_list.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.add_deleted_pages_to_follow_list }}
+                <label for="{{ form.add_deleted_pages_to_follow_list.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.add_deleted_pages_to_follow_list.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.add_deleted_pages_to_follow_list.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.add_reverted_pages_to_follow_list.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.add_reverted_pages_to_follow_list }}
+                <label for="{{ form.add_reverted_pages_to_follow_list.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.add_reverted_pages_to_follow_list.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.add_reverted_pages_to_follow_list.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.add_created_topics_to_follow_list.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.add_created_topics_to_follow_list }}
+                <label for="{{ form.add_created_topics_to_follow_list.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.add_created_topics_to_follow_list.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.add_created_topics_to_follow_list.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.add_replied_to_topics_to_follow_list.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.add_replied_to_topics_to_follow_list }}
+                <label for="{{ form.add_replied_to_topics_to_follow_list.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.add_replied_to_topics_to_follow_list.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.add_replied_to_topics_to_follow_list.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+      </div>
+      <div id="form-panel-search" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-search">
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.search_general' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.search_default_results_nb.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.search_default_results_nb.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.search_default_results_nb }}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' nb=50 %}</small>
+              {% if form.search_default_results_nb.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.search_default_results_nb.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.advanced_search' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.search_mode.label|add:'.' %}
+            <div class="form-group">
+              <label>{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {% for f in form.search_mode %}
+                <div class="custom-control custom-radio">
+                  {{ f.tag }}
+                  <label for="{{ f.id_for_label }}" class="custom-control-label">
+                    {% ottm_translate trans_field_prefix|add:f.choice_label|add:'.label' %}
+                  </label>
+                  <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:f.choice_label|add:'.help' %}</small>
+                </div>
+              {% endfor %}
+              {% if form.search_mode.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.search_mode.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+      </div>
+      <div id="form-panel-notifications" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-notifications">
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.email_options' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.email_update_notification_frequency.label|add:'.' %}
+            <div class="form-group">
+              <label>{% ottm_translate trans_field_prefix|add:'label' %}</label><br>
+              {% for f in form.email_update_notification_frequency %}
+                <div class="custom-control custom-radio custom-control-inline">
+                  {{ f.tag }}
+                  <label for="{{ f.id_for_label }}" class="custom-control-label">
+                    {% ottm_translate trans_field_prefix|add:f.choice_label|add:'.label' %}
+                  </label>
+                </div>
+              {% endfor %}
+              {% if form.email_update_notification_frequency.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.email_update_notification_frequency.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+          {% with trans_field_prefix=trans_prefix|add:form.html_email_updates.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.html_email_updates }}
+                <label for="{{ form.html_email_updates.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.html_email_updates.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.html_email_updates.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.events' %}</legend>
+          <p>{% ottm_translate trans_prefix|add:'events.text' %}</p>
+          <table class="table table-striped table-hover">
+            <colgroup>
+              <col>
+              <col style="width: 10%">
+              <col style="width: 10%">
+            </colgroup>
+            <tbody>
+              <tr>
+                <th></th>
+                <th scope="col">{% ottm_translate trans_prefix|add:'events.table.header.web' %}</th>
+                <th scope="col">{% ottm_translate trans_prefix|add:'events.table.header.email' %}</th>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_user_talk_edits' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    <input id="user-settings-form-web-notify-user-talk-edits" class="custom-control-input" disabled checked type="checkbox">
+                    <label for="user-settings-form-web-notify-user-talk-edits" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.email_notify_user_talk_edits }}
+                    <label for="{{ form.email_notify_user_talk_edits.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_followed_pages_edits' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_followed_pages_edits }}
+                    <label for="{{ form.web_notify_followed_pages_edits.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.email_notify_followed_pages_edits }}
+                    <label for="{{ form.email_notify_followed_pages_edits.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_talk_mentions' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_talk_mentions }}
+                    <label for="{{ form.web_notify_talk_mentions.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.email_notify_talk_mentions }}
+                    <label for="{{ form.email_notify_talk_mentions.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_message_answers' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_message_answers }}
+                    <label for="{{ form.web_notify_message_answers.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.email_notify_message_answers }}
+                    <label for="{{ form.email_notify_message_answers.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_topic_answers' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_topic_answers }}
+                    <label for="{{ form.web_notify_topic_answers.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.email_notify_topic_answers }}
+                    <label for="{{ form.email_notify_topic_answers.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_thanks' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_thanks }}
+                    <label for="{{ form.web_notify_thanks.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.email_notify_thanks }}
+                    <label for="{{ form.email_notify_thanks.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_failed_connection_attempts' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_failed_connection_attempts }}
+                    <label for="{{ form.web_notify_failed_connection_attempts.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.email_notify_failed_connection_attempts }}
+                    <label for="{{ form.email_notify_failed_connection_attempts.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_permissions_edit' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_permissions_edit }}
+                    <label for="{{ form.web_notify_permissions_edit.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.email_notify_permissions_edit }}
+                    <label for="{{ form.email_notify_permissions_edit.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_user_email' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_user_email }}
+                    <label for="{{ form.web_notify_user_email.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    <input id="user-settings-form-email-notify-user-email" class="custom-control-input" disabled type="checkbox">
+                    <label for="user-settings-form-email-notify-user-email" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_cancelled_edits' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_cancelled_edits }}
+                    <label for="{{ form.web_notify_cancelled_edits.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.email_notify_cancelled_edits }}
+                    <label for="{{ form.email_notify_cancelled_edits.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_edit_count_milestones' %}</th>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    {{ form.web_notify_edit_count_milestones }}
+                    <label for="{{ form.web_notify_edit_count_milestones.id_for_label }}" class="custom-control-label"></label>
+                  </div>
+                </td>
+                <td>
+                  <div class="custom-control custom-checkbox">
+                    <input id="user-settings-form-email-notify-edit-count-milestones" class="custom-control-input" disabled type="checkbox">
+                    <label for="user-settings-form-email-notify-edit-count-milestones" class="custom-control-label"></label>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.blocked_users' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.user_notification_blacklist.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.user_notification_blacklist.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.user_notification_blacklist }}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
+              {% if form.user_notification_blacklist.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.user_notification_blacklist.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+        <fieldset>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.muted_pages' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.page_notification_blacklist.label|add:'.' %}
+            <div class="form-group">
+              <label for="{{ form.page_notification_blacklist.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.page_notification_blacklist }}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
+              {% if form.page_notification_blacklist.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.page_notification_blacklist.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
+        </fieldset>
+      </div>
+      <div id="form-panel-gadgets" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-gadgets">
+        <p>{% ottm_translate trans_prefix|add:'gadgets.text' %}</p>
+        {# TODO #}
+      </div>
+      <div class="text-center">
+        <input type="submit" class="btn btn-primary" value="{% ottm_translate trans_prefix|add:'submit.label' %}">
+      </div>
+    </form>
+  {% endwith %}
 {% endblock %}
 
 {% block page-scripts %}

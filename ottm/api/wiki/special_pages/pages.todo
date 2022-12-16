@@ -13,3 +13,6 @@ X- Block
 X- SendEmail
 V- ChangePageLanguage
 V- ChangePageContentType
+X- EditFollowList
+X- EditFollowList/raw
+X- EditFollowList/clear
