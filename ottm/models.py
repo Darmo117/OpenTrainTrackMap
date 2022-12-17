@@ -671,29 +671,29 @@ class User:
         self._user.notif_failed_connection_attempts_email = value
 
     @property
-    def notif_permissions_edit_web(self) -> bool:
+    def web_notify_permissions_edit(self) -> bool:
         return self._user.notif_permissions_edit_web
 
-    @notif_permissions_edit_web.setter
-    def notif_permissions_edit_web(self, value: bool):
+    @web_notify_permissions_edit.setter
+    def web_notify_permissions_edit(self, value: bool):
         self._check_not_anonymous()
         self._user.notif_permissions_edit_web = value
 
     @property
-    def notif_permissions_edit_email(self) -> bool:
+    def email_notify_permissions_edit(self) -> bool:
         return self._user.notif_permissions_edit_email
 
-    @notif_permissions_edit_email.setter
-    def notif_permissions_edit_email(self, value: bool):
+    @email_notify_permissions_edit.setter
+    def email_notify_permissions_edit(self, value: bool):
         self._check_not_anonymous()
         self._user.notif_permissions_edit_email = value
 
     @property
-    def notif_user_email_web(self) -> bool:
+    def web_notify_user_email_web(self) -> bool:
         return self._user.notif_user_email_web
 
-    @notif_user_email_web.setter
-    def notif_user_email_web(self, value: bool):
+    @web_notify_user_email_web.setter
+    def web_notify_user_email_web(self, value: bool):
         self._check_not_anonymous()
         self._user.notif_user_email_web = value
 

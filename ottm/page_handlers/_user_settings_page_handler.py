@@ -5,11 +5,12 @@ import django.contrib.auth.models as _dj_auth
 import django.core.validators as _dj_valid
 import django.forms as _dj_forms
 from django.http import response as _dj_response
+import pytz as _pytz
 
 from . import _ottm_handler, _user_page_context
-from .. import forms as _forms, models as _models, requests as _requests
+from .. import forms as _forms, models as _models, requests as _requests, settings as _settings
 from ..api import data_types as _dt, timezones as _tz, utils as _utils
-from ..api.wiki import constants as _const, search_engine as _se, notifications as _notif
+from ..api.wiki import constants as _const, notifications as _notif, search_engine as _se
 
 
 class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
@@ -20,8 +21,82 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
             return self.redirect('ottm:map', reverse=True)
 
         user = self._request_params.user
+        if self._request_params.post:
+            form = UserSettingsForm(post=self._request_params.post, user=user)
+            if form.is_valid():
+                # TODO password if present
+                user.email = form.cleaned_data['email']
+                user.prefered_language = _settings.LANGUAGES[form.cleaned_data['prefered_language']]
+                user.prefered_timezone = _pytz.timezone(form.cleaned_data['prefered_timezone'])
+                user.prefered_datetime_format = form.cleaned_data['prefered_datetime_format']
+                user.gender = _dt.GENDERS[form.cleaned_data['gender']]
+                user.uses_dark_mode = form.cleaned_data['dark_mode']
+                user.users_can_send_emails = form.cleaned_data['users_can_send_emails']
+                user.new_users_can_send_emails = form.cleaned_data['new_users_can_send_emails']
+                user.send_copy_of_sent_emails = form.cleaned_data['send_copy_of_sent_emails']
+                user.email_user_blacklist = form.cleaned_data['email_user_blacklist'].split('\n')
+                n1, n2 = form.cleaned_data['max_file_preview_size'].split(',')
+                user.max_file_preview_size = (int(n1), int(n2))
+                user.thumbnails_size = form.cleaned_data['thumbnails_size']
+                user.show_page_content_in_diffs = form.cleaned_data['show_page_content_in_diffs']
+                user.show_diff_after_revert = form.cleaned_data['show_diff_after_revert']
+                user.show_hidden_categories = form.cleaned_data['show_hidden_categories']
+                user.ask_revert_confirmation = form.cleaned_data['ask_revert_confirmation']
+                user.mark_all_wiki_edits_as_minor = form.cleaned_data['mark_all_wiki_edits_as_minor']
+                user.warn_when_no_wiki_edit_comment = form.cleaned_data['warn_when_no_wiki_edit_comment']
+                user.warn_when_wiki_edit_not_published = form.cleaned_data['warn_when_wiki_edit_not_published']
+                user.show_preview_above_edit_form = form.cleaned_data['show_preview_above_edit_form']
+                user.show_preview_without_reload = form.cleaned_data['show_preview_without_reload']
+                user.default_days_nb_in_wiki_edit_lists = form.cleaned_data['default_days_nb_in_wiki_edit_lists']
+                user.default_edits_nb_in_wiki_edit_lists = form.cleaned_data['default_edits_nb_in_wiki_edit_lists']
+                user.group_edits_per_page = form.cleaned_data['group_edits_per_page']
+                user.mask_wiki_minor_edits = form.cleaned_data['mask_wiki_minor_edits']
+                user.mask_wiki_bot_edits = form.cleaned_data['mask_wiki_bot_edits']
+                user.mask_wiki_own_edits = form.cleaned_data['mask_wiki_own_edits']
+                user.mask_wiki_anonymous_edits = form.cleaned_data['mask_wiki_anonymous_edits']
+                user.mask_wiki_authenticated_edits = form.cleaned_data['mask_wiki_authenticated_edits']
+                user.mask_wiki_categorization_edits = form.cleaned_data['mask_wiki_categorization_edits']
+                user.mask_wiki_patrolled_edits = form.cleaned_data['mask_wiki_patrolled_edits']
+                user.add_created_pages_to_follow_list = form.cleaned_data['add_created_pages_to_follow_list']
+                user.add_modified_pages_to_follow_list = form.cleaned_data['add_modified_pages_to_follow_list']
+                user.add_renamed_pages_to_follow_list = form.cleaned_data['add_renamed_pages_to_follow_list']
+                user.add_deleted_pages_to_follow_list = form.cleaned_data['add_deleted_pages_to_follow_list']
+                user.add_reverted_pages_to_follow_list = form.cleaned_data['add_reverted_pages_to_follow_list']
+                user.add_created_topics_to_follow_list = form.cleaned_data['add_created_topics_to_follow_list']
+                user.add_replied_to_topics_to_follow_list = form.cleaned_data['add_replied_to_topics_to_follow_list']
+                user.search_default_results_nb = form.cleaned_data['search_default_results_nb']
+                user.search_mode = _se.SearchMode(form.cleaned_data['search_mode'])
+                user.email_update_notification_frequency = _notif.NotificationEmailFrequency(
+                    form.cleaned_data['email_update_notification_frequency'])
+                user.html_email_updates = form.cleaned_data['html_email_updates']
+                user.email_notify_user_talk_edits = form.cleaned_data['email_notify_user_talk_edits']
+                user.web_notify_followed_pages_edits = form.cleaned_data['web_notify_followed_pages_edits']
+                user.email_notify_followed_pages_edits = form.cleaned_data['email_notify_followed_pages_edits']
+                user.web_notify_talk_mentions = form.cleaned_data['web_notify_talk_mentions']
+                user.email_notify_talk_mentions = form.cleaned_data['email_notify_talk_mentions']
+                user.web_notify_message_answers = form.cleaned_data['web_notify_message_answers']
+                user.email_notify_message_answers = form.cleaned_data['email_notify_message_answers']
+                user.web_notify_topic_answers = form.cleaned_data['web_notify_topic_answers']
+                user.email_notify_topic_answers = form.cleaned_data['email_notify_topic_answers']
+                user.web_notify_thanks = form.cleaned_data['web_notify_thanks']
+                user.email_notify_thanks = form.cleaned_data['email_notify_thanks']
+                user.web_notify_failed_connection_attempts = form.cleaned_data['web_notify_failed_connection_attempts']
+                user.email_notify_failed_connection_attempts = \
+                    form.cleaned_data['email_notify_failed_connection_attempts']
+                user.web_notify_permissions_edit = form.cleaned_data['web_notify_permissions_edit']
+                user.email_notify_permissions_edit = form.cleaned_data['email_notify_permissions_edit']
+                user.web_notify_user_email_web = form.cleaned_data['web_notify_user_email']
+                user.web_notify_cancelled_edits = form.cleaned_data['web_notify_cancelled_edits']
+                user.email_notify_cancelled_edits = form.cleaned_data['email_notify_cancelled_edits']
+                user.web_notify_edit_count_milestones = form.cleaned_data['web_notify_edit_count_milestones']
+                user.user_notification_blacklist = form.cleaned_data['user_notification_blacklist'].split('\n')
+                user.page_notification_blacklist = form.cleaned_data['page_notification_blacklist'].split('\n')
+                user.internal_object.save()
+                return self.redirect('ottm:user_settings', reverse=True)
+        else:
+            form = UserSettingsForm(user=user)
+
         title, tab_title = self.get_page_titles(page_id='user_settings')
-        form = UserSettingsForm(user=user)
         return self.render_page(f'ottm/user-settings.html', UserSettingsPageContext(
             self._request_params,
             title,
@@ -63,6 +138,7 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
         label='email',
         widget=_dj_forms.EmailInput(),
         validators=[_dj_valid.validate_email],
+        strip=True,
         required=True,
         help_text=True,
     )
@@ -81,6 +157,7 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
     email_user_blacklist = _dj_forms.CharField(
         label='email_user_blacklist',
         widget=_dj_forms.Textarea(attrs={'rows': 2}),
+        strip=True,
         required=False,
         help_text=True,
     )
@@ -107,8 +184,6 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
         label='thumbnails_size',
         required=True,
         validators=[_models.thumbnail_size_validator],
-        min_value=100,
-        max_value=600,
     )
     show_page_content_in_diffs = _dj_forms.BooleanField(
         label='show_page_content_in_diffs',
@@ -151,16 +226,12 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
         required=True,
         validators=[_models.days_nb_rc_fl_logs_validator],
         help_text=True,
-        min_value=1,
-        max_value=30,
     )
     default_edits_nb_in_wiki_edit_lists = _dj_forms.IntegerField(
         label='default_edits_nb_in_wiki_edit_lists',
         required=True,
         validators=[_models.edits_nb_rc_fl_logs_validator],
         help_text=True,
-        min_value=1,
-        max_value=1000,
     )
     group_edits_per_page = _dj_forms.BooleanField(
         label='group_edits_per_page',
@@ -227,8 +298,6 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
         required=True,
         validators=[_models.search_results_nb_validator],
         help_text=True,
-        min_value=1,
-        max_value=50,
     )
     search_mode = _dj_forms.ChoiceField(
         label='search_mode',
@@ -326,16 +395,18 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
     user_notification_blacklist = _dj_forms.CharField(
         label='user_notification_blacklist',
         widget=_dj_forms.Textarea(attrs={'rows': 2}),
+        strip=True,
         required=False,
     )
     page_notification_blacklist = _dj_forms.CharField(
         label='page_notification_blacklist',
         widget=_dj_forms.Textarea(attrs={'rows': 2}),
+        strip=True,
         required=False,
     )
 
-    def __init__(self, post=None, user: _models.User = None):
-        if user:
+    def __init__(self, user: _models.User = None, post=None):
+        if user and not post:
             initial = {
                 'gender': user.gender.label,
                 'prefered_language': user.prefered_language.code,
@@ -392,9 +463,9 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
                 'email_notify_thanks': user.email_notify_thanks,
                 'web_notify_failed_connection_attempts': user.web_notify_failed_connection_attempts,
                 'email_notify_failed_connection_attempts': user.email_notify_failed_connection_attempts,
-                'web_notify_permissions_edit': user.notif_permissions_edit_web,
-                'email_notify_permissions_edit': user.notif_permissions_edit_email,
-                'web_notify_user_email': user.notif_user_email_web,
+                'web_notify_permissions_edit': user.web_notify_permissions_edit,
+                'email_notify_permissions_edit': user.email_notify_permissions_edit,
+                'web_notify_user_email': user.web_notify_user_email_web,
                 'web_notify_cancelled_edits': user.web_notify_cancelled_edits,
                 'email_notify_cancelled_edits': user.email_notify_cancelled_edits,
                 'web_notify_edit_count_milestones': user.web_notify_edit_count_milestones,

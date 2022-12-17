@@ -176,14 +176,23 @@
               },
               "masculine": {
                 "label": "He contributes."
+              },
+              "error": {
+                "invalid_choice": "Invalid choice!"
               }
             },
             "prefered_language": {
-              "label": "Prefered interface language"
+              "label": "Prefered interface language",
+              "error": {
+                "invalid_choice": "Invalid choice!"
+              }
             },
             "email": {
               "label": "Email address",
-              "help": "Never shown publicly"
+              "help": "Never shown publicly",
+              "error": {
+                "invalid": "Invalid email address!"
+              }
             },
             "users_can_send_emails": {
               "label": "Allow users to send me emails"
@@ -211,7 +220,10 @@
               "label": "Use dark mode"
             },
             "prefered_datetime_format": {
-              "label": "Prefered date and time format"
+              "label": "Prefered date and time format",
+              "error": {
+                "invalid_choice": "Invalid choice!"
+              }
             },
             "server_time": {
               "label": "Server time:"
@@ -220,14 +232,23 @@
               "label": "Timezone time:"
             },
             "prefered_timezone": {
-              "label": "Prefered timezone"
+              "label": "Prefered timezone",
+              "error": {
+                "invalid_choice": "Invalid choice!"
+              }
             },
             "max_file_preview_size": {
-              "label": "Maximum size of file preview on wiki ”File:” pages"
+              "label": "Maximum size of file preview on wiki ”File:” pages",
+              "error": {
+                "invalid_choice": "Invalid choice!"
+              }
             },
             "thumbnails_size": {
               "label": "Maximum size of image thumbnails in wiki pages",
-              "help": "Between 100px and 600px"
+              "help": "Between 100px and 600px",
+              "error": {
+                "invalid_thumbnail_size": "Invalid size!"
+              }
             },
             "show_page_content_in_diffs": {
               "label": "Show pages’ content below diffs"
@@ -264,11 +285,19 @@
             },
             "default_days_nb_in_wiki_edit_lists": {
               "label": "Number of days to display in recent changes, logs and follow list",
-              "help": "Maximum number: {nb} days"
+              "help": "Maximum number: {nb} days",
+              "error": {
+                "invalid": "Invalid value!",
+                "invalid_revisions_days_nb": "Invalid size!"
+              }
             },
             "default_edits_nb_in_wiki_edit_lists": {
               "label": "Number of revisions to display in recent changes, logs and follow list",
-              "help": "Maximum number: {nb}"
+              "help": "Maximum number: {nb}",
+              "error": {
+                "invalid": "Invalid value!",
+                "invalid_revisions_edits_nb": "Invalid value!"
+              }
             },
             "group_edits_per_page": {
               "label": "Group edits per page in recent changes and follow list"
@@ -323,10 +352,17 @@
             },
             "search_default_results_nb": {
               "label": "Default number of results to display on the search page",
-              "help": "Maximum number: {nb}"
+              "help": "Maximum number: {nb}",
+              "error": {
+                "invalid": "Invalid value!",
+                "invalid_search_results_nb": "Invalid value!"
+              }
             },
             "search_mode": {
               "label": "Defines the behavior of the search suggestion algorithm.",
+              "error": {
+                "invalid_choice": "Invalid choice!"
+              },
               "default": {
                 "label": "Default (recommended)",
                 "help": "Suggests results that are similar."
