@@ -42,6 +42,7 @@
         "title": "Log in",
         "tab_title": "Log in",
         "not_logged_in": "You need to log in to be able to edit the map.",
+        "password_update": "You just changed your password, please log in again.",
         "already_logged_in": "You are already logged in.",
         "form": {
           "log_in": {
@@ -76,7 +77,7 @@
             },
             "email": {
               "label": "Email",
-              "help": "Never shown publicly",
+              "help": "Never shown publicly.",
               "error": {
                 "invalid": "Invalid email address!"
               }
@@ -160,10 +161,13 @@
             },
             "password": {
               "label": "New password",
-              "help": "Leave empty to keep unchanged"
+              "help": "Leave empty to keep unchanged. You will have to log in again if you change it."
             },
             "password_confirm": {
-              "label": "Confirm new password"
+              "label": "Confirm new password",
+              "error": {
+                "passwords_mismatch": "Passwords do not match!"
+              }
             },
             "gender": {
               "label": "What gender would you like to be described as?",
@@ -189,7 +193,7 @@
             },
             "email": {
               "label": "Email address",
-              "help": "Never shown publicly",
+              "help": "Never shown publicly.",
               "error": {
                 "invalid": "Invalid email address!"
               }
@@ -245,7 +249,7 @@
             },
             "thumbnails_size": {
               "label": "Maximum size of image thumbnails in wiki pages",
-              "help": "Between 100px and 600px",
+              "help": "Between 100px and 600px.",
               "error": {
                 "invalid_thumbnail_size": "Invalid size!"
               }
@@ -285,7 +289,7 @@
             },
             "default_days_nb_in_wiki_edit_lists": {
               "label": "Number of days to display in recent changes, logs and follow list",
-              "help": "Maximum number: {nb} days",
+              "help": "Maximum number: {nb} days.",
               "error": {
                 "invalid": "Invalid value!",
                 "invalid_revisions_days_nb": "Invalid size!"
@@ -293,7 +297,7 @@
             },
             "default_edits_nb_in_wiki_edit_lists": {
               "label": "Number of revisions to display in recent changes, logs and follow list",
-              "help": "Maximum number: {nb}",
+              "help": "Maximum number: {nb}.",
               "error": {
                 "invalid": "Invalid value!",
                 "invalid_revisions_edits_nb": "Invalid value!"
@@ -352,7 +356,7 @@
             },
             "search_default_results_nb": {
               "label": "Default number of results to display on the search page",
-              "help": "Maximum number: {nb}",
+              "help": "Maximum number: {nb}.",
               "error": {
                 "invalid": "Invalid value!",
                 "invalid_search_results_nb": "Invalid value!"

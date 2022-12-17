@@ -34,7 +34,7 @@ class MapPageHandler(_ottm_handler.OTTMHandler):
         if self._mode == self.EDIT and not self._request_params.user.is_authenticated:
             return self.redirect('ottm:log_in', reverse=True, get_params={
                 'return_to': self._request_params.request.path,
-                'w': 1,
+                'edit_warning': 1,
             })
 
         translations_keys = [

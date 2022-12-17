@@ -33,7 +33,8 @@ class LoginPageHandler(_ottm_handler.OTTMHandler):
             self._request_params,
             title,
             tab_title,
-            edit_warning=bool(self._request_params.get.get('w')),
+            edit_warning=bool(self._request_params.get.get('edit_warning')),
+            password_update_info=bool(self._request_params.get.get('password_update')),
             form=form,
             global_errors=global_errors,
         ))
@@ -72,6 +73,7 @@ class LoginPageContext(_core.PageContext):
             tab_title: str,
             title: str,
             edit_warning: bool,
+            password_update_info: bool,
             form: LoginForm = None,
             global_errors: list[str] = None,
     ):
@@ -81,6 +83,8 @@ class LoginPageContext(_core.PageContext):
         :param tab_title: Title of the browser’s tab.
         :param title: Page’s title.
         :param form: The login form.
+        :param edit_warning: Whether to show the edit warning alert.
+        :param password_update_info: Whether to show the update password alert.
         :param global_errors: List of global form errors.
         """
         super().__init__(
@@ -90,12 +94,17 @@ class LoginPageContext(_core.PageContext):
             no_index=False,
         )
         self._edit_warning = edit_warning
+        self._password_update_info = password_update_info
         self._form = form
         self._global_errors = global_errors
 
     @property
-    def edit_warning(self) -> bool:
+    def show_edit_warning(self) -> bool:
         return self._edit_warning
+
+    @property
+    def show_password_update_info(self) -> bool:
+        return self._password_update_info
 
     @property
     def login_form(self) -> LoginForm | None:

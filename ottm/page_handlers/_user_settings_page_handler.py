@@ -20,11 +20,14 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
         if not self._request_params.user.is_authenticated:
             return self.redirect('ottm:map', reverse=True)
 
+        changed_password = False
         user = self._request_params.user
         if self._request_params.post:
             form = UserSettingsForm(post=self._request_params.post, user=user)
             if form.is_valid():
-                # TODO password if present
+                if form.cleaned_data['password']:
+                    user.password = form.cleaned_data['password']
+                    changed_password = True
                 user.email = form.cleaned_data['email']
                 user.prefered_language = _settings.LANGUAGES[form.cleaned_data['prefered_language']]
                 user.prefered_timezone = _pytz.timezone(form.cleaned_data['prefered_timezone'])
@@ -92,6 +95,11 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
                 user.user_notification_blacklist = form.cleaned_data['user_notification_blacklist'].split('\n')
                 user.page_notification_blacklist = form.cleaned_data['page_notification_blacklist'].split('\n')
                 user.internal_object.save()
+                if changed_password:
+                    return self.redirect('ottm:log_in', reverse=True, get_params={
+                        'return_to': '/user/settings',
+                        'password_update': 1,
+                    })
                 return self.redirect('ottm:user_settings', reverse=True)
         else:
             form = UserSettingsForm(user=user)

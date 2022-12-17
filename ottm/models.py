@@ -147,9 +147,11 @@ class User:
 
     @password.setter
     def password(self, value: str):
-        """Set this user’s password. User must not be anonymous."""
+        """Set this user’s password. User must not be anonymous.
+        Calls the ``set_password()`` method on the internal object.
+        """
         self._check_not_anonymous()
-        self._user.password = value
+        self._user.set_password(value)
 
     @property
     def email(self) -> str:
