@@ -9,7 +9,7 @@ import pytz as _pytz
 
 from . import _ottm_handler, _user_page_context
 from .. import forms as _forms, models as _models, requests as _requests, settings as _settings
-from ..api import data_types as _dt, timezones as _tz, utils as _utils
+from ..api import data_types as _dt, utils as _utils, timezones as _tz
 from ..api.wiki import constants as _const, notifications as _notif, search_engine as _se
 
 
@@ -181,7 +181,7 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
     prefered_timezone = _dj_forms.ChoiceField(
         label='prefered_timezone',
         required=True,
-        choices=((tz, tz) for tz in _tz.TIMEZONES),  # Set in __init__()
+        choices=_tz.GROUPED_TIMEZONES,
     )
     max_file_preview_size = _dj_forms.ChoiceField(
         label='max_file_preview_size',

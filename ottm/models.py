@@ -13,7 +13,7 @@ import django.db.models as dj_models
 import pytz
 
 from . import model_fields, settings
-from .api import constants, data_types, utils
+from .api import constants, data_types, utils, timezones
 from .api.permissions import *
 from .api.wiki import constants as w_cons, namespaces, search_engine, notifications
 
@@ -871,7 +871,8 @@ class CustomUser(dj_auth_models.AbstractUser):
                                       default=data_types.GENDER_N.label)
     uses_dark_mode = dj_models.BooleanField(default=False)
     prefered_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
-    prefered_timezone = dj_models.CharField(max_length=50, default=pytz.UTC.zone)
+    prefered_timezone = dj_models.CharField(max_length=50, choices=((tz, tz) for tz in timezones.TIMEZONES),
+                                            default=pytz.UTC.zone)
     is_bot = dj_models.BooleanField(default=False)
     # Wiki-related
     users_can_send_emails = dj_models.BooleanField(default=True)
