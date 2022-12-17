@@ -2,14 +2,19 @@
 from __future__ import annotations
 
 import abc as _abc
+import datetime as _dt
+import json as _json
 import typing as _typ
-import urllib.parse
+import urllib.parse as _url_parse
 
+from django.conf import settings as _dj_settings
 import django.core.handlers.wsgi as _dj_wsgi
 import django.http.response as _dj_response
 import django.shortcuts as _dj_scut
+import pytz as _pytz
 
 from .. import models as _models, requests as _requests, settings as _settings
+from ..api import utils as _utils
 
 
 class PageHandler(_abc.ABC):
@@ -41,7 +46,7 @@ class PageHandler(_abc.ABC):
         if reverse:
             url = _dj_scut.reverse(url, kwargs=kwargs)
         if get_params:
-            url += '?' + urllib.parse.urlencode(get_params)
+            url += '?' + _url_parse.urlencode(get_params)
         return _dj_response.HttpResponseRedirect(url)
 
     def render_page(self, template_name: str, context: PageContext, status: int = None,
@@ -97,10 +102,24 @@ class PageContext:
         self._title = title
         self._no_index = no_index
         self._max_page_index = max_page_index
+        self._now = _utils.now()
+        self._js_config = {
+            'siteName': self.site_name,
+            'serverTimezone': _dj_settings.TIME_ZONE,
+            # TODO user data
+        }
 
     @property
     def request_params(self) -> _requests.RequestParams:
         return self._request_params
+
+    @property
+    def now(self) -> _dt.datetime:
+        return self._now
+
+    @property
+    def server_timezone(self) -> _dt.tzinfo:
+        return _pytz.timezone(_dj_settings.TIME_ZONE)
 
     @property
     def site_name(self) -> str:
@@ -143,3 +162,7 @@ class PageContext:
         if self._max_page_index:
             return min(self._request_params.page_index, self._max_page_index)
         return self._request_params.page_index
+
+    @property
+    def js_config(self) -> str:
+        return _json.dumps(self._js_config)

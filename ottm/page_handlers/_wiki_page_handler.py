@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import abc as _abc
 import datetime as _dt
-import json as _json
 import re
 import typing as _typ
 
@@ -490,7 +489,7 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
             self._parent_pages = page.get_parent_page_titles()
         else:
             self._parent_pages = []
-        self._js_config = _json.dumps(js_config)
+        self._js_config.update(js_config)
 
     @property
     def invalid_title(self) -> bool:
@@ -527,10 +526,6 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
     @property
     def parent_pages(self) -> list[_models.Page]:
         return self._parent_pages
-
-    @property
-    def wiki_js_config(self) -> str:
-        return self._js_config
 
 
 class WikiPageErrorContext(WikiPageContext):

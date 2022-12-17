@@ -23,6 +23,6 @@
   <script src="{% static 'ottm/libs/leaflet/plugins/Leaflet.Editable.js' %}"></script>
   <script src="{% static 'ottm/libs/leaflet/plugins/leaflet.geometryutil.js' %}"></script>
   {#  <script src="{% static 'ottm/libs/leaflet/plugins/leaflet.snap.js' %}"></script>#}
-  <script id="ottm-map-config">window.OTTM_MAP_CONFIG = {{ context.map_js_config|safe }};</script>
+  <script id="ottm-map-config-script">window.OTTM_MAP_CONFIG = {{ context.map_js_config|safe }};</script>
   <script src="{% static 'ottm/map/map.min.js' %}"></script>
 {% endblock %}

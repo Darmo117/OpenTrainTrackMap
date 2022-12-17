@@ -1,4 +1,5 @@
 {% extends 'ottm/user-page-base.html' %}
+{% load static %}
 {% load ottm %}
 {% load wiki %}
 
@@ -89,7 +90,8 @@
           {% endwith %}
           {% with trans_field_prefix=trans_prefix|add:form.password_confirm.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.password_confirm.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.password_confirm.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.password_confirm }}
               {% if form.password_confirm.errors %}
                 <div class="invalid-feedback" style="display: block">
@@ -126,7 +128,8 @@
           <legend>{% ottm_translate trans_prefix|add:'fieldset.localization' %}</legend>
           {% with trans_field_prefix=trans_prefix|add:form.prefered_language.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.prefered_language.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.prefered_language.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.prefered_language }}
               {% if form.prefered_language.errors %}
                 <div class="invalid-feedback" style="display: block">
@@ -206,7 +209,8 @@
           {% endwith %}
           {% with trans_field_prefix=trans_prefix|add:form.email_user_blacklist.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.email_user_blacklist.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.email_user_blacklist.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.email_user_blacklist }}
               <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
               {% if form.email_user_blacklist.errors %}
@@ -241,9 +245,10 @@
             </div>
           {% endwith %}
           <p>
-            {% ottm_translate trans_prefix|add:'custom_css_js.label' %}<br>
+            <label>{% ottm_translate trans_prefix|add:'custom_css_js.label' %}</label><br>
             {% ottm_translate trans_prefix|add:'custom_css.label' as text %}
-            {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common.css' text=text ignore_current_title=True %} |
+            {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common.css' text=text ignore_current_title=True %}
+            |
             {% ottm_translate trans_prefix|add:'custom_js.label' as text %}
             {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common.js' text=text ignore_current_title=True %}
           </p>
@@ -252,7 +257,8 @@
           <legend>{% ottm_translate trans_prefix|add:'fieldset.date_and_time' %}</legend>
           {% with trans_field_prefix=trans_prefix|add:form.prefered_datetime_format.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.prefered_datetime_format.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.prefered_datetime_format.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.prefered_datetime_format }}
               {% if form.prefered_datetime_format.errors %}
                 <div class="invalid-feedback" style="display: block">
@@ -264,14 +270,17 @@
             </div>
           {% endwith %}
           <p>
-            {% ottm_translate trans_prefix|add:'server_time.label' %}<br>
-            {# TODO server time #}
-            {% ottm_translate trans_prefix|add:'timezone_time.label' %}<br>
-            {# TODO timezone time #}
+            <label>{% ottm_translate trans_prefix|add:'server_time.label' tz=context.server_timezone.zone %}</label><br>
+            <span id="server-time">{% ottm_format_time context.now timezone=context.server_timezone.zone %}</span>
+          </p>
+          <p>
+            <label>{% ottm_translate trans_prefix|add:'timezone_time.label' %}</label><br>
+            <span id="local-time">{% ottm_format_time context.now %}</span>
           </p>
           {% with trans_field_prefix=trans_prefix|add:form.prefered_timezone.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.prefered_timezone.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.prefered_timezone.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.prefered_timezone }}
               {% if form.prefered_timezone.errors %}
                 <div class="invalid-feedback" style="display: block">
@@ -287,7 +296,8 @@
           <legend>{% ottm_translate trans_prefix|add:'fieldset.files' %}</legend>
           {% with trans_field_prefix=trans_prefix|add:form.max_file_preview_size.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.max_file_preview_size.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.max_file_preview_size.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.max_file_preview_size }}
               {% if form.max_file_preview_size.errors %}
                 <div class="invalid-feedback" style="display: block">
@@ -300,7 +310,8 @@
           {% endwith %}
           {% with trans_field_prefix=trans_prefix|add:form.thumbnails_size.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.thumbnails_size.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.thumbnails_size.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.thumbnails_size }}
               <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
               {% if form.thumbnails_size.errors %}
@@ -498,7 +509,8 @@
           <legend>{% ottm_translate trans_prefix|add:'fieldset.revisions_display' %}</legend>
           {% with trans_field_prefix=trans_prefix|add:form.default_days_nb_in_wiki_edit_lists.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.default_days_nb_in_wiki_edit_lists.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.default_days_nb_in_wiki_edit_lists.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.default_days_nb_in_wiki_edit_lists }}
               <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' nb=30 %}</small>
               {% if form.default_days_nb_in_wiki_edit_lists.errors %}
@@ -512,7 +524,8 @@
           {% endwith %}
           {% with trans_field_prefix=trans_prefix|add:form.default_edits_nb_in_wiki_edit_lists.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.default_edits_nb_in_wiki_edit_lists.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.default_edits_nb_in_wiki_edit_lists.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.default_edits_nb_in_wiki_edit_lists }}
               <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' nb=1000 %}</small>
               {% if form.default_edits_nb_in_wiki_edit_lists.errors %}
@@ -794,7 +807,8 @@
           <legend>{% ottm_translate trans_prefix|add:'fieldset.search_general' %}</legend>
           {% with trans_field_prefix=trans_prefix|add:form.search_default_results_nb.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.search_default_results_nb.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.search_default_results_nb.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.search_default_results_nb }}
               <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' nb=50 %}</small>
               {% if form.search_default_results_nb.errors %}
@@ -818,7 +832,8 @@
                   <label for="{{ f.id_for_label }}" class="custom-control-label">
                     {% ottm_translate trans_field_prefix|add:f.choice_label|add:'.label' %}
                   </label>
-                  <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:f.choice_label|add:'.help' %}</small>
+                  <small
+                      class="form-text text-muted">{% ottm_translate trans_field_prefix|add:f.choice_label|add:'.help' %}</small>
                 </div>
               {% endfor %}
               {% if form.search_mode.errors %}
@@ -892,14 +907,16 @@
                 <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_user_talk_edits' %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
-                    <input id="user-settings-form-web-notify-user-talk-edits" class="custom-control-input" disabled checked type="checkbox">
+                    <input id="user-settings-form-web-notify-user-talk-edits" class="custom-control-input" disabled
+                           checked type="checkbox">
                     <label for="user-settings-form-web-notify-user-talk-edits" class="custom-control-label"></label>
                   </div>
                 </td>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.email_notify_user_talk_edits }}
-                    <label for="{{ form.email_notify_user_talk_edits.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.email_notify_user_talk_edits.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
               </tr>
@@ -908,13 +925,15 @@
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_followed_pages_edits }}
-                    <label for="{{ form.web_notify_followed_pages_edits.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.web_notify_followed_pages_edits.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.email_notify_followed_pages_edits }}
-                    <label for="{{ form.email_notify_followed_pages_edits.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.email_notify_followed_pages_edits.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
               </tr>
@@ -929,7 +948,8 @@
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.email_notify_talk_mentions }}
-                    <label for="{{ form.email_notify_talk_mentions.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.email_notify_talk_mentions.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
               </tr>
@@ -938,13 +958,15 @@
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_message_answers }}
-                    <label for="{{ form.web_notify_message_answers.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.web_notify_message_answers.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.email_notify_message_answers }}
-                    <label for="{{ form.email_notify_message_answers.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.email_notify_message_answers.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
               </tr>
@@ -959,7 +981,8 @@
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.email_notify_topic_answers }}
-                    <label for="{{ form.email_notify_topic_answers.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.email_notify_topic_answers.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
               </tr>
@@ -983,13 +1006,15 @@
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_failed_connection_attempts }}
-                    <label for="{{ form.web_notify_failed_connection_attempts.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.web_notify_failed_connection_attempts.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.email_notify_failed_connection_attempts }}
-                    <label for="{{ form.email_notify_failed_connection_attempts.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.email_notify_failed_connection_attempts.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
               </tr>
@@ -998,13 +1023,15 @@
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_permissions_edit }}
-                    <label for="{{ form.web_notify_permissions_edit.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.web_notify_permissions_edit.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.email_notify_permissions_edit }}
-                    <label for="{{ form.email_notify_permissions_edit.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.email_notify_permissions_edit.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
               </tr>
@@ -1018,7 +1045,8 @@
                 </td>
                 <td>
                   <div class="custom-control custom-checkbox">
-                    <input id="user-settings-form-email-notify-user-email" class="custom-control-input" disabled type="checkbox">
+                    <input id="user-settings-form-email-notify-user-email" class="custom-control-input" disabled
+                           type="checkbox">
                     <label for="user-settings-form-email-notify-user-email" class="custom-control-label"></label>
                   </div>
                 </td>
@@ -1028,13 +1056,15 @@
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_cancelled_edits }}
-                    <label for="{{ form.web_notify_cancelled_edits.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.web_notify_cancelled_edits.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.email_notify_cancelled_edits }}
-                    <label for="{{ form.email_notify_cancelled_edits.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.email_notify_cancelled_edits.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
               </tr>
@@ -1043,13 +1073,16 @@
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_edit_count_milestones }}
-                    <label for="{{ form.web_notify_edit_count_milestones.id_for_label }}" class="custom-control-label"></label>
+                    <label for="{{ form.web_notify_edit_count_milestones.id_for_label }}"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
                 <td>
                   <div class="custom-control custom-checkbox">
-                    <input id="user-settings-form-email-notify-edit-count-milestones" class="custom-control-input" disabled type="checkbox">
-                    <label for="user-settings-form-email-notify-edit-count-milestones" class="custom-control-label"></label>
+                    <input id="user-settings-form-email-notify-edit-count-milestones" class="custom-control-input"
+                           disabled type="checkbox">
+                    <label for="user-settings-form-email-notify-edit-count-milestones"
+                           class="custom-control-label"></label>
                   </div>
                 </td>
               </tr>
@@ -1060,7 +1093,8 @@
           <legend>{% ottm_translate trans_prefix|add:'fieldset.blocked_users' %}</legend>
           {% with trans_field_prefix=trans_prefix|add:form.user_notification_blacklist.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.user_notification_blacklist.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.user_notification_blacklist.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.user_notification_blacklist }}
               <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
               {% if form.user_notification_blacklist.errors %}
@@ -1077,7 +1111,8 @@
           <legend>{% ottm_translate trans_prefix|add:'fieldset.muted_pages' %}</legend>
           {% with trans_field_prefix=trans_prefix|add:form.page_notification_blacklist.label|add:'.' %}
             <div class="form-group">
-              <label for="{{ form.page_notification_blacklist.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              <label
+                  for="{{ form.page_notification_blacklist.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.page_notification_blacklist }}
               <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
               {% if form.page_notification_blacklist.errors %}
@@ -1103,14 +1138,5 @@
 {% endblock %}
 
 {% block page-scripts %}
-  <script>
-    (function () {
-      const hash = location.hash.substring(1) || "personal-info";
-      $(`#form-tab-${hash}`).addClass("active");
-      $(`#form-panel-${hash}`).addClass("show active");
-      $("#page-content ul[role='tablist'] button[role='tab']").on("click", e => {
-        location.hash = `#${e.target.id.substring(9)}`;
-      });
-    })();
-  </script>
+  <script src="{% static 'ottm/user-settings.min.js' %}"></script>
 {% endblock %}

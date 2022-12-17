@@ -74,7 +74,8 @@
               <a class="dropdown-item" href="{% url 'ottm:user_profile' username=context.user.username %}">
                 <span class="mdi mdi-account"></span> {% ottm_translate 'navbar.profile.label' %}
               </a>
-              <a class="dropdown-item" href="{% url 'ottm:wiki_page' raw_page_title='User:'|add:context.user.username %}">
+              <a class="dropdown-item"
+                 href="{% url 'ottm:wiki_page' raw_page_title='User:'|add:context.user.username %}">
                 <span class="mdi mdi-file-account-outline"></span> {% ottm_translate 'navbar.wiki_user_page.label' %}
               </a>
               <a class="dropdown-item" href="{% url 'ottm:user_contributions' username=context.user.username %}">
@@ -140,6 +141,7 @@
   <script src="{% static 'ottm/libs/jquery-3.6.0.min.js' %}"></script>
   <script src="{% static 'ottm/libs/popper.min.js' %}"></script>
   <script src="{% static 'ottm/libs/bootstrap-4.5.2-dist/js/bootstrap.min.js' %}"></script>
+  <script id="ottm-config-script">window.OTTM_CONFIG = {{ context.js_config|safe }};</script>
   <script src="{% static 'ottm/main.min.js' %}"></script>
   <script src="{% static 'ottm/forms.min.js' %}"></script>
   {% block page-scripts %}{% endblock %}

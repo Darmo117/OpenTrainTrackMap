@@ -1,5 +1,9 @@
+/**
+ * Script for forms.
+ */
+"use strict";
+
 (function () {
-  "use strict";
   // Add .is-invalid class to form inputs with associated
   // .invalid-feedback div.
   $("form div.form-group").each((_, element) => {

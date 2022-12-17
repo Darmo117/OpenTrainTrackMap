@@ -1,3 +1,6 @@
+/**
+ * Script for the Leaflet map view.
+ */
 "use strict";
 
 (function () {
@@ -246,7 +249,7 @@
       }
       // Delete config object and script tag
       delete window.OTTM_MAP_CONFIG;
-      $("#ottm-map-config").remove();
+      $("#ottm-map-config-script").remove();
     }
 
     /**

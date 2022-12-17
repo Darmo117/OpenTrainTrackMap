@@ -230,7 +230,7 @@
               }
             },
             "server_time": {
-              "label": "Server time:"
+              "label": "Server time ({tz}):"
             },
             "timezone_time": {
               "label": "Timezone time:"

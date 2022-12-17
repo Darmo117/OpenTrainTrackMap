@@ -206,7 +206,6 @@
 
 {% block page-scripts %}
   <script src="{% static 'ottm/libs/highlight/highlight.min.js' %}"></script>
-  <script id="wiki-config-script">window.WIKI_CONFIG = {{ context.wiki_js_config|safe }};</script>
   <script src="{% static 'ottm/libs/jquery.confirmExit.min.js' %}"></script>
   <script src="{% static 'ottm/wiki/main.min.js' %}"></script>
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}
