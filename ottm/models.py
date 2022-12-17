@@ -1011,7 +1011,7 @@ class Type(Structure):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if self.objects.filter(label=self.label).exists():
+        if Type.objects.filter(label=self.label).exists():
             raise dj_exc.ValidationError(
                 f'type with label {self.label} already exist',
                 code='type_duplicate'
@@ -1054,7 +1054,7 @@ class Property(Structure):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if self.objects.filter(label=self.label, host_type__label=self.host_type.label).exists():
+        if Property.objects.filter(label=self.label, host_type__label=self.host_type.label).exists():
             raise dj_exc.ValidationError(
                 f'property with name {self.label} already exists for type {self.host_type}',
                 code='duplicate_property'
@@ -1257,7 +1257,7 @@ class Relation(dj_models.Model):
                 'left_object': self.left_object,
                 k: getattr(self, k),
             }
-            if self.objects.filter(**filters).exists():
+            if Relation.objects.filter(**filters).exists():
                 raise dj_exc.ValidationError(
                     f'duplicate value for property {self.property}',
                     code='relation_duplicate_for_unique_property'
@@ -1265,7 +1265,7 @@ class Relation(dj_models.Model):
 
         match self.property.property_type:
             case constants.PROPERTY_LOCALIZED:
-                if self.objects.filter(language_code=self.language_code, left_object=self.left_object).exists():
+                if Relation.objects.filter(language_code=self.language_code, left_object=self.left_object).exists():
                     raise dj_exc.ValidationError(
                         f'duplicate localization for language {self.language_code} and object {self.left_object}',
                         code='localized_relation_duplicate'
@@ -1299,7 +1299,7 @@ class Relation(dj_models.Model):
 
         maxi = self.property.multiplicity_max or math.inf
         if not self.property.is_temporal:
-            if self.objects.filter(left_object=self.left_object, property=self.property).count() >= maxi:
+            if Relation.objects.filter(left_object=self.left_object, property=self.property).count() >= maxi:
                 raise dj_exc.ValidationError(
                     f'too many relations for property {self.property} on object {self.left_object}',
                     code='too_many_relations'
@@ -1313,7 +1313,7 @@ class Relation(dj_models.Model):
                 }
                 # TODO if possible, delegate to SQL
                 return any(relation.existence_interval.overlaps(self.existence_interval)
-                           for relation in self.objects.filter(**filters))
+                           for relation in Relation.objects.filter(**filters))
 
             if maxi == 1 and overlaps():
                 raise dj_exc.ValidationError(
@@ -1525,7 +1525,7 @@ class EditGroup(dj_models.Model):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if self.objects.filter(date=self.date, author=self.author).exists():
+        if EditGroup.objects.filter(date=self.date, author=self.author).exists():
             # noinspection PyUnresolvedReferences
             raise dj_exc.ValidationError(
                 f'user {self.user.user.username} cannot make multiple edits at the exact same time',
@@ -1590,7 +1590,7 @@ class Translation(dj_models.Model):
             'label': self.label,
             k: obj,
         }
-        if self.objects.filter(**filters).exists():
+        if Translation.objects.filter(**filters).exists():
             raise dj_exc.ValidationError(f'duplicate translation for object {obj} and language {self.language_code}',
                                          code='duplicate_translation')
 
@@ -1927,6 +1927,12 @@ class Page(dj_models.Model, NonDeletableMixin):
             return dj_auth_models.EmptyManager(Page).all()
         return Page.objects.filter(namespace_id=self.namespace_id, title__startswith=self.title + '/')
 
+    def get_categories(self) -> dj_models.QuerySet[PageCategory]:
+        """Return a query set of all categories of this page"""
+        if not self.exists:
+            return dj_auth_models.EmptyManager(PageCategory).all()
+        return PageCategory.objects.filter(page=self).order_by('page__namespace_id', 'page__title')
+
 
 class PageCategory(dj_models.Model):
     """Model that associates a page to a category with an optional sort key.
@@ -1935,8 +1941,10 @@ class PageCategory(dj_models.Model):
     cat_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
     sort_key = dj_models.CharField(max_length=200, null=True, blank=True)
 
-    class Meta:
-        unique_together = ('page', 'cat_title')
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        if PageCategory.objects.filter(page=self.page, cat_title=self.cat_title).exists():
+            raise dj_exc.ValidationError('duplicate category for page', code='duplicate_category')
 
     @staticmethod
     def subcategories_for_category(cat_title: str) -> dj_models.QuerySet[Page]:
@@ -1981,8 +1989,8 @@ class PageFollowStatus(dj_models.Model):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if self.objects.filter(user=self.user, page_namespace_id=self.page_namespace_id,
-                               page_title=self.page_title).exists():
+        if PageFollowStatus.objects.filter(user=self.user, page_namespace_id=self.page_namespace_id,
+                                           page_title=self.page_title).exists():
             raise dj_exc.ValidationError(
                 'duplicate follow list entry',
                 code='page_follow_list_duplicate_entry'

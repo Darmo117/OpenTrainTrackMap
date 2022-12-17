@@ -1,13 +1,15 @@
 """This module defines functions to interact with the wiki’s database."""
 import datetime
+import typing as _typ
 import urllib.parse
 
 import django.core.handlers.wsgi as dj_wsgi
 import django.db.transaction as dj_db_trans
+import django.shortcuts as dj_scut
 
 from . import constants, namespaces
 from .. import auth, errors, groups, permissions, utils
-from ... import models, settings
+from ... import models, settings, requests
 
 MAIN_PAGE_TITLE = namespaces.NS_WIKI.get_full_page_title('Main Page')
 
@@ -69,19 +71,60 @@ def get_page(ns: namespaces.Namespace, title: str) -> models.Page:
         )
 
 
-def get_js_config(page: models.Page, action: str) -> dict:
+def get_js_config(request_params: requests.RequestParams, page: models.Page,
+                  special_page_data: dict[str, _typ.Any] = None, revision_id: int = None) -> dict:
     """Return a dict object representing the page’s JS configuration object to insert into the HTML template.
 
+    :param request_params: Request parameters.
     :param page: Page to get the JS configuration of.
-    :param action: Page’s action.
+    :param special_page_data: Optional special page data.
+    :param revision_id: ID of the page’s selected revision.
     :return: The JS object.
     """
+    user = request_params.user
+    special_page_data = special_page_data or {}
+    if page.namespace == namespaces.NS_SPECIAL:
+        username = (tu := special_page_data.get('target_user')) and tu.username
+    elif page.namespace == namespaces.NS_USER:
+        username = page.title
+    else:
+        username = None
+    action = request_params.wiki_action
     return {
-        'pageNamespaceID': page.namespace.id,
-        'pageNamespaceName': page.namespace.name,
-        'pageTitle': page.title,
-        'action': action,
-        # TODO
+        'wPath': dj_scut.reverse('ottm:wiki_main_page'),
+        'wContentNamespaces': [ns_id for ns_id, ns in namespaces.NAMESPACE_IDS.items() if ns.is_content],
+        'wNamespaceNames': {ns_id: ns.name for ns_id, ns in namespaces.NAMESPACE_IDS.items()},
+        'wNamespaceIDs': list(namespaces.NAMESPACE_IDS.keys()),
+        'wPageAction': action,
+        'wPageID': page.id if page.exists else 0,
+        'wPageNamespaceID': page.namespace.id,
+        'wPageNamespaceName': page.namespace.name,
+        'wPageNamespaceNameURL': url_encode_page_title(page.namespace.name),
+        'wPageTitle': page.title,
+        'wPageTitleURL': url_encode_page_title(page.title),
+        'wPageFullTitle': page.full_title,
+        'wPageFullTitleURL': url_encode_page_title(page.full_title),
+        'wPageBaseName': page.base_name,
+        'wPageBaseNameURL': url_encode_page_title(page.base_name),
+        'wPageName': page.page_name,
+        'wPageNameURL': url_encode_page_title(page.page_name),
+        'wPageCategories': [cat.cat_title for cat in page.get_categories()],
+        'wPageCurrentRevisionID': page.get_latest_revision().id if page.exists else 0,
+        'wPageIsNormalPage': action == constants.ACTION_READ and page.namespace != namespaces.NS_SPECIAL,
+        'wPageIsRedirect': page.redirects_to_namespace_id is not None and page.redirects_to_title is not None,
+        'wPageContentLanguage': page.content_language.code,
+        'wPageContentType': page.content_type,
+        'wRedirectedFrom': None,  # TODO
+        'wRelevantPage': (tp := special_page_data.get('target_page')) and tp.full_title,
+        'wRelevantUser': username,
+        'wPageEditProtection': (pp := page.get_edit_protection()) and pp.protection_level.label,
+        'wPageNamespaceEditProtection': page.namespace.perms_required,
+        'wPageRevisionID': revision_id or 0,
+        'wIsMainPage': page.full_title == MAIN_PAGE_TITLE,
+        'wDiffOldID': special_page_data.get('old_id', 0),
+        'wDiffNewID': special_page_data.get('new_id', 0),
+        'wUserCanEditPage': page.can_user_edit(user),
+        'wUserCanPostMessages': page.can_user_post_messages(user),
     }
 
 

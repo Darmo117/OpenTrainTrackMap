@@ -104,9 +104,24 @@ class PageContext:
         self._max_page_index = max_page_index
         self._now = _utils.now()
         self._js_config = {
+            'debug': _dj_settings.DEBUG,
+            'serverHost': f'//{request_params.request.get_host()}',
+            'staticPath': _dj_settings.STATIC_URL,
             'siteName': self.site_name,
             'serverTimezone': _dj_settings.TIME_ZONE,
-            # TODO user data
+            'language': self.language.code,
+            'languages': sorted(code for code in _settings.LANGUAGES.keys()),
+            'darkMode': self.dark_mode,
+            'userName': self.user.username,
+            'userID': self.user.internal_object.id,
+            'userGender': self.user.gender.label,
+            'userLanguage': self.user.prefered_language.code,
+            'userRegistrationTimestamp': int(self.user.internal_object.date_joined.timestamp()),
+            'userGroups': [g.label for g in self.user.internal_object.groups.order_by('label')],
+            'userEditCount': self.user.edits_count(),
+            'userWikiEditCount': self.user.wiki_edits_count(),
+            'userTimezone': self.user.prefered_timezone.zone,
+            'userSearchMode': self.user.search_mode.value,
         }
 
     @property
@@ -147,7 +162,7 @@ class PageContext:
 
     @property
     def ui_languages(self) -> list[_settings.UILanguage]:
-        return list(_settings.LANGUAGES.values())
+        return sorted(_settings.LANGUAGES.values(), key=lambda lang: lang.name)
 
     @property
     def dark_mode(self) -> bool:

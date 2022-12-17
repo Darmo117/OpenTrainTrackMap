@@ -59,7 +59,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         # Check if title is empty
         if not title:
             page = _models.Page(namespace_id=_w_ns.NS_SPECIAL.id, title=title)
-            js_config = _w_pages.get_js_config(page, self._request_params.wiki_action)
+            js_config = _w_pages.get_js_config(self._request_params, page)
             return self.render_page(
                 'ottm/wiki/page.html',
                 self._page_error_context(page, js_config, empty_title=True),
@@ -73,7 +73,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         # Check if title is invalid
         if m := _settings.INVALID_TITLE_REGEX.search(title):
             page = _models.Page(namespace_id=_w_ns.NS_SPECIAL.id, title=title)
-            js_config = _w_pages.get_js_config(page, self._request_params.wiki_action)
+            js_config = _w_pages.get_js_config(self._request_params, page)
             return self.render_page(
                 'ottm/wiki/page.html',
                 self._page_error_context(page, js_config, char=m.group(1)),
@@ -102,7 +102,6 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
 
         ns, title = result
         page = _w_pages.get_page(ns, title)
-        js_config = _w_pages.get_js_config(page, self._request_params.wiki_action)
         if ns == _w_ns.NS_SPECIAL:
             special_page = _w_sp.SPECIAL_PAGES.get(page.base_name)
             if special_page is None:
@@ -110,7 +109,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                     self._request_params,
                     page=page,
                     page_exists=False,
-                    js_config=js_config,
+                    js_config=_w_pages.get_js_config(self._request_params, page),
                 )
                 status = 404
             elif not special_page.can_user_access(self._request_params.user):
@@ -118,7 +117,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                     self._request_params,
                     page=page,
                     page_exists=True,
-                    js_config=js_config,
+                    js_config=_w_pages.get_js_config(self._request_params, page),
                     required_perms=special_page.permissions_required,
                 )
                 status = 403
@@ -135,7 +134,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                     self._request_params,
                     page=page,
                     page_exists=True,
-                    js_config=js_config,
+                    js_config=_w_pages.get_js_config(self._request_params, page, data),
                     required_perms=special_page.permissions_required,
                     kwargs=data,
                 )
@@ -147,6 +146,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                 revision_id = int(revid)
             else:
                 revision_id = None
+            js_config = _w_pages.get_js_config(self._request_params, page, revision_id=revision_id)
 
             match self._request_params.wiki_action:
                 case _w_cons.ACTION_RAW:
