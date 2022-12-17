@@ -126,7 +126,7 @@ class User:
     @username.setter
     def username(self, value: str):
         """Set this user’s username. User must not be anonymous."""
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.username = value
 
     @property
@@ -137,7 +137,7 @@ class User:
     @hide_username.setter
     def hide_username(self, value: bool):
         """Set whether this user’s username has to be hidden in pages. User must not be anonymous."""
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.hide_username = value
 
     @property
@@ -150,7 +150,7 @@ class User:
         """Set this user’s password. User must not be anonymous.
         Calls the ``set_password()`` method on the internal object.
         """
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.set_password(value)
 
     @property
@@ -161,7 +161,7 @@ class User:
     @email.setter
     def email(self, value: str):
         """Set this user’s email address. User must not be anonymous."""
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.email = value
 
     @property
@@ -174,7 +174,7 @@ class User:
     @prefered_language.setter
     def prefered_language(self, value: settings.UILanguage):
         """Set this user’s prefered language. User must not be anonymous."""
-        self._check_not_anonymous()
+        self._check_authenticated()
         try:
             self._user.prefered_language = Language.objects.get(code=value.code)
         except Language.DoesNotExist:  # Should never happen
@@ -188,7 +188,7 @@ class User:
     @prefered_timezone.setter
     def prefered_timezone(self, value: pytz.BaseTzInfo):
         """Set this user’s prefered timezone. User must not be anonymous."""
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.prefered_timezone = value.zone
 
     @property
@@ -202,7 +202,7 @@ class User:
     @prefered_datetime_format.setter
     def prefered_datetime_format(self, value: int):
         """Set this user’s prefered datetime format to the one with the given ID. User must not be anonymous."""
-        self._check_not_anonymous()
+        self._check_authenticated()
         try:
             self._user.prefered_datetime_format = DateTimeFormat.objects.get(id=value)
         except DateTimeFormat.DoesNotExist:
@@ -216,7 +216,7 @@ class User:
     @gender.setter
     def gender(self, value: data_types.UserGender):
         """Set this user’s gender. User must not be anonymous."""
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.gender_code = value.label
 
     @property
@@ -227,7 +227,7 @@ class User:
     @uses_dark_mode.setter
     def uses_dark_mode(self, value: bool):
         """Set whether this user uses dark mode. User must not be anonymous."""
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.uses_dark_mode = value
 
     @property
@@ -236,7 +236,7 @@ class User:
 
     @users_can_send_emails.setter
     def users_can_send_emails(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.users_can_send_emails = value
 
     @property
@@ -245,7 +245,7 @@ class User:
 
     @new_users_can_send_emails.setter
     def new_users_can_send_emails(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.new_users_can_send_emails = value
 
     @property
@@ -254,7 +254,7 @@ class User:
 
     @send_copy_of_sent_emails.setter
     def send_copy_of_sent_emails(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.send_copy_of_sent_emails = value
 
     @property
@@ -263,7 +263,7 @@ class User:
 
     @email_user_blacklist.setter
     def email_user_blacklist(self, value: typ.Sequence[str]):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.email_user_blacklist = value
 
     @property
@@ -273,7 +273,7 @@ class User:
 
     @max_file_preview_size.setter
     def max_file_preview_size(self, value: tuple[int, int]):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.max_file_preview_size = f'{value[0]},{value[1]}'
 
     @property
@@ -282,7 +282,7 @@ class User:
 
     @thumbnails_size.setter
     def thumbnails_size(self, value: int):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.thumbnails_size = value
 
     @property
@@ -291,7 +291,7 @@ class User:
 
     @show_page_content_in_diffs.setter
     def show_page_content_in_diffs(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.show_page_content_in_diffs = value
 
     @property
@@ -300,7 +300,7 @@ class User:
 
     @show_diff_after_revert.setter
     def show_diff_after_revert(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.show_diff_after_revert = value
 
     @property
@@ -309,7 +309,7 @@ class User:
 
     @show_hidden_categories.setter
     def show_hidden_categories(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.show_hidden_categories = value
 
     @property
@@ -318,7 +318,7 @@ class User:
 
     @ask_revert_confirmation.setter
     def ask_revert_confirmation(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.ask_revert_confirmation = value
 
     @property
@@ -327,7 +327,7 @@ class User:
 
     @mark_all_wiki_edits_as_minor.setter
     def mark_all_wiki_edits_as_minor(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.mark_all_wiki_edits_as_minor = value
 
     @property
@@ -336,7 +336,7 @@ class User:
 
     @warn_when_no_wiki_edit_comment.setter
     def warn_when_no_wiki_edit_comment(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.warn_when_no_wiki_edit_comment = value
 
     @property
@@ -345,7 +345,7 @@ class User:
 
     @warn_when_wiki_edit_not_published.setter
     def warn_when_wiki_edit_not_published(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.warn_when_wiki_edit_not_published = value
 
     @property
@@ -354,7 +354,7 @@ class User:
 
     @show_preview_above_edit_form.setter
     def show_preview_above_edit_form(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.show_preview_above_edit_form = value
 
     @property
@@ -363,7 +363,7 @@ class User:
 
     @show_preview_without_reload.setter
     def show_preview_without_reload(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.show_preview_without_reload = value
 
     @property
@@ -372,7 +372,7 @@ class User:
 
     @default_days_nb_in_wiki_edit_lists.setter
     def default_days_nb_in_wiki_edit_lists(self, value: int):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.days_nb_rc_fl_logs = value
 
     @property
@@ -381,7 +381,7 @@ class User:
 
     @default_edits_nb_in_wiki_edit_lists.setter
     def default_edits_nb_in_wiki_edit_lists(self, value: int):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.edits_nb_rc_fl_logs = value
 
     @property
@@ -390,7 +390,7 @@ class User:
 
     @group_edits_per_page.setter
     def group_edits_per_page(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.group_edits_per_page_rc_fl = value
 
     @property
@@ -399,7 +399,7 @@ class User:
 
     @mask_wiki_minor_edits.setter
     def mask_wiki_minor_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.mask_wiki_minor_edits = value
 
     @property
@@ -408,7 +408,7 @@ class User:
 
     @mask_wiki_bot_edits.setter
     def mask_wiki_bot_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.mask_wiki_bot_edits = value
 
     @property
@@ -417,7 +417,7 @@ class User:
 
     @mask_wiki_own_edits.setter
     def mask_wiki_own_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.mask_wiki_own_edits = value
 
     @property
@@ -426,7 +426,7 @@ class User:
 
     @mask_wiki_anonymous_edits.setter
     def mask_wiki_anonymous_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.mask_wiki_anonymous_edits = value
 
     @property
@@ -435,7 +435,7 @@ class User:
 
     @mask_wiki_authenticated_edits.setter
     def mask_wiki_authenticated_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.mask_wiki_authenticated_edits = value
 
     @property
@@ -444,7 +444,7 @@ class User:
 
     @mask_wiki_categorization_edits.setter
     def mask_wiki_categorization_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.mask_wiki_categorization_edits = value
 
     @property
@@ -453,7 +453,7 @@ class User:
 
     @mask_wiki_patrolled_edits.setter
     def mask_wiki_patrolled_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.mask_wiki_patrolled_edits = value
 
     @property
@@ -462,7 +462,7 @@ class User:
 
     @add_created_pages_to_follow_list.setter
     def add_created_pages_to_follow_list(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.fl_add_created_pages = value
 
     @property
@@ -471,7 +471,7 @@ class User:
 
     @add_modified_pages_to_follow_list.setter
     def add_modified_pages_to_follow_list(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.fl_add_modified_pages = value
 
     @property
@@ -480,7 +480,7 @@ class User:
 
     @add_renamed_pages_to_follow_list.setter
     def add_renamed_pages_to_follow_list(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.fl_add_renamed_pages = value
 
     @property
@@ -489,7 +489,7 @@ class User:
 
     @add_deleted_pages_to_follow_list.setter
     def add_deleted_pages_to_follow_list(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.fl_add_deleted_pages = value
 
     @property
@@ -498,7 +498,7 @@ class User:
 
     @add_reverted_pages_to_follow_list.setter
     def add_reverted_pages_to_follow_list(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.fl_add_reverted_pages = value
 
     @property
@@ -507,7 +507,7 @@ class User:
 
     @add_created_topics_to_follow_list.setter
     def add_created_topics_to_follow_list(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.fl_add_created_topics = value
 
     @property
@@ -516,7 +516,7 @@ class User:
 
     @add_replied_to_topics_to_follow_list.setter
     def add_replied_to_topics_to_follow_list(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.fl_add_replied_to_topics = value
 
     @property
@@ -525,7 +525,7 @@ class User:
 
     @search_default_results_nb.setter
     def search_default_results_nb(self, value: int):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.search_default_results_nb = value
 
     @property
@@ -534,7 +534,7 @@ class User:
 
     @search_mode.setter
     def search_mode(self, value: search_engine.SearchMode):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.search_mode = value.value
 
     @property
@@ -543,7 +543,7 @@ class User:
 
     @email_update_notification_frequency.setter
     def email_update_notification_frequency(self, value: notifications.NotificationEmailFrequency):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_email_frequency = value.value
 
     @property
@@ -552,7 +552,7 @@ class User:
 
     @html_email_updates.setter
     def html_email_updates(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.html_email_updates = value
 
     @property
@@ -561,7 +561,7 @@ class User:
 
     @email_notify_user_talk_edits.setter
     def email_notify_user_talk_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_user_talk_edits_email = value
 
     @property
@@ -570,7 +570,7 @@ class User:
 
     @web_notify_followed_pages_edits.setter
     def web_notify_followed_pages_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_followed_pages_edits_web = value
 
     @property
@@ -579,7 +579,7 @@ class User:
 
     @email_notify_followed_pages_edits.setter
     def email_notify_followed_pages_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_followed_pages_edits_email = value
 
     @property
@@ -588,7 +588,7 @@ class User:
 
     @web_notify_talk_mentions.setter
     def web_notify_talk_mentions(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_talk_mentions_web = value
 
     @property
@@ -597,7 +597,7 @@ class User:
 
     @email_notify_talk_mentions.setter
     def email_notify_talk_mentions(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_talk_mentions_email = value
 
     @property
@@ -606,7 +606,7 @@ class User:
 
     @web_notify_message_answers.setter
     def web_notify_message_answers(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_message_answers_web = value
 
     @property
@@ -615,7 +615,7 @@ class User:
 
     @email_notify_message_answers.setter
     def email_notify_message_answers(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_message_answers_email = value
 
     @property
@@ -624,7 +624,7 @@ class User:
 
     @web_notify_topic_answers.setter
     def web_notify_topic_answers(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_topic_answers_web = value
 
     @property
@@ -633,7 +633,7 @@ class User:
 
     @email_notify_topic_answers.setter
     def email_notify_topic_answers(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_topic_answers_email = value
 
     @property
@@ -642,7 +642,7 @@ class User:
 
     @web_notify_thanks.setter
     def web_notify_thanks(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_thanks_web = value
 
     @property
@@ -651,7 +651,7 @@ class User:
 
     @email_notify_thanks.setter
     def email_notify_thanks(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_thanks_email = value
 
     @property
@@ -660,7 +660,7 @@ class User:
 
     @web_notify_failed_connection_attempts.setter
     def web_notify_failed_connection_attempts(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_failed_connection_attempts_web = value
 
     @property
@@ -669,7 +669,7 @@ class User:
 
     @email_notify_failed_connection_attempts.setter
     def email_notify_failed_connection_attempts(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_failed_connection_attempts_email = value
 
     @property
@@ -678,7 +678,7 @@ class User:
 
     @web_notify_permissions_edit.setter
     def web_notify_permissions_edit(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_permissions_edit_web = value
 
     @property
@@ -687,7 +687,7 @@ class User:
 
     @email_notify_permissions_edit.setter
     def email_notify_permissions_edit(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_permissions_edit_email = value
 
     @property
@@ -696,7 +696,7 @@ class User:
 
     @web_notify_user_email_web.setter
     def web_notify_user_email_web(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_user_email_web = value
 
     @property
@@ -705,7 +705,7 @@ class User:
 
     @web_notify_cancelled_edits.setter
     def web_notify_cancelled_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_cancelled_edits_web = value
 
     @property
@@ -714,7 +714,7 @@ class User:
 
     @email_notify_cancelled_edits.setter
     def email_notify_cancelled_edits(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_cancelled_edits_email = value
 
     @property
@@ -723,7 +723,7 @@ class User:
 
     @web_notify_edit_count_milestones.setter
     def web_notify_edit_count_milestones(self, value: bool):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.notif_edit_count_milestones_web = value
 
     @property
@@ -732,7 +732,7 @@ class User:
 
     @user_notification_blacklist.setter
     def user_notification_blacklist(self, value: list[str]):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.user_notification_blacklist = value
 
     @property
@@ -741,7 +741,7 @@ class User:
 
     @page_notification_blacklist.setter
     def page_notification_blacklist(self, value: list[str]):
-        self._check_not_anonymous()
+        self._check_authenticated()
         self._user.page_notification_blacklist = value
 
     @property
@@ -826,8 +826,8 @@ class User:
         """Return the number of messages this user posted on the wiki."""
         return self._user.wiki_messages.count() if not self.is_anonymous else 0
 
-    def _check_not_anonymous(self):
-        if self.is_anonymous or not self.is_authenticated:
+    def _check_authenticated(self):
+        if not self.is_authenticated:
             raise RuntimeError('user is anonymous')
 
     def __eq__(self, other: User):
