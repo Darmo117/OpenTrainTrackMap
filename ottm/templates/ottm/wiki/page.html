@@ -81,6 +81,9 @@
               <span id="wiki-maintenance-category-icon" class="mdi mdi-tools"
                     title="{% wiki_translate 'title.maintenance_category.tooltip' %}"></span>
             {% endif %}
+            {% if context.page.namespace == NS_USER %}
+              <span class="float-right">{% ottm_user_type_icon context.page.title %}</span>
+            {% endif %}
           {% elif context.action == ACTION_TALK %}
             {% wiki_translate 'page.title.talk' page_title=context.page.full_title %}
           {% elif context.action == ACTION_EDIT or context.action == ACTION_SUBMIT %}

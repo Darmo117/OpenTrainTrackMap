@@ -112,8 +112,12 @@
         "statistics": {
           "title": "Statistics",
           "groups": "Groups",
-          "bot": "Bot?",
-          "account_creation_date_label": "Rail mapper since",
+          "status": "Account type",
+          "status_non_existent": "User does not exist",
+          "status_anonymous": "Anonymous user",
+          "status_bot": "Bot",
+          "status_user": "Normal user",
+          "account_creation_date_label": "Account creation date",
           "notes_count_label": "Number of notes",
           "edits_count_label": "Number of edits",
           "wiki_edits_count_label": "Number of wiki edits"

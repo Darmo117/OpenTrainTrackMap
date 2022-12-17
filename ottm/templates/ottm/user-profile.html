@@ -25,14 +25,8 @@
         <td>{{ context.user_groups|join:', ' }}</td>
       </tr>
       <tr>
-        <th scope="row">{% ottm_translate 'page.user_profile.statistics.bot' %}</th>
-        <td>
-          {% if context.target_user.is_bot %}
-            <span class="mdi mdi-check-bold text-success"></span>
-          {% else %}
-            <span class="mdi mdi-close-thick text-danger"></span>
-          {% endif %}
-        </td>
+        <th scope="row">{% ottm_translate 'page.user_profile.statistics.status' %}</th>
+        <td>{% ottm_user_type_icon context.target_user.username %}</td>
       </tr>
       <tr>
         <th scope="row">{% ottm_translate 'page.user_profile.statistics.notes_count_label' %}</th>
