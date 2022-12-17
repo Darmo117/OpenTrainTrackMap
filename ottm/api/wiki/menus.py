@@ -4,6 +4,7 @@ from . import pages, parser, special_pages as w_sp
 from .constants import *
 from .namespaces import *
 from ..permissions import *
+from .. import auth
 from ... import page_handlers as _ph, settings
 
 
@@ -89,7 +90,7 @@ def _get_builtin_menu(page_context: _ph.WikiPageContext, menu_id: str) -> Menu:
                     items.append({'title': 'Special:ProtectPage', 'subpage': page.full_title})
             elif w_sp.SPECIAL_PAGES.get(page.base_name):
                 items.append({'title': NS_SPECIAL.get_full_page_title(page.base_name), 'label': 'special_page'})
-            if page.namespace == NS_USER:
+            if page.namespace == NS_USER and auth.get_user_from_name(page.base_name):
                 username = page.base_name
                 items.append({'url': f'/user/{username}', 'label': 'user_profile'})
                 items.append({'title': 'Special:Contributions', 'subpage': username})

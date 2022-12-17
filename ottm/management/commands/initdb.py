@@ -86,7 +86,7 @@ class Command(dj_mngmt.BaseCommand):
         ).save()
         models.UserGroup(
             label=GROUP_ALL,
-            permissions=(PERM_WIKI_EDIT, PERM_WIKI_EDIT),
+            permissions=(PERM_WIKI_EDIT,),
         ).save()
 
         self.stdout.write('Done.')

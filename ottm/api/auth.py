@@ -35,7 +35,7 @@ def get_user_from_request(request: dj_wsgi.WSGIRequest) -> models.User:
     """Return the user associated to the given request."""
     user = dj_auth.get_user(request)
     if user.is_anonymous:
-        return get_or_create_anonymous_account_from_request(request, save=False)
+        return _get_or_create_anonymous_user(request)
     return models.User(user)
 
 
@@ -47,22 +47,13 @@ def get_user_from_name(username: str) -> models.User | None:
         return None
 
 
-def get_ip(request: dj_wsgi.WSGIRequest) -> str:
-    """Return the IP of the given request."""
-    # Client’s IP address is always at the last one in HTTP_X_FORWARDED_FOR on Heroku
-    # https://stackoverflow.com/questions/18264304/get-clients-real-ip-address-on-heroku#answer-18517550
-    if x_forwarded_for := request.META.get('HTTP_X_FORWARDED_FOR'):
-        return x_forwarded_for[-1]
-    return request.META.get('REMOTE_ADDR')
-
-
 @dj_db_trans.atomic
-def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest, save: bool = True) -> models.User:
-    """Create a new user account for the IP address of the given request.
+def _get_or_create_anonymous_user(request: dj_wsgi.WSGIRequest) -> models.User:
+    """Create a new anonymous user account for the IP address of the given request.
     If an anonymous account for the IP already exists, it is returned and no new one is created.
-    """
-    ip = get_ip(request)
 
+    :param request: Request to create the user object from.
+    """
     try:
         latest_user = models.CustomUser.objects.latest('id')
     except models.CustomUser.DoesNotExist:
@@ -70,22 +61,29 @@ def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest, s
     else:
         nb = latest_user.id
 
+    ip = _get_ip(request)
     try:
         dj_user = models.CustomUser.objects.get(ip=ip)
     except models.CustomUser.DoesNotExist:
         # Create temporary user account
         language = models.Language.get_default()
-        dj_user = models.CustomUser.objects.create_user(
+        dj_user = models.CustomUser(
             username=f'Anonymous-{nb + 1}',
             ip=ip,
             prefered_language=language,
             prefered_datetime_format=language.default_datetime_format,
         )
-        if save:
-            dj_user.save()
-            dj_user.groups.add(models.UserGroup.objects.get(label='all'))
 
     return models.User(dj_user)
+
+
+def _get_ip(request: dj_wsgi.WSGIRequest) -> str:
+    """Return the IP of the given request."""
+    # Client’s IP address is always at the last one in HTTP_X_FORWARDED_FOR on Heroku
+    # https://stackoverflow.com/questions/18264304/get-clients-real-ip-address-on-heroku#answer-18517550
+    if x_forwarded_for := request.META.get('HTTP_X_FORWARDED_FOR'):
+        return x_forwarded_for[-1]
+    return request.META.get('REMOTE_ADDR')
 
 
 @dj_db_trans.atomic

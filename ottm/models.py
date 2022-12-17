@@ -268,10 +268,10 @@ class User:
     @property
     def email_user_blacklist(self) -> typ.Sequence[str]:
         """List of users that cannot send emails to this user."""
-        return self._user.email_user_blacklist
+        return self._user.email_user_blacklist or []
 
     @email_user_blacklist.setter
-    def email_user_blacklist(self, value: typ.Sequence[str]):
+    def email_user_blacklist(self, value: list[str]):
         """Set the list of users that cannot send emails to this user."""
         self._check_authenticated()
         self._user.email_user_blacklist = value
@@ -844,7 +844,7 @@ class User:
     @property
     def user_notification_blacklist(self) -> typ.Sequence[str]:
         """List of users whose notifications should be ignored."""
-        return self._user.user_notification_blacklist
+        return self._user.user_notification_blacklist or []
 
     @user_notification_blacklist.setter
     def user_notification_blacklist(self, value: list[str]):
@@ -855,7 +855,7 @@ class User:
     @property
     def page_notification_blacklist(self) -> typ.Sequence[str]:
         """List of pages whose notifications should be ignored."""
-        return self._user.page_notification_blacklist
+        return self._user.page_notification_blacklist or []
 
     @page_notification_blacklist.setter
     def page_notification_blacklist(self, value: list[str]):
@@ -924,7 +924,7 @@ class User:
             return 0
         return (ObjectEdit.objects  # Get all object creation edits
                 # Keep only those made by this user that are of type "Note"
-                .filter(edit_group__author=self, operation=constants.OBJECT_CREATED, object_type__label='Note')
+                .filter(edit_group__author=self._user, operation=constants.OBJECT_CREATED, object_type__label='Note')
                 .count())
 
     def edits_count(self) -> int:
@@ -1070,6 +1070,11 @@ class CustomUser(dj_auth_models.AbstractUser):
     notif_edit_count_milestones_web = dj_models.BooleanField(default=True)
     user_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
     page_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.groups.count() == 0:  # Add default group when saving anonymous user for the first time
+            self.groups.add(UserGroup.objects.get(label='all'))
 
 
 class UserBlock(dj_models.Model):
