@@ -14,18 +14,6 @@
   background-color: #a9a9a9;
 }
 
-.wiki-red-link {
-  color: #c90c0c;
-}
-
-.wiki-red-link:hover {
-  color: #980c0c;
-}
-
-.wiki-hidden {
-  color: gray;
-}
-
 pre {
   border-color: #9d9d9d;
 }

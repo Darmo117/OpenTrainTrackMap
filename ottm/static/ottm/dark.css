@@ -1,3 +1,21 @@
 #page-header {
   background-color: #111617;
 }
+
+.alert-warning a:not(:hover, .wiki-red-link) {
+  color: #315c81;
+}
+
+/* Wiki */
+
+.wiki-red-link {
+  color: #e02424;
+}
+
+.wiki-red-link:hover {
+  color: #c92525;
+}
+
+.wiki-hidden {
+  color: gray;
+}
