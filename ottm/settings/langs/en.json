@@ -378,6 +378,9 @@
             },
             "email_update_notification_frequency": {
               "label": "Notification emails frequency",
+              "error": {
+                "invalid_choice": "Invalid choice!"
+              },
               "none": {
                 "label": "Never"
               },
