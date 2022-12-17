@@ -6,6 +6,7 @@ import datetime
 import math
 import typing as typ
 
+from django.conf import settings as dj_settings
 import django.contrib.auth.models as dj_auth_models
 import django.core.exceptions as dj_exc
 import django.core.validators as dj_valid
@@ -13,9 +14,9 @@ import django.db.models as dj_models
 import pytz
 
 from . import model_fields, settings
-from .api import constants, data_types, utils, timezones
+from .api import constants, data_types, groups, timezones, utils
 from .api.permissions import *
-from .api.wiki import constants as w_cons, namespaces, search_engine, notifications
+from .api.wiki import constants as w_cons, namespaces, notifications, search_engine
 
 
 class DateTimeFormat(dj_models.Model):
@@ -82,14 +83,18 @@ def username_validator(value: str):
 class User:
     """Wrapper class around CustomUser and AnonymousUser classes."""
 
-    def __init__(self, dj_user: CustomUser, ip: str = None):
+    def __init__(self, dj_user: CustomUser):
         """Create a wrapper around the given user.
 
         :param dj_user: Either a CustomUser or AnonymousUser.
-        :param ip: IP of anonymous user.
         """
         self._user = dj_user
-        self._ip = ip
+
+    @property
+    def exists(self) -> bool:
+        """Whether this user exists in the database.
+        Is true only for users that are not authenticated and no edits were ever made with their IP."""
+        return self._user.pk is not None
 
     @property
     def internal_object(self) -> CustomUser:
@@ -99,14 +104,8 @@ class User:
     @property
     def is_authenticated(self) -> bool:
         """Whether this user is authenticated."""
-        return self._user.is_authenticated
-
-    @property
-    def is_anonymous(self) -> bool:
-        """Return true if the user is anonymous, false otherwise.
-        A user is anonymous if they are not authenticated and their IP address
-        has not already been used to edit the wiki at least once."""
-        return self._user.is_anonymous
+        # Not using is_authenticated as it is True even for anonymous users
+        return self._user.ip is None
 
     @property
     def is_bot(self):
@@ -116,7 +115,7 @@ class User:
     @property
     def ip(self) -> str | None:
         """This user’s IP. May be None if the user is authenticated."""
-        return self._user.ip if not self.is_anonymous else self._ip
+        return self._user.ip
 
     @property
     def username(self) -> str:
@@ -132,7 +131,7 @@ class User:
     @property
     def hide_username(self) -> bool:
         """Whether this user’s username has to be hidden in pages."""
-        return not self.is_anonymous and self._user.hide_username
+        return self._user.hide_username
 
     @hide_username.setter
     def hide_username(self, value: bool):
@@ -167,7 +166,7 @@ class User:
     @property
     def prefered_language(self) -> settings.UILanguage:
         """This user’s prefered language."""
-        if self.is_anonymous:
+        if not self.exists:
             return settings.LANGUAGES[settings.DEFAULT_LANGUAGE_CODE]
         return settings.LANGUAGES[self._user.prefered_language.code]
 
@@ -183,7 +182,10 @@ class User:
     @property
     def prefered_timezone(self) -> pytz.BaseTzInfo:
         """This user’s prefered timezone."""
-        return pytz.timezone(self._user.prefered_timezone) if not self.is_anonymous else pytz.utc
+        if self.exists:
+            return pytz.timezone(self._user.prefered_timezone)
+        else:
+            return pytz.timezone(dj_settings.TIME_ZONE)
 
     @prefered_timezone.setter
     def prefered_timezone(self, value: pytz.BaseTzInfo):
@@ -194,7 +196,7 @@ class User:
     @property
     def prefered_datetime_format(self) -> str:
         """This user’s prefered datetime format."""
-        if not self.is_anonymous:
+        if self.exists:
             return self._user.prefered_datetime_format.format
         else:
             return self.prefered_language.default_datetime_format
@@ -211,7 +213,7 @@ class User:
     @property
     def gender(self) -> data_types.UserGender:
         """This user’s gender."""
-        return data_types.GENDERS.get(self._user.gender_code, data_types.GENDER_N)
+        return data_types.GENDERS[self._user.gender_code]
 
     @gender.setter
     def gender(self, value: data_types.UserGender):
@@ -222,7 +224,7 @@ class User:
     @property
     def uses_dark_mode(self) -> bool:
         """Whether this user uses dark mode."""
-        return self._user.uses_dark_mode if not self.is_anonymous else False
+        return self._user.uses_dark_mode
 
     @uses_dark_mode.setter
     def uses_dark_mode(self, value: bool):
@@ -232,522 +234,639 @@ class User:
 
     @property
     def users_can_send_emails(self) -> bool:
+        """Whether users can send emails to this user."""
         return self._user.users_can_send_emails
 
     @users_can_send_emails.setter
     def users_can_send_emails(self, value: bool):
+        """Set whether users can send emails to this user."""
         self._check_authenticated()
         self._user.users_can_send_emails = value
 
     @property
     def new_users_can_send_emails(self) -> bool:
+        """Whether new users can send emails to this user."""
         return self._user.new_users_can_send_emails
 
     @new_users_can_send_emails.setter
     def new_users_can_send_emails(self, value: bool):
+        """Set whether new users can send emails to this user."""
         self._check_authenticated()
         self._user.new_users_can_send_emails = value
 
     @property
     def send_copy_of_sent_emails(self) -> bool:
+        """Whether to send copies of emails this user sends."""
         return self._user.send_copy_of_sent_emails
 
     @send_copy_of_sent_emails.setter
     def send_copy_of_sent_emails(self, value: bool):
+        """Set whether to send copies of emails this user sends."""
         self._check_authenticated()
         self._user.send_copy_of_sent_emails = value
 
     @property
     def email_user_blacklist(self) -> typ.Sequence[str]:
-        return self._user.email_user_blacklist or []
+        """List of users that cannot send emails to this user."""
+        return self._user.email_user_blacklist
 
     @email_user_blacklist.setter
     def email_user_blacklist(self, value: typ.Sequence[str]):
+        """Set the list of users that cannot send emails to this user."""
         self._check_authenticated()
         self._user.email_user_blacklist = value
 
     @property
     def max_file_preview_size(self) -> tuple[int, int]:
+        """Tuple corresponding to the maximum size of the wiki file previews."""
         n1, n2 = self._user.max_file_preview_size.split(',')
         return int(n1), int(n2)
 
     @max_file_preview_size.setter
     def max_file_preview_size(self, value: tuple[int, int]):
+        """Set the maximum size of the wiki file previews."""
         self._check_authenticated()
         self._user.max_file_preview_size = f'{value[0]},{value[1]}'
 
     @property
     def thumbnails_size(self) -> int:
+        """Maximum width and height of media thumbnails in wiki pages."""
         return self._user.thumbnails_size
 
     @thumbnails_size.setter
     def thumbnails_size(self, value: int):
+        """Set the maximum width and height of media thumbnails in wiki pages."""
         self._check_authenticated()
         self._user.thumbnails_size = value
 
     @property
     def show_page_content_in_diffs(self) -> bool:
+        """Whether to show the content of pages in diffs."""
         return self._user.show_page_content_in_diffs
 
     @show_page_content_in_diffs.setter
     def show_page_content_in_diffs(self, value: bool):
+        """Set whether to show the content of pages in diffs."""
         self._check_authenticated()
         self._user.show_page_content_in_diffs = value
 
     @property
     def show_diff_after_revert(self) -> bool:
+        """Whether to show the diff after a revert."""
         return self._user.show_diff_after_revert
 
     @show_diff_after_revert.setter
     def show_diff_after_revert(self, value: bool):
+        """Set whether to show the diff after a revert."""
         self._check_authenticated()
         self._user.show_diff_after_revert = value
 
     @property
     def show_hidden_categories(self) -> bool:
+        """Whether to show hidden categories."""
         return self._user.show_hidden_categories
 
     @show_hidden_categories.setter
     def show_hidden_categories(self, value: bool):
+        """Set whether to show hidden categories."""
         self._check_authenticated()
         self._user.show_hidden_categories = value
 
     @property
     def ask_revert_confirmation(self) -> bool:
+        """Whether to ask confirmation before reverting a wiki edit."""
         return self._user.ask_revert_confirmation
 
     @ask_revert_confirmation.setter
     def ask_revert_confirmation(self, value: bool):
+        """Set whether to ask confirmation before reverting a wiki edit."""
         self._check_authenticated()
         self._user.ask_revert_confirmation = value
 
     @property
     def mark_all_wiki_edits_as_minor(self) -> bool:
+        """Whether to mark all wiki edits as minor."""
         return self._user.mark_all_wiki_edits_as_minor
 
     @mark_all_wiki_edits_as_minor.setter
     def mark_all_wiki_edits_as_minor(self, value: bool):
+        """Set whether to mark all wiki edits as minor."""
         self._check_authenticated()
         self._user.mark_all_wiki_edits_as_minor = value
 
     @property
     def warn_when_no_wiki_edit_comment(self) -> bool:
+        """Whether to warn when a wiki edit is published without a summary."""
         return self._user.warn_when_no_wiki_edit_comment
 
     @warn_when_no_wiki_edit_comment.setter
     def warn_when_no_wiki_edit_comment(self, value: bool):
+        """Set whether to warn when a wiki edit is published without a summary."""
         self._check_authenticated()
         self._user.warn_when_no_wiki_edit_comment = value
 
     @property
     def warn_when_wiki_edit_not_published(self) -> bool:
+        """Whether to warn when this user quits the wiki edit form with unpublished changes."""
         return self._user.warn_when_wiki_edit_not_published
 
     @warn_when_wiki_edit_not_published.setter
     def warn_when_wiki_edit_not_published(self, value: bool):
+        """Set whether to warn when this user quits the wiki edit form with unpublished changes."""
         self._check_authenticated()
         self._user.warn_when_wiki_edit_not_published = value
 
     @property
     def show_preview_above_edit_form(self) -> bool:
+        """Whether to show previews above the edit form."""
         return self._user.show_preview_above_edit_form
 
     @show_preview_above_edit_form.setter
     def show_preview_above_edit_form(self, value: bool):
+        """Set whether to show previews above the edit form."""
         self._check_authenticated()
         self._user.show_preview_above_edit_form = value
 
     @property
     def show_preview_without_reload(self) -> bool:
+        """Whether to show the preview without reloading the page."""
         return self._user.show_preview_without_reload
 
     @show_preview_without_reload.setter
     def show_preview_without_reload(self, value: bool):
+        """Set whether to show the preview without reloading the page."""
         self._check_authenticated()
         self._user.show_preview_without_reload = value
 
     @property
     def default_days_nb_in_wiki_edit_lists(self) -> int:
+        """Default number of days to show in the wiki RC and FL."""
         return self._user.days_nb_rc_fl_logs
 
     @default_days_nb_in_wiki_edit_lists.setter
     def default_days_nb_in_wiki_edit_lists(self, value: int):
+        """Set the default number of days to show in the wiki RC and FL."""
         self._check_authenticated()
         self._user.days_nb_rc_fl_logs = value
 
     @property
     def default_edits_nb_in_wiki_edit_lists(self) -> int:
+        """Default number of edits to show in the wiki RC, logs and FL."""
         return self._user.edits_nb_rc_fl_logs
 
     @default_edits_nb_in_wiki_edit_lists.setter
     def default_edits_nb_in_wiki_edit_lists(self, value: int):
+        """Set the default number of edits to show in the wiki RC, logs and FL."""
         self._check_authenticated()
         self._user.edits_nb_rc_fl_logs = value
 
     @property
     def group_edits_per_page(self) -> bool:
+        """Whether to group edits per page in RC and FL."""
         return self._user.group_edits_per_page_rc_fl
 
     @group_edits_per_page.setter
     def group_edits_per_page(self, value: bool):
+        """Set whether to group edits per page in RC and FL."""
         self._check_authenticated()
         self._user.group_edits_per_page_rc_fl = value
 
     @property
     def mask_wiki_minor_edits(self) -> bool:
+        """Whether to mask minor edits in RC and FL."""
         return self._user.mask_wiki_minor_edits
 
     @mask_wiki_minor_edits.setter
     def mask_wiki_minor_edits(self, value: bool):
+        """Set whether to mask minor edits in RC and FL."""
         self._check_authenticated()
         self._user.mask_wiki_minor_edits = value
 
     @property
     def mask_wiki_bot_edits(self) -> bool:
+        """Whether to mask bot edits in RC and FL."""
         return self._user.mask_wiki_bot_edits
 
     @mask_wiki_bot_edits.setter
     def mask_wiki_bot_edits(self, value: bool):
+        """Set whether to mask bot edits in RC and FL."""
         self._check_authenticated()
         self._user.mask_wiki_bot_edits = value
 
     @property
     def mask_wiki_own_edits(self) -> bool:
+        """Whether to mask this user’s edits in RC and FL."""
         return self._user.mask_wiki_own_edits
 
     @mask_wiki_own_edits.setter
     def mask_wiki_own_edits(self, value: bool):
+        """Set whether to mask this user’s edits in RC and FL."""
         self._check_authenticated()
         self._user.mask_wiki_own_edits = value
 
     @property
     def mask_wiki_anonymous_edits(self) -> bool:
+        """Whether to mask anonymous edits in RC and FL."""
         return self._user.mask_wiki_anonymous_edits
 
     @mask_wiki_anonymous_edits.setter
     def mask_wiki_anonymous_edits(self, value: bool):
+        """Set whether to mask anonymous edits in RC and FL."""
         self._check_authenticated()
         self._user.mask_wiki_anonymous_edits = value
 
     @property
     def mask_wiki_authenticated_edits(self) -> bool:
+        """Whether to mask authenticated edits in RC and FL."""
         return self._user.mask_wiki_authenticated_edits
 
     @mask_wiki_authenticated_edits.setter
     def mask_wiki_authenticated_edits(self, value: bool):
+        """Set whether to mask authenticated edits in RC and FL."""
         self._check_authenticated()
         self._user.mask_wiki_authenticated_edits = value
 
     @property
     def mask_wiki_categorization_edits(self) -> bool:
+        """Whether to mask page categorization edits in RC and FL."""
         return self._user.mask_wiki_categorization_edits
 
     @mask_wiki_categorization_edits.setter
     def mask_wiki_categorization_edits(self, value: bool):
+        """Set whether to mask page categorization edits in RC and FL."""
         self._check_authenticated()
         self._user.mask_wiki_categorization_edits = value
 
     @property
     def mask_wiki_patrolled_edits(self) -> bool:
+        """Whether to mask patrolled edits in RC and FL."""
         return self._user.mask_wiki_patrolled_edits
 
     @mask_wiki_patrolled_edits.setter
     def mask_wiki_patrolled_edits(self, value: bool):
+        """Set whether to mask patrolled edits in RC and FL."""
         self._check_authenticated()
         self._user.mask_wiki_patrolled_edits = value
 
     @property
     def add_created_pages_to_follow_list(self) -> bool:
+        """Whether to add created pages to this user’s FL."""
         return self._user.fl_add_created_pages
 
     @add_created_pages_to_follow_list.setter
     def add_created_pages_to_follow_list(self, value: bool):
+        """Set whether to add created pages to this user’s FL."""
         self._check_authenticated()
         self._user.fl_add_created_pages = value
 
     @property
     def add_modified_pages_to_follow_list(self) -> bool:
+        """Whether to add modified pages to this user’s FL."""
         return self._user.fl_add_modified_pages
 
     @add_modified_pages_to_follow_list.setter
     def add_modified_pages_to_follow_list(self, value: bool):
+        """Set whether to add modified pages to this user’s FL."""
         self._check_authenticated()
         self._user.fl_add_modified_pages = value
 
     @property
     def add_renamed_pages_to_follow_list(self) -> bool:
+        """Whether to add renamed pages to this user’s FL."""
         return self._user.fl_add_renamed_pages
 
     @add_renamed_pages_to_follow_list.setter
     def add_renamed_pages_to_follow_list(self, value: bool):
+        """Set whether to add renamed pages to this user’s FL."""
         self._check_authenticated()
         self._user.fl_add_renamed_pages = value
 
     @property
     def add_deleted_pages_to_follow_list(self) -> bool:
+        """Whether to add deleted pages to this user’s FL."""
         return self._user.fl_add_deleted_pages
 
     @add_deleted_pages_to_follow_list.setter
     def add_deleted_pages_to_follow_list(self, value: bool):
+        """Set whether to add deleted pages to this user’s FL."""
         self._check_authenticated()
         self._user.fl_add_deleted_pages = value
 
     @property
     def add_reverted_pages_to_follow_list(self) -> bool:
+        """Whether to add reverted pages to this user’s FL."""
         return self._user.fl_add_reverted_pages
 
     @add_reverted_pages_to_follow_list.setter
     def add_reverted_pages_to_follow_list(self, value: bool):
+        """Set whether to add reverted pages to this user’s FL."""
         self._check_authenticated()
         self._user.fl_add_reverted_pages = value
 
     @property
     def add_created_topics_to_follow_list(self) -> bool:
+        """Whether to add created topics to this user’s FL."""
         return self._user.fl_add_created_topics
 
     @add_created_topics_to_follow_list.setter
     def add_created_topics_to_follow_list(self, value: bool):
+        """Set whether to add created topics to this user’s FL."""
         self._check_authenticated()
         self._user.fl_add_created_topics = value
 
     @property
     def add_replied_to_topics_to_follow_list(self) -> bool:
+        """Whether to add replied to topics to this user’s FL."""
         return self._user.fl_add_replied_to_topics
 
     @add_replied_to_topics_to_follow_list.setter
     def add_replied_to_topics_to_follow_list(self, value: bool):
+        """Set whether to add replied to topics to this user’s FL."""
         self._check_authenticated()
         self._user.fl_add_replied_to_topics = value
 
     @property
     def search_default_results_nb(self) -> int:
+        """Default number of search results per page."""
         return self._user.search_default_results_nb
 
     @search_default_results_nb.setter
     def search_default_results_nb(self, value: int):
+        """Set the default number of search results per page."""
         self._check_authenticated()
         self._user.search_default_results_nb = value
 
     @property
     def search_mode(self) -> search_engine.SearchMode:
+        """Search engine mode."""
         return search_engine.SearchMode(self._user.search_mode)
 
     @search_mode.setter
     def search_mode(self, value: search_engine.SearchMode):
+        """Set the search engine mode."""
         self._check_authenticated()
         self._user.search_mode = value.value
 
     @property
     def email_update_notification_frequency(self) -> notifications.NotificationEmailFrequency:
-        return notifications.NotificationEmailFrequency(self._user.notif_email_frequency)
+        """Frequency of notification emails."""
+        if self.exists:
+            return notifications.NotificationEmailFrequency(self._user.notif_email_frequency)
+        else:
+            return notifications.NotificationEmailFrequency.NONE
 
     @email_update_notification_frequency.setter
     def email_update_notification_frequency(self, value: notifications.NotificationEmailFrequency):
+        """Set the frequency of notification emails."""
         self._check_authenticated()
         self._user.notif_email_frequency = value.value
 
     @property
     def html_email_updates(self) -> bool:
+        """Whether to send emails as HTML."""
         return self._user.html_email_updates
 
     @html_email_updates.setter
     def html_email_updates(self, value: bool):
+        """Set whether to send emails as HTML."""
         self._check_authenticated()
         self._user.html_email_updates = value
 
     @property
     def email_notify_user_talk_edits(self) -> bool:
+        """Whether to send email notifications when this user’s talk page is updated."""
         return self._user.notif_user_talk_edits_email
 
     @email_notify_user_talk_edits.setter
     def email_notify_user_talk_edits(self, value: bool):
+        """Set whether to send email notifications when this user’s talk page is updated."""
         self._check_authenticated()
         self._user.notif_user_talk_edits_email = value
 
     @property
     def web_notify_followed_pages_edits(self) -> bool:
+        """Whether to send web notifications when this user’s followed pages are edited."""
         return self._user.notif_followed_pages_edits_web
 
     @web_notify_followed_pages_edits.setter
     def web_notify_followed_pages_edits(self, value: bool):
+        """Set whether to send web notifications when this user’s followed pages are edited."""
         self._check_authenticated()
         self._user.notif_followed_pages_edits_web = value
 
     @property
     def email_notify_followed_pages_edits(self) -> bool:
+        """Whether to send email notifications when this user’s followed pages are edited."""
         return self._user.notif_followed_pages_edits_email
 
     @email_notify_followed_pages_edits.setter
     def email_notify_followed_pages_edits(self, value: bool):
+        """Set whether to send email notifications when this user’s followed pages are edited."""
         self._check_authenticated()
         self._user.notif_followed_pages_edits_email = value
 
     @property
     def web_notify_talk_mentions(self) -> bool:
+        """Whether to send web notifications when this user is mentioned."""
         return self._user.notif_talk_mentions_web
 
     @web_notify_talk_mentions.setter
     def web_notify_talk_mentions(self, value: bool):
+        """Set whether to send web notifications when this user is mentioned."""
         self._check_authenticated()
         self._user.notif_talk_mentions_web = value
 
     @property
     def email_notify_talk_mentions(self) -> bool:
+        """Whether to send email notifications when this user is mentioned."""
         return self._user.notif_talk_mentions_email
 
     @email_notify_talk_mentions.setter
     def email_notify_talk_mentions(self, value: bool):
+        """Set whether to send email notifications when this user is mentioned."""
         self._check_authenticated()
         self._user.notif_talk_mentions_email = value
 
     @property
     def web_notify_message_answers(self) -> bool:
+        """Whether to send web notifications when a message of this user receives a response."""
         return self._user.notif_message_answers_web
 
     @web_notify_message_answers.setter
     def web_notify_message_answers(self, value: bool):
+        """Set whether to send web notifications when a message of this user receives a response."""
         self._check_authenticated()
         self._user.notif_message_answers_web = value
 
     @property
     def email_notify_message_answers(self) -> bool:
+        """Whether to send email notifications when a message of this user receives a response."""
         return self._user.notif_message_answers_email
 
     @email_notify_message_answers.setter
     def email_notify_message_answers(self, value: bool):
+        """Set whether to send email notifications when a message of this user receives a response."""
         self._check_authenticated()
         self._user.notif_message_answers_email = value
 
     @property
     def web_notify_topic_answers(self) -> bool:
+        """Whether to send web notifications when a topic created by this user receives a response."""
         return self._user.notif_topic_answers_web
 
     @web_notify_topic_answers.setter
     def web_notify_topic_answers(self, value: bool):
+        """Set whether to send web notifications when a topic created by this user receives a response."""
         self._check_authenticated()
         self._user.notif_topic_answers_web = value
 
     @property
     def email_notify_topic_answers(self) -> bool:
+        """Whether to send email notifications when a topic created by this user receives a response."""
         return self._user.notif_topic_answers_email
 
     @email_notify_topic_answers.setter
     def email_notify_topic_answers(self, value: bool):
+        """Set whether to send email notifications when a topic created by this user receives a response."""
         self._check_authenticated()
         self._user.notif_topic_answers_email = value
 
     @property
     def web_notify_thanks(self) -> bool:
+        """Whether to send web notifications when someone thanks this user."""
         return self._user.notif_thanks_web
 
     @web_notify_thanks.setter
     def web_notify_thanks(self, value: bool):
+        """Set whether to send web notifications when someone thanks this user."""
         self._check_authenticated()
         self._user.notif_thanks_web = value
 
     @property
     def email_notify_thanks(self) -> bool:
+        """Whether to send email notifications when someone thanks this user."""
         return self._user.notif_thanks_email
 
     @email_notify_thanks.setter
     def email_notify_thanks(self, value: bool):
+        """Set whether to send email notifications when someone thanks this user."""
         self._check_authenticated()
         self._user.notif_thanks_email = value
 
     @property
     def web_notify_failed_connection_attempts(self) -> bool:
+        """Whether to send web notifications when there was a failed connection attempt to this user’s account."""
         return self._user.notif_failed_connection_attempts_web
 
     @web_notify_failed_connection_attempts.setter
     def web_notify_failed_connection_attempts(self, value: bool):
+        """Set whether to send web notifications when there was a failed connection attempt to this user’s account."""
         self._check_authenticated()
         self._user.notif_failed_connection_attempts_web = value
 
     @property
     def email_notify_failed_connection_attempts(self) -> bool:
+        """Whether to send email notifications when there was a failed connection attempt to this user’s account."""
         return self._user.notif_failed_connection_attempts_email
 
     @email_notify_failed_connection_attempts.setter
     def email_notify_failed_connection_attempts(self, value: bool):
+        """Set whether to send email notifications when there was a failed connection attempt to this user’s account."""
         self._check_authenticated()
         self._user.notif_failed_connection_attempts_email = value
 
     @property
     def web_notify_permissions_edit(self) -> bool:
+        """Whether to send web notifications when this user’s permissions are edited."""
         return self._user.notif_permissions_edit_web
 
     @web_notify_permissions_edit.setter
     def web_notify_permissions_edit(self, value: bool):
+        """Set whether to send web notifications when this user’s permissions are edited."""
         self._check_authenticated()
         self._user.notif_permissions_edit_web = value
 
     @property
     def email_notify_permissions_edit(self) -> bool:
+        """Whether to send email notifications when this user’s permissions are edited."""
         return self._user.notif_permissions_edit_email
 
     @email_notify_permissions_edit.setter
     def email_notify_permissions_edit(self, value: bool):
+        """Set whether to send email notifications when this user’s permissions are edited."""
         self._check_authenticated()
         self._user.notif_permissions_edit_email = value
 
     @property
     def web_notify_user_email_web(self) -> bool:
+        """Whether to send web notifications when this user receives an email from another user."""
         return self._user.notif_user_email_web
 
     @web_notify_user_email_web.setter
     def web_notify_user_email_web(self, value: bool):
+        """Set whether to send web notifications when this user receives an email from another user."""
         self._check_authenticated()
         self._user.notif_user_email_web = value
 
     @property
     def web_notify_cancelled_edits(self) -> bool:
+        """Whether to send web notifications when one of this user’s edits is cancelled."""
         return self._user.notif_cancelled_edits_web
 
     @web_notify_cancelled_edits.setter
     def web_notify_cancelled_edits(self, value: bool):
+        """Set whether to send web notifications when one of this user’s edits is cancelled."""
         self._check_authenticated()
         self._user.notif_cancelled_edits_web = value
 
     @property
     def email_notify_cancelled_edits(self) -> bool:
+        """Whether to send email notifications when one of this user’s edits is cancelled."""
         return self._user.notif_cancelled_edits_email
 
     @email_notify_cancelled_edits.setter
     def email_notify_cancelled_edits(self, value: bool):
+        """Set whether to send email notifications when one of this user’s edits is cancelled."""
         self._check_authenticated()
         self._user.notif_cancelled_edits_email = value
 
     @property
     def web_notify_edit_count_milestones(self) -> bool:
+        """Whether to send web notifications when this user reaches an edit count milestone."""
         return self._user.notif_edit_count_milestones_web
 
     @web_notify_edit_count_milestones.setter
     def web_notify_edit_count_milestones(self, value: bool):
+        """Set whether to send web notifications when this user reaches an edit count milestone."""
         self._check_authenticated()
         self._user.notif_edit_count_milestones_web = value
 
     @property
     def user_notification_blacklist(self) -> typ.Sequence[str]:
-        return self._user.user_notification_blacklist or []
+        """List of users whose notifications should be ignored."""
+        return self._user.user_notification_blacklist
 
     @user_notification_blacklist.setter
     def user_notification_blacklist(self, value: list[str]):
+        """Set the list of users whose notifications should be ignored."""
         self._check_authenticated()
         self._user.user_notification_blacklist = value
 
     @property
     def page_notification_blacklist(self) -> typ.Sequence[str]:
-        return self._user.page_notification_blacklist or []
+        """List of pages whose notifications should be ignored."""
+        return self._user.page_notification_blacklist
 
     @page_notification_blacklist.setter
     def page_notification_blacklist(self, value: list[str]):
+        """Set the list of pages whose notifications should be ignored."""
         self._check_authenticated()
         self._user.page_notification_blacklist = value
 
     @property
     def block(self) -> UserBlock | None:
         """This user’s block status or None if the user’s not blocked."""
-        if self.is_anonymous:
+        if not self.exists:
             return None
         try:
             return self._user.block
@@ -757,15 +876,15 @@ class User:
     @property
     def edits(self) -> dj_models.Manager[EditGroup]:
         """A Manager object for this user’s edit groups."""
-        return self._user.edit_groups if not self.is_anonymous else dj_auth_models.EmptyManager(EditGroup)
+        return self._user.edit_groups if self.exists else dj_auth_models.EmptyManager(EditGroup)
 
     @property
-    def wiki_edits(self) -> dj_models.Manager[PageRevision] | dj_models.QuerySet[PageRevision]:
-        """A Manager/QuerySet object for the wiki page edits made by this user."""
-        if not self.is_anonymous:
+    def wiki_edits(self) -> dj_models.QuerySet[PageRevision]:
+        """A QuerySet object for the wiki page edits made by this user."""
+        if self.exists:
             return PageRevision.objects.filter(author=self._user)
         else:
-            return dj_auth_models.EmptyManager(Message)
+            return dj_auth_models.EmptyManager(Message).all()
 
     @property
     def wiki_topics(self) -> dj_models.Manager[Topic]:
@@ -775,7 +894,7 @@ class User:
     @property
     def wiki_messages(self) -> dj_models.Manager[Message]:
         """A Manager object for the wiki messages posted by this user."""
-        return self._user.wiki_messages if not self.is_anonymous else dj_auth_models.EmptyManager(Message)
+        return self._user.wiki_messages if self.exists else dj_auth_models.EmptyManager(Message)
 
     def has_permission(self, perm: str) -> bool:
         """Check whether this user has the given permission.
@@ -783,7 +902,7 @@ class User:
         :param perm: The permission.
         :return: True if the user has the permission, false otherwise.
         """
-        return any(g.has_permission(perm) for g in self._user.groups.all())
+        return any(g.has_permission(perm) for g in self.get_groups())
 
     def is_in_group(self, group: UserGroup) -> bool:
         """Check whether this user is in the given group.
@@ -791,11 +910,17 @@ class User:
         :param group: The group.
         :return: True if the user is in the group, false otherwise.
         """
-        return self._user.groups.filter(id=group.id).exists()
+        return self.get_groups().filter(id=group.id).exists()
+
+    def get_groups(self) -> dj_models.QuerySet[UserGroup]:
+        """Return a query set of this user’s groups."""
+        if not self.exists:
+            return UserGroup.objects.filter(label=groups.GROUP_ALL)
+        return self._user.groups.all()
 
     def notes_count(self) -> int:
         """Return the total number of notes created by this user."""
-        if not self.is_anonymous:
+        if not self.exists:
             return 0
         return (ObjectEdit.objects  # Get all object creation edits
                 # Keep only those made by this user that are of type "Note"
@@ -804,31 +929,32 @@ class User:
 
     def edits_count(self) -> int:
         """Return the total number of edits on objects and relations made by this user."""
-        if not self.is_anonymous:
+        if not self.exists:
             return 0
-        return (self._user.edit_groups  # Get all edit groups for this user
-                .annotate(edits_count=dj_models.Count('edits'))  # Count number of edits for each group
-                .aggregate(dj_models.Sum('edits_count')))  # Sum all counts
+        return 0  # FIXME
+        # return (self._user.edit_groups  # Get all edit groups for this user
+        #         .annotate(edits_count=dj_models.Count('edits'))  # Count number of edits for each group
+        #         .aggregate(dj_models.Sum('edits_count')))  # Sum all counts
 
     def edit_groups_count(self) -> int:
         """Return the number of edit groups made by this user."""
-        return self._user.edit_groups.count() if not self.is_anonymous else 0
+        return self._user.edit_groups.count() if self.exists else 0
 
     def wiki_edits_count(self) -> int:
         """Return the number of edits this user made on the wiki."""
-        return PageRevision.objects.filter(author=self._user).count() if not self.is_anonymous else 0
+        return PageRevision.objects.filter(author=self._user).count() if self.exists else 0
 
     def wiki_topics_count(self) -> int:
         """Return the number of topics this user created on the wiki."""
-        return self._user.wiki_topics.count() if not self.is_anonymous else 0
+        return self._user.wiki_topics.count() if self.exists else 0
 
     def wiki_messages_count(self) -> int:
         """Return the number of messages this user posted on the wiki."""
-        return self._user.wiki_messages.count() if not self.is_anonymous else 0
+        return self._user.wiki_messages.count() if self.exists else 0
 
     def _check_authenticated(self):
         if not self.is_authenticated:
-            raise RuntimeError('user is anonymous')
+            raise RuntimeError('user is not authenticated')
 
     def __eq__(self, other: User):
         return self.internal_object == other.internal_object
@@ -890,7 +1016,7 @@ class CustomUser(dj_auth_models.AbstractUser):
     show_hidden_categories = dj_models.BooleanField(default=False)
     ask_revert_confirmation = dj_models.BooleanField(default=True)
     mark_all_wiki_edits_as_minor = dj_models.BooleanField(default=False)
-    warn_when_no_wiki_edit_comment = dj_models.BooleanField(default=False)
+    warn_when_no_wiki_edit_comment = dj_models.BooleanField(default=True)
     warn_when_wiki_edit_not_published = dj_models.BooleanField(default=True)
     show_preview_above_edit_form = dj_models.BooleanField(default=True)
     show_preview_without_reload = dj_models.BooleanField(default=True)
@@ -1869,7 +1995,7 @@ class Page(dj_models.Model, NonDeletableMixin):
         :param user: The user.
         :return: True if the user follows this page, false otherwise.
         """
-        if user.is_anonymous:
+        if not user.exists:
             return False
         try:
             pp = user.internal_object.followed_pages.get(

@@ -33,7 +33,10 @@ def log_out(request: dj_wsgi.WSGIRequest):
 
 def get_user_from_request(request: dj_wsgi.WSGIRequest) -> models.User:
     """Return the user associated to the given request."""
-    return models.User(dj_auth.get_user(request))
+    user = dj_auth.get_user(request)
+    if user.is_anonymous:
+        return get_or_create_anonymous_account_from_request(request, save=False)
+    return models.User(user)
 
 
 def get_user_from_name(username: str) -> models.User | None:
@@ -54,14 +57,14 @@ def get_ip(request: dj_wsgi.WSGIRequest) -> str:
 
 
 @dj_db_trans.atomic
-def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest) -> models.User:
+def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest, save: bool = True) -> models.User:
     """Create a new user account for the IP address of the given request.
     If an anonymous account for the IP already exists, it is returned and no new one is created.
     """
     ip = get_ip(request)
 
     try:
-        latest_user = models.CustomUser.objects.latest("id")
+        latest_user = models.CustomUser.objects.latest('id')
     except models.CustomUser.DoesNotExist:
         nb = 0
     else:
@@ -78,8 +81,9 @@ def get_or_create_anonymous_account_from_request(request: dj_wsgi.WSGIRequest) -
             prefered_language=language,
             prefered_datetime_format=language.default_datetime_format,
         )
-        dj_user.save()
-        dj_user.groups.add(models.UserGroup.objects.get(label='all'))
+        if save:
+            dj_user.save()
+            dj_user.groups.add(models.UserGroup.objects.get(label='all'))
 
     return models.User(dj_user)
 

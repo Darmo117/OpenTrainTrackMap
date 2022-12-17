@@ -443,7 +443,7 @@ class WikiEditPageForm(_wiki_base_form.WikiForm):
         """
         super().__init__('edit', warn_unsaved_changes, post=post, initial=initial)
 
-        if user and user.is_anonymous:
+        if user and not user.is_authenticated:
             self.fields['follow_page'].widget.attrs['disabled'] = True
         if page and page.namespace != _w_ns.NS_CATEGORY:
             self.fields['hidden_category'].widget.attrs['disabled'] = True

@@ -24,7 +24,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
     def handle_request(self) -> _dj_response.HttpResponse:
         target_user = _auth.get_user_from_name(self._username)
         title, tab_title = self.get_page_titles(page_id='user_profile', titles_args={'username': target_user.username})
-        groups = sorted(group.label for group in target_user.internal_object.groups.all())
+        groups = sorted(group.label for group in target_user.get_groups())
         return self.render_page(f'ottm/user-profile.html', UserProfilePageContext(
             self._request_params,
             tab_title,

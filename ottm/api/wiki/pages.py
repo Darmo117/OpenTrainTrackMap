@@ -8,8 +8,8 @@ import django.db.transaction as dj_db_trans
 import django.shortcuts as dj_scut
 
 from . import constants, namespaces
-from .. import auth, errors, groups, permissions, utils
-from ... import models, settings, requests
+from .. import errors, groups, permissions, utils
+from ... import models, requests, settings
 
 MAIN_PAGE_TITLE = namespaces.NS_WIKI.get_full_page_title('Main Page')
 
@@ -244,9 +244,9 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
         raise errors.NotACategoryPageError()
     if False:  # TODO check if another edit was made while editing
         raise errors.ConcurrentWikiEditError()
-    if author.is_anonymous:
+    if not author.exists:
         if request:
-            author = auth.get_or_create_anonymous_account_from_request(request)
+            author.internal_object.save()
         else:
             raise ValueError('missing request')
     if not page.exists or page.get_content() != content:
@@ -304,8 +304,8 @@ def set_page_content_language(request: dj_wsgi.WSGIRequest, author: models.User,
         raise errors.EditSpecialPageError()
     if not page.can_user_edit(author):
         raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
-    if author.is_anonymous:
-        author = auth.get_or_create_anonymous_account_from_request(request)
+    if not author.exists:
+        author.internal_object.save()
     if language.internal_language == page.content_language:
         return False
     page.content_language = language.internal_language
@@ -340,8 +340,8 @@ def set_page_content_type(request: dj_wsgi.WSGIRequest, author: models.User, pag
         raise errors.EditSpecialPageError()
     if not page.can_user_edit(author):
         raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
-    if author.is_anonymous:
-        author = auth.get_or_create_anonymous_account_from_request(request)
+    if not author.exists:
+        author.internal_object.save()
     if content_type == page.content_type:
         return False
     page.content_type = content_type
@@ -367,7 +367,7 @@ def follow_page(user: models.User, page: models.Page, follow: bool, until: datet
     :raise AnonymousFollowPageError: If the user is not logged in.
     :raise FollowSpecialPageError: If the page is in the "Special" namespace.
     """
-    if user.is_anonymous or not user.is_authenticated:
+    if not user.is_authenticated:
         raise errors.AnonymousFollowPageError()
     if page.namespace == namespaces.NS_SPECIAL:
         raise errors.FollowSpecialPageError()
