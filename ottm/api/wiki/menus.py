@@ -94,9 +94,9 @@ def _get_builtin_menu(page_context: _ph.WikiPageContext, menu_id: str) -> Menu:
                 items.append({'url': f'/user/{username}', 'label': 'user_profile'})
                 items.append({'title': 'Special:Contributions', 'subpage': username})
                 if user.has_permission(PERM_WIKI_BLOCK_USERS):
-                    items.append({'title': 'Special:Block', 'subpage': NS_USER.get_full_page_title(username)})
+                    items.append({'title': 'Special:Block', 'subpage': username})
                 if user.is_authenticated:
-                    items.append({'title': 'Special:SendEmail', 'subpage': NS_USER.get_full_page_title(username)})
+                    items.append({'title': 'Special:SendEmail', 'subpage': username})
             if page.namespace != NS_SPECIAL:
                 items.append({'title': 'Special:Subpages', 'subpage': page.full_title})
             elif hasattr(page_context, 'target_user') and page_context.target_user:
