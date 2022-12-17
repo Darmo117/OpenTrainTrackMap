@@ -111,13 +111,16 @@
       {% endif %}
 
       {% if context.parent_pages %}
-        <div id="wiki-parent-pages-info" class="text-muted">
-          <span class="mdi mdi-chevron-up"></span>
-          {% for parent_page in context.parent_pages %}
-            {% wiki_inner_link page_title=parent_page.0 text=parent_page.1 %}
-            {% if not forloop.last %}|{% endif %}
-          {% endfor %}
-        </div>
+        <nav id="wiki-parent-pages-info" aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            {% for parent_page in context.parent_pages %}
+              <li class="breadcrumb-item">
+                {% if forloop.counter == 1 %}<span class="mdi mdi-chevron-up"></span>{% endif %}
+                {% wiki_inner_link page_title=parent_page.0 text=parent_page.1 %}
+              </li>
+            {% endfor %}
+          </ol>
+        </nav>
       {% endif %}
 
       {% if context.is_redirection or context.redirected_from %}

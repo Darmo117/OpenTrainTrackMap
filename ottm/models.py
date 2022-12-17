@@ -1917,7 +1917,8 @@ class Page(dj_models.Model, NonDeletableMixin):
             if buffer:
                 buffer += '/'
             buffer += parts[i]
-            titles.append((self.namespace.get_full_page_title(buffer), parts[i]))
+            titles.append((self.namespace.get_full_page_title(buffer),
+                           self.namespace.get_full_page_title(parts[i]) if i == 0 else parts[i]))
         return titles
 
     def get_subpages(self) -> dj_models.QuerySet[Page]:
