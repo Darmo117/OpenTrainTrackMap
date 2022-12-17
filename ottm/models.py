@@ -1011,7 +1011,7 @@ class Type(Structure):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if Type.objects.filter(label=self.label).exists():
+        if Type.objects.filter(dj_models.Q(label=self.label) & ~dj_models.Q(id=self.id)).exists():
             raise dj_exc.ValidationError(
                 f'type with label {self.label} already exist',
                 code='type_duplicate'
@@ -1054,7 +1054,8 @@ class Property(Structure):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if Property.objects.filter(label=self.label, host_type__label=self.host_type.label).exists():
+        if Property.objects.filter(dj_models.Q(label=self.label, host_type__label=self.host_type.label)
+                                   & ~dj_models.Q(id=self.id)).exists():
             raise dj_exc.ValidationError(
                 f'property with name {self.label} already exists for type {self.host_type}',
                 code='duplicate_property'
@@ -1252,12 +1253,12 @@ class Relation(dj_models.Model):
         super().validate_unique(exclude=exclude)
         if self.property.is_value_unique:
             k = self._get_right_value_attribute_name()
-            filters = {
+            filters = dj_models.Q(**{
                 'property': self.property,
                 'left_object': self.left_object,
                 k: getattr(self, k),
-            }
-            if Relation.objects.filter(**filters).exists():
+            })
+            if Relation.objects.filter(filters & ~dj_models.Q(id=self.id)).exists():
                 raise dj_exc.ValidationError(
                     f'duplicate value for property {self.property}',
                     code='relation_duplicate_for_unique_property'
@@ -1265,7 +1266,8 @@ class Relation(dj_models.Model):
 
         match self.property.property_type:
             case constants.PROPERTY_LOCALIZED:
-                if Relation.objects.filter(language_code=self.language_code, left_object=self.left_object).exists():
+                if Relation.objects.filter(dj_models.Q(language_code=self.language_code, left_object=self.left_object)
+                                           & ~dj_models.Q(id=self.id)).exists():
                     raise dj_exc.ValidationError(
                         f'duplicate localization for language {self.language_code} and object {self.left_object}',
                         code='localized_relation_duplicate'
@@ -1525,7 +1527,8 @@ class EditGroup(dj_models.Model):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if EditGroup.objects.filter(date=self.date, author=self.author).exists():
+        if EditGroup.objects.filter(dj_models.Q(date=self.date, author=self.author)
+                                    & ~dj_models.Q(id=self.id)).exists():
             # noinspection PyUnresolvedReferences
             raise dj_exc.ValidationError(
                 f'user {self.user.user.username} cannot make multiple edits at the exact same time',
@@ -1585,12 +1588,12 @@ class Translation(dj_models.Model):
         super().validate_unique(exclude=exclude)
         k = self._get_object_attr_name()
         obj = getattr(self, k)
-        filters = {
+        filters = dj_models.Q(**{
             'language_code': self.language_code,
             'label': self.label,
             k: obj,
-        }
-        if Translation.objects.filter(**filters).exists():
+        })
+        if Translation.objects.filter(filters & ~dj_models.Q(id=self.id)).exists():
             raise dj_exc.ValidationError(f'duplicate translation for object {obj} and language {self.language_code}',
                                          code='duplicate_translation')
 
@@ -1943,7 +1946,8 @@ class PageCategory(dj_models.Model):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if PageCategory.objects.filter(page=self.page, cat_title=self.cat_title).exists():
+        if PageCategory.objects.filter(dj_models.Q(page=self.page, cat_title=self.cat_title)
+                                       & ~dj_models.Q(id=self.id)).exists():
             raise dj_exc.ValidationError('duplicate category for page', code='duplicate_category')
 
     @staticmethod
@@ -1989,8 +1993,9 @@ class PageFollowStatus(dj_models.Model):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if PageFollowStatus.objects.filter(user=self.user, page_namespace_id=self.page_namespace_id,
-                                           page_title=self.page_title).exists():
+        if PageFollowStatus.objects.filter(
+                dj_models.Q(user=self.user, page_namespace_id=self.page_namespace_id, page_title=self.page_title)
+                & ~dj_models.Q(id=self.id)).exists():
             raise dj_exc.ValidationError(
                 'duplicate follow list entry',
                 code='page_follow_list_duplicate_entry'
