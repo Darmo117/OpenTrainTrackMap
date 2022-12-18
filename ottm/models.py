@@ -1795,7 +1795,7 @@ class Revision(dj_models.Model, NonDeletableMixin):
 
     @property
     def bytes_size(self):
-        return len(self._get_content()[1].encode(encoding='utf8'))
+        return len(self._get_content()[1].encode(encoding='utf-8'))
 
     def get_byte_size_diff(self, ignore_hidden: bool):
         if prev := self.get_previous(ignore_hidden):

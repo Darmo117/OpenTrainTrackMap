@@ -226,7 +226,7 @@ def init_languages():
         if not lang_file.exists():
             LOGGER.error(f'Missing translation file for language code {language.code}')
             continue
-        with lang_file.open(encoding='utf8') as lang_file:
+        with lang_file.open(encoding='utf-8') as lang_file:
             json_obj = _json.load(lang_file)
             mapping = _build_mapping(json_obj['mappings'])
             js_mappings = {}
