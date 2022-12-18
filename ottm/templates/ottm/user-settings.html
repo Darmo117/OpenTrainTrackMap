@@ -419,6 +419,23 @@
       <div id="form-panel-editing" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-editing">
         <fieldset>
           <legend>{% ottm_translate trans_prefix|add:'fieldset.editor' %}</legend>
+          {% with trans_field_prefix=trans_prefix|add:form.use_editor_syntax_highlight.label|add:'.' %}
+            <div class="form-group">
+              <div class="custom-control custom-checkbox">
+                {{ form.use_editor_syntax_highlight }}
+                <label for="{{ form.use_editor_syntax_highlight.id_for_label }}" class="custom-control-label">
+                  {% ottm_translate trans_field_prefix|add:'label' %}
+                </label>
+              </div>
+              {% if form.use_editor_syntax_highlight.errors %}
+                <div class="invalid-feedback" style="display: block">
+                  {% for error in form.use_editor_syntax_highlight.errors.as_data %}
+                    {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          {% endwith %}
           {% with trans_field_prefix=trans_prefix|add:form.mark_all_wiki_edits_as_minor.label|add:'.' %}
             <div class="form-group">
               <div class="custom-control custom-checkbox">

@@ -45,6 +45,7 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
                 user.show_diff_after_revert = form.cleaned_data['show_diff_after_revert']
                 user.show_hidden_categories = form.cleaned_data['show_hidden_categories']
                 user.ask_revert_confirmation = form.cleaned_data['ask_revert_confirmation']
+                user.uses_editor_syntax_highlight = form.cleaned_data['use_editor_syntax_highlight']
                 user.mark_all_wiki_edits_as_minor = form.cleaned_data['mark_all_wiki_edits_as_minor']
                 user.warn_when_no_wiki_edit_comment = form.cleaned_data['warn_when_no_wiki_edit_comment']
                 user.warn_when_wiki_edit_not_published = form.cleaned_data['warn_when_wiki_edit_not_published']
@@ -207,6 +208,10 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
     )
     ask_revert_confirmation = _dj_forms.BooleanField(
         label='ask_revert_confirmation',
+        required=False,
+    )
+    use_editor_syntax_highlight = _dj_forms.BooleanField(
+        label='use_editor_syntax_highlight',
         required=False,
     )
     mark_all_wiki_edits_as_minor = _dj_forms.BooleanField(
@@ -432,6 +437,7 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
                 'show_diff_after_revert': user.show_diff_after_revert,
                 'show_hidden_categories': user.show_hidden_categories,
                 'ask_revert_confirmation': user.ask_revert_confirmation,
+                'use_editor_syntax_highlight': user.uses_editor_syntax_highlight,
                 'mark_all_wiki_edits_as_minor': user.mark_all_wiki_edits_as_minor,
                 'warn_when_no_wiki_edit_comment': user.warn_when_no_wiki_edit_comment,
                 'warn_when_wiki_edit_not_published': user.warn_when_wiki_edit_not_published,

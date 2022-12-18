@@ -64,8 +64,9 @@
 {% endwith %}
 
 {% with form=context.edit_form trans_prefix='page.edit.form.' %}
-  <form action="{% wiki_inner_link page_title=context.page.full_title url_params='action=submit' only_url=True no_red_link=True %}"
-        method="post" id="wiki-edit-form">
+  <form
+      action="{% wiki_inner_link page_title=context.page.full_title url_params='action=submit' only_url=True no_red_link=True %}"
+      method="post" id="wiki-edit-form">
     {% if form.warn_unsaved_changes and context.user.warn_when_wiki_edit_not_published %}
       <input type="hidden" name="warn-unsaved">
     {% endif %}
@@ -74,7 +75,7 @@
       <label class="sr-only" for="{{ form.content.id_for_label }}">
         {% wiki_translate trans_prefix|add:'content.label' %}
       </label>
-      <div id="wiki-ace-editor" data-ace-target="{{ form.content.id_for_label }}"></div>
+      <div id="wiki-ace-editor" data-ace-target="{{ form.content.id_for_label }}" style="display: none"></div>
       {{ form.content }}
     </div>
 

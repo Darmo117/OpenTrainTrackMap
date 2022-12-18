@@ -141,6 +141,7 @@ class PageContext:
                 'showDiffAfterRevert': self.user.show_diff_after_revert,
                 'showHiddenCategories': self.user.show_hidden_categories,
                 'askRevertConfirmation': self.user.ask_revert_confirmation,
+                'useEditorSyntaxHighlighting': self.user.uses_editor_syntax_highlight,
                 'markAllWikiEditsAsMinor': self.user.mark_all_wiki_edits_as_minor,
                 'warnWhenNoWikiEditComment': self.user.warn_when_no_wiki_edit_comment,
                 'warnWhenWikiEditNotPublished': self.user.warn_when_wiki_edit_not_published,

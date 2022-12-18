@@ -4,6 +4,9 @@
 "use strict";
 
 (function () {
+  if (!ottm.user.get("useEditorSyntaxHighlighting")) {
+    return;
+  }
   const mode = {
     js: "javascript",
     css: "css",
@@ -12,7 +15,7 @@
     wikipage: "text", // TODO custom language: https://medium.com/@jackub/writing-custom-ace-editor-mode-5a7aa83dbe50
   }[ottm.page.get("wContentType")];
   const editorID = "wiki-ace-editor";
-  const $div = $(`#${editorID}`);
+  const $div = $(`#${editorID}`).show();
   const targetId = $div.data("ace-target");
   const $textarea = $(`#${targetId}`).hide();
   const editor = ace.edit(editorID, {
