@@ -53,7 +53,7 @@
       const link = L.DomUtil.create("a", "", container);
 
       link.href = "#";
-      link.title = window.OTTM_MAP_CONFIG["trans"][`map.controls.edit.${this.options.kind}.tooltip`];
+      link.title = ottm._translations.get(`map.controls.edit.${this.options.kind}.tooltip`);
       link.innerHTML = this.options.html;
       L.DomEvent.on(link, "click", L.DomEvent.stop)
         .on(link, "click", () => {
@@ -132,8 +132,8 @@
       window.onhashchange = () => this.centerViewFromUrl();
 
       this.#zoomControl = L.control.zoom({
-        zoomInTitle: window.OTTM_MAP_CONFIG["trans"]["map.controls.zoom_in.tooltip"],
-        zoomOutTitle: window.OTTM_MAP_CONFIG["trans"]["map.controls.zoom_out.tooltip"],
+        zoomInTitle: ottm._translations.get("map.controls.zoom_in.tooltip"),
+        zoomOutTitle: ottm._translations.get("map.controls.zoom_out.tooltip"),
         position: "topright",
       }).addTo(map);
 
@@ -156,10 +156,10 @@
       });
 
       this.#layers = {
-        [window.OTTM_MAP_CONFIG["trans"]["map.controls.layers.standard"]]: osmTiles,
-        [window.OTTM_MAP_CONFIG["trans"]["map.controls.layers.black_and_white"]]: mapnikBWTiles,
-        [window.OTTM_MAP_CONFIG["trans"]["map.controls.layers.satellite_maptiler"]]: maptilerSatelliteTiles,
-        [window.OTTM_MAP_CONFIG["trans"]["map.controls.layers.satellite_esri"]]: esriSatelliteTiles,
+        [ottm._translations.get("map.controls.layers.standard")]: osmTiles,
+        [ottm._translations.get("map.controls.layers.black_and_white")]: mapnikBWTiles,
+        [ottm._translations.get("map.controls.layers.satellite_maptiler")]: maptilerSatelliteTiles,
+        [ottm._translations.get("map.controls.layers.satellite_esri")]: esriSatelliteTiles,
       };
       L.control.layers(this.#layers).addTo(map);
 
@@ -177,21 +177,21 @@
       }
 
       L.control.button({
-        tooltip: window.OTTM_MAP_CONFIG["trans"]["map.controls.google_maps_button.tooltip"],
-        icon: window.OTTM_MAP_CONFIG["static_path"] + "ottm/images/Google_Maps_icon.svg.png",
+        tooltip: ottm._translations.get("map.controls.google_maps_button.tooltip"),
+        icon: `${ottm.config.get("staticPath")}ottm/images/Google_Maps_icon.svg.png`,
         action: map => openMapInTab(map, "https://www.google.com/maps/@{lat},{long},{zoom}z"),
       }).addTo(map);
       L.control.button({
-        label: window.OTTM_MAP_CONFIG["trans"]["map.controls.ign_compare_button.label"],
-        tooltip: window.OTTM_MAP_CONFIG["trans"]["map.controls.ign_compare_button.tooltip"],
+        label: ottm._translations.get("map.controls.ign_compare_button.label"),
+        tooltip: ottm._translations.get("map.controls.ign_compare_button.tooltip"),
         action: map => openMapInTab(map, "https://remonterletemps.ign.fr/comparer/basic?x={long}&y={lat}&z={zoom}"),
       }).addTo(map);
 
       this.#scaleControl = L.control.scale().addTo(map);
 
       L.esri.Geocoding.geosearch({
-        title: window.OTTM_MAP_CONFIG["trans"]["map.controls.search.tooltip"],
-        placeholder: window.OTTM_MAP_CONFIG["trans"]["map.controls.search.placeholder"],
+        title: ottm._translations.get("map.controls.search.tooltip"),
+        placeholder: ottm._translations.get("map.controls.search.placeholder"),
         expanded: true,
         collapseAfterResult: false,
         providers: [
@@ -201,8 +201,8 @@
         ],
       }).addTo(map);
       // L.Control.geocoder({
-      //   title: window.OTTM_MAP_CONFIG["trans"]["map.controls.search.tooltip"],
-      //   placeholder: window.OTTM_MAP_CONFIG["trans"]["map.controls.search.placeholder"],
+      //   title: ottm._translations.get("map.controls.search.tooltip"),
+      //   placeholder: ottm._translations.get("map.controls.search.placeholder"),
       //   expanded: true,
       //   collapseAfterResult: false,
       //   position: 'topleft',

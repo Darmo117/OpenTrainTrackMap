@@ -133,7 +133,7 @@ def get_js_config(request_params: requests.RequestParams, page: models.Page,
         'user': {
             'wCanEditPage': page.can_user_edit(user),
             'wCanPostMessages': page.can_user_post_messages(user),
-        }
+        },
     }
 
 

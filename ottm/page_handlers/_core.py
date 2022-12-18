@@ -167,6 +167,7 @@ class PageContext:
                 'searchMode': self.user.search_mode.value,
             },
             'languages': [self._lang_to_json(lang) for lang in _settings.LANGUAGES.values()],
+            'translations': self.language.js_mappings,
         }
 
     @property

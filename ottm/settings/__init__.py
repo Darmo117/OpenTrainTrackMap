@@ -25,6 +25,7 @@ class UILanguage:
             decimal_sep: str,
             thousands_sep: str,
             mappings: dict[str, str],
+            js_mappings: dict[str, str],
     ):
         """Create a UI language.
 
@@ -40,6 +41,7 @@ class UILanguage:
         :param decimal_sep: Decimal separator.
         :param thousands_sep: Thousands separator.
         :param mappings: Language’s UI translation mappings.
+        :param js_mappings: Language’s UI translation JavaScript mappings.
         """
         if len(day_names) != 7:
             raise ValueError('day_names expected 7 values')
@@ -62,6 +64,7 @@ class UILanguage:
         self._decimal_sep = decimal_sep
         self._thousands_sep = thousands_sep
         self._mappings = mappings
+        self._js_mappings = js_mappings
 
     @property
     def internal_language(self):
@@ -135,6 +138,10 @@ class UILanguage:
     def default_datetime_format(self) -> str:
         """This language’s default datetime format."""
         return self._language.default_datetime_format.format
+
+    @property
+    def js_mappings(self) -> dict[str, str]:
+        return self._js_mappings
 
     def translate(self, key: str, default: str = None, /, **kwargs) -> str:
         """Translate the given key.
@@ -221,6 +228,12 @@ def init_languages():
             continue
         with lang_file.open(encoding='utf8') as lang_file:
             json_obj = _json.load(lang_file)
+            mapping = _build_mapping(json_obj['mappings'])
+            js_mappings = {}
+            for k, v in list(mapping.items()):
+                if k.startswith('js.'):
+                    js_mappings[k[3:]] = v
+                    del mapping[k]
             LANGUAGES[language.code] = UILanguage(
                 language=language,
                 comma=json_obj['comma'],
@@ -232,7 +245,8 @@ def init_languages():
                 am_pm=tuple(json_obj['am_pm']),
                 decimal_sep=json_obj['number_format']['decimal_sep'],
                 thousands_sep=json_obj['number_format']['thousands_sep'],
-                mappings=_build_mapping(json_obj['mappings']),
+                mappings=mapping,
+                js_mappings=js_mappings,
             )
             LOGGER.info(f'Loaded translations for {language.name} ({language.code})')
     LOGGER.info('Translations loaded.')

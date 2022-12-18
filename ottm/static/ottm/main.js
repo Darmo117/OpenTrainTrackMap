@@ -233,6 +233,8 @@
     page: new Mapping(window.OTTM_CONFIG.page),
     /** Current user’s data. */
     user: new Mapping(window.OTTM_CONFIG.user),
+    /** UI translations. */
+    _translations: new Mapping(window.OTTM_CONFIG.translations),
     /** @type {Language[]} List of all available UI languages. */
     languages: [],
     // Expose classes

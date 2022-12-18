@@ -576,41 +576,48 @@
         }
       }
     },
-    "map": {
-      "controls": {
-        "layers": {
-          "standard": "Map",
-          "black_and_white": "Map (black and white)",
-          "satellite_maptiler": "Satellite (MapTiler)",
-          "satellite_esri": "Satellite (Esri)"
-        },
-        "zoom_in": {
-          "tooltip": "Zoom in"
-        },
-        "zoom_out": {
-          "tooltip": "Zoom out"
-        },
-        "search": {
-          "tooltip": "Location search",
-          "placeholder": "Search for places or addresses…"
-        },
-        "google_maps_button": {
-          "tooltip": "Open current location in Google Maps"
-        },
-        "ign_compare_button": {
-          "label": "IGN",
-          "tooltip": "Open current location in IGN’s comparing tool"
-        },
-        "edit": {
-          "new_marker": {
-            "tooltip": "Create a new marker"
+    "js": {
+      "map": {
+        "controls": {
+          "layers": {
+            "standard": "Map",
+            "black_and_white": "Map (black and white)",
+            "satellite_maptiler": "Satellite (MapTiler)",
+            "satellite_esri": "Satellite (Esri)"
           },
-          "new_line": {
-            "tooltip": "Create a new polyline"
+          "zoom_in": {
+            "tooltip": "Zoom in"
           },
-          "new_polygon": {
-            "tooltip": "Create a new polygon"
+          "zoom_out": {
+            "tooltip": "Zoom out"
+          },
+          "search": {
+            "tooltip": "Location search",
+            "placeholder": "Search for places or addresses…"
+          },
+          "google_maps_button": {
+            "tooltip": "Open current location in Google Maps"
+          },
+          "ign_compare_button": {
+            "label": "IGN",
+            "tooltip": "Open current location in IGN’s comparing tool"
+          },
+          "edit": {
+            "new_marker": {
+              "tooltip": "Create a new marker"
+            },
+            "new_line": {
+              "tooltip": "Create a new polyline"
+            },
+            "new_polygon": {
+              "tooltip": "Create a new polygon"
+            }
           }
+        }
+      },
+      "wiki": {
+        "edit": {
+          "no_summary_warning": "It is strongly recommended to write a short summary of what you modified.\nPublish anyway?"
         }
       }
     },

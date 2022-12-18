@@ -27,9 +27,11 @@
   // Update form’s textarea on each change in the editor
   editor.getSession().on("change", () => $textarea.val(editor.getSession().getValue()).trigger("change"));
   $("#wiki-edit-form").on("submit", e => {
-    const $comment = $("#wiki-edit-form-comment");
-    if (!$comment.val().trim() && ottm.user.get("warnWhenNoWikiEditComment")) {
-      // TODO
+    if (!$("#wiki-edit-form-comment").val().trim() && ottm.user.get("warnWhenNoWikiEditComment")) {
+      const message = ottm._translations.get("wiki.edit.no_summary_warning");
+      if (!confirm(message)) {
+        e.preventDefault();
+      }
     }
   });
 

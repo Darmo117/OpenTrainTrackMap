@@ -4,7 +4,6 @@ from __future__ import annotations
 import json as _json
 import typing as _typ
 
-from django.conf import settings as _dj_settings
 import django.core.handlers.wsgi as _dj_wsgi
 from django.http import response as _dj_response
 
@@ -37,30 +36,9 @@ class MapPageHandler(_ottm_handler.OTTMHandler):
                 'edit_warning': 1,
             })
 
-        translations_keys = [
-            'map.controls.layers.standard',
-            'map.controls.layers.black_and_white',
-            'map.controls.layers.satellite_maptiler',
-            'map.controls.layers.satellite_esri',
-            'map.controls.zoom_in.tooltip',
-            'map.controls.zoom_out.tooltip',
-            'map.controls.search.tooltip',
-            'map.controls.search.placeholder',
-            'map.controls.google_maps_button.tooltip',
-            'map.controls.ign_compare_button.label',
-            'map.controls.ign_compare_button.tooltip',
-            'map.controls.edit.new_marker.tooltip',
-            'map.controls.edit.new_line.tooltip',
-            'map.controls.edit.new_polygon.tooltip',
-        ]
         js_config = {
-            'trans': {},
-            'static_path': _dj_settings.STATIC_URL,
-            'edit': 'true' if self._mode == self.EDIT else 'false',
+            'edit': self._mode == self.EDIT,
         }
-
-        for k in translations_keys:
-            js_config['trans'][k] = self._request_params.ui_language.translate(k)
 
         args = {'username': self._username} if self._mode == self.CONTRIBUTIONS else {}
         if self._mode != self.VIEW:
