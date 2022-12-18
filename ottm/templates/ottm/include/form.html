@@ -28,8 +28,8 @@
   {% endif %}
   <form method="post" id="{{ form.name|replace:'_,-' }}" class="tab-content" style="margin-bottom: 1em">
     {% csrf_token %}
-    {% if form.warn_unsaved_changes %}
-      <input type="hidden" name="warn-unsaved" value="1">
+    {% if form.warn_unsaved_changes and context.user.warn_when_wiki_edit_not_published %}
+      <input type="hidden" name="warn-unsaved">
     {% endif %}
     {# @formatter:off #}
     {% for section_name, fieldsets in form.sections.items %}

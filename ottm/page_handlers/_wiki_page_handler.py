@@ -320,6 +320,9 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             archived = True
         user = self._request_params.user
         language = self._request_params.ui_language
+        follow = (page.is_user_following(user)
+                  or user.add_modified_pages_to_follow_list
+                  or (not page.exists and user.add_created_pages_to_follow_list))
         form = form or WikiEditPageForm(
             user=user,
             page=page,
@@ -327,8 +330,9 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             warn_unsaved_changes=True,
             initial={
                 'content': revision.content if revision else '',
-                'follow_page': page.is_user_following(user),
+                'follow_page': follow,
                 'hidden_category': page.is_category_hidden,
+                'minor_edit': user.mark_all_wiki_edits_as_minor,
             },
         )
         return WikiPageEditActionContext(
@@ -489,7 +493,9 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
             self._parent_pages = page.get_parent_page_titles()
         else:
             self._parent_pages = []
-        self._js_config['config'].update(js_config)
+        self._js_config['config'].update(js_config['config'])
+        self._js_config['page'].update(js_config['page'])
+        self._js_config['user'].update(js_config['user'])
 
     @property
     def invalid_title(self) -> bool:

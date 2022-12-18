@@ -38,4 +38,6 @@
   } else if (location.pathname === "/user/settings") {
     passwordConfirm($("#user-settings-form-password"), $("#user-settings-form-password-confirm"));
   }
+
+  $("form input[name='warn-unsaved']").each((_, element) => $(element).closest("form").confirmExit());
 })();

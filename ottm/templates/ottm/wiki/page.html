@@ -234,8 +234,9 @@
   {% endif %}
   {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT or context.action == ACTION_TALK %}
     <script src="{% static 'ottm/libs/ace-editor/ace.js' %}"></script>
-    <script src="{% static 'ottm/wiki/editor.min.js' %}"></script>
-    {% if context.action == ACTION_TALK %}
+    {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT %}
+      <script src="{% static 'ottm/wiki/editor.min.js' %}"></script>
+    {% elif context.action == ACTION_TALK %}
       <script src="{% static 'ottm/wiki/talk.min.js' %}"></script>
     {% endif %}
   {% endif %}

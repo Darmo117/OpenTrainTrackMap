@@ -4,7 +4,7 @@
   // noinspection JSMismatchedCollectionQueryUpdate
   const gadgetDefs = ["`<PLACEHOLDER>`"];
   for (const gadgetDef of gadgetDefs) {
-    wiki.gadgetsManager.registerGadget(gadgetDef);
+    ottm.wiki.gadgetsManager.registerGadget(gadgetDef);
   }
-  wiki.gadgetsManager.finishRegistration();
+  ottm.wiki.gadgetsManager.finishRegistration();
 })();

@@ -82,9 +82,12 @@ h2 {
   margin-top: 1rem;
 }
 
-pre {
+pre, #wiki-ace-editor {
   border-radius: 5px;
   border-style: solid;
   border-width: 1px;
+}
+
+pre {
   padding: 0.5em;
 }

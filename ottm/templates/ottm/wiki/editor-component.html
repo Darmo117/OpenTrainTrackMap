@@ -66,18 +66,15 @@
 {% with form=context.edit_form trans_prefix='page.edit.form.' %}
   <form action="{% wiki_inner_link page_title=context.page.full_title url_params='action=submit' only_url=True no_red_link=True %}"
         method="post" id="wiki-edit-form">
-    {% if form.warn_unsaved_changes %}
-      <input type="hidden" name="warn-unsaved" value="1">
+    {% if form.warn_unsaved_changes and context.user.warn_when_wiki_edit_not_published %}
+      <input type="hidden" name="warn-unsaved">
     {% endif %}
 
     <div class="form-group">
       <label class="sr-only" for="{{ form.content.id_for_label }}">
         {% wiki_translate trans_prefix|add:'content.label' %}
       </label>
-      <div class="wiki-ace-editor" id="{{ form.content.id_for_label }}-ace"
-           data-ace-target="{{ form.content.id_for_label }}"
-           data-content-type="{{ context.page.content_type }}"
-           {% if not context.can_user_edit %}data-disabled="1"{% endif %}></div>
+      <div id="wiki-ace-editor" data-ace-target="{{ form.content.id_for_label }}"></div>
       {{ form.content }}
     </div>
 
@@ -98,7 +95,7 @@
           </label>
         </div>
 
-        {% if not context.user.is_anonymous %}
+        {% if context.user.is_authenticated %}
           <div class="custom-control custom-checkbox custom-control-inline"
                title="{% wiki_translate trans_prefix|add:'follow_page.tooltip' %}">
             {{ form.follow_page }}

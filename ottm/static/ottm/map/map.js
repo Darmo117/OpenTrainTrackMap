@@ -341,5 +341,6 @@
     }
   }
 
-  window.ottm.map = new Map("map", window.OTTM_MAP_CONFIG["edit"]);
+  // noinspection JSCheckFunctionSignatures
+  ottm.map = new Map("map", window.OTTM_MAP_CONFIG["edit"]);
 })();

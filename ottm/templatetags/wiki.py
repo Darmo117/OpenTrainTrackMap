@@ -193,7 +193,8 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
                     + wiki_translate(context, 'page.read.revision_nav_box.diff_previous'))
             if prev_r:
                 link = wiki_inner_link(context, page.full_title, text, url_params=f'revid={prev_r.id}')
-                diff = wiki_inner_link(context, page.full_title, '', url_params=f'revid={prev_r.id}&diff={revision.id}',
+                diff = wiki_inner_link(context, page.full_title, '',
+                                       url_params=f'oldid={prev_r.id}&newid={revision.id}',
                                        css_classes='mdi mdi-file-compare')
                 text = f'{link} ({diff})'
             else:
@@ -207,7 +208,7 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
             link = wiki_inner_link(context, page.full_title, text, ignore_current_title=True)
             if current_r.id != revision.id:
                 diff = wiki_inner_link(context, page.full_title, '',
-                                       url_params=f'revid={revision.id}&diff={current_r.id}',
+                                       url_params=f'oldid={revision.id}&newid={current_r.id}',
                                        css_classes='mdi mdi-file-compare')
                 text = f'{link} ({diff})'
             else:
@@ -220,7 +221,8 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
                     + ' <span class="mdi mdi-arrow-right-thick"></span>')
             if next_r:
                 link = wiki_inner_link(context, page.full_title, text, url_params=f'revid={next_r.id}')
-                diff = wiki_inner_link(context, page.full_title, '', url_params=f'revid={revision.id}&diff={next_r.id}',
+                diff = wiki_inner_link(context, page.full_title, '',
+                                       url_params=f'oldid={revision.id}&newid={next_r.id}',
                                        css_classes='mdi mdi-file-compare')
                 text = f'{link} ({diff})'
             else:
@@ -309,7 +311,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 text='',
                 tooltip=wiki_translate(context, 'revisions_list.current.tooltip'),
                 css_classes='mdi mdi-file-arrow-up-down-outline wiki-revision-action',
-                url_params=f'revid={revision.id}&diff={revision.page.get_latest_revision().id}',
+                url_params=f'oldid={revision.id}&newid={revision.page.get_latest_revision().id}',
                 ignore_current_title=True,
             ))
         else:
@@ -324,7 +326,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 text='',
                 tooltip=wiki_translate(context, 'revisions_list.diff.tooltip'),
                 css_classes='mdi mdi-file-arrow-left-right-outline wiki-revision-action',
-                url_params=f'revid={previous.id}&diff={revision.id}',
+                url_params=f'oldid={previous.id}&newid={revision.id}',
                 ignore_current_title=True,
             ))
         else:

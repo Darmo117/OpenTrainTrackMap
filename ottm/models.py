@@ -1015,6 +1015,7 @@ class CustomUser(dj_auth_models.AbstractUser):
     show_diff_after_revert = dj_models.BooleanField(default=True)
     show_hidden_categories = dj_models.BooleanField(default=False)
     ask_revert_confirmation = dj_models.BooleanField(default=True)
+    # TODO editor type
     mark_all_wiki_edits_as_minor = dj_models.BooleanField(default=False)
     warn_when_no_wiki_edit_comment = dj_models.BooleanField(default=True)
     warn_when_wiki_edit_not_published = dj_models.BooleanField(default=True)
