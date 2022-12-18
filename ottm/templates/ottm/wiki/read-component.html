@@ -27,10 +27,12 @@
   </div>
 {% endif %}
 
-{% if context.page.content_type == CT_WIKIPAGE %}
-  {{ context.page_content }}
-{% else %}
-  <pre class="hljs language-{{ context.page_language }}">{{ context.page_content }}</pre>
+{% if context.page_content %}
+  {% if context.page.content_type == CT_WIKIPAGE %}
+    {{ context.page_content }}
+  {% else %}
+    <pre class="hljs language-{{ context.page_language }}">{{ context.page_content }}</pre>
+  {% endif %}
 {% endif %}
 
 {% if context.page.namespace == NS_CATEGORY %}
