@@ -1,15 +1,11 @@
 #map {
   overflow: hidden;
   position: absolute;
-  top: 61px;
+  top: 61px; /* Navbar approximate height */
   bottom: 0;
   width: 100%;
 }
 
-.leaflet-control-geocoder {
-  background-color: white;
-}
-
 .leaflet-control a .mdi {
-  font-size: 26px;
+  font-size: 2em;
 }
