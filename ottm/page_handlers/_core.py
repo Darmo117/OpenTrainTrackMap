@@ -67,7 +67,7 @@ class PageHandler(_abc.ABC):
         )
 
     # noinspection PyMethodMayBeStatic
-    def response(self, content: str, content_type: str, status: int):
+    def response(self, content: str, content_type: str, status: int = 200):
         """Return a HttpResponse object.
 
         :param content: Response’s content.
@@ -104,27 +104,31 @@ class PageContext:
         self._max_page_index = max_page_index
         self._now = _utils.now()
         self._js_config = {
-            'debug': _dj_settings.DEBUG,
-            'serverHost': f'//{request_params.request.get_host()}',
-            'staticPath': _dj_settings.STATIC_URL,
-            'siteName': self.site_name,
-            'serverTimezone': _dj_settings.TIME_ZONE,
-            'language': self.language.code,
-            'languages': sorted(code for code in _settings.LANGUAGES.keys()),
-            'darkMode': self.dark_mode,
-            'userIsAnonymous': not self.user.is_authenticated,
-            'userName': self.user.username,
-            'userID': self.user.internal_object.id if self.user.is_authenticated else 0,
-            'userGender': self.user.gender.label,
-            'userLanguage': self.user.prefered_language.code,
-            'userRegistrationTimestamp':
-                int(self.user.internal_object.date_joined.timestamp()) if self.user.is_authenticated else None,
-            'userGroups': [g.label for g in self.user.get_groups().order_by('label')],
-            'userPermissions': [p for g in self.user.get_groups().order_by('label') for p in g.permissions],
-            'userEditCount': self.user.edits_count(),
-            'userWikiEditCount': self.user.wiki_edits_count(),
-            'userTimezone': self.user.prefered_timezone.zone,
-            'userSearchMode': self.user.search_mode.value,
+            'config': {
+                'debug': _dj_settings.DEBUG,
+                'apiPath': _dj_scut.reverse('ottm:api'),
+                'serverHost': f'//{request_params.request.get_host()}',
+                'staticPath': _dj_settings.STATIC_URL,
+                'siteName': self.site_name,
+                'serverTimezone': _dj_settings.TIME_ZONE,
+                'language': self.language.code,
+                'languages': sorted(code for code in _settings.LANGUAGES.keys()),
+                'darkMode': self.dark_mode,
+                'userIsAnonymous': not self.user.is_authenticated,
+                'userName': self.user.username,
+                'userID': self.user.internal_object.id if self.user.is_authenticated else 0,
+                'userGender': self.user.gender.label,
+                'userLanguage': self.user.prefered_language.code,
+                'userRegistrationTimestamp':
+                    int(self.user.internal_object.date_joined.timestamp()) if self.user.is_authenticated else None,
+                'userGroups': [g.label for g in self.user.get_groups().order_by('label')],
+                'userPermissions': [p for g in self.user.get_groups().order_by('label') for p in g.permissions],
+                'userEditCount': self.user.edits_count(),
+                'userWikiEditCount': self.user.wiki_edits_count(),
+                'userTimezone': self.user.prefered_timezone.zone,
+                'userSearchMode': self.user.search_mode.value,
+            },
+            'languages': [self._lang_to_json(lang) for lang in _settings.LANGUAGES.values()],
         }
 
     @property
@@ -184,3 +188,20 @@ class PageContext:
     @property
     def js_config(self) -> str:
         return _json.dumps(self._js_config)
+
+    @staticmethod
+    def _lang_to_json(lang: _settings.UILanguage) -> dict[str, _typ.Any]:
+        return {
+            'code': lang.code,
+            'name': lang.name,
+            'writingDirection': lang.writing_direction,
+            'comma': lang.comma,
+            'and': lang.and_word,
+            'dayNames': lang.day_names,
+            'abbrDayNames': lang.abbr_day_names,
+            'monthNames': lang.month_names,
+            'abbrMonthNames': lang.abbr_month_names,
+            'ampm': lang.am_pm,
+            'decimalSep': lang.decimal_separator,
+            'thousandsSep': lang.thousands_separator,
+        }

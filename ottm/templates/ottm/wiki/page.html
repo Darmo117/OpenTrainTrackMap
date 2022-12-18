@@ -19,7 +19,7 @@
     {% endwith %}
   {% endif %}
   {% wiki_static 'Interface:Common.css' %}
-  {% if not context.user.is_anonymous %}
+  {% if context.user.is_authenticated %}
     {% wiki_static 'User:'|add:context.user.username|add:'/Common.css' %}
   {% endif %}
 
@@ -219,7 +219,7 @@
   {% endif %}
 
   {% wiki_static 'Interface:Common.js' %}
-  {% if not context.user.is_anonymous %}
+  {% if context.user.is_authenticated %}
     {% wiki_static 'User:'|add:context.user.username|add:'/Common.js' %}
   {% endif %}
   {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT or context.action == ACTION_TALK %}
@@ -229,4 +229,5 @@
       <script src="{% static 'ottm/wiki/talk.min.js' %}"></script>
     {% endif %}
   {% endif %}
+  {% wiki_static 'gadgets' %}
 {% endblock %}

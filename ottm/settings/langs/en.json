@@ -1,4 +1,6 @@
 {
+  "comma": ", ",
+  "and": " and ",
   "day_names": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
   "abbr_day_names": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
   "month_names": [

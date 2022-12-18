@@ -1,17 +1,21 @@
 """This module defines template tags for the wiki."""
 import collections
+import pathlib
 import urllib.parse
 
 import django.core.paginator as dj_paginator
 import django.template as dj_template
 import django.utils.safestring as dj_safe
+import django.shortcuts as _dj_scut
 
 from .ottm import *
 from .. import models, page_handlers as _ph
 from ..api.permissions import *
-from ..api.wiki import constants as w_cons, menus, namespaces as w_ns, parser
+from ..api.wiki import constants as w_cons, menus, namespaces as w_ns, pages as w_pages, parser
 
 register = dj_template.Library()
+
+JS_TEMPLATE_FILE = pathlib.Path(__file__).parent / 'gadgets-loading-template.min.js'
 
 
 @register.simple_tag(takes_context=True)
@@ -150,7 +154,22 @@ def wiki_static(context: TemplateContext, page_title: str) -> str:
     :param page_title: Title of the page to get the static resource from.
     :return: The resource’s link.
     """
-    return ''  # TODO
+    tag = ''
+    if page_title == 'gadgets':
+        gadgetNames = []  # TODO get from user object
+        with JS_TEMPLATE_FILE.open(encoding='utf-8') as f:
+            js_code = f.read().replace('"`<PLACEHOLDER>`"', ','.join(repr(g) for g in gadgetNames))
+        tag = f'<script>{w_pages.minify_js(js_code)}</script>'
+    else:
+        page = w_pages.get_page(*w_pages.split_title(page_title))
+        if page.exists:
+            link = _dj_scut.reverse('ottm:wiki_api')
+            title = urllib.parse.urlencode({'title': w_pages.url_encode_page_title(page.full_title)})
+            if page.content_type == w_cons.CT_JS:
+                tag = f'<script src="{link}?action=query&query=static&{title}"></script>'
+            elif page.content_type == w_cons.CT_CSS:
+                tag = f'<link href="{link}?action=query&query=static&{title}" rel="stylesheet">'
+    return dj_safe.mark_safe(tag)
 
 
 @register.simple_tag(takes_context=True)
@@ -169,6 +188,7 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
     match against:
         case 'previous':
             prev_r = revision.get_previous(ignore_hidden)
+            # language=HTML
             text = ('<span class="mdi mdi-arrow-left-thick"></span> '
                     + wiki_translate(context, 'page.read.revision_nav_box.diff_previous'))
             if prev_r:
@@ -177,9 +197,11 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
                                        css_classes='mdi mdi-file-compare')
                 text = f'{link} ({diff})'
             else:
+                # language=HTML
                 text = f'{text} (<span class="mdi mdi-file-compare"></span>)'
         case 'current':
             current_r = page.get_latest_revision()
+            # language=HTML
             text = ('<span class="mdi mdi-arrow-up-thick"></span> '
                     + wiki_translate(context, 'page.read.revision_nav_box.diff_current'))
             link = wiki_inner_link(context, page.full_title, text, ignore_current_title=True)
@@ -189,10 +211,12 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
                                        css_classes='mdi mdi-file-compare')
                 text = f'{link} ({diff})'
             else:
+                # language=HTML
                 text = f'{link} (<span class="mdi mdi-file-compare"></span>)'
         case 'next':
             next_r = revision.get_next(ignore_hidden)
             text = (wiki_translate(context, 'page.read.revision_nav_box.diff_next')
+                    # language=HTML
                     + ' <span class="mdi mdi-arrow-right-thick"></span>')
             if next_r:
                 link = wiki_inner_link(context, page.full_title, text, url_params=f'revid={next_r.id}')
@@ -200,6 +224,7 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
                                        css_classes='mdi mdi-file-compare')
                 text = f'{link} ({diff})'
             else:
+                # language=HTML
                 text = f'{text} (<span class="mdi mdi-file-compare"></span>)'
         case _:
             raise ValueError(f'invalid value {against}')
@@ -233,6 +258,7 @@ def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, clas
     wiki_context: _ph.WikiPageContext = context.get('context')
     if pages.count == 0:
         message = wiki_translate(context, no_results_key)
+        # language=HTML
         return dj_safe.mark_safe(f'<div class="alert alert-warning text-center">{message}</div>')
     if paginate:
         pagination = wiki_pagination(context, pages)
@@ -287,6 +313,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 ignore_current_title=True,
             ))
         else:
+            # language=HTML
             actions.append(dj_safe.mark_safe(
                 '<span class="mdi mdi-file-arrow-up-down-outline wiki-revision-action"></span>'))
 
@@ -301,6 +328,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 ignore_current_title=True,
             ))
         else:
+            # language=HTML
             actions.append(dj_safe.mark_safe(
                 '<span class="mdi mdi-file-arrow-left-right-outline wiki-revision-action"></span>'))
 
@@ -315,6 +343,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 ignore_current_title=True,
             ))
         else:
+            # language=HTML
             actions.append(dj_safe.mark_safe('<span class="mdi mdi-undo wiki-revision-action"></span>'))
 
         if not is_first and user.has_permission(PERM_WIKI_REVERT):
@@ -502,17 +531,23 @@ def wiki_pagination(context: TemplateContext, paginator: dj_paginator.Paginator)
             url = wiki_add_url_params(context, page=index)
             tooltip = wiki_translate(context, 'pagination.page.tooltip', page=index)
             active = 'active' if index == page_index else ''
+            # noinspection HtmlUnknownTarget
+            # language=HTML
             items.append(
                 f'<li class="page-item {active}" title="{tooltip}"><a class="page-link" href="{url}">{index}</a></li>')
         else:
+            # language=HTML
             items.append(f'<li class="page-item disabled"><a class="page-link" href="#">{index}</a></li>')
 
+    # language=HTML
     nav = '<nav><ul class="pagination justify-content-center">' + ''.join(items) + '</ul></nav>'
     numbers = []
     for nb in [20, 50, 100, 200, 500]:
         url = wiki_add_url_params(context, results_per_page=nb)
         tooltip = wiki_translate(context, 'pagination.per_page_item.tooltip', nb=nb)
         active = 'active' if nb == paginator.per_page else ''
+        # noinspection HtmlUnknownTarget
+        # language=HTML
         numbers.append(
             f'<li class="page-item {active}" title="{tooltip}"><a class="page-link" href="{url}">{nb}</a></li>')
     number_per_page_list = '<ul class="pagination justify-content-center">' + ''.join(numbers) + '</ul>'
@@ -548,4 +583,5 @@ def _format_comment(context: TemplateContext, comment: str, hide: bool) -> str:
     if hide:
         return f'<span class="wiki-hidden">{wiki_translate(context, "comment_hidden")}</span>'
     else:
+        # language=HTML
         return f'<span class="font-italic">({comment})</span>' if comment else ''

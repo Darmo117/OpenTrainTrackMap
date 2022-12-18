@@ -1,4 +1,6 @@
 {
+  "comma": ", ",
+  "and": " et ",
   "day_names": ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"],
   "abbr_day_names": ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."],
   "month_names": [

@@ -42,6 +42,7 @@ def ottm_format_time(context: TemplateContext, date: _dt.datetime, timezone: str
         tz = ottm_context.user.prefered_timezone
     date = date.astimezone(tz)
     iso_date = date.strftime('%H:%M')
+    # language=HTML
     return _dj_safe.mark_safe(f'<time datetime="{iso_date}">{iso_date}</time>')
 
 
@@ -62,6 +63,7 @@ def ottm_format_date(context: TemplateContext, date: _dt.datetime, timezone: str
     date = date.astimezone(tz)
     formated_date = ottm_context.language.format_datetime(date, ottm_context.user.prefered_datetime_format)
     iso_date = date.strftime('%Y-%m-%d %H:%M:%S%z')
+    # language=HTML
     return _dj_safe.mark_safe(f'<time datetime="{iso_date}">{formated_date}</time>')
 
 
@@ -76,6 +78,7 @@ def ottm_format_number(context: TemplateContext, n: int | float, value_only: boo
     """
     ottm_context: _ph.PageContext = context['context']
     s = ottm_context.language.format_number(n)
+    # language=HTML
     return _dj_safe.mark_safe(f'<data value="{n}">{s}</data>') if not value_only else s
 
 
@@ -102,4 +105,5 @@ def ottm_user_type_icon(context: TemplateContext, username: str) -> str:
         key = 'page.user_profile.statistics.status_user'
         icon = 'account'
     tooltip = ottm_context.language.translate(key)
+    # language=HTML
     return _dj_safe.mark_safe(f'<span class="mdi mdi-{icon}" title="{tooltip}"></span>')

@@ -1,0 +1,2 @@
+ottm/static/
+ottm/templatetags/

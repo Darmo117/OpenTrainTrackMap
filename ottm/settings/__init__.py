@@ -15,10 +15,12 @@ class UILanguage:
     def __init__(
             self,
             language,
-            day_names: list[str],
-            abbr_day_names: list[str],
-            month_names: list[str],
-            abbr_month_names: list[str],
+            comma: str,
+            and_word: str,
+            day_names: tuple[str, ...],
+            abbr_day_names: tuple[str, ...],
+            month_names: tuple[str, ...],
+            abbr_month_names: tuple[str, ...],
             am_pm: tuple[str, str],
             decimal_sep: str,
             thousands_sep: str,
@@ -28,11 +30,15 @@ class UILanguage:
 
         :param language: Related language instance from the database.
         :type language: ottm.models.Language
+        :param comma: The character to use as a comma.
+        :param and_word: The word equivalent to english 'and'.
         :param day_names: Names of week days.
         :param abbr_day_names: Abbreviated names of week days.
         :param month_names: Names of months.
         :param abbr_month_names: Abbreviated names of months.
         :param am_pm: AM and PM equivalents for the language.
+        :param decimal_sep: Decimal separator.
+        :param thousands_sep: Thousands separator.
         :param mappings: Language’s UI translation mappings.
         """
         if len(day_names) != 7:
@@ -46,6 +52,8 @@ class UILanguage:
         if len(am_pm) != 2:
             raise ValueError('am_pm expected 2 values')
         self._language = language
+        self._comma = comma
+        self._and_word = and_word
         self._day_names = day_names
         self._abbr_day_names = abbr_day_names
         self._month_names = month_names
@@ -77,6 +85,51 @@ class UILanguage:
     def writing_direction(self) -> str:
         """This language’s writing direction."""
         return self._language.writing_direction
+
+    @property
+    def comma(self) -> str:
+        """The character to use as a comma."""
+        return self._comma
+
+    @property
+    def and_word(self) -> str:
+        """The word equivalent to english 'and'."""
+        return self._and_word
+
+    @property
+    def day_names(self) -> tuple[str, ...]:
+        """Names of week days."""
+        return self._day_names
+
+    @property
+    def abbr_day_names(self) -> tuple[str, ...]:
+        """Abbreviated names of week days."""
+        return self._abbr_day_names
+
+    @property
+    def month_names(self) -> tuple[str, ...]:
+        """Names of months."""
+        return self._month_names
+
+    @property
+    def abbr_month_names(self) -> tuple[str, ...]:
+        """Abbreviated names of months."""
+        return self._abbr_month_names
+
+    @property
+    def am_pm(self) -> tuple[str, str]:
+        """AM and PM equivalents for the language."""
+        return self._am_pm
+
+    @property
+    def decimal_separator(self) -> str:
+        """Thousands separator."""
+        return self._decimal_sep
+
+    @property
+    def thousands_separator(self) -> str:
+        """Language’s UI translation mappings."""
+        return self._thousands_sep
 
     @property
     def default_datetime_format(self) -> str:
@@ -170,11 +223,13 @@ def init_languages():
             json_obj = _json.load(lang_file)
             LANGUAGES[language.code] = UILanguage(
                 language=language,
-                day_names=json_obj['day_names'],
-                abbr_day_names=json_obj['abbr_day_names'],
-                month_names=json_obj['month_names'],
-                abbr_month_names=json_obj['abbr_month_names'],
-                am_pm=json_obj['am_pm'],
+                comma=json_obj['comma'],
+                and_word=json_obj['and'],
+                day_names=tuple(json_obj['day_names']),
+                abbr_day_names=tuple(json_obj['abbr_day_names']),
+                month_names=tuple(json_obj['month_names']),
+                abbr_month_names=tuple(json_obj['abbr_month_names']),
+                am_pm=tuple(json_obj['am_pm']),
                 decimal_sep=json_obj['number_format']['decimal_sep'],
                 thousands_sep=json_obj['number_format']['thousands_sep'],
                 mappings=_build_mapping(json_obj['mappings']),

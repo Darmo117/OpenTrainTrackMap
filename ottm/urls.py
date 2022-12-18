@@ -27,4 +27,6 @@ urlpatterns = [
         path('', views.wiki_page, name='wiki_main_page'),
         re_path('(?P<raw_page_title>.*)', views.wiki_page, name='wiki_page'),
     ])),
+    path('api', views.api, name='api'),
+    path('wiki-api', views.wiki_api, name='wiki_api'),
 ]

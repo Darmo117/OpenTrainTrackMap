@@ -113,6 +113,16 @@ def wiki_page(request: dj_wsgi.WSGIRequest, raw_page_title: str = '') -> dj_resp
     return _ph.WikiPageHandler(request, raw_page_title).handle_request()
 
 
+def api(request: dj_wsgi.WSGIRequest):
+    """Entry point for the map API."""
+    return dj_response.HttpResponseNotFound()  # TODO
+
+
+def wiki_api(request: dj_wsgi.WSGIRequest):
+    """Entry point for the wiki API."""
+    return _ph.WikiAPIHandler(request).handle_request()
+
+
 def handle404(request: dj_wsgi.WSGIRequest, _) -> dj_response.HttpResponse:
     """404 error page handler."""
     pass  # TODO 404

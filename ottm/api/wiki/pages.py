@@ -3,9 +3,11 @@ import datetime
 import typing as _typ
 import urllib.parse
 
+import cssmin
 import django.core.handlers.wsgi as dj_wsgi
 import django.db.transaction as dj_db_trans
 import django.shortcuts as dj_scut
+import rjsmin
 
 from . import constants, namespaces
 from .. import errors, groups, permissions, utils
@@ -91,6 +93,7 @@ def get_js_config(request_params: requests.RequestParams, page: models.Page,
         username = None
     action = request_params.wiki_action
     return {
+        'wApiPath': dj_scut.reverse('ottm:wiki_api'),
         'wPath': dj_scut.reverse('ottm:wiki_main_page'),
         'wContentNamespaces': [ns_id for ns_id, ns in namespaces.NAMESPACE_IDS.items() if ns.is_content],
         'wNamespaceNames': {ns_id: ns.name for ns_id, ns in namespaces.NAMESPACE_IDS.items()},
@@ -264,8 +267,32 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
             content=content,
             is_bot=author.is_bot,
         ).save()
+        if page.content_type == constants.CT_JS:
+            page.minified_content = minify_js(content)
+            page.save()
+        elif page.content_type == constants.CT_CSS:
+            page.minified_content = minify_css(content)
+            page.save()
     if author.is_authenticated:
         follow_page(author, page, follow)
+
+
+def minify_js(code: str) -> str:  # TODO check syntax and return 'console.log("error")' dummy code
+    """Minify the given JavaScript code.
+
+    :param code: JavaScript code to minify.
+    :return: The minified code.
+    """
+    return rjsmin.jsmin(code)
+
+
+def minify_css(code: str) -> str:  # TODO check syntax and return None if any error
+    """Minify the given CSS code.
+
+    :param code: CSS code to minify.
+    :return: The minified code.
+    """
+    return cssmin.cssmin(code)
 
 
 def _get_page_content_type(page: models.Page) -> str:

@@ -39,18 +39,23 @@ class Command(dj_mngmt.BaseCommand):
 
     @staticmethod
     def _minify_(minifier: typ.Callable[[str], str], ext: str, f: pathlib.Path):
-        with f.open(encoding='utf8') as fp:
+        with f.open(encoding='utf-8') as fp:
             content = fp.read()
         minified = minifier(content)
         fname = '{0}.min.{1}'.format(f.name.rsplit('.', maxsplit=1)[0], ext)
-        with (f.parent / fname).open(mode='w', encoding='utf8') as fp:
+        with (f.parent / fname).open(mode='w', encoding='utf-8') as fp:
             fp.write(minified)
 
     @staticmethod
     def _map(pattern: str, callback: typ.Callable[[pathlib.Path], None]) -> int:
+        dirs = []
+        with (settings.BASE_DIR / 'minify.txt').open(encoding='utf-8') as f:
+            for line in f:
+                dirs.append(settings.BASE_DIR / line.strip())
         nb = 0
-        for file in map(pathlib.Path, (settings.BASE_DIR / 'ottm/static').rglob(pattern)):
-            if 'libs' not in file.parts and '.min.' not in file.name and file.is_file():
-                callback(file)
-                nb += 1
+        for directory in dirs:
+            for file in map(pathlib.Path, directory.rglob(pattern)):
+                if 'libs' not in file.parts and '.min.' not in file.name and file.is_file():
+                    callback(file)
+                    nb += 1
         return nb

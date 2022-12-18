@@ -114,6 +114,7 @@ class Command(dj_mngmt.BaseCommand):
         pages.protect_page(wiki_user, pages.get_page(ns, title),
                            models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS),
                            reason='Page with high traffic.')
+        # language=JS
         content = """
 /*
  * Put the wiki’s global JavaScript here. It will be loaded on every wiki page, regardless of device.
@@ -121,18 +122,21 @@ class Command(dj_mngmt.BaseCommand):
 """.strip()
         pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Common.js'), content,
                         edit_comment)
+        # language=CSS
         content = """
 /*
  * Put the wiki’s global CSS here. It will be loaded on every wiki page, regardless of device.
  */
 """.strip()
         pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Common.css'), content, edit_comment)
+        # language=JS
         content = """
 /*
  * Put the wiki’s mobile JavaScript here. It will be loaded on every wiki page on mobile devices only.
  */
 """.strip()
         pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Mobile.js'), content, edit_comment)
+        # language=CSS
         content = """
 /*
  * Put the wiki’s mobile CSS here. It will be loaded on every wiki page on mobile devices only.

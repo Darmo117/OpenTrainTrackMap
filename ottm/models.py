@@ -1865,6 +1865,8 @@ class Page(dj_models.Model, NonDeletableMixin):
     # May redirect to non-existent page
     redirects_to_namespace_id = dj_models.IntegerField(null=True, blank=True)
     redirects_to_title = dj_models.CharField(max_length=200, validators=[page_title_validator], null=True, blank=True)
+    # Cache for CSS/JS/JSON pages
+    minified_content = dj_models.TextField(null=True, blank=True)
 
     class Meta:
         unique_together = ('namespace_id', 'title')

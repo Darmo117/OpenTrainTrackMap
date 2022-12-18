@@ -489,7 +489,7 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
             self._parent_pages = page.get_parent_page_titles()
         else:
             self._parent_pages = []
-        self._js_config.update(js_config)
+        self._js_config['config'].update(js_config)
 
     @property
     def invalid_title(self) -> bool:
