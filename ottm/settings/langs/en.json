@@ -226,6 +226,24 @@
             "custom_js": {
               "label": "Custom JavaScript"
             },
+            "custom_light_css_js": {
+              "label": "Custom CSS/JavaScript wiki pages to apply to all wiki pages when using light mode:"
+            },
+            "custom_light_css": {
+              "label": "Custom light-mode CSS"
+            },
+            "custom_light_js": {
+              "label": "Custom light-mode JavaScript"
+            },
+            "custom_dark_css_js": {
+              "label": "Custom CSS/JavaScript wiki pages to apply to all wiki pages when using dark mode:"
+            },
+            "custom_dark_css": {
+              "label": "Custom dark-mode CSS"
+            },
+            "custom_dark_js": {
+              "label": "Custom dark-mode JavaScript"
+            },
             "dark_mode": {
               "label": "Use dark mode"
             },

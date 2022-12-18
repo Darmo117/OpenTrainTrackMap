@@ -21,6 +21,11 @@
   {% wiki_static 'Interface:Common.css' %}
   {% if context.user.is_authenticated %}
     {% wiki_static 'User:'|add:context.user.username|add:'/Common.css' %}
+    {% if context.dark_mode %}
+      {% wiki_static 'User:'|add:context.user.username|add:'/Common-dark.css' %}
+    {% else %}
+      {% wiki_static 'User:'|add:context.user.username|add:'/Common-light.css' %}
+    {% endif %}
   {% endif %}
 
   {% block head %}{% endblock %}
@@ -82,7 +87,7 @@
                     title="{% wiki_translate 'title.maintenance_category.tooltip' %}"></span>
             {% endif %}
             {% if context.page.namespace == NS_USER %}
-              <span class="float-right">{% ottm_user_type_icon context.page.title %}</span>
+              <span class="float-right">{% ottm_user_type_icon context.page.base_name %}</span>
             {% endif %}
           {% elif context.action == ACTION_TALK %}
             {% wiki_translate 'page.title.talk' page_title=context.page.full_title %}
@@ -221,6 +226,11 @@
   {% wiki_static 'Interface:Common.js' %}
   {% if context.user.is_authenticated %}
     {% wiki_static 'User:'|add:context.user.username|add:'/Common.js' %}
+    {% if context.dark_mode %}
+      {% wiki_static 'User:'|add:context.user.username|add:'/Common-dark.js' %}
+    {% else %}
+      {% wiki_static 'User:'|add:context.user.username|add:'/Common-light.js' %}
+    {% endif %}
   {% endif %}
   {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT or context.action == ACTION_TALK %}
     <script src="{% static 'ottm/libs/ace-editor/ace.js' %}"></script>

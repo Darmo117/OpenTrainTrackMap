@@ -252,6 +252,22 @@
             {% ottm_translate trans_prefix|add:'custom_js.label' as text %}
             {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common.js' text=text ignore_current_title=True %}
           </p>
+          <p>
+            <label>{% ottm_translate trans_prefix|add:'custom_light_css_js.label' %}</label><br>
+            {% ottm_translate trans_prefix|add:'custom_light_css.label' as text %}
+            {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common-light.css' text=text ignore_current_title=True %}
+            |
+            {% ottm_translate trans_prefix|add:'custom_light_js.label' as text %}
+            {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common-light.js' text=text ignore_current_title=True %}
+          </p>
+          <p>
+            <label>{% ottm_translate trans_prefix|add:'custom_dark_css_js.label' %}</label><br>
+            {% ottm_translate trans_prefix|add:'custom_dark_css.label' as text %}
+            {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common-dark.css' text=text ignore_current_title=True %}
+            |
+            {% ottm_translate trans_prefix|add:'custom_dark_js.label' as text %}
+            {% wiki_inner_link page_title='User:'|add:context.user.username|add:'/Common-dark.js' text=text ignore_current_title=True %}
+          </p>
         </fieldset>
         <fieldset>
           <legend>{% ottm_translate trans_prefix|add:'fieldset.date_and_time' %}</legend>
