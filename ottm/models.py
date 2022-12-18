@@ -113,6 +113,11 @@ class User:
         return self._user.is_bot
 
     @property
+    def is_new(self):
+        """Whether this user is new (anonymous or less than 30 days)."""
+        return not self.exists or (self._user.date_joined - utils.now()).days <= 30
+
+    @property
     def ip(self) -> str | None:
         """This user’s IP. May be None if the user is authenticated."""
         return self._user.ip
@@ -896,6 +901,16 @@ class User:
         """A Manager object for the wiki messages posted by this user."""
         return self._user.wiki_messages if self.exists else dj_auth_models.EmptyManager(Message)
 
+    def can_send_emails_to(self, other: User) -> bool:
+        """Check whether this user can send emails to the given one.
+
+        :param other: A user.
+        :return: True if this user can send emails to the specified one, false otherwise.
+        """
+        return (self.is_authenticated and other.users_can_send_emails
+                and (not self.is_new or other.new_users_can_send_emails)
+                and self.username not in other.email_user_blacklist)
+
     def has_permission(self, perm: str) -> bool:
         """Check whether this user has the given permission.
 
@@ -1003,74 +1018,74 @@ class CustomUser(dj_auth_models.AbstractUser):
     # Wiki-related
     users_can_send_emails = dj_models.BooleanField(default=True)
     new_users_can_send_emails = dj_models.BooleanField(default=True)
-    send_copy_of_sent_emails = dj_models.BooleanField(default=False)
+    send_copy_of_sent_emails = dj_models.BooleanField(default=False)  # TODO use
     email_user_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
     max_file_preview_size = dj_models.CharField(
         max_length=15,
         choices=tuple((f'{n1},{n2}', f'{n1},{n2}') for n1, n2 in w_cons.FILE_PREVIEW_SIZES),
         default=f'{w_cons.FILE_PREVIEW_SIZES[2][0]},{w_cons.FILE_PREVIEW_SIZES[2][1]}',
-    )
-    thumbnails_size = dj_models.IntegerField(validators=[thumbnail_size_validator], default=200)
-    show_page_content_in_diffs = dj_models.BooleanField(default=True)
-    show_diff_after_revert = dj_models.BooleanField(default=True)
-    show_hidden_categories = dj_models.BooleanField(default=False)
-    ask_revert_confirmation = dj_models.BooleanField(default=True)
+    )  # TODO use
+    thumbnails_size = dj_models.IntegerField(validators=[thumbnail_size_validator], default=200)  # TODO use
+    show_page_content_in_diffs = dj_models.BooleanField(default=True)  # TODO use
+    show_diff_after_revert = dj_models.BooleanField(default=True)  # TODO use
+    show_hidden_categories = dj_models.BooleanField(default=False)  # TODO use
+    ask_revert_confirmation = dj_models.BooleanField(default=True)  # TODO use
     # TODO editor type
     mark_all_wiki_edits_as_minor = dj_models.BooleanField(default=False)
     warn_when_no_wiki_edit_comment = dj_models.BooleanField(default=True)
     warn_when_wiki_edit_not_published = dj_models.BooleanField(default=True)
-    show_preview_above_edit_form = dj_models.BooleanField(default=True)
-    show_preview_without_reload = dj_models.BooleanField(default=True)
-    days_nb_rc_fl_logs = dj_models.IntegerField(validators=[days_nb_rc_fl_logs_validator], default=30)
-    edits_nb_rc_fl_logs = dj_models.IntegerField(validators=[edits_nb_rc_fl_logs_validator], default=50)
-    group_edits_per_page_rc_fl = dj_models.BooleanField(default=False)
-    mask_wiki_minor_edits = dj_models.BooleanField(default=False)
-    mask_wiki_bot_edits = dj_models.BooleanField(default=False)
-    mask_wiki_own_edits = dj_models.BooleanField(default=True)
-    mask_wiki_anonymous_edits = dj_models.BooleanField(default=False)
-    mask_wiki_authenticated_edits = dj_models.BooleanField(default=False)
-    mask_wiki_categorization_edits = dj_models.BooleanField(default=False)
-    mask_wiki_patrolled_edits = dj_models.BooleanField(default=False)
+    show_preview_above_edit_form = dj_models.BooleanField(default=True)  # TODO use
+    show_preview_without_reload = dj_models.BooleanField(default=True)  # TODO use
+    days_nb_rc_fl_logs = dj_models.IntegerField(validators=[days_nb_rc_fl_logs_validator], default=30)  # TODO use
+    edits_nb_rc_fl_logs = dj_models.IntegerField(validators=[edits_nb_rc_fl_logs_validator], default=50)  # TODO use
+    group_edits_per_page_rc_fl = dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_minor_edits = dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_bot_edits = dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_own_edits = dj_models.BooleanField(default=True)  # TODO use
+    mask_wiki_anonymous_edits = dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_authenticated_edits = dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_categorization_edits = dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_patrolled_edits = dj_models.BooleanField(default=False)  # TODO use
     fl_add_created_pages = dj_models.BooleanField(default=False)
     fl_add_modified_pages = dj_models.BooleanField(default=False)
-    fl_add_renamed_pages = dj_models.BooleanField(default=False)
-    fl_add_deleted_pages = dj_models.BooleanField(default=False)
-    fl_add_reverted_pages = dj_models.BooleanField(default=False)
-    fl_add_created_topics = dj_models.BooleanField(default=True)
-    fl_add_replied_to_topics = dj_models.BooleanField(default=False)
-    search_default_results_nb = dj_models.IntegerField(validators=[search_results_nb_validator], default=20)
+    fl_add_renamed_pages = dj_models.BooleanField(default=False)  # TODO use
+    fl_add_deleted_pages = dj_models.BooleanField(default=False)  # TODO use
+    fl_add_reverted_pages = dj_models.BooleanField(default=False)  # TODO use
+    fl_add_created_topics = dj_models.BooleanField(default=True)  # TODO use
+    fl_add_replied_to_topics = dj_models.BooleanField(default=False)  # TODO use
+    search_default_results_nb = dj_models.IntegerField(validators=[search_results_nb_validator], default=20)  # TODO use
     search_mode = dj_models.CharField(
         max_length=10,
         choices=tuple((sm.value, sm.value) for sm in search_engine.SearchMode),
         default=search_engine.SearchMode.DEFAULT.value,
-    )
+    )  # TODO use
     notif_email_frequency = dj_models.CharField(
         max_length=15,
         choices=tuple((neu.value, neu.value) for neu in notifications.NotificationEmailFrequency),
         default=notifications.NotificationEmailFrequency.IMMEDIATELY.value,
-    )
-    html_email_updates = dj_models.BooleanField(default=True)
-    notif_user_talk_edits_email = dj_models.BooleanField(default=True)
-    notif_followed_pages_edits_web = dj_models.BooleanField(default=True)
-    notif_followed_pages_edits_email = dj_models.BooleanField(default=True)
-    notif_talk_mentions_web = dj_models.BooleanField(default=True)
-    notif_talk_mentions_email = dj_models.BooleanField(default=True)
-    notif_message_answers_web = dj_models.BooleanField(default=True)
-    notif_message_answers_email = dj_models.BooleanField(default=True)
-    notif_topic_answers_web = dj_models.BooleanField(default=True)
-    notif_topic_answers_email = dj_models.BooleanField(default=True)
-    notif_thanks_web = dj_models.BooleanField(default=True)
-    notif_thanks_email = dj_models.BooleanField(default=False)
-    notif_failed_connection_attempts_web = dj_models.BooleanField(default=True)
-    notif_failed_connection_attempts_email = dj_models.BooleanField(default=True)
-    notif_permissions_edit_web = dj_models.BooleanField(default=True)
-    notif_permissions_edit_email = dj_models.BooleanField(default=True)
-    notif_user_email_web = dj_models.BooleanField(default=True)
-    notif_cancelled_edits_web = dj_models.BooleanField(default=True)
-    notif_cancelled_edits_email = dj_models.BooleanField(default=False)
-    notif_edit_count_milestones_web = dj_models.BooleanField(default=True)
-    user_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
-    page_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
+    )  # TODO use
+    html_email_updates = dj_models.BooleanField(default=True)  # TODO use
+    notif_user_talk_edits_email = dj_models.BooleanField(default=True)  # TODO use
+    notif_followed_pages_edits_web = dj_models.BooleanField(default=True)  # TODO use
+    notif_followed_pages_edits_email = dj_models.BooleanField(default=True)  # TODO use
+    notif_talk_mentions_web = dj_models.BooleanField(default=True)  # TODO use
+    notif_talk_mentions_email = dj_models.BooleanField(default=True)  # TODO use
+    notif_message_answers_web = dj_models.BooleanField(default=True)  # TODO use
+    notif_message_answers_email = dj_models.BooleanField(default=True)  # TODO use
+    notif_topic_answers_web = dj_models.BooleanField(default=True)  # TODO use
+    notif_topic_answers_email = dj_models.BooleanField(default=True)  # TODO use
+    notif_thanks_web = dj_models.BooleanField(default=True)  # TODO use
+    notif_thanks_email = dj_models.BooleanField(default=False)  # TODO use
+    notif_failed_connection_attempts_web = dj_models.BooleanField(default=True)  # TODO use
+    notif_failed_connection_attempts_email = dj_models.BooleanField(default=True)  # TODO use
+    notif_permissions_edit_web = dj_models.BooleanField(default=True)  # TODO use
+    notif_permissions_edit_email = dj_models.BooleanField(default=True)  # TODO use
+    notif_user_email_web = dj_models.BooleanField(default=True)  # TODO use
+    notif_cancelled_edits_web = dj_models.BooleanField(default=True)  # TODO use
+    notif_cancelled_edits_email = dj_models.BooleanField(default=False)  # TODO use
+    notif_edit_count_milestones_web = dj_models.BooleanField(default=True)  # TODO use
+    user_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)  # TODO use
+    page_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)  # TODO use
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
