@@ -63,7 +63,10 @@ class MapPageHandler(_ottm_handler.OTTMHandler):
             js_config['trans'][k] = self._request_params.ui_language.translate(k)
 
         args = {'username': self._username} if self._mode == self.CONTRIBUTIONS else {}
-        tab_title = self.get_page_titles(page_id=self._mode, titles_args=args)[1]
+        if self._mode != self.VIEW:
+            tab_title = self.get_page_titles(page_id=self._mode, titles_args=args)[1]
+        else:
+            tab_title = None
         return self.render_page('ottm/map.html', MapPageContext(
             self._request_params,
             tab_title=tab_title,
