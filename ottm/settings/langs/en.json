@@ -290,8 +290,8 @@
             "ask_revert_confirmation": {
               "label": "Ask for confirmation when clicking on a revert button"
             },
-            "use_editor_syntax_highlight": {
-              "label": "Enable syntax highlighting in editor"
+            "use_editor_syntax_highlighting": {
+              "label": "Enable syntax highlighting"
             },
             "mark_all_wiki_edits_as_minor": {
               "label": "Mark all edits as minor"

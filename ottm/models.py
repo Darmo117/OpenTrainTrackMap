@@ -349,15 +349,15 @@ class User:
         self._user.ask_revert_confirmation = value
 
     @property
-    def uses_editor_syntax_highlight(self) -> bool:
-        """Whether this user uses the syntax highlight wiki editor."""
-        return self._user.uses_editor_syntax_highlight
+    def uses_editor_syntax_highlighting(self) -> bool:
+        """Whether this user uses the syntax highlighting wiki editor."""
+        return self._user.uses_editor_syntax_highlighting
 
-    @uses_editor_syntax_highlight.setter
-    def uses_editor_syntax_highlight(self, value: bool):
-        """Set whether this user uses the syntax highlight wiki editor."""
+    @uses_editor_syntax_highlighting.setter
+    def uses_editor_syntax_highlighting(self, value: bool):
+        """Set whether this user uses the syntax highlighting wiki editor."""
         self._check_authenticated()
-        self._user.uses_editor_syntax_highlight = value
+        self._user.uses_editor_syntax_highlighting = value
 
     @property
     def mark_all_wiki_edits_as_minor(self) -> bool:
@@ -1041,7 +1041,7 @@ class CustomUser(dj_auth_models.AbstractUser):
     show_diff_after_revert = dj_models.BooleanField(default=True)  # TODO use
     show_hidden_categories = dj_models.BooleanField(default=False)  # TODO use
     ask_revert_confirmation = dj_models.BooleanField(default=True)  # TODO use
-    uses_editor_syntax_highlight = dj_models.BooleanField(default=True)
+    uses_editor_syntax_highlighting = dj_models.BooleanField(default=True)
     mark_all_wiki_edits_as_minor = dj_models.BooleanField(default=False)
     warn_when_no_wiki_edit_comment = dj_models.BooleanField(default=True)
     warn_when_wiki_edit_not_published = dj_models.BooleanField(default=True)
