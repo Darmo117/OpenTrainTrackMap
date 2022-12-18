@@ -147,6 +147,7 @@
             <div class="form-group">
               <label for="{{ form.email.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
               {{ form.email }}
+              <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
               {% if form.email.errors %}
                 <div class="invalid-feedback" style="display: block">
                   {% for error in form.email.errors.as_data %}
