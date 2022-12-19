@@ -29,9 +29,9 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
                     user.password = form.cleaned_data['password']
                     changed_password = True
                 user.email = form.cleaned_data['email']
-                user.prefered_language = _settings.LANGUAGES[form.cleaned_data['prefered_language']]
-                user.prefered_timezone = _pytz.timezone(form.cleaned_data['prefered_timezone'])
-                user.prefered_datetime_format = form.cleaned_data['prefered_datetime_format']
+                user.preferred_language = _settings.LANGUAGES[form.cleaned_data['preferred_language']]
+                user.preferred_timezone = _pytz.timezone(form.cleaned_data['preferred_timezone'])
+                user.preferred_datetime_format = form.cleaned_data['preferred_datetime_format']
                 user.gender = _dt.GENDERS[form.cleaned_data['gender']]
                 user.uses_dark_mode = form.cleaned_data['dark_mode']
                 user.users_can_send_emails = form.cleaned_data['users_can_send_emails']
@@ -138,8 +138,8 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
         choices=tuple((gender.label, gender.i18n_label) for gender in _dt.GENDERS.values()),
         help_text=True,
     )
-    prefered_language = _dj_forms.ChoiceField(
-        label='prefered_language',
+    preferred_language = _dj_forms.ChoiceField(
+        label='preferred_language',
         required=True,
         choices=(),  # Set in __init__
     )
@@ -174,13 +174,13 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
         label='dark_mode',
         required=False,
     )
-    prefered_datetime_format = _dj_forms.ChoiceField(
-        label='prefered_datetime_format',
+    preferred_datetime_format = _dj_forms.ChoiceField(
+        label='preferred_datetime_format',
         required=True,
         choices=(),  # Set in __init__()
     )
-    prefered_timezone = _dj_forms.ChoiceField(
-        label='prefered_timezone',
+    preferred_timezone = _dj_forms.ChoiceField(
+        label='preferred_timezone',
         required=True,
         choices=_tz.GROUPED_TIMEZONES,
     )
@@ -422,15 +422,15 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
         if user and not post:
             initial = {
                 'gender': user.gender.label,
-                'prefered_language': user.prefered_language.code,
+                'preferred_language': user.preferred_language.code,
                 'email': user.email,
                 'users_can_send_emails': user.users_can_send_emails,
                 'new_users_can_send_emails': user.new_users_can_send_emails,
                 'send_copy_of_sent_emails': user.send_copy_of_sent_emails,
                 'email_user_blacklist': '\n'.join(user.email_user_blacklist),
                 'dark_mode': user.uses_dark_mode,
-                'prefered_datetime_format': user.internal_object.prefered_datetime_format.id,
-                'prefered_timezone': user.internal_object.prefered_timezone,
+                'preferred_datetime_format': user.internal_object.preferred_datetime_format.id,
+                'preferred_timezone': user.internal_object.preferred_timezone,
                 'max_file_preview_size': user.internal_object.max_file_preview_size,
                 'thumbnails_size': user.thumbnails_size,
                 'show_page_content_in_diffs': user.show_page_content_in_diffs,
@@ -491,13 +491,13 @@ class UserSettingsForm(_forms.CustomForm, _forms.ConfirmPasswordFormMixin):
 
         super().__init__('user_settings', True, post=post, initial=initial)
 
-        self.fields['prefered_language'].choices = tuple(
+        self.fields['preferred_language'].choices = tuple(
             (language.code, language.name)
             for language in _models.Language.objects.order_by('name')
         )
         now = _utils.now()
-        self.fields['prefered_datetime_format'].choices = tuple(
-            (dtf.id, user.prefered_language.format_datetime(now, dtf.format))
+        self.fields['preferred_datetime_format'].choices = tuple(
+            (dtf.id, user.preferred_language.format_datetime(now, dtf.format))
             for dtf in _models.DateTimeFormat.objects.all()
         )
 

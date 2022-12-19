@@ -191,8 +191,8 @@
                 "invalid_choice": "Invalid choice!"
               }
             },
-            "prefered_language": {
-              "label": "Prefered interface language",
+            "preferred_language": {
+              "label": "Preferred interface language",
               "error": {
                 "invalid_choice": "Invalid choice!"
               }
@@ -247,8 +247,8 @@
             "dark_mode": {
               "label": "Use dark mode"
             },
-            "prefered_datetime_format": {
-              "label": "Prefered date and time format",
+            "preferred_datetime_format": {
+              "label": "Preferred date and time format",
               "error": {
                 "invalid_choice": "Invalid choice!"
               }
@@ -259,8 +259,8 @@
             "timezone_time": {
               "label": "Timezone time:"
             },
-            "prefered_timezone": {
-              "label": "Prefered timezone",
+            "preferred_timezone": {
+              "label": "Preferred timezone",
               "error": {
                 "invalid_choice": "Invalid choice!"
               }

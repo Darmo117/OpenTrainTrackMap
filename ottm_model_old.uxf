@@ -186,7 +186,7 @@ r2=edit_group</panel_attributes>
 *+ is_administrator: boolean = False*
 --
 --
-+ prefered_language: Language</panel_attributes>
++ preferred_language: Language</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -3049,7 +3049,7 @@ r2=*+ holes*</panel_attributes>
 + data(): ?UserInfo
 + username(): string
 + is_logged_in(): boolean
-+ prefered_language(): Language
++ preferred_language(): Language
 + is_admin(): boolean
 + notes_count(): int
 + edits_count(): int

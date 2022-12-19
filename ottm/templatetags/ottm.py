@@ -39,7 +39,7 @@ def ottm_format_time(context: TemplateContext, date: _dt.datetime, timezone: str
     if timezone:
         tz = _pytz.timezone(timezone)
     else:
-        tz = ottm_context.user.prefered_timezone
+        tz = ottm_context.user.preferred_timezone
     date = date.astimezone(tz)
     iso_date = date.strftime('%H:%M')
     # language=HTML
@@ -59,9 +59,9 @@ def ottm_format_date(context: TemplateContext, date: _dt.datetime, timezone: str
     if timezone:
         tz = _pytz.timezone(timezone)
     else:
-        tz = ottm_context.user.prefered_timezone
+        tz = ottm_context.user.preferred_timezone
     date = date.astimezone(tz)
-    formated_date = ottm_context.language.format_datetime(date, ottm_context.user.prefered_datetime_format)
+    formated_date = ottm_context.language.format_datetime(date, ottm_context.user.preferred_datetime_format)
     iso_date = date.strftime('%Y-%m-%d %H:%M:%S%z')
     # language=HTML
     return _dj_safe.mark_safe(f'<time datetime="{iso_date}">{formated_date}</time>')

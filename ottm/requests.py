@@ -88,7 +88,7 @@ class RequestParams:
                 and (lang_code := request.COOKIES.get('language'))
                 and lang_code in settings.LANGUAGES):
             return settings.LANGUAGES[lang_code]
-        return user.prefered_language
+        return user.preferred_language
 
     @staticmethod
     def _get_dark_mode_status(request: dj_wsgi.WSGIRequest, user: models.User) -> bool:

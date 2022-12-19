@@ -169,49 +169,49 @@ class User:
         self._user.email = value
 
     @property
-    def prefered_language(self) -> settings.UILanguage:
-        """This user’s prefered language."""
+    def preferred_language(self) -> settings.UILanguage:
+        """This user’s preferred language."""
         if not self.exists:
             return settings.LANGUAGES[settings.DEFAULT_LANGUAGE_CODE]
-        return settings.LANGUAGES[self._user.prefered_language.code]
+        return settings.LANGUAGES[self._user.preferred_language.code]
 
-    @prefered_language.setter
-    def prefered_language(self, value: settings.UILanguage):
-        """Set this user’s prefered language. User must not be anonymous."""
+    @preferred_language.setter
+    def preferred_language(self, value: settings.UILanguage):
+        """Set this user’s preferred language. User must not be anonymous."""
         self._check_authenticated()
         try:
-            self._user.prefered_language = Language.objects.get(code=value.code)
+            self._user.preferred_language = Language.objects.get(code=value.code)
         except Language.DoesNotExist:  # Should never happen
             raise ValueError(f'invalid language code {value.code}')
 
     @property
-    def prefered_timezone(self) -> pytz.BaseTzInfo:
-        """This user’s prefered timezone."""
+    def preferred_timezone(self) -> pytz.BaseTzInfo:
+        """This user’s preferred timezone."""
         if self.exists:
-            return pytz.timezone(self._user.prefered_timezone)
+            return pytz.timezone(self._user.preferred_timezone)
         else:
             return pytz.timezone(dj_settings.TIME_ZONE)
 
-    @prefered_timezone.setter
-    def prefered_timezone(self, value: pytz.BaseTzInfo):
-        """Set this user’s prefered timezone. User must not be anonymous."""
+    @preferred_timezone.setter
+    def preferred_timezone(self, value: pytz.BaseTzInfo):
+        """Set this user’s preferred timezone. User must not be anonymous."""
         self._check_authenticated()
-        self._user.prefered_timezone = value.zone
+        self._user.preferred_timezone = value.zone
 
     @property
-    def prefered_datetime_format(self) -> str:
-        """This user’s prefered datetime format."""
+    def preferred_datetime_format(self) -> str:
+        """This user’s preferred datetime format."""
         if self.exists:
-            return self._user.prefered_datetime_format.format
+            return self._user.preferred_datetime_format.format
         else:
-            return self.prefered_language.default_datetime_format
+            return self.preferred_language.default_datetime_format
 
-    @prefered_datetime_format.setter
-    def prefered_datetime_format(self, value: int):
-        """Set this user’s prefered datetime format to the one with the given ID. User must not be anonymous."""
+    @preferred_datetime_format.setter
+    def preferred_datetime_format(self, value: int):
+        """Set this user’s preferred datetime format to the one with the given ID. User must not be anonymous."""
         self._check_authenticated()
         try:
-            self._user.prefered_datetime_format = DateTimeFormat.objects.get(id=value)
+            self._user.preferred_datetime_format = DateTimeFormat.objects.get(id=value)
         except DateTimeFormat.DoesNotExist:
             raise ValueError(f'invalid datetime format ID: {value}')
 
@@ -1017,13 +1017,13 @@ class CustomUser(dj_auth_models.AbstractUser):
     hide_username = dj_models.BooleanField(default=False)
     # IP for anonymous accounts
     ip = dj_models.CharField(max_length=39, null=True, blank=True)
-    prefered_language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
+    preferred_language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
     groups = dj_models.ManyToManyField(UserGroup, related_name='users')
     gender_code = dj_models.CharField(max_length=10, choices=tuple((v, v) for v in data_types.GENDERS.keys()),
                                       default=data_types.GENDER_N.label)
     uses_dark_mode = dj_models.BooleanField(default=False)
-    prefered_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
-    prefered_timezone = dj_models.CharField(max_length=50, choices=((tz, tz) for tz in timezones.TIMEZONES),
+    preferred_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
+    preferred_timezone = dj_models.CharField(max_length=50, choices=((tz, tz) for tz in timezones.TIMEZONES),
                                             default=pytz.UTC.zone)
     is_bot = dj_models.BooleanField(default=False)
     # Wiki-related
@@ -2323,6 +2323,20 @@ class UserLog(Log):
 
 class UserAccountCreationLog(UserLog):
     """New entries are added each time a user account is created."""
+
+    class Meta:
+        get_latest_by = 'date'
+        ordering = ('date',)
+
+
+class UserGroupLog(UserLog):
+    """New entries are added each time a user account is created."""
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT,
+                                     related_name='usergrouplog_performer_set',
+                                     null=True, blank=True)
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
+    joined = dj_models.BooleanField()
+    group = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
 
     class Meta:
         get_latest_by = 'date'

@@ -12,8 +12,8 @@
     location.hash = `#${e.target.id.substring(9)}`;
   });
 
-  // Update example time when prefered timezone selection changes
-  $("#user-settings-form-prefered-timezone").on("change", e => {
+  // Update example time when preferred timezone selection changes
+  $("#user-settings-form-preferred-timezone").on("change", e => {
     const date = new Date();
     // Convert date to selected timezone
     const localTime = ottm.formatTime(ottm.convertDateTimezone(date, $(e.target).val()));

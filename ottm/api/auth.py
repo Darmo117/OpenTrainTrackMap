@@ -70,8 +70,8 @@ def _get_or_create_anonymous_user(request: dj_wsgi.WSGIRequest) -> models.User:
         dj_user = models.CustomUser(
             username=f'Anonymous-{nb + 1}',
             ip=ip,
-            prefered_language=language,
-            prefered_datetime_format=language.default_datetime_format,
+            preferred_language=language,
+            preferred_datetime_format=language.default_datetime_format,
         )
 
     return models.User(dj_user)
@@ -122,8 +122,8 @@ def create_user(username: str, email: str = None, password: str = None, ignore_e
         username=username,
         email=email,
         password=password,
-        prefered_language=language,
-        prefered_datetime_format=language.default_datetime_format,
+        preferred_language=language,
+        preferred_datetime_format=language.default_datetime_format,
         is_bot=is_bot,
     )
     dj_user.save()

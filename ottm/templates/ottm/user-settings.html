@@ -126,14 +126,14 @@
         </fieldset>
         <fieldset>
           <legend>{% ottm_translate trans_prefix|add:'fieldset.localization' %}</legend>
-          {% with trans_field_prefix=trans_prefix|add:form.prefered_language.label|add:'.' %}
+          {% with trans_field_prefix=trans_prefix|add:form.preferred_language.label|add:'.' %}
             <div class="form-group">
               <label
-                  for="{{ form.prefered_language.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
-              {{ form.prefered_language }}
-              {% if form.prefered_language.errors %}
+                  for="{{ form.preferred_language.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.preferred_language }}
+              {% if form.preferred_language.errors %}
                 <div class="invalid-feedback" style="display: block">
-                  {% for error in form.prefered_language.errors.as_data %}
+                  {% for error in form.preferred_language.errors.as_data %}
                     {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
                   {% endfor %}
                 </div>
@@ -272,14 +272,14 @@
         </fieldset>
         <fieldset>
           <legend>{% ottm_translate trans_prefix|add:'fieldset.date_and_time' %}</legend>
-          {% with trans_field_prefix=trans_prefix|add:form.prefered_datetime_format.label|add:'.' %}
+          {% with trans_field_prefix=trans_prefix|add:form.preferred_datetime_format.label|add:'.' %}
             <div class="form-group">
               <label
-                  for="{{ form.prefered_datetime_format.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
-              {{ form.prefered_datetime_format }}
-              {% if form.prefered_datetime_format.errors %}
+                  for="{{ form.preferred_datetime_format.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.preferred_datetime_format }}
+              {% if form.preferred_datetime_format.errors %}
                 <div class="invalid-feedback" style="display: block">
-                  {% for error in form.prefered_datetime_format.errors.as_data %}
+                  {% for error in form.preferred_datetime_format.errors.as_data %}
                     {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
                   {% endfor %}
                 </div>
@@ -294,14 +294,14 @@
             <label>{% ottm_translate trans_prefix|add:'timezone_time.label' %}</label><br>
             <span id="local-time">{% ottm_format_time context.now %}</span>
           </p>
-          {% with trans_field_prefix=trans_prefix|add:form.prefered_timezone.label|add:'.' %}
+          {% with trans_field_prefix=trans_prefix|add:form.preferred_timezone.label|add:'.' %}
             <div class="form-group">
               <label
-                  for="{{ form.prefered_timezone.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
-              {{ form.prefered_timezone }}
-              {% if form.prefered_timezone.errors %}
+                  for="{{ form.preferred_timezone.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' %}</label>
+              {{ form.preferred_timezone }}
+              {% if form.preferred_timezone.errors %}
                 <div class="invalid-feedback" style="display: block">
-                  {% for error in form.prefered_timezone.errors.as_data %}
+                  {% for error in form.preferred_timezone.errors.as_data %}
                     {% ottm_translate trans_field_prefix|add:'error.'|add:error.code %}
                   {% endfor %}
                 </div>
