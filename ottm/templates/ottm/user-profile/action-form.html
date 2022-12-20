@@ -1,5 +1,6 @@
 {% extends 'ottm/user-page-base.html' %}
 {% load ottm %}
+{% load wiki %}
 
 {% block container-content %}
   <div class="row justify-content-center">
@@ -7,4 +8,12 @@
       {% include 'ottm/include/form.html' with form=context.form prefix='page.user_profile.'|add:context.form.name|add:'.' %}
     </div>
   </div>
+  {% if context.log_entries.count %}
+    {% ottm_translate 'page.user_profile.'|add:context.form.name|add:'.log_entries' %}
+    <ul>
+      {% for log_entry in context.log_entries %}
+        <li>{% wiki_format_log_entry log_entry %}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
 {% endblock %}

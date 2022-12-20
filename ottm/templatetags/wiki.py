@@ -489,6 +489,36 @@ def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> st
                 date=formatted_date,
                 user=_format_username(context, user),
             )
+        case models.UserMaskLog(user=user, performer=performer, reason=reason, masked=masked):
+            action = 'masked' if masked else 'unmasked'
+            return wiki_translate(
+                context,
+                'log.user_mask_' + action,
+                date=formatted_date,
+                performer=_format_username(context, performer),
+                user=_format_username(context, user),
+                reason=_format_comment(context, reason, False),
+            )
+        case models.UserGroupLog(user=user, performer=performer, reason=reason, joined=joined, group=group):
+            action = 'joined' if joined else 'left'
+            if performer:
+                return wiki_translate(
+                    context,
+                    'log.user_group_' + action,
+                    date=formatted_date,
+                    performer=_format_username(context, performer),
+                    user=_format_username(context, user),
+                    group=group.label,
+                    reason=_format_comment(context, reason, False),
+                )
+            return wiki_translate(
+                context,
+                'log.user_group_internal_' + action,
+                date=formatted_date,
+                user=_format_username(context, user),
+                group=group.label,
+                reason=_format_comment(context, reason, False),
+            )
         case models.UserBlockLog(performer=performer, reason=reason, end_date=end_date,
                                  allow_messages_on_own_user_page=allow_messages_on_own_user_page,
                                  user=user, allow_editing_own_settings=allow_editing_own_settings):

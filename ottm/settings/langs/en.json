@@ -190,7 +190,8 @@
                 "anonymous_user": "Cannot change the groups of an anonymous user."
               }
             }
-          }
+          },
+          "log_entries": "Related log entries:"
         },
         "mask_username": {
           "title": "Mask username of “{username}”",
@@ -211,7 +212,8 @@
                 "anonymous_user": "Cannot change the visibility of anonymous users’ usernames."
               }
             }
-          }
+          },
+          "log_entries": "Related log entries:"
         }
       },
       "user_notes": {
@@ -1229,6 +1231,12 @@
         "page_content_language": "({date}) {user} changed content language of {page} to {language_name} ({language_code}). {reason}",
         "page_content_type": "({date}) {user} changed content type of {page} to {content_type}. {reason}",
         "user_account_creation": "({date}) User account {user} has been created.",
+        "user_mask_masked": "({date}) {performer} masked {user}’s username. {reason}",
+        "user_mask_unmasked": "({date}) {performer} unmasked {user}’s username. {reason}",
+        "user_group_joined": "({date}) {performer} added {user} to group {group}. {reason}",
+        "user_group_left": "({date}) {performer} removed {user} from group {group}. {reason}",
+        "user_group_internal_joined": "({date}) {user} joined group {group}. {reason}",
+        "user_group_internal_left": "({date}) {user} left group {group}. {reason}",
         "user_block": "({date}) {performer} has blocked user {user}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] ({until}) {reason}",
         "ip_block": "({date}) {performer} has blocked IP {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) {reason}",
         "infinite": "infinite"
