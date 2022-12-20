@@ -183,7 +183,7 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
     """
     wiki_context: _ph.WikiPageReadActionContext = context.get('context')
     page = wiki_context.page
-    ignore_hidden = not wiki_context.user.has_permission(PERM_WIKI_MASK)
+    ignore_hidden = not wiki_context.user.has_permission(PERM_MASK)
 
     match against:
         case 'previous':
@@ -285,7 +285,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     """
     wiki_context: _ph.WikiPageHistoryActionContext | _ph.WikiSpecialPageContext = context.get('context')
     user = wiki_context.user
-    ignore_hidden = not user.has_permission(PERM_WIKI_MASK)
+    ignore_hidden = not user.has_permission(PERM_MASK)
     Line = collections.namedtuple(
         'Line',
         ('actions', 'date', 'page_link', 'flags', 'size', 'size_text', 'variation', 'variation_text', 'comment')
@@ -294,7 +294,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     for revision in revisions.get_page(wiki_context.page_index):
         actions = []
 
-        if user.has_permission(PERM_WIKI_MASK):
+        if user.has_permission(PERM_MASK):
             actions.append(wiki_inner_link(
                 context,
                 f'Special:MaskRevision/{revision.page.full_title}',

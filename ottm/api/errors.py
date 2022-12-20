@@ -57,3 +57,11 @@ class AnonymousFollowPageError(RuntimeError):
 
 class NotACategoryPageError(RuntimeError):
     pass
+
+
+class AnonymousEditGroupsError(RuntimeError):
+    pass
+
+
+class EditGroupsError(RuntimeError):
+    pass

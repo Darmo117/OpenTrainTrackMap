@@ -23,7 +23,7 @@
     <span class="mdi mdi-file-account-outline"></span>
     <a href="{% url 'ottm:wiki_page' raw_page_title='User:'|add:context.target_user.username %}">
       {% ottm_translate 'page.user_profile.subtitle.wiki_user_page' %}</a>
-    {% if context.target_user == context.user %}
+    {% if context.target_user == context.user and context.user.is_authenticated %}
       | <span class="mdi mdi-cog"></span>
       <a href="{% url 'ottm:user_settings' %}">
         {% ottm_translate 'page.user_profile.subtitle.settings' %}

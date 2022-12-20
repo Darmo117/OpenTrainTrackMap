@@ -111,6 +111,25 @@
           "wiki_user_page": "Wiki user page",
           "settings": "Settings"
         },
+        "action": {
+          "block": {
+            "label": "Block"
+          },
+          "mask_username": {
+            "label": "Mask username"
+          },
+          "edit_groups": {
+            "label": "Edit groups"
+          },
+          "rename": {
+            "label": "Rename"
+          }
+        },
+        "404": {
+          "title": "User “{username}” not found",
+          "tab_title": "User not found",
+          "message": "User ”{username}” does not exists."
+        },
         "statistics": {
           "title": "Statistics",
           "groups": "Groups",
@@ -123,6 +142,60 @@
           "notes_count_label": "Number of notes",
           "edits_count_label": "Number of edits",
           "wiki_edits_count_label": "Number of wiki edits"
+        },
+        "edit_groups": {
+          "title": "Edit groups of “{username}”",
+          "tab_title": "Edit groups of “{username}”",
+          "form": {
+            "edit_user_groups": {
+              "groups": {
+                "label": "Groups",
+                "administrators": {
+                  "label": "Administrators"
+                },
+                "all": {
+                  "label": "All"
+                },
+                "autopatrolled": {
+                  "label": "Autopatrolled"
+                },
+                "groups_managers": {
+                  "label": "Groups managers"
+                },
+                "patrollers": {
+                  "label": "Patrollers"
+                },
+                "superusers": {
+                  "label": "Superusers"
+                },
+                "users": {
+                  "label": "Users"
+                },
+                "wiki_administrators": {
+                  "label": "Wiki administrators"
+                },
+                "wiki_autopatrolled": {
+                  "label": "Wiki autopatrolled"
+                },
+                "wiki_patrollers": {
+                  "label": "Wiki patrollers"
+                },
+                "error": {
+                  "invalid_choice": "Invalid choice!"
+                }
+              },
+              "reason": {
+                "label": "Reason"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "You do not have the permission to edit user groups.",
+                "anonymous_user": "Cannot change the groups of an anonymous user."
+              }
+            }
+          }
         }
       },
       "user_notes": {
@@ -463,6 +536,13 @@
               "label": "Save settings"
             }
           }
+        }
+      },
+      "error": {
+        "404": {
+          "title": "Page not found",
+          "tab_title": "Page not found!",
+          "message": "The page **{path}** does not exist.\n\nGo back to the [main page]({url})."
         }
       }
     },
@@ -896,6 +976,10 @@
               "user_profile": {
                 "label": "User profile",
                 "tooltip": "Go to the user’s profile page"
+              },
+              "block": {
+                "label": "Block",
+                "tooltip": "Block this user"
               }
             }
           },

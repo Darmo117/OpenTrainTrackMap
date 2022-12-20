@@ -198,7 +198,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             status = 200 if context.page.exists else 404
 
         return self.render_page('ottm/wiki/page.html', context, status=status, kwargs={
-            **_w_cons.__dict__,
+            **{k: v for k, v in _w_cons.__dict__.items() if k.startswith('ACTION_') or k.startswith('CT_')},
             **_w_ns.NAMESPACES_DICT,
             'MAIN_PAGE_TITLE': _w_pages.MAIN_PAGE_TITLE,
         })
@@ -362,7 +362,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         """
         user = self._request_params.user
         if page.exists:
-            if user.has_permission(_permissions.PERM_WIKI_MASK):
+            if user.has_permission(_permissions.PERM_MASK):
                 topics = page.topics.all()
             else:
                 topics = page.topics.filter(deleted=False)
@@ -388,7 +388,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         """
         user = self._request_params.user
         if page.exists:
-            if user.has_permission(_permissions.PERM_WIKI_MASK):
+            if user.has_permission(_permissions.PERM_MASK):
                 revisions = page.revisions.all()
             else:
                 revisions = page.revisions.filter(hidden=False)

@@ -1,5 +1,5 @@
 import dataclasses
-
+import urllib.parse as _url_parse
 from . import pages, parser, special_pages as w_sp
 from .constants import *
 from .namespaces import *
@@ -95,8 +95,6 @@ def _get_builtin_menu(page_context: _ph.WikiPageContext, menu_id: str) -> Menu:
                 target_user = auth.get_user_from_name(username)
                 items.append({'url': f'/user/{username}', 'label': 'user_profile'})
                 items.append({'title': 'Special:Contributions', 'subpage': username})
-                if user.has_permission(PERM_WIKI_BLOCK_USERS):
-                    items.append({'title': 'Special:Block', 'subpage': username})
                 if target_user and user.can_send_emails_to(target_user):
                     items.append({'title': 'Special:SendEmail', 'subpage': username})
             if page.namespace != NS_SPECIAL:
@@ -164,8 +162,11 @@ def _get_menu_object(language, id_: str, title: str, items: list[dict[str, str |
                 tooltip = language.translate(f'wiki.menu.side.{id_}.item.{label_}.tooltip')
             else:
                 label = item['label']
+            url = item['url']
+            if 'args' in item:
+                url += '?' + _url_parse.urlencode(item['args'])
             menu_items.append(parser.Parser.format_link(
-                item['url'],
+                url,
                 label,
                 tooltip,
                 page_exists=True,

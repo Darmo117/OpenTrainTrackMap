@@ -40,7 +40,7 @@ class ContributionsSpecialPage(_core.SpecialPage):
                 form = _Form(initial={'username': args[0]})
             else:
                 query_set = target_user.internal_object.pagerevision_set
-                if user.has_permission(PERM_WIKI_MASK):
+                if user.has_permission(PERM_MASK):
                     contributions = query_set.all()
                 else:
                     contributions = query_set.filter(hidden=False)

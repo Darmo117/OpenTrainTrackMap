@@ -6,7 +6,7 @@ import django.template as _dj_template
 import django.utils.safestring as _dj_safe
 import pytz as _pytz
 
-from .. import page_handlers as _ph
+from .. import page_handlers as _ph, models as _models
 from ..api import auth as _auth
 
 register = _dj_template.Library()
@@ -107,3 +107,14 @@ def ottm_user_type_icon(context: TemplateContext, username: str) -> str:
     tooltip = ottm_context.language.translate(key)
     # language=HTML
     return _dj_safe.mark_safe(f'<span class="mdi mdi-{icon}" title="{tooltip}"></span>')
+
+
+@register.filter
+def has_perm(user: _models.User, permission: str) -> bool:
+    """Check if a user has a specific permission.
+
+    :param user: The user.
+    :param permission: The permission.
+    :return: user.has_permission(permission)
+    """
+    return user.has_permission(permission)

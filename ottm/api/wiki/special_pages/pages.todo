@@ -8,7 +8,7 @@ X- LinkedPages
 X- Logs
 X- DeletePage
 X- RenamePage
-X- ProtectPage
+~- ProtectPage
 X- Block
 X- SendEmail
 V- ChangePageLanguage
@@ -16,3 +16,4 @@ V- ChangePageContentType
 X- EditFollowList
 X- EditFollowList/raw
 X- EditFollowList/clear
+X- MaskRevision

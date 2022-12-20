@@ -14,7 +14,7 @@ import django.shortcuts as _dj_scut
 import pytz as _pytz
 
 from .. import models as _models, requests as _requests, settings as _settings
-from ..api import utils as _utils
+from ..api import utils as _utils, permissions as _perms
 
 
 class PageHandler(_abc.ABC):
@@ -62,7 +62,11 @@ class PageHandler(_abc.ABC):
         return _dj_scut.render(
             self._request_params.request,
             template_name,
-            context={'context': context, **(kwargs or {})},
+            context={
+                'context': context,
+                **{k: v for k, v in _perms.__dict__.items() if k.startswith('PERM_')},
+                **(kwargs or {}),
+            },
             status=status,
         )
 
@@ -129,8 +133,8 @@ class PageContext:
                 'isBot': self.user.is_bot,
                 'registrationTimestamp':
                     int(self.user.internal_object.date_joined.timestamp()) if self.user.is_authenticated else None,
-                'groups': [g.label for g in self.user.get_groups().order_by('label')],
-                'permissions': [p for g in self.user.get_groups().order_by('label') for p in g.permissions],
+                'groups': [g.label for g in self.user.get_groups()],
+                'permissions': [p for g in self.user.get_groups() for p in g.permissions],
                 'editCount': self.user.edits_count(),
                 'wikiEditCount': self.user.wiki_edits_count(),
                 'usersCanSendEmails': self.user.users_can_send_emails,

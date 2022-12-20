@@ -8,4 +8,3 @@ urlpatterns = [
 ]
 
 handler404 = apps.OTTMConfig.name + '.views.handle404'
-handler500 = apps.OTTMConfig.name + '.views.handle500'

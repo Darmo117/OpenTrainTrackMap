@@ -45,17 +45,17 @@
         {% for field in fieldset %}
           {% with trans_field_prefix=trans_prefix|add:field.label|add:'.' %}
             <div class="form-group">
-              {% if field.field.widget.input_type == 'checkbox' %}
+              {% if field.field.widget.input_type == 'checkbox' and field|length_is:1 %}{# If only one checkbox #}
                 <div class="custom-control custom-checkbox">
                   {{ field }}
                   <label for="{{ field.id_for_label }}" class="custom-control-label">
                     {% ottm_translate trans_field_prefix|add:'label' %}
                   </label>
                 </div>
-              {% elif field.field.widget.input_type == 'radio' %}
+              {% elif field.field.widget.input_type == 'checkbox' or field.field.widget.input_type == 'radio' %}
                 <label>{% ottm_translate trans_field_prefix|add:'label' %}</label>
                 {% for f in field %}
-                  <div class="custom-control custom-radio">
+                  <div class="custom-control custom-{% if field.field.widget.input_type == 'radio' %}radio{% else %}checkbox{% endif %}">
                     {{ f.tag }}
                     <label for="{{ f.id_for_label }}" class="custom-control-label">
                       {% ottm_translate trans_field_prefix|add:f.choice_label|add:'.label' %}

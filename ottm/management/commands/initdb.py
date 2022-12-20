@@ -58,12 +58,12 @@ class Command(dj_mngmt.BaseCommand):
         ).save()
         models.UserGroup(
             label=GROUP_ADMINISTRATORS,
-            permissions=(PERM_BLOCK_USERS,),
+            permissions=(PERM_BLOCK_USERS, PERM_RENAME_USERS, PERM_MASK),
         ).save()
         models.UserGroup(
             label=GROUP_WIKI_ADMINISTRATORS,
-            permissions=(PERM_WIKI_DELETE, PERM_WIKI_RENAME, PERM_WIKI_MASK, PERM_WIKI_EDIT_FILTERS,
-                         PERM_WIKI_BLOCK_USERS, PERM_WIKI_EDIT_USER_PAGES, PERM_WIKI_PROTECT, PERM_WIKI_EDIT_INTERFACE),
+            permissions=(PERM_WIKI_DELETE, PERM_WIKI_RENAME, PERM_WIKI_EDIT_FILTERS,
+                         PERM_WIKI_EDIT_USER_PAGES, PERM_WIKI_PROTECT, PERM_WIKI_EDIT_INTERFACE),
         ).save()
         models.UserGroup(
             label=GROUP_PATROLLERS,
@@ -83,10 +83,12 @@ class Command(dj_mngmt.BaseCommand):
         ).save()
         models.UserGroup(
             label=GROUP_USERS,
+            assignable_by_users=False,
             permissions=(PERM_EDIT_OBJECTS,),
         ).save()
         models.UserGroup(
             label=GROUP_ALL,
+            assignable_by_users=False,
             permissions=(PERM_WIKI_EDIT,),
         ).save()
 
@@ -99,8 +101,7 @@ class Command(dj_mngmt.BaseCommand):
         password = models.CustomUser.objects.make_random_password(length=50)
         self.stdout.write(f'Generated temporary password: {password}')
         superuser = auth.create_user('Admin', password=password, ignore_email=True)
-        for group in GROUPS:
-            auth.add_user_to_group(superuser, group)
+        auth.add_user_to_groups(superuser, *GROUPS)
 
         self.stdout.write('Done.')
 
@@ -114,8 +115,7 @@ class Command(dj_mngmt.BaseCommand):
         # Create dummy user with throwaway password
         password = models.CustomUser.objects.make_random_password(length=50)
         wiki_user = auth.create_user('Wiki Setup', password=password, ignore_email=True, is_bot=True)
-        auth.add_user_to_group(wiki_user, GROUP_WIKI_AUTOPATROLLED)
-        auth.add_user_to_group(wiki_user, GROUP_WIKI_ADMINISTRATORS)
+        auth.add_user_to_groups(wiki_user, GROUP_WIKI_AUTOPATROLLED, GROUP_WIKI_ADMINISTRATORS)
         edit_comment = 'Wiki setup.'
 
         content = 'This user is a bot used to setup the wiki.'

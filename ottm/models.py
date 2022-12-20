@@ -55,7 +55,16 @@ def user_group_label_validator(value: str):
 class UserGroup(dj_models.Model):
     """User groups define permissions to grant to user that belong to them."""
     label = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
+    assignable_by_users = dj_models.BooleanField(default=True)
     permissions = model_fields.CommaSeparatedStringsField()
+
+    class Meta:
+        ordering = ('assignable_by_users', 'label')
+
+    @classmethod
+    def get_assignable_groups(cls) -> dj_models.QuerySet[UserGroup]:
+        """Return a query set of all user groups that are assignable by users."""
+        return cls.objects.filter(assignable_by_users=True)
 
     def has_permission(self, perm: str) -> bool:
         """Check whether this group has the given permission.
@@ -66,8 +75,8 @@ class UserGroup(dj_models.Model):
         return perm in self.permissions
 
     def delete(self, using=None, keep_parents=False):
-        if self.label == 'all':
-            raise RuntimeError('cannot delete "all" user group')
+        if not self.assignable_by_users:
+            raise RuntimeError(f'cannot delete "{self.label}" group')
         super().delete(using=using, keep_parents=keep_parents)
 
 
@@ -1024,7 +1033,7 @@ class CustomUser(dj_auth_models.AbstractUser):
     uses_dark_mode = dj_models.BooleanField(default=False)
     preferred_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
     preferred_timezone = dj_models.CharField(max_length=50, choices=((tz, tz) for tz in timezones.TIMEZONES),
-                                            default=pytz.UTC.zone)
+                                             default=pytz.UTC.zone)
     is_bot = dj_models.BooleanField(default=False)
     # Wiki-related
     users_can_send_emails = dj_models.BooleanField(default=True)
@@ -1101,7 +1110,7 @@ class CustomUser(dj_auth_models.AbstractUser):
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.groups.count() == 0:  # Add default group when saving anonymous user for the first time
-            self.groups.add(UserGroup.objects.get(label='all'))
+            self.groups.add(UserGroup.objects.get(label=groups.GROUP_ALL))
 
 
 class UserBlock(dj_models.Model):

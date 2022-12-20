@@ -136,34 +136,76 @@ def create_user(username: str, email: str = None, password: str = None, ignore_e
 
 
 @dj_db_trans.atomic
-def add_user_to_group(user: models.User, group_name: str, performer: models.User = None, reason: str = None) -> bool:
-    """Add a user to the given group.
+def add_user_to_groups(user: models.User, *group_names: str, performer: models.User = None, reason: str = None):
+    """Add a user to the given groups.
 
-    :param user: User to add to the group.
-    :param group_name: The name of the group.
+    :param user: User to add to the groups.
+    :param group_names: The names of the groups.
     :param performer: The user performing the action, None if internal call.
     :param reason: Reason for the group change.
-    :return: True if the user was successfully added, false if they were already in the given group.
     :raise MissingPermissionError: If the performer does not have the "edit_user_groups" permission.
+    :raise AnonymousEditGroupsError: If the user is anonymous.
     :raise ValueError: If no group with the given name exists.
     """
-    if performer and not performer.has_permission(_perms.PERM_EDIT_USER_GROUPS):
-        raise errors.MissingPermissionError(_perms.PERM_EDIT_USER_GROUPS)
-    try:
-        group = models.UserGroup.objects.get(label=group_name)
-    except models.UserGroup.DoesNotExist:
-        raise ValueError(f'invalid group name {group_name!r}')
-    if user.is_in_group(group):
-        return False
-    user.internal_object.groups.add(group)
-    models.UserGroupLog(
-        user=user.internal_object,
-        performer=performer.internal_object if performer else None,
-        joined=True,
-        group=group,
-        reason=reason,
-    ).save()
-    return True
+    if performer:
+        if not performer.has_permission(_perms.PERM_EDIT_USER_GROUPS):
+            raise errors.MissingPermissionError(_perms.PERM_EDIT_USER_GROUPS)
+        if not user.is_authenticated:
+            raise errors.AnonymousEditGroupsError()
+    for group_name in group_names:
+        try:
+            group = models.UserGroup.objects.get(label=group_name)
+        except models.UserGroup.DoesNotExist:
+            raise ValueError(f'invalid group name {group_name!r}')
+        if user.is_in_group(group):
+            continue
+        user.internal_object.groups.add(group)
+        models.UserGroupLog(
+            user=user.internal_object,
+            performer=performer.internal_object if performer else None,
+            joined=True,
+            group=group,
+            reason=reason,
+        ).save()
+
+
+@dj_db_trans.atomic
+def remove_user_from_groups(user: models.User, *group_names: str, performer: models.User = None, reason: str = None):
+    """Remove a user from the given groups.
+
+    :param user: User to remove from the groups.
+    :param group_names: The names of the groups.
+    :param performer: The user performing the action, None if internal call.
+    :param reason: Reason for the group change.
+    :raise MissingPermissionError: If the performer does not have the "edit_user_groups" permission.
+    :raise AnonymousEditGroupsError: If the user is anonymous.
+    :raise EditGroupsError: If either 'all' or 'users' groups are present.
+    :raise ValueError: If no group with the given name exists.
+    """
+    if performer:
+        if not performer.has_permission(_perms.PERM_EDIT_USER_GROUPS):
+            raise errors.MissingPermissionError(_perms.PERM_EDIT_USER_GROUPS)
+        if not user.is_authenticated:
+            raise errors.AnonymousEditGroupsError()
+        if groups.GROUP_ALL in group_names:
+            raise errors.EditGroupsError(groups.GROUP_ALL)
+        if groups.GROUP_USERS in group_names:
+            raise errors.EditGroupsError(groups.GROUP_USERS)
+    for group_name in group_names:
+        try:
+            group = models.UserGroup.objects.get(label=group_name)
+        except models.UserGroup.DoesNotExist:
+            raise ValueError(group_name)
+        if not user.is_in_group(group):
+            continue
+        user.internal_object.groups.remove(group)
+        models.UserGroupLog(
+            user=user.internal_object,
+            performer=performer.internal_object if performer else None,
+            joined=False,
+            group=group,
+            reason=reason,
+        ).save()
 
 
 def user_exists(username: str) -> bool:

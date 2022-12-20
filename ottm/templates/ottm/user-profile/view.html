@@ -10,6 +10,35 @@
 {% endblock %}
 
 {% block container-content %}
+  <div class="text-center">
+    {% if context.user|has_perm:PERM_BLOCK_USERS %}
+      <a href="{% url 'ottm:user_profile' username=context.target_user.username %}?action=block"
+         class="btn btn-danger">
+        {% ottm_translate 'page.user_profile.action.block.label' %}
+      </a>
+    {% endif %}
+    {% if context.user|has_perm:PERM_MASK %}
+      <a href="{% url 'ottm:user_profile' username=context.target_user.username %}?action=mask_username"
+         class="btn btn-danger">
+        {% ottm_translate 'page.user_profile.action.mask_username.label' %}
+      </a>
+    {% endif %}
+    {% if context.target_user.is_authenticated %}
+      {% if context.user|has_perm:PERM_RENAME_USERS %}
+        <a href="{% url 'ottm:user_profile' username=context.target_user.username %}?action=rename"
+           class="btn btn-secondary">
+          {% ottm_translate 'page.user_profile.action.rename.label' %}
+        </a>
+      {% endif %}
+      {% if context.user|has_perm:PERM_EDIT_USER_GROUPS %}
+        <a href="{% url 'ottm:user_profile' username=context.target_user.username %}?action=edit_groups"
+           class="btn btn-secondary">
+          {% ottm_translate 'page.user_profile.action.edit_groups.label' %}
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+
   <h2>{% ottm_translate 'page.user_profile.statistics.title' %}</h2>
   <table class="table table-striped table-hover">
     <colgroup>
