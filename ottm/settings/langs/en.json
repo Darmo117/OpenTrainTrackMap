@@ -161,7 +161,8 @@
                 "label": "Submit"
               },
               "error": {
-                "missing_permission": "You do not have the permission to block users."
+                "missing_permission": "You do not have the permission to block users.",
+                "past_date": "The specified date is in the past."
               }
             },
             "unblock": {
@@ -173,8 +174,7 @@
                 "label": "Submit"
               },
               "error": {
-                "missing_permission": "You do not have the permission to unblock users.",
-                "past_date": "The specified date is in the past."
+                "missing_permission": "You do not have the permission to unblock users."
               }
             }
           },

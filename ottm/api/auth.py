@@ -8,7 +8,7 @@ import django.core.validators as dj_valid
 import django.db.transaction as dj_db_trans
 
 from .. import models
-from ..api import errors, groups, permissions as _perms
+from ..api import errors, groups, permissions as _perms, utils as _utils
 
 
 def log_in(request: dj_wsgi.WSGIRequest, username: str, password: str) -> bool:
@@ -254,7 +254,7 @@ def block_user(user: models.User, performer: models.User, allow_messages_on_own_
     """
     if performer and not performer.has_permission(_perms.PERM_BLOCK_USERS):
         raise errors.MissingPermissionError(_perms.PERM_BLOCK_USERS)
-    if end_date and end_date <= end_date.now().date():
+    if end_date and end_date <= _utils.now().date():
         raise errors.PastDateError()
     for block in models.UserBlock.objects.filter(user=user.internal_object):
         block.delete()
