@@ -488,7 +488,7 @@ def get_page_protection_log_entry(page: models.Page) -> models.PageProtectionLog
         pp = models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
     except models.PageProtection.DoesNotExist:
         return None
-    if pp.end_date and pp.end_date < utils.now():
+    if not pp.is_active:
         return None
     try:
         return models.PageProtectionLog.objects.filter(page=page).latest()

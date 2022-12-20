@@ -901,7 +901,7 @@ class User:
     @property
     def is_blocked(self):
         """Whether this user is blocked."""
-        return (b := self.block) and (not b.end_date or b.end_date >= utils.now())
+        return (b := self.block) and b.is_active
 
     @property
     def edits(self) -> dj_models.Manager[EditGroup]:
@@ -932,7 +932,8 @@ class User:
         :param other: A user.
         :return: True if this user can send emails to the specified one, false otherwise.
         """
-        return (self != other and self.is_authenticated and other.exists and other.users_can_send_emails
+        return (self != other and self.is_authenticated and not self.is_blocked
+                and other.exists and other.users_can_send_emails
                 and (not self.is_new or other.new_users_can_send_emails)
                 and self.username not in other.email_user_blacklist)
 
@@ -1128,6 +1129,10 @@ class UserBlock(dj_models.Model):
     allow_messages_on_own_user_page = dj_models.BooleanField(default=True)
     allow_editing_own_settings = dj_models.BooleanField(default=True)
 
+    @property
+    def is_active(self):
+        return self.end_date and self.end_date > utils.now()
+
 
 class IPBlock(dj_models.Model):
     """Defines the block status of an IP address.
@@ -1141,6 +1146,10 @@ class IPBlock(dj_models.Model):
     end_date = dj_models.DateTimeField(null=True, blank=True)
     allow_messages_on_own_user_page = dj_models.BooleanField(default=True)
     allow_account_creation = dj_models.BooleanField(default=True)
+
+    @property
+    def is_active(self):
+        return self.end_date and self.end_date > utils.now()
 
 
 ###################
@@ -1974,7 +1983,6 @@ class Page(dj_models.Model, NonDeletableMixin):
         if not self.namespace.can_user_edit_pages(user):
             return False
 
-        now = utils.now()
         if user.is_blocked:
             return False
 
@@ -1983,15 +1991,14 @@ class Page(dj_models.Model, NonDeletableMixin):
                 ip_block = IPBlock.objects.get(ip=user.ip)
             except IPBlock.DoesNotExist:
                 ip_block = None
-            if ip_block and (not ip_block.end_date or ip_block.end_date >= now):
+            if ip_block and ip_block.is_active:
                 return False
 
         try:
             pp = PageProtection.objects.get(page_namespace_id=self.namespace_id, page_title=self.title)
         except PageProtection.DoesNotExist:
             pp = None
-        if pp and ((pp.end_date and pp.end_date >= now or not pp.end_date)
-                   and not user.is_in_group(pp.protection_level)):
+        if pp and pp.is_active and not user.is_in_group(pp.protection_level):
             return False
 
         if (self.namespace == namespaces.NS_USER
@@ -2016,7 +2023,6 @@ class Page(dj_models.Model, NonDeletableMixin):
         if not self.namespace.is_editable:
             return False
 
-        now = utils.now()
         own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
         if user.is_blocked and (not own_page or not user.block.allow_messages_on_own_user_page):
             return False
@@ -2026,16 +2032,14 @@ class Page(dj_models.Model, NonDeletableMixin):
                 ip_block = IPBlock.objects.get(ip=user.ip)
             except IPBlock.DoesNotExist:
                 ip_block = None
-            if (ip_block and (not ip_block.end_date or ip_block.end_date >= now)
-                    and (not own_page or not ip_block.allow_messages_on_own_user_page)):
+            if ip_block and ip_block.is_active and (not own_page or not ip_block.allow_messages_on_own_user_page):
                 return False
 
         try:
             pp = PageProtection.objects.get(page_namespace_id=self.namespace_id, page_title=self.title)
         except PageProtection.DoesNotExist:
             pp = None
-        if pp and pp.protect_talks and ((pp.end_date and pp.end_date >= now or not pp.end_date)
-                                        and not user.is_in_group(pp.protection_level)):
+        if pp and pp.protect_talks and pp.is_active and not user.is_in_group(pp.protection_level):
             return False
 
         return True
@@ -2049,13 +2053,13 @@ class Page(dj_models.Model, NonDeletableMixin):
         if not user.exists:
             return False
         try:
-            pp = user.internal_object.followed_pages.get(
+            follow = user.internal_object.followed_pages.get(
                 page_namespace_id=self.namespace_id,
                 page_title=self.title,
             )
         except PageFollowStatus.DoesNotExist:
             return False
-        return not pp.end_date or pp.end_date >= utils.now()
+        return follow.is_active
 
     def get_latest_revision(self) -> PageRevision | None:
         """Return the latest visible revision of this page."""
@@ -2160,6 +2164,10 @@ class PageProtection(dj_models.Model):
     class Meta:
         unique_together = ('page_namespace_id', 'page_title')
 
+    @property
+    def is_active(self):
+        return not self.end_date or self.end_date > utils.now()
+
 
 class PageFollowStatus(dj_models.Model):
     """Defines the follow status of a page. Non-existent pages can be followed."""
@@ -2178,6 +2186,10 @@ class PageFollowStatus(dj_models.Model):
                 'duplicate follow list entry',
                 code='page_follow_list_duplicate_entry'
             )
+
+    @property
+    def is_active(self):
+        return not self.end_date or self.end_date > utils.now()
 
 
 def tag_label_validator(value: str):

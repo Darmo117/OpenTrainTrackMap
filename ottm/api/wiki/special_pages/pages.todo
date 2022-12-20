@@ -8,7 +8,7 @@ X- LinkedPages
 X- Logs
 X- DeletePage
 X- RenamePage
-~- ProtectPage
+V- ProtectPage
 X- SendEmail
 V- ChangePageLanguage
 V- ChangePageContentType
