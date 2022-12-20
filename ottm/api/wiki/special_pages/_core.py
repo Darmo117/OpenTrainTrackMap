@@ -22,6 +22,7 @@ class Section(_enum.Enum):
 @_dt.dataclass(frozen=True)
 class Redirect:
     page_title: str
+    args: dict[str, _typ.Any] = None
 
 
 class SpecialPage(_abc.ABC):

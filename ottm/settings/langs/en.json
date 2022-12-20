@@ -904,9 +904,8 @@
         "ChangePageLanguage": {
           "title": "Change page content language",
           "title_page": "Change content language of page “{value}”",
-          "title_done": "Changed content language of page “{value}”",
           "log_entries": "Related log entries:",
-          "done": "Content language of page {page} changed to {language_name} ({language_code}).",
+          "done": "Content language successfully changed.",
           "form": {
             "set_page_language": {
               "page": {
@@ -939,9 +938,8 @@
         "ChangePageContentType": {
           "title": "Change page content type",
           "title_page": "Change content type of page “{value}”",
-          "title_done": "Changed content type of page “{value}”",
           "log_entries": "Related log entries:",
-          "done": "Content type of page {page} changed to {content_type}.",
+          "done": "Content type successfully changed.",
           "form": {
             "set_page_content_type": {
               "page": {

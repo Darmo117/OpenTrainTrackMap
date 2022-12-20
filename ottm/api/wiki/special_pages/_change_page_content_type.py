@@ -40,12 +40,7 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
                     global_errors.append('edit_special_page')
                 else:
                     if done:
-                        return {
-                            'title_key': 'title_done',
-                            'title_value': target_page.full_title,
-                            'target_page': target_page,
-                            'content_type': content_type,
-                        }
+                        return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
                     else:
                         global_errors.append('no_changes')
         else:
@@ -71,6 +66,7 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
             'form': form,
             'global_errors': global_errors,
             'log_entries': log_entries,
+            'done': params.get.get('done'),
         }
 
 

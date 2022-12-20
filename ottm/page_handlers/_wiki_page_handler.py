@@ -124,10 +124,12 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             else:
                 data = special_page.process_request(self._request_params, title)
                 if isinstance(data, _w_sp.Redirect):
+                    args = {k: v for k, v in self._request_params.get.items()}
+                    args.update(data.args)
                     return self.redirect(
                         'ottm:wiki_page',
                         reverse=True,
-                        get_params=self._request_params.get,
+                        get_params=args,
                         raw_page_title=_w_pages.url_encode_page_title(data.page_title),
                     )
                 context = WikiSpecialPageContext(

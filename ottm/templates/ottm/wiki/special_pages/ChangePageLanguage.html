@@ -1,17 +1,16 @@
 {% load wiki %}
 
-{% if context.form %}
-  {% include 'ottm/include/form.html' with form=context.form prefix='wiki.special_page.ChangePageLanguage.' %}
-  {% if context.log_entries.count %}
-    {% wiki_translate 'special_page.ChangePageLanguage.log_entries' %}
-    <ul>
-      {% for log_entry in context.log_entries %}
-        <li>{% wiki_format_log_entry log_entry %}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
-{% else %}
+{% if context.done %}
   <div class="alert alert-success" role="alert">
-    {% wiki_translate 'special_page.ChangePageLanguage.done' page=context.target_page.full_title language_name=context.content_language.name language_code=context.content_language.code %}
+    {% wiki_translate 'special_page.ChangePageLanguage.done' %}
   </div>
+{% endif %}
+{% include 'ottm/include/form.html' with form=context.form prefix='wiki.special_page.ChangePageLanguage.' %}
+{% if context.log_entries.count %}
+  {% wiki_translate 'special_page.ChangePageLanguage.log_entries' %}
+  <ul>
+    {% for log_entry in context.log_entries %}
+      <li>{% wiki_format_log_entry log_entry %}</li>
+    {% endfor %}
+  </ul>
 {% endif %}

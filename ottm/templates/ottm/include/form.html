@@ -59,7 +59,11 @@
                   <div class="custom-control custom-{% if field.field.widget.input_type == 'radio' %}radio{% else %}checkbox{% endif %}">
                     {{ f.tag }}
                     <label for="{{ f.id_for_label }}" class="custom-control-label">
-                      {% ottm_translate trans_field_prefix|add:f.choice_label|add:'.label' %}
+                      {% if field.field.widget.attrs.no_translate %}
+                        {{ f.choice_label }}
+                      {% else %}
+                        {% ottm_translate trans_field_prefix|add:f.choice_label|add:'.label' %}
+                      {% endif %}
                     </label>
                   </div>
                 {% endfor %}
