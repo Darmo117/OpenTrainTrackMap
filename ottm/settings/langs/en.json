@@ -835,6 +835,9 @@
                 "label": "End date",
                 "help": "Leave empty for infinite duration. Ignored if the selected group is 'all'."
               },
+              "protect_talks": {
+                "label": "Protect talks"
+              },
               "reason": {
                 "label": "Reason"
               },
@@ -1262,8 +1265,8 @@
       "log": {
         "page_creation": "({date}) {user} has created {page}.",
         "page_deletion": "({date}) {user} has deleted {page}. {reason}",
-        "page_protection": "({date}) {user} has changed the protection status of {page} to group “{group}” until {until}. {reason}",
-        "page_protection_infinite": "({date}) {user} has changed the protection status of {page} to group “{group}” (infinite). {reason}",
+        "page_protection": "({date}) {user} has changed the protection status of {page} to group “{group}” until {until}. [protect talks: {talks}] {reason}",
+        "page_protection_infinite": "({date}) {user} has changed the protection status of {page} to group “{group}” (infinite). [protect talks: {talks}] {reason}",
         "page_content_language": "({date}) {user} changed content language of {page} to {language_name} ({language_code}). {reason}",
         "page_content_type": "({date}) {user} changed content type of {page} to {content_type}. {reason}",
         "user_account_creation": "({date}) User account {user} has been created.",

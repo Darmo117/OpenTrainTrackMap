@@ -126,6 +126,7 @@ class Command(dj_mngmt.BaseCommand):
         pages.edit_page(None, wiki_user, pages.get_page(ns, title), content, edit_comment)
         pages.protect_page(wiki_user, pages.get_page(ns, title),
                            models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS),
+                           protect_talks=False,
                            reason='Page with high traffic.')
         # language=JS
         content = """

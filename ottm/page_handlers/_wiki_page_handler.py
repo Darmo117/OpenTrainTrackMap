@@ -370,11 +370,16 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                 topics = page.topics.filter(deleted=False)
         else:
             topics = _dj_auth_models.EmptyManager(_models.TopicRevision)
+        if (pp := page.get_edit_protection()) and pp.protect_talks:
+            log_entry = _w_pages.get_page_protection_log_entry(page)
+        else:
+            log_entry = None
         return WikiPageTalkActionContext(
             self._request_params,
             page=page,
             js_config=js_config,
             topics=topics.order_by('-date'),
+            edit_protection_log_entry=log_entry,
         )
 
     def _page_history_context(
@@ -833,6 +838,7 @@ class WikiPageTalkActionContext(WikiPageContext):
             page: _models.Page,
             js_config: dict[str, _typ.Any],
             topics: list[_models.Topic],
+            edit_protection_log_entry: _models.PageProtectionLog = None,
     ):
         """Create a page context for a wiki page with the 'talk' action.
 
@@ -841,6 +847,7 @@ class WikiPageTalkActionContext(WikiPageContext):
         :param js_config: Dict object containing the wiki’s JS config.
          It is converted to a JSON object before being inserted in the HTML page.
         :param topics: List of page talk topics.
+        :param edit_protection_log_entry: The page’s PageProtectionLog entry if it exists.
         """
         self._topics = _dj_paginator.Paginator(topics, request_params.results_per_page)
         super().__init__(
@@ -852,10 +859,15 @@ class WikiPageTalkActionContext(WikiPageContext):
             js_config=js_config,
             max_page_index=self._topics.num_pages,
         )
+        self._edit_protection_log_entry = edit_protection_log_entry
 
     @property
     def topics(self) -> _dj_paginator.Paginator:
         return self._topics
+
+    @property
+    def edit_protection_log_entry(self) -> _models.PageProtectionLog | None:
+        return self._edit_protection_log_entry
 
 
 class WikiPageHistoryActionContext(WikiPageContext):

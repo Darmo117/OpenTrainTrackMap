@@ -423,8 +423,8 @@ def follow_page(user: models.User, page: models.Page, follow: bool, until: datet
 
 
 @dj_db_trans.atomic
-def protect_page(author: models.User, page: models.Page, protection_level: models.UserGroup, reason: str = None,
-                 until: datetime.datetime = None) -> bool:
+def protect_page(author: models.User, page: models.Page, protection_level: models.UserGroup, protect_talks: bool,
+                 reason: str = None, until: datetime.datetime = None) -> bool:
     f"""Change the protection status of the given page.
     If a the page is already protected, the status will be replaced by the new one.
 
@@ -432,6 +432,7 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
     :param page: The page.
     :param protection_level: The new protection level. If the new level is {groups.GROUP_ALL},
         any pre-existing protection will be removed.
+    :param protect_talks: Whether to also protect talks.
     :param reason: The reason behind the new protection status.
     :param until: The date until which the page will be protected. If None, the protection will never end.
     :return: True if the operation succeeded, false otherwise.
@@ -451,7 +452,7 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
         if protection_level.label == groups.GROUP_ALL:
             return False
     else:
-        if pp.protection_level == protection_level and pp.end_date == until:
+        if pp.protection_level == protection_level and pp.end_date == until and pp.protect_talks == protect_talks:
             return False
         pp.delete()
     reason = utils.escape_html(reason)
@@ -463,6 +464,7 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
             page_title=page.title,
             end_date=end_date,
             reason=reason,
+            protect_talks=protect_talks,
             protection_level=protection_level,
         ).save()
     models.PageProtectionLog(
@@ -470,6 +472,7 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
         page=page,
         end_date=end_date,
         reason=reason,
+        protect_talks=protect_talks,
         protection_level=protection_level,
     ).save()
     return True

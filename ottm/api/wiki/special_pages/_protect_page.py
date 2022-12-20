@@ -32,6 +32,7 @@ class ProtectPageSpecialPage(_core.SpecialPage):
                 protection_level = _models.UserGroup.objects.get(label=form.cleaned_data['protection_level'])
                 try:
                     done = _pages.protect_page(params.user, target_page, protection_level,
+                                               form.cleaned_data['protect_talks'],
                                                form.cleaned_data['reason'],
                                                form.cleaned_data['end_date'])
                 except _errors.MissingPermissionError:
@@ -54,6 +55,7 @@ class ProtectPageSpecialPage(_core.SpecialPage):
                     'page_name': target_page.full_title,
                     'protection_level': block and block.protection_level.label,
                     'end_date': block and block.end_date,
+                    'protect_talks': block and block.protect_talks,
                 })
         if target_page and target_page.exists:
             log_entries = target_page.pageprotectionlog_set.reverse()
@@ -90,6 +92,10 @@ class _Form(_ph.WikiForm):
         widget=_dj_forms.DateInput(attrs={'type': 'date'}),
         required=False,
         help_text=True,
+    )
+    protect_talks = _dj_forms.BooleanField(
+        label='protect_talks',
+        required=False,
     )
     reason = _dj_forms.CharField(
         label='reason',

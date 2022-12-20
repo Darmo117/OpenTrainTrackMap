@@ -2030,6 +2030,14 @@ class Page(dj_models.Model, NonDeletableMixin):
                     and (not own_page or not ip_block.allow_messages_on_own_user_page)):
                 return False
 
+        try:
+            pp = PageProtection.objects.get(page_namespace_id=self.namespace_id, page_title=self.title)
+        except PageProtection.DoesNotExist:
+            pp = None
+        if pp and pp.protect_talks and ((pp.end_date and pp.end_date >= now or not pp.end_date)
+                                        and not user.is_in_group(pp.protection_level)):
+            return False
+
         return True
 
     def is_user_following(self, user: User) -> bool:
@@ -2147,6 +2155,7 @@ class PageProtection(dj_models.Model):
     end_date = dj_models.DateTimeField(null=True, blank=True)
     reason = dj_models.CharField(max_length=200, null=True, blank=True)
     protection_level = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
+    protect_talks = dj_models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('page_namespace_id', 'page_title')
@@ -2296,6 +2305,7 @@ class PageProtectionLog(PageLog):
     end_date = dj_models.DateTimeField(null=True, blank=True)
     reason = dj_models.CharField(max_length=200, null=True, blank=True)
     protection_level = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
+    protect_talks = dj_models.BooleanField()
 
     class Meta:
         get_latest_by = 'date'

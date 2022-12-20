@@ -51,7 +51,7 @@
   </div>
 {% endif %}
 
-{% with edit_protection=context.page.get_edit_protection %}{# Cached to avoid making several DB requests #}
+{% with edit_protection=context.edit_protection_log_entry %}{# Cached to avoid making several DB requests #}
   {% if edit_protection %}
     <div class="wiki-edit-interface-warning-box alert alert-warning" role="alert">
       <p class="text-center">
