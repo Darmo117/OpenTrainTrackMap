@@ -30,7 +30,7 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
                 target_page = _pages.get_page(*_pages.split_title(form.cleaned_data['page_name']))
                 content_type = form.cleaned_data['content_type']
                 try:
-                    done = _pages.set_page_content_type(params.request, params.user, target_page, content_type,
+                    done = _pages.set_page_content_type(params.user, target_page, content_type,
                                                         form.cleaned_data['reason'])
                 except _errors.PageDoesNotExistError:
                     global_errors.append('page_does_not_exist')
@@ -41,8 +41,6 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
                 else:
                     if done:
                         return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
-                    else:
-                        global_errors.append('no_changes')
         else:
             if args:
                 target_page = _pages.get_page(*_pages.split_title('/'.join(args)))

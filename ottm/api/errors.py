@@ -69,3 +69,7 @@ class AnonymousMaskUsernameError(RuntimeError):
 
 class EditGroupsError(RuntimeError):
     pass
+
+
+class PastDateError(RuntimeError):
+    pass

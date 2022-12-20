@@ -145,7 +145,8 @@
             "block": {
               "title": "Block",
               "end_date": {
-                "label": "End date"
+                "label": "End date",
+                "help": "Leave empty for infinite duration."
               },
               "allow_messages_on_own_user_page": {
                 "label": "Allow posting messages on own page"
@@ -172,7 +173,8 @@
                 "label": "Submit"
               },
               "error": {
-                "missing_permission": "You do not have the permission to unblock users."
+                "missing_permission": "You do not have the permission to unblock users.",
+                "past_date": "The specified date is in the past."
               }
             }
           },
@@ -814,9 +816,37 @@
         "ProtectPage": {
           "title": "Protect a page",
           "title_page": "Change protection level of “{value}”",
+          "log_entries": "Related log entries:",
+          "done": "Protection level successfully changed.",
           "menu": {
             "label": "Protect",
             "tooltip": "Protect this page"
+          },
+          "form": {
+            "protect_page": {
+              "page": {
+                "label": "Page to protect"
+              },
+              "protection_level": {
+                "label": "Protection level",
+                "help": "Only users from this group will be able to edit the page."
+              },
+              "end_date": {
+                "label": "End date",
+                "help": "Leave empty for infinite duration. Ignored if the selected group is 'all'."
+              },
+              "reason": {
+                "label": "Reason"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "You do not have the permissions required to edit this page.",
+                "edit_special_page": "Special pages cannot be modified.",
+                "past_date": "The specified date is in the past."
+              }
+            }
           }
         },
         "Subpages": {
@@ -885,14 +915,6 @@
             }
           }
         },
-        "Block": {
-          "title": "Block a user",
-          "title_user": "Block user “{value}”",
-          "menu": {
-            "label": "Block",
-            "tooltip": "Block this user"
-          }
-        },
         "SendEmail": {
           "title": "Send an email to a user",
           "title_user": "Send an email to user “{value}”",
@@ -930,7 +952,7 @@
               "error": {
                 "missing_permission": "You do not have the permissions required to edit this page.",
                 "page_does_not_exist": "This page does not exist.",
-                "no_changes": "Please select another language."
+                "edit_special_page": "Special pages cannot be modified."
               }
             }
           }
@@ -964,7 +986,7 @@
               "error": {
                 "missing_permission": "You do not have the permissions required to edit this page.",
                 "page_does_not_exist": "This page does not exist.",
-                "no_changes": "Please select another type."
+                "edit_special_page": "Special pages cannot be modified."
               }
             }
           }
@@ -1240,16 +1262,17 @@
       "log": {
         "page_creation": "({date}) {user} has created {page}.",
         "page_deletion": "({date}) {user} has deleted {page}. {reason}",
-        "page_protection": "({date}) {user} has changed the protection status of {page} to group {group}. ({until}) {reason}",
+        "page_protection": "({date}) {user} has changed the protection status of {page} to group “{group}” until {until}. {reason}",
+        "page_protection_infinite": "({date}) {user} has changed the protection status of {page} to group “{group}” (infinite). {reason}",
         "page_content_language": "({date}) {user} changed content language of {page} to {language_name} ({language_code}). {reason}",
         "page_content_type": "({date}) {user} changed content type of {page} to {content_type}. {reason}",
         "user_account_creation": "({date}) User account {user} has been created.",
         "user_mask_masked": "({date}) {performer} masked {user}’s username. {reason}",
         "user_mask_unmasked": "({date}) {performer} unmasked {user}’s username. {reason}",
-        "user_group_joined": "({date}) {performer} added {user} to group {group}. {reason}",
-        "user_group_left": "({date}) {performer} removed {user} from group {group}. {reason}",
-        "user_group_internal_joined": "({date}) {user} joined group {group}. {reason}",
-        "user_group_internal_left": "({date}) {user} left group {group}. {reason}",
+        "user_group_joined": "({date}) {performer} added {user} to group “{group}”. {reason}",
+        "user_group_left": "({date}) {performer} removed {user} from group “{group}”. {reason}",
+        "user_group_internal_joined": "({date}) {user} joined group “{group}”. {reason}",
+        "user_group_internal_left": "({date}) {user} left group “{group}”. {reason}",
         "user_block": "({date}) {performer} has blocked user {user} until {until}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] {reason}",
         "user_block_infinite": "({date}) {performer} has blocked user {user} (infinite). [edit settings: {edit_settings}, post messages on user page: {post_messages}] {reason}",
         "user_unblock": "({date}) {performer} has unblocked user {user}. {reason}",

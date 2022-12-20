@@ -317,11 +317,9 @@ def _get_page_content_type(page: models.Page) -> str:
 
 
 @dj_db_trans.atomic
-def set_page_content_language(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Page,
-                              language: settings.UILanguage, reason: str):
+def set_page_content_language(author: models.User, page: models.Page, language: settings.UILanguage, reason: str):
     """Change the content language of the given page.
 
-    :param request: Client request.
     :param author: User performing the action.
     :param page: Page to alter.
     :param language: New content language.
@@ -353,11 +351,9 @@ def set_page_content_language(request: dj_wsgi.WSGIRequest, author: models.User,
 
 
 @dj_db_trans.atomic
-def set_page_content_type(request: dj_wsgi.WSGIRequest, author: models.User, page: models.Page,
-                          content_type: str, reason: str):
+def set_page_content_type(author: models.User, page: models.Page, content_type: str, reason: str):
     """Change the content type of the given page.
 
-    :param request: Client request.
     :param author: User performing the action.
     :param page: Page to alter.
     :param content_type: New content type.
@@ -428,7 +424,7 @@ def follow_page(user: models.User, page: models.Page, follow: bool, until: datet
 
 @dj_db_trans.atomic
 def protect_page(author: models.User, page: models.Page, protection_level: models.UserGroup, reason: str = None,
-                 until: datetime.datetime = None):
+                 until: datetime.datetime = None) -> bool:
     f"""Change the protection status of the given page.
     If a the page is already protected, the status will be replaced by the new one.
 
@@ -438,35 +434,45 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
         any pre-existing protection will be removed.
     :param reason: The reason behind the new protection status.
     :param until: The date until which the page will be protected. If None, the protection will never end.
+    :return: True if the operation succeeded, false otherwise.
     :raise MissingPermissionError: If the user does not have the {permissions.PERM_WIKI_PROTECT} permission.
     :raise ProtectSpecialPageError: If the page is in the "Special" namespace.
+    :raise PastDateError: If the date is in the past.
     """
     if not author.has_permission(permissions.PERM_WIKI_PROTECT):
         raise errors.MissingPermissionError(permissions.PERM_WIKI_PROTECT)
     if page.namespace == namespaces.NS_SPECIAL:
         raise errors.ProtectSpecialPageError()
+    if until and until <= utils.now().date():
+        raise errors.PastDateError()
     try:
         pp = models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
     except models.PageProtection.DoesNotExist:
-        pass
+        if protection_level.label == groups.GROUP_ALL:
+            return False
     else:
+        if pp.protection_level == protection_level and pp.end_date == until:
+            return False
         pp.delete()
     reason = utils.escape_html(reason)
-    if protection_level.label != groups.GROUP_ALL:
+    protect = protection_level.label != groups.GROUP_ALL
+    end_date = until if protect else None
+    if protect:
         models.PageProtection(
             page_namespace_id=page.namespace_id,
             page_title=page.title,
-            end_date=until,
+            end_date=end_date,
             reason=reason,
             protection_level=protection_level,
         ).save()
     models.PageProtectionLog(
         performer=author.internal_object,
         page=page,
-        end_date=until,
+        end_date=end_date,
         reason=reason,
         protection_level=protection_level,
     ).save()
+    return True
 
 
 def get_page_protection_log_entry(page: models.Page) -> models.PageProtectionLog | None:
@@ -479,7 +485,7 @@ def get_page_protection_log_entry(page: models.Page) -> models.PageProtectionLog
         pp = models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
     except models.PageProtection.DoesNotExist:
         return None
-    if pp.end_date and pp.end_date >= utils.now():
+    if pp.end_date and pp.end_date < utils.now():
         return None
     try:
         return models.PageProtectionLog.objects.filter(page=page).latest()

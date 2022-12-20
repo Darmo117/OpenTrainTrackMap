@@ -71,6 +71,8 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                                          form.cleaned_data['reason'])
                     except _errors.MissingPermissionError:
                         global_errors.append('missing_permission')
+                    except _errors.PastDateError:
+                        global_errors.append('past_date')
                     else:
                         return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
             else:
@@ -341,6 +343,7 @@ class BlockUserForm(_forms.CustomForm):
         label='end_date',
         widget=_dj_forms.DateInput(attrs={'type': 'date'}),
         required=False,
+        help_text=True,
     )
     allow_messages_on_own_user_page = _dj_forms.BooleanField(
         label='allow_messages_on_own_user_page',

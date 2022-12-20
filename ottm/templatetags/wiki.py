@@ -451,14 +451,24 @@ def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> st
             )
         case models.PageProtectionLog(performer=performer, page=page, reason=reason, end_date=end_date,
                                       protection_level=protection_level):
+            if end_date:
+                return wiki_translate(
+                    context,
+                    'log.page_protection',
+                    date=formatted_date,
+                    user=_format_username(context, performer),
+                    page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
+                    group=protection_level.label,
+                    until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
+                    reason=_format_comment(context, reason, False),
+                )
             return wiki_translate(
                 context,
-                'log.page_protection',
+                'log.page_protection_infinite',
                 date=formatted_date,
                 user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
                 group=protection_level.label,
-                until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
                 reason=_format_comment(context, reason, False),
             )
         case models.PageContentLanguageLog(performer=performer, page=page, language=language, reason=reason):

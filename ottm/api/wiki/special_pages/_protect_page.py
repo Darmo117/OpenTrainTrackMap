@@ -2,12 +2,12 @@
 import typing as _typ
 
 import django.contrib.auth.models as _dj_auth_models
-import django.core.paginator as _dj_paginator
 import django.forms as _dj_forms
 
 from . import _core
 from .. import pages as _pages
 from ..namespaces import *
+from ... import errors as _errors
 from .... import models as _models, page_handlers as _ph, requests as _requests
 
 
@@ -23,25 +23,50 @@ class ProtectPageSpecialPage(_core.SpecialPage):
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:
-        form = _Form()
+        target_page = None
+        global_errors = []
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
-                return _core.Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["page_name"]}')
-        target_page = None
-        subpages = _dj_auth_models.EmptyManager(_models.PageRevision)
-        if title := '/'.join(args):
-            target_page = _pages.get_page(*_pages.split_title(title))
-            subpages = target_page.get_subpages()
-            form = _Form(initial={'page_name': target_page.full_title})
-        paginator = _dj_paginator.Paginator(subpages, params.results_per_page)
+                target_page = _pages.get_page(*_pages.split_title(form.cleaned_data['page_name']))
+                protection_level = _models.UserGroup.objects.get(label=form.cleaned_data['protection_level'])
+                try:
+                    done = _pages.protect_page(params.user, target_page, protection_level,
+                                               form.cleaned_data['reason'],
+                                               form.cleaned_data['end_date'])
+                except _errors.MissingPermissionError:
+                    global_errors.append('missing_permission')
+                except _errors.EditSpecialPageError:
+                    global_errors.append('edit_special_page')
+                except _errors.PastDateError:
+                    global_errors.append('past_date')
+                else:
+                    if done:
+                        return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
+        else:
+            if args:
+                target_page = _pages.get_page(*_pages.split_title('/'.join(args)))
+            if not target_page:
+                form = _Form()
+            else:
+                block = target_page.get_edit_protection()
+                form = _Form(initial={
+                    'page_name': target_page.full_title,
+                    'protection_level': block and block.protection_level.label,
+                    'end_date': block and block.end_date,
+                })
+        if target_page and target_page.exists:
+            log_entries = target_page.pageprotectionlog_set.reverse()
+        else:
+            log_entries = _dj_auth_models.EmptyManager(_models.PageProtectionLog)
         return {
             'title_key': 'title_page' if target_page else 'title',
             'title_value': target_page.full_title if target_page else None,
             'target_page': target_page,
-            'subpages': paginator,
             'form': form,
-            'max_page_index': paginator.num_pages,
+            'global_errors': global_errors,
+            'log_entries': log_entries,
+            'done': params.get.get('done'),
         }
 
 
@@ -55,13 +80,21 @@ class _Form(_ph.WikiForm):
     )
     protection_level = _dj_forms.ChoiceField(
         label='protection_level',
+        widget=_dj_forms.Select(attrs={'no_translate': True}),
         required=True,
         choices=(),  # Set in __init__()
+        help_text=True,
+    )
+    end_date = _dj_forms.DateField(
+        label='end_date',
+        widget=_dj_forms.DateInput(attrs={'type': 'date'}),
+        required=False,
+        help_text=True,
     )
     reason = _dj_forms.CharField(
         label='reason',
         max_length=_models.UserGroupLog._meta.get_field('reason').max_length,
-        required=True,
+        required=False,
         strip=True,
     )
 
