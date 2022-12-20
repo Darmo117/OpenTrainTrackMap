@@ -1,0 +1,14 @@
+{% extends 'ottm/user-profile/action-form.html' %}
+{% load ottm %}
+{% load wiki %}
+
+{% block container-content %}
+  <h2 class="text-center">{% ottm_translate 'page.user_profile.block.form.unblock.title' %}</h2>
+  <div class="row justify-content-center">
+    <div class="col-4">
+      {% include 'ottm/include/form.html' with form=context.unblock_form prefix='page.user_profile.'|add:context.form.name|add:'.' %}
+    </div>
+  </div>
+  <h2 class="text-center">{% ottm_translate 'page.user_profile.block.form.block.title' %}</h2>
+  {{ block.super }}
+{% endblock %}

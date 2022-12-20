@@ -28,6 +28,7 @@
   {% endif %}
   <form method="post" id="{{ form.name|replace:'_,-' }}" class="tab-content" style="margin-bottom: 1em">
     {% csrf_token %}
+    <input type="hidden" name="form-name" value="{{ form.name }}">
     {% if form.warn_unsaved_changes and context.user.warn_when_wiki_edit_not_published %}
       <input type="hidden" name="warn-unsaved">
     {% endif %}

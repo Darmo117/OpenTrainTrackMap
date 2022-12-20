@@ -2,10 +2,10 @@
 from __future__ import annotations
 
 import django.core.handlers.wsgi as _dj_wsgi
+import django.db.models as _dj_models
 import django.forms as _dj_forms
 from django.http import response as _dj_response
 
-import django.db.models as _dj_models
 from . import _ottm_handler, _user_page_context
 from .. import forms as _forms, models as _models, requests as _requests
 from ..api import auth as _auth, errors as _errors, permissions as _perms
@@ -50,7 +50,51 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
         ))
 
     def _handle_block(self, target_user: _models.User) -> _dj_response.HttpResponse:
-        pass
+        if not self._request_params.user.has_permission(_perms.PERM_BLOCK_USERS):
+            return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
+
+        global_errors = []
+        form = BlockUserForm(initial={
+            'allow_messages_on_own_user_page': True,
+            'allow_editing_own_settings': True,
+        })
+        unblock_form = UnblockUserForm()
+        if self._request_params.post:
+            if self._request_params.post.get('form-name') == 'block':
+                form = BlockUserForm(post=self._request_params.post)
+                if form.is_valid():
+                    try:
+                        _auth.block_user(target_user, self._request_params.user,
+                                         form.cleaned_data['allow_messages_on_own_user_page'],
+                                         form.cleaned_data['allow_editing_own_settings'],
+                                         form.cleaned_data['end_date'],
+                                         form.cleaned_data['reason'])
+                    except _errors.MissingPermissionError:
+                        global_errors.append('missing_permission')
+                    else:
+                        return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
+            else:
+                unblock_form = UnblockUserForm(post=self._request_params.post)
+                if unblock_form.is_valid():
+                    try:
+                        _auth.unblock_user(target_user, self._request_params.user, unblock_form.cleaned_data['reason'])
+                    except _errors.MissingPermissionError:
+                        global_errors.append('missing_permission')
+                    else:
+                        return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
+
+        title, tab_title = self.get_page_titles(page_id='user_profile.block',
+                                                titles_args={'username': target_user.username})
+        return self.render_page(f'ottm/user-profile/block.html', UserBlockPageContext(
+            self._request_params,
+            tab_title,
+            title,
+            target_user=target_user,
+            form=form,
+            global_errors=global_errors,
+            log_entries=_models.UserBlockLog.objects.filter(user=target_user.internal_object).reverse(),
+            unblock_form=unblock_form,
+        ))
 
     def _handle_mask_username(self, target_user: _models.User) -> _dj_response.HttpResponse:
         if not self._request_params.user.has_permission(_perms.PERM_MASK) or not target_user.is_authenticated:
@@ -65,7 +109,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                                         reason=form.cleaned_data['reason'])
                 except _errors.MissingPermissionError:
                     global_errors.append('missing_permission')
-                except _errors.AnonymousEditGroupsError:
+                except _errors.AnonymousMaskUsernameError:
                     global_errors.append('anonymous_user')
                 else:
                     return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
@@ -87,7 +131,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
         ))
 
     def _handle_rename(self, target_user: _models.User) -> _dj_response.HttpResponse:
-        pass
+        pass  # TODO
 
     def _handle_edit_groups(self, target_user: _models.User) -> _dj_response.HttpResponse:
         if (not self._request_params.user.has_permission(_perms.PERM_EDIT_USER_GROUPS)
@@ -209,7 +253,50 @@ class UserProfileActionPageContext(_user_page_context.UserPageContext):
         return self._log_entries
 
 
+class UserBlockPageContext(UserProfileActionPageContext):
+    """Context class for the user block pages."""
+
+    def __init__(
+            self,
+            request_params: _requests.RequestParams,
+            tab_title: str | None,
+            title: str | None,
+            target_user: _models.User,
+            form: _forms.CustomForm,
+            global_errors: list[str],
+            log_entries: _dj_models.QuerySet[_models.UserLog],
+            unblock_form: _forms.CustomForm,
+    ):
+        """Create a page context for a user block page.
+
+        :param request_params: Page request parameters.
+        :param tab_title: Title of the browser’s tab.
+        :param title: Page’s title.
+        :param target_user: User of the requested page.
+        :param form: The form.
+        :param global_errors: Global errors.
+        :param log_entries: List of related log entries.
+        :param unblock_form: The unblock form.
+        """
+        super().__init__(
+            request_params,
+            tab_title=tab_title,
+            title=title,
+            target_user=target_user,
+            form=form,
+            global_errors=global_errors,
+            log_entries=log_entries,
+        )
+        self._unblock_form = unblock_form
+
+    @property
+    def unblock_form(self) -> _forms.CustomForm:
+        return self._unblock_form
+
+
 class EditUserGroupsForm(_forms.CustomForm):
+    """Edit user groups form."""
+
     groups = _dj_forms.MultipleChoiceField(
         label='groups',
         widget=_dj_forms.CheckboxSelectMultiple(),
@@ -230,16 +317,59 @@ class EditUserGroupsForm(_forms.CustomForm):
 
 
 class MaskUsernameForm(_forms.CustomForm):
+    """Mask username form."""
+
     mask = _dj_forms.BooleanField(
         label='mask',
         required=False,
     )
     reason = _dj_forms.CharField(
         label='reason',
-        max_length=_models.UserGroupLog._meta.get_field('reason').max_length,
+        max_length=_models.UserMaskLog._meta.get_field('reason').max_length,
         required=False,
         strip=True,
     )
 
     def __init__(self, post=None, initial=None):
         super().__init__('mask_username', False, post=post, initial=initial)
+
+
+class BlockUserForm(_forms.CustomForm):
+    """Block user form."""
+
+    end_date = _dj_forms.DateField(
+        label='end_date',
+        widget=_dj_forms.DateInput(attrs={'type': 'date'}),
+        required=False,
+    )
+    allow_messages_on_own_user_page = _dj_forms.BooleanField(
+        label='allow_messages_on_own_user_page',
+        required=False,
+    )
+    allow_editing_own_settings = _dj_forms.BooleanField(
+        label='allow_editing_own_settings',
+        required=False,
+    )
+    reason = _dj_forms.CharField(
+        label='reason',
+        max_length=_models.UserBlockLog._meta.get_field('reason').max_length,
+        required=False,
+        strip=True,
+    )
+
+    def __init__(self, post=None, initial=None):
+        super().__init__('block', False, post=post, initial=initial)
+
+
+class UnblockUserForm(_forms.CustomForm):
+    """Unblock user form."""
+
+    reason = _dj_forms.CharField(
+        label='reason',
+        max_length=_models.UserBlockLog._meta.get_field('reason').max_length,
+        required=False,
+        strip=True,
+    )
+
+    def __init__(self, post=None, initial=None):
+        super().__init__('unblock', False, post=post, initial=initial)

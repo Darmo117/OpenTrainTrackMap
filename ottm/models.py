@@ -899,6 +899,11 @@ class User:
             return None
 
     @property
+    def is_blocked(self):
+        """Whether this user is blocked."""
+        return (b := self.block) and (not b.end_date or b.end_date >= utils.now())
+
+    @property
     def edits(self) -> dj_models.Manager[EditGroup]:
         """A Manager object for this user’s edit groups."""
         return self._user.edit_groups if self.exists else dj_auth_models.EmptyManager(EditGroup)
@@ -1119,8 +1124,6 @@ class UserBlock(dj_models.Model):
     Blocks expire after a specified date. If no end date is specified, the block will never expire.
     """
     user = dj_models.OneToOneField(CustomUser, on_delete=dj_models.PROTECT, related_name='block')
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='user_blocks_given')
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
     end_date = dj_models.DateTimeField(null=True, blank=True)
     allow_messages_on_own_user_page = dj_models.BooleanField(default=True)
     allow_editing_own_settings = dj_models.BooleanField(default=True)
@@ -1972,8 +1975,7 @@ class Page(dj_models.Model, NonDeletableMixin):
             return False
 
         now = utils.now()
-        block = user.block
-        if block and (not block.end_date or block.end_date >= now):
+        if user.is_blocked:
             return False
 
         if not user.is_authenticated:
@@ -2015,10 +2017,8 @@ class Page(dj_models.Model, NonDeletableMixin):
             return False
 
         now = utils.now()
-        block = user.block
         own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
-        if (block and (not block.end_date or block.end_date >= now)
-                and (not own_page or not block.allow_messages_on_own_user_page)):
+        if user.is_blocked and (not own_page or not user.block.allow_messages_on_own_user_page):
             return False
 
         if not user.is_authenticated:
@@ -2364,25 +2364,26 @@ class UserGroupLog(UserLog):
         ordering = ('date',)
 
 
-class BlockLogMixin:
-    """Mixin class that holds fields shared between block logs."""
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, null=True)
+class UserBlockLog(UserLog):
+    """New entries are added each time a user’s block status changes."""
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='userblocklog_performer_set')
     reason = dj_models.CharField(max_length=200, null=True, blank=True)
     end_date = dj_models.DateTimeField(null=True, blank=True)
     allow_messages_on_own_user_page = dj_models.BooleanField()
-
-
-class UserBlockLog(UserLog, BlockLogMixin):
-    """New entries are added each time a user’s block status changes."""
     allow_editing_own_settings = dj_models.BooleanField()
+    blocked = dj_models.BooleanField()
 
     class Meta:
         get_latest_by = 'date'
         ordering = ('date',)
 
 
-class IPBlockLog(Log, BlockLogMixin):
+class IPBlockLog(Log):
     """New entries are added each time an IP address’ block status changes."""
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
+    end_date = dj_models.DateTimeField(null=True, blank=True)
+    allow_messages_on_own_user_page = dj_models.BooleanField()
     ip = dj_models.CharField(max_length=39)
     allow_account_creation = dj_models.BooleanField()
 

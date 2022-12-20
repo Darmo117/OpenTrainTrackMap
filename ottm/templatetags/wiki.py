@@ -519,18 +519,38 @@ def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> st
                 group=group.label,
                 reason=_format_comment(context, reason, False),
             )
-        case models.UserBlockLog(performer=performer, reason=reason, end_date=end_date,
+        case models.UserBlockLog(performer=performer, reason=reason, end_date=end_date, blocked=blocked,
                                  allow_messages_on_own_user_page=allow_messages_on_own_user_page,
                                  user=user, allow_editing_own_settings=allow_editing_own_settings):
+            if blocked:
+                if end_date:
+                    return wiki_translate(
+                        context,
+                        'log.user_block',
+                        date=formatted_date,
+                        performer=_format_username(context, performer),
+                        user=_format_username(context, user),
+                        edit_settings=str(allow_editing_own_settings).lower(),
+                        post_messages=str(allow_messages_on_own_user_page).lower(),
+                        until=ottm_format_date(context, end_date),
+                        reason=_format_comment(context, reason, False),
+                    )
+                return wiki_translate(
+                    context,
+                    'log.user_block_infinite',
+                    date=formatted_date,
+                    performer=_format_username(context, performer),
+                    user=_format_username(context, user),
+                    edit_settings=str(allow_editing_own_settings).lower(),
+                    post_messages=str(allow_messages_on_own_user_page).lower(),
+                    reason=_format_comment(context, reason, False),
+                )
             return wiki_translate(
                 context,
-                'log.user_block',
+                'log.user_unblock',
                 date=formatted_date,
                 performer=_format_username(context, performer),
                 user=_format_username(context, user),
-                edit_settings=str(allow_editing_own_settings).lower(),
-                post_messages=str(allow_messages_on_own_user_page).lower(),
-                until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
                 reason=_format_comment(context, reason, False),
             )
         case models.IPBlockLog(performer=performer, reason=reason, end_date=end_date,

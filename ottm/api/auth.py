@@ -1,4 +1,6 @@
 """This module declares functions related to user authentication."""
+import datetime
+
 import django.contrib.auth as dj_auth
 import django.core.exceptions as dj_exc
 import django.core.handlers.wsgi as dj_wsgi
@@ -217,13 +219,13 @@ def mask_username(user: models.User, performer: models.User, mask: bool, reason:
     :param mask: True to mask the username, false to unmask it.
     :param reason: Reason for the mask/unmask.
     :raise MissingPermissionError: If the performer does not have the "mask" permission.
-    :raise AnonymousEditGroupsError: If the user is anonymous.
+    :raise AnonymousMaskUsernameError: If the user is anonymous.
     """
     if performer:
         if not performer.has_permission(_perms.PERM_MASK):
             raise errors.MissingPermissionError(_perms.PERM_MASK)
         if not user.is_authenticated:
-            raise errors.AnonymousEditGroupsError()
+            raise errors.AnonymousMaskUsernameError()
     if user.hide_username == mask:
         return
     user.hide_username = mask
@@ -233,6 +235,62 @@ def mask_username(user: models.User, performer: models.User, mask: bool, reason:
         performer=performer.internal_object if performer else None,
         masked=mask,
         reason=reason,
+    ).save()
+
+
+@dj_db_trans.atomic
+def block_user(user: models.User, performer: models.User, allow_messages_on_own_user_page: bool,
+               allow_editing_own_settings: bool, end_date: datetime.datetime = None, reason: str = None):
+    """Block the given user. Any pre-existing blocks for this user will be deleted.
+
+    :param user: The user to block.
+    :param performer: The user performing the action.
+    :param allow_messages_on_own_user_page: Whether to allow the user to post messages on its own user page.
+    :param allow_editing_own_settings: Whether to allow the user to edit its own settings.
+    :param end_date: The date until which to block this user. None means infinite.
+    :param reason: The block’s reason.
+    :raise MissingPermissionError: If the performer does not have the "block_users" permission.
+    """
+    if performer and not performer.has_permission(_perms.PERM_BLOCK_USERS):
+        raise errors.MissingPermissionError(_perms.PERM_BLOCK_USERS)
+    for block in models.UserBlock.objects.filter(user=user.internal_object):
+        block.delete()
+    models.UserBlock(
+        user=user.internal_object,
+        end_date=end_date,
+        allow_messages_on_own_user_page=allow_messages_on_own_user_page,
+        allow_editing_own_settings=allow_editing_own_settings,
+    ).save()
+    models.UserBlockLog(
+        user=user.internal_object,
+        performer=performer.internal_object,
+        reason=reason,
+        end_date=end_date,
+        allow_messages_on_own_user_page=allow_messages_on_own_user_page,
+        allow_editing_own_settings=allow_editing_own_settings,
+        blocked=True,
+    ).save()
+
+
+@dj_db_trans.atomic
+def unblock_user(user: models.User, performer: models.User, reason: str = None):
+    """Unblock the given user.
+
+    :param user: The user to unblock.
+    :param performer: The user performing the action.
+    :param reason: The unblock’s reason.
+    """
+    if performer and not performer.has_permission(_perms.PERM_BLOCK_USERS):
+        raise errors.MissingPermissionError(_perms.PERM_BLOCK_USERS)
+    for block in models.UserBlock.objects.filter(user=user.internal_object):
+        block.delete()
+    models.UserBlockLog(
+        user=user.internal_object,
+        performer=performer.internal_object,
+        reason=reason,
+        allow_messages_on_own_user_page=True,
+        allow_editing_own_settings=True,
+        blocked=False,
     ).save()
 
 

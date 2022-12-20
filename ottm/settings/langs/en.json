@@ -138,6 +138,46 @@
           "edits_count_label": "Number of edits",
           "wiki_edits_count_label": "Number of wiki edits"
         },
+        "block": {
+          "title": "Block user “{username}”",
+          "tab_title": "Block user “{username}”",
+          "form": {
+            "block": {
+              "title": "Block",
+              "end_date": {
+                "label": "End date"
+              },
+              "allow_messages_on_own_user_page": {
+                "label": "Allow posting messages on own page"
+              },
+              "allow_editing_own_settings": {
+                "label": "Allow editing own settings"
+              },
+              "reason": {
+                "label": "Reason"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "You do not have the permission to block users."
+              }
+            },
+            "unblock": {
+              "title": "Unblock",
+              "reason": {
+                "label": "Reason"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "You do not have the permission to unblock users."
+              }
+            }
+          },
+          "log_entries": "Related log entries:"
+        },
         "edit_groups": {
           "title": "Edit groups of “{username}”",
           "tab_title": "Edit groups of “{username}”",
@@ -557,6 +597,11 @@
         }
       },
       "error": {
+        "403": {
+          "title": "Forbidden access",
+          "tab_title": "You cannot access this page!",
+          "message": "You do not have the permissions required to access this page for the following reason:\n\n{reason}\n\nGo back to the [main page]({url})."
+        },
         "404": {
           "title": "Page not found",
           "tab_title": "Page not found!",
@@ -1237,9 +1282,10 @@
         "user_group_left": "({date}) {performer} removed {user} from group {group}. {reason}",
         "user_group_internal_joined": "({date}) {user} joined group {group}. {reason}",
         "user_group_internal_left": "({date}) {user} left group {group}. {reason}",
-        "user_block": "({date}) {performer} has blocked user {user}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] ({until}) {reason}",
-        "ip_block": "({date}) {performer} has blocked IP {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) {reason}",
-        "infinite": "infinite"
+        "user_block": "({date}) {performer} has blocked user {user} until {until}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] {reason}",
+        "user_block_infinite": "({date}) {performer} has blocked user {user} (infinite). [edit settings: {edit_settings}, post messages on user page: {post_messages}] {reason}",
+        "user_unblock": "({date}) {performer} has unblocked user {user}. {reason}",
+        "ip_block": "({date}) {performer} has blocked IP {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) {reason}"
       },
       "pagination": {
         "page": {

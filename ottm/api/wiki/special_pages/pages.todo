@@ -9,7 +9,6 @@ X- Logs
 X- DeletePage
 X- RenamePage
 ~- ProtectPage
-X- Block
 X- SendEmail
 V- ChangePageLanguage
 V- ChangePageContentType

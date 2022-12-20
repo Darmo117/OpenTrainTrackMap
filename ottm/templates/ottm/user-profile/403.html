@@ -1,0 +1,11 @@
+{% extends 'ottm/user-page-base.html' %}
+{% load ottm %}
+{% load wiki %}
+
+{% block container-content %}
+  <div class="alert alert-danger text-center" role="alert">
+    {% url 'ottm:map' as url %}
+    {% wiki_format_log_entry context.block_log_entry as entry %}
+    {% ottm_translate 'page.error.403.message' reason=entry url=url %}
+  </div>
+{% endblock %}

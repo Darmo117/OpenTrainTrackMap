@@ -9,7 +9,7 @@ import pytz as _pytz
 
 from . import _ottm_handler, _user_page_context
 from .. import forms as _forms, models as _models, requests as _requests, settings as _settings
-from ..api import data_types as _dt, utils as _utils, timezones as _tz
+from ..api import data_types as _dt, timezones as _tz, utils as _utils
 from ..api.wiki import constants as _const, notifications as _notif, search_engine as _se
 
 
@@ -19,6 +19,16 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
     def handle_request(self) -> _dj_response.HttpResponse:
         if not self._request_params.user.is_authenticated:
             return self.redirect('ottm:map', reverse=True)
+
+        user = self._request_params.user
+        title, tab_title = self.get_page_titles(page_id='user_settings')
+        if user.is_blocked and not user.block.allow_editing_own_settings:
+            return self.render_page('ottm/user-profile/403.html', context=UserSettings403PageContext(
+                self._request_params,
+                title,
+                tab_title,
+                self._request_params.user,
+            ))
 
         changed_password = False
         user = self._request_params.user
@@ -105,7 +115,6 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
         else:
             form = UserSettingsForm(user=user)
 
-        title, tab_title = self.get_page_titles(page_id='user_settings')
         return self.render_page(f'ottm/user-settings.html', UserSettingsPageContext(
             self._request_params,
             title,
@@ -532,3 +541,33 @@ class UserSettingsPageContext(_user_page_context.UserPageContext):
     @property
     def form(self) -> UserSettingsForm:
         return self._form
+
+
+class UserSettings403PageContext(_user_page_context.UserPageContext):
+    """Context class for user settings 403 pages."""
+
+    def __init__(
+            self,
+            request_params: _requests.RequestParams,
+            tab_title: str | None,
+            title: str | None,
+            target_user: _models.User,
+    ):
+        """Create a page context for a user’s settings 403 page.
+
+        :param request_params: Page request parameters.
+        :param tab_title: Title of the browser’s tab.
+        :param title: Page’s title.
+        :param target_user: User of the requested page.
+        """
+        super().__init__(
+            request_params,
+            tab_title=tab_title,
+            title=title,
+            target_user=target_user,
+        )
+        self._log_entry = _models.UserBlockLog.objects.filter(user=target_user.internal_object).latest()
+
+    @property
+    def block_log_entry(self):
+        return self._log_entry

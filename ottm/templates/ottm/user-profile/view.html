@@ -17,13 +17,13 @@
         {% ottm_translate 'page.user_profile.action.block.label' %}
       </a>
     {% endif %}
-    {% if context.user|has_perm:PERM_MASK %}
-      <a href="{% url 'ottm:user_profile' username=context.target_user.username %}?action=mask_username"
-         class="btn btn-danger">
-        {% ottm_translate 'page.user_profile.action.mask_username.label' %}
-      </a>
-    {% endif %}
     {% if context.target_user.is_authenticated %}
+      {% if context.user|has_perm:PERM_MASK %}
+        <a href="{% url 'ottm:user_profile' username=context.target_user.username %}?action=mask_username"
+           class="btn btn-danger">
+          {% ottm_translate 'page.user_profile.action.mask_username.label' %}
+        </a>
+      {% endif %}
       {% if context.user|has_perm:PERM_RENAME_USERS %}
         <a href="{% url 'ottm:user_profile' username=context.target_user.username %}?action=rename"
            class="btn btn-secondary">
