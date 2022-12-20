@@ -1,4 +1,5 @@
 """This package defines handlers and context classes for the site’s pages."""
+from ._404_handler import *
 from ._core import *
 from ._default_page_handler import *
 from ._login_page_handler import *

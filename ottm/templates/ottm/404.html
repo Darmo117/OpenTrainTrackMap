@@ -1,0 +1,9 @@
+{% extends 'ottm/not-map.html' %}
+{% load ottm %}
+
+{% block container-content %}
+  <div class="alert alert-danger text-center" role="alert">
+    {% url 'ottm:map' as url %}
+    {% ottm_translate 'page.error.404.message' path=context.path url=url %}
+  </div>
+{% endblock %}
