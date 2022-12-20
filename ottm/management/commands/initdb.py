@@ -1,6 +1,6 @@
 """This module defines a command that initializes the database."""
-import django.db.transaction as dj_db_trans
 import django.core.management.base as dj_mngmt
+import django.db.transaction as dj_db_trans
 
 from ...api import auth
 from ...api.groups import *
@@ -16,6 +16,7 @@ class Command(dj_mngmt.BaseCommand):
         self.stdout.write('Initializing DB…')
         self._init_default_languages()
         self._init_user_groups()
+        self._create_superuser()
         self._init_ottm_model()
         self._init_default_wiki_pages()
         self.stdout.write('DB initialized successfully.')
@@ -91,6 +92,18 @@ class Command(dj_mngmt.BaseCommand):
 
         self.stdout.write('Done.')
 
+    def _create_superuser(self):
+        from ... import models
+        self.stdout.write('Creating superuser…')
+
+        password = models.CustomUser.objects.make_random_password(length=50)
+        self.stdout.write(f'Generated temporary password: {password}')
+        superuser = auth.create_user('Admin', password=password, ignore_email=True)
+        for group in GROUPS:
+            auth.add_user_to_group(superuser, group)
+
+        self.stdout.write('Done.')
+
     def _init_ottm_model(self):
         pass  # TODO
 
@@ -101,8 +114,8 @@ class Command(dj_mngmt.BaseCommand):
         # Create dummy user with throwaway password
         password = models.CustomUser.objects.make_random_password(length=50)
         wiki_user = auth.create_user('Wiki Setup', password=password, ignore_email=True, is_bot=True)
-        wiki_user.internal_object.groups.add(models.UserGroup.objects.get(label=GROUP_WIKI_AUTOPATROLLED))
-        wiki_user.internal_object.groups.add(models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS))
+        auth.add_user_to_group(wiki_user, GROUP_WIKI_AUTOPATROLLED)
+        auth.add_user_to_group(wiki_user, GROUP_WIKI_ADMINISTRATORS)
         edit_comment = 'Wiki setup.'
 
         content = 'This user is a bot used to setup the wiki.'

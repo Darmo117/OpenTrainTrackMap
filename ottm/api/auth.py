@@ -6,7 +6,7 @@ import django.core.validators as dj_valid
 import django.db.transaction as dj_db_trans
 
 from .. import models
-from ..api import errors, groups
+from ..api import errors, groups, permissions as _perms
 
 
 def log_in(request: dj_wsgi.WSGIRequest, username: str, password: str) -> bool:
@@ -133,6 +133,37 @@ def create_user(username: str, email: str = None, password: str = None, ignore_e
     models.UserAccountCreationLog(user=dj_user).save()
 
     return models.User(dj_user)
+
+
+@dj_db_trans.atomic
+def add_user_to_group(user: models.User, group_name: str, performer: models.User = None, reason: str = None) -> bool:
+    """Add a user to the given group.
+
+    :param user: User to add to the group.
+    :param group_name: The name of the group.
+    :param performer: The user performing the action, None if internal call.
+    :param reason: Reason for the group change.
+    :return: True if the user was successfully added, false if they were already in the given group.
+    :raise MissingPermissionError: If the performer does not have the "edit_user_groups" permission.
+    :raise ValueError: If no group with the given name exists.
+    """
+    if performer and not performer.has_permission(_perms.PERM_EDIT_USER_GROUPS):
+        raise errors.MissingPermissionError(_perms.PERM_EDIT_USER_GROUPS)
+    try:
+        group = models.UserGroup.objects.get(label=group_name)
+    except models.UserGroup.DoesNotExist:
+        raise ValueError(f'invalid group name {group_name!r}')
+    if user.is_in_group(group):
+        return False
+    user.internal_object.groups.add(group)
+    models.UserGroupLog(
+        user=user.internal_object,
+        performer=performer.internal_object if performer else None,
+        joined=True,
+        group=group,
+        reason=reason,
+    ).save()
+    return True
 
 
 def user_exists(username: str) -> bool:
