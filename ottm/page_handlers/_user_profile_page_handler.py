@@ -299,7 +299,7 @@ class EditUserGroupsForm(_forms.CustomForm):
 
     groups = _dj_forms.MultipleChoiceField(
         label='groups',
-        widget=_dj_forms.CheckboxSelectMultiple(),
+        widget=_dj_forms.CheckboxSelectMultiple(attrs={'no_translate': True}),
         choices=(),  # Set in __init__()
         required=False,
     )

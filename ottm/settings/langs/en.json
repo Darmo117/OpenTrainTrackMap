@@ -185,36 +185,6 @@
             "edit_groups": {
               "groups": {
                 "label": "Groups",
-                "administrators": {
-                  "label": "Administrators"
-                },
-                "all": {
-                  "label": "All"
-                },
-                "autopatrolled": {
-                  "label": "Autopatrolled"
-                },
-                "groups_managers": {
-                  "label": "Groups managers"
-                },
-                "patrollers": {
-                  "label": "Patrollers"
-                },
-                "superusers": {
-                  "label": "Superusers"
-                },
-                "users": {
-                  "label": "Users"
-                },
-                "wiki_administrators": {
-                  "label": "Wiki administrators"
-                },
-                "wiki_autopatrolled": {
-                  "label": "Wiki autopatrolled"
-                },
-                "wiki_patrollers": {
-                  "label": "Wiki patrollers"
-                },
                 "error": {
                   "invalid_choice": "Invalid choice!"
                 }
