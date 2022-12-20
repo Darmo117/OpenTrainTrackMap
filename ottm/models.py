@@ -2338,6 +2338,19 @@ class UserAccountCreationLog(UserLog):
         ordering = ('date',)
 
 
+class UserMaskLog(UserLog):
+    """New entries are added each time a user account is created."""
+    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT,
+                                     related_name='usermasklog_performer_set',
+                                     null=True, blank=True)
+    reason = dj_models.CharField(max_length=200, null=True, blank=True)
+    masked = dj_models.BooleanField()
+
+    class Meta:
+        get_latest_by = 'date'
+        ordering = ('date',)
+
+
 class UserGroupLog(UserLog):
     """New entries are added each time a user account is created."""
     performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT,

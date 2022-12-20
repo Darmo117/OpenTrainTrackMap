@@ -208,6 +208,34 @@ def remove_user_from_groups(user: models.User, *group_names: str, performer: mod
         ).save()
 
 
+@dj_db_trans.atomic
+def mask_username(user: models.User, performer: models.User, mask: bool, reason: str = None):
+    """Mask/unmask the username of a user.
+
+    :param user: The user to mask/unmask the username of.
+    :param performer: User performing the action.
+    :param mask: True to mask the username, false to unmask it.
+    :param reason: Reason for the mask/unmask.
+    :raise MissingPermissionError: If the performer does not have the "mask" permission.
+    :raise AnonymousEditGroupsError: If the user is anonymous.
+    """
+    if performer:
+        if not performer.has_permission(_perms.PERM_MASK):
+            raise errors.MissingPermissionError(_perms.PERM_MASK)
+        if not user.is_authenticated:
+            raise errors.AnonymousEditGroupsError()
+    if user.hide_username == mask:
+        return
+    user.hide_username = mask
+    user.internal_object.save()
+    models.UserMaskLog(
+        user=user.internal_object,
+        performer=performer.internal_object if performer else None,
+        masked=mask,
+        reason=reason,
+    ).save()
+
+
 def user_exists(username: str) -> bool:
     """Check whether the given username exists."""
     return dj_auth.get_user_model().objects.filter(username=username).exists()

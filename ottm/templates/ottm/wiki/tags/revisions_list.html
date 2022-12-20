@@ -1,26 +1,32 @@
-{{ pagination }}
-<ul class="wiki-page-revisions">
-  {% for line in lines %}
-    <li class="wiki-page-revision">
-      ({{ line.actions|join:' | ' }})
-      {{ line.date }} ·
-      {{ line.page_link|safe }} ·
-      {% if line.flags %}
-        {% for flag in line.flags %}
-          <abbr class="badge badge-info" title="{{ flag.1 }}">{{ flag.0 }}</abbr>
-        {% endfor %}
+{% if not lines %}
+  <div class="alert alert-info text-center">
+    {{ no_results_message }}
+  </div>
+{% else %}
+  {{ pagination }}
+  <ul class="wiki-page-revisions">
+    {% for line in lines %}
+      <li class="wiki-page-revision">
+        ({{ line.actions|join:' | ' }})
+        {{ line.date }} ·
+        {{ line.page_link|safe }} ·
+        {% if line.flags %}
+          {% for flag in line.flags %}
+            <abbr class="badge badge-info" title="{{ flag.1 }}">{{ flag.0 }}</abbr>
+          {% endfor %}
+          ·
+        {% endif %}
+        <data data-unit="bytes" value="{{ line.size }}">{{ line.size_text }}</data>
         ·
-      {% endif %}
-      <data data-unit="bytes" value="{{ line.size }}">{{ line.size_text }}</data>
-      ·
-      <data data-unit="bytes" value="{{ line.variation }}"
-            class="wiki-diff-badge badge {% if line.variation > 0 %}badge-success{% elif line.variation < 0 %}badge-danger{% else %}badge-secondary{% endif %} {% if line.variation > 500 %}wiki-diff-important-var{% endif %}">
-        {{ line.variation_text }}
-      </data>
-      {% if line.comment %}
-        · {{ line.comment|safe }}
-      {% endif %}
-    </li>
-  {% endfor %}
-</ul>
-{{ pagination }}
+        <data data-unit="bytes" value="{{ line.variation }}"
+              class="wiki-diff-badge badge {% if line.variation > 0 %}badge-success{% elif line.variation < 0 %}badge-danger{% else %}badge-secondary{% endif %} {% if line.variation > 500 %}wiki-diff-important-var{% endif %}">
+          {{ line.variation_text }}
+        </data>
+        {% if line.comment %}
+          · {{ line.comment|safe }}
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ul>
+  {{ pagination }}
+{% endif %}

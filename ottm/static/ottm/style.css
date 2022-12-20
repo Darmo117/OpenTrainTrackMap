@@ -70,3 +70,8 @@ html, body {
 .form-errors-alert .form-errors {
   margin-bottom: 0;
 }
+
+.masked {
+  text-decoration: line-through;
+  font-style: italic;
+}

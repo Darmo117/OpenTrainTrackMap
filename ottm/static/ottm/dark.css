@@ -16,6 +16,6 @@
   color: #c92525;
 }
 
-.wiki-hidden {
+:not(a).masked {
   color: gray;
 }

@@ -6,7 +6,7 @@ PERM_EDIT_USER_GROUPS = 'edit_user_groups'
 PERM_REVERT = 'revert'
 PERM_BLOCK_USERS = 'block_users'
 PERM_RENAME_USERS = 'rename_users'
-PERM_MASK = 'wiki_mask'
+PERM_MASK = 'mask'
 # Wiki
 PERM_WIKI_EDIT = 'wiki_edit'
 PERM_WIKI_DELETE = 'wiki_delete'

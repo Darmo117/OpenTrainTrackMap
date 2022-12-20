@@ -52,7 +52,37 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
         pass
 
     def _handle_mask_username(self, target_user: _models.User) -> _dj_response.HttpResponse:
-        pass
+        if not self._request_params.user.has_permission(_perms.PERM_MASK) or not target_user.is_authenticated:
+            return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
+
+        global_errors = []
+        if self._request_params.post:
+            form = MaskUsernameForm(post=self._request_params.post)
+            if form.is_valid():
+                try:
+                    _auth.mask_username(target_user, self._request_params.user, mask=form.cleaned_data['mask'],
+                                        reason=form.cleaned_data['reason'])
+                except _errors.MissingPermissionError:
+                    global_errors.append('missing_permission')
+                except _errors.AnonymousEditGroupsError:
+                    global_errors.append('anonymous_user')
+                else:
+                    return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
+        else:
+            form = MaskUsernameForm(initial={
+                'mask': not target_user.hide_username,
+            })
+
+        title, tab_title = self.get_page_titles(page_id='user_profile.mask_username',
+                                                titles_args={'username': target_user.username})
+        return self.render_page(f'ottm/user-profile/action-form.html', MaskUsernamePageContext(
+            self._request_params,
+            tab_title,
+            title,
+            target_user=target_user,
+            form=form,
+            global_errors=global_errors,
+        ))
 
     def _handle_rename(self, target_user: _models.User) -> _dj_response.HttpResponse:
         pass
@@ -88,7 +118,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
 
         title, tab_title = self.get_page_titles(page_id='user_profile.edit_groups',
                                                 titles_args={'username': target_user.username})
-        return self.render_page(f'ottm/user-profile/edit-groups.html', EditUserGroupsPageContext(
+        return self.render_page(f'ottm/user-profile/action-form.html', EditUserGroupsPageContext(
             self._request_params,
             tab_title,
             title,
@@ -131,7 +161,7 @@ class UserProfilePageContext(_user_page_context.UserPageContext):
 
 
 class EditUserGroupsPageContext(_user_page_context.UserPageContext):
-    """Context class for edit user groups pages."""
+    """Context class for the edit user groups pages."""
 
     def __init__(
             self,
@@ -169,18 +199,6 @@ class EditUserGroupsPageContext(_user_page_context.UserPageContext):
         return self._global_errors
 
 
-class CheckboxSelectMultiple(_dj_forms.CheckboxSelectMultiple):
-    def __init__(self, disabled_options: tuple[str, ...] = (), attrs=None):
-        super().__init__(attrs=attrs)
-        self._disabled_options = disabled_options
-
-    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
-        options = super().create_option(name, value, label, selected, index, subindex, attrs)
-        if label in self._disabled_options:
-            options['attrs']['disabled'] = 'disabled'
-        return options
-
-
 class EditUserGroupsForm(_forms.CustomForm):
     groups = _dj_forms.MultipleChoiceField(
         label='groups',
@@ -196,6 +214,61 @@ class EditUserGroupsForm(_forms.CustomForm):
     )
 
     def __init__(self, post=None, initial=None):
-        super().__init__('edit_user_groups', False, post=post, initial=initial)
+        super().__init__('edit_groups', False, post=post, initial=initial)
         self.fields['groups'].choices = tuple(
             (group.label, group.label) for group in _models.UserGroup.get_assignable_groups())
+
+
+class MaskUsernamePageContext(_user_page_context.UserPageContext):
+    """Context class for the mask username pages."""
+
+    def __init__(
+            self,
+            request_params: _requests.RequestParams,
+            tab_title: str | None,
+            title: str | None,
+            target_user: _models.User,
+            form: MaskUsernameForm,
+            global_errors: list[str],
+    ):
+        """Create a page context for the mask username page.
+
+        :param request_params: Page request parameters.
+        :param tab_title: Title of the browser’s tab.
+        :param title: Page’s title.
+        :param target_user: User of the requested page.
+        :param form: The form.
+        :param global_errors: Global errors.
+        """
+        super().__init__(
+            request_params,
+            tab_title=tab_title,
+            title=title,
+            target_user=target_user,
+        )
+        self._form = form
+        self._global_errors = global_errors
+
+    @property
+    def form(self) -> MaskUsernameForm:
+        return self._form
+
+    @property
+    def global_errors(self) -> list[str]:
+        return self._global_errors
+
+
+class MaskUsernameForm(_forms.CustomForm):
+    mask = _dj_forms.BooleanField(
+        label='mask',
+        required=False,
+    )
+    reason = _dj_forms.CharField(
+        label='reason',
+        max_length=_models.UserGroupLog._meta.get_field('reason').max_length,
+        required=False,
+        strip=True,
+    )
+
+    def __init__(self, post=None, initial=None):
+        super().__init__('mask_username', False, post=post, initial=initial)

@@ -125,11 +125,6 @@
             "label": "Rename"
           }
         },
-        "404": {
-          "title": "User “{username}” not found",
-          "tab_title": "User not found",
-          "message": "User ”{username}” does not exists."
-        },
         "statistics": {
           "title": "Statistics",
           "groups": "Groups",
@@ -147,7 +142,7 @@
           "title": "Edit groups of “{username}”",
           "tab_title": "Edit groups of “{username}”",
           "form": {
-            "edit_user_groups": {
+            "edit_groups": {
               "groups": {
                 "label": "Groups",
                 "administrators": {
@@ -193,6 +188,27 @@
               "error": {
                 "missing_permission": "You do not have the permission to edit user groups.",
                 "anonymous_user": "Cannot change the groups of an anonymous user."
+              }
+            }
+          }
+        },
+        "mask_username": {
+          "title": "Mask username of “{username}”",
+          "tab_title": "Mask username of “{username}”",
+          "form": {
+            "mask_username": {
+              "mask": {
+                "label": "Mask"
+              },
+              "reason": {
+                "label": "Reason"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "You do not have the permission to change the visibility of usernames.",
+                "anonymous_user": "Cannot change the visibility of anonymous users’ usernames."
               }
             }
           }
@@ -1203,7 +1219,8 @@
             "label": "b",
             "tooltip": "Bot edit"
           }
-        }
+        },
+        "no_results_message": "No results"
       },
       "log": {
         "page_creation": "({date}) {user} has created {page}.",

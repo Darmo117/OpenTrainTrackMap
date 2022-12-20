@@ -235,6 +235,17 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
 
 
 @register.simple_tag(takes_context=True)
+def wiki_revision_author(context: TemplateContext, revision: models.PageRevision) -> str:
+    """Format a revision’s author.
+
+    :param context: Page context.
+    :param revision: The revision to render the author of.
+    :return: The formatted username.
+    """
+    return dj_safe.mark_safe(_format_username(context, revision.author))
+
+
+@register.simple_tag(takes_context=True)
 def wiki_revision_comment(context: TemplateContext, revision: models.PageRevision) -> str:
     """Format a revision’s comment.
 
@@ -393,6 +404,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     return {
         'lines': lines,
         'pagination': wiki_pagination(context, revisions),
+        'no_results_message': wiki_translate(context, 'revisions_list.no_results_message'),
     }
 
 
@@ -577,16 +589,23 @@ def wiki_add_url_params(context: TemplateContext, **kwargs) -> str:
 
 
 def _format_username(context: TemplateContext, user: models.CustomUser) -> str:
+    wiki_context: _ph.WikiPageContext = context.get('context')
+    can_view = wiki_context.user.has_permission(PERM_MASK)
+    css_classes = ''
     if user.hide_username:
-        return f'<span class="wiki-hidden">{wiki_translate(context, "username_hidden")}</span>'
-    else:
-        return wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(user.username),
-                               text=user.username, ignore_current_title=True)
+        if not can_view:
+            return f'<span class="masked">{wiki_translate(context, "username_hidden")}</span>'
+        css_classes = 'masked'
+    return wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(user.username),
+                           text=user.username, ignore_current_title=True, css_classes=css_classes)
 
 
 def _format_comment(context: TemplateContext, comment: str, hide: bool) -> str:
+    wiki_context: _ph.WikiPageContext = context.get('context')
+    can_view = wiki_context.user.has_permission(PERM_MASK)
+    css_classes = ''
     if hide:
-        return f'<span class="wiki-hidden">{wiki_translate(context, "comment_hidden")}</span>'
-    else:
-        # language=HTML
-        return f'<span class="font-italic">({comment})</span>' if comment else ''
+        if not can_view:
+            return f'<span class="masked">{wiki_translate(context, "comment_hidden")}</span>'
+        css_classes = 'masked'
+    return f'<span class="font-italic {css_classes}">({comment})</span>' if comment else ''

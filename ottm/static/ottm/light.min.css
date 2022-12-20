@@ -1,1 +1,1 @@
-#page-header{background-color:#dbdbdb}.wiki-red-link{color:#c90c0c}.wiki-red-link:hover{color:#980c0c}.wiki-hidden{color:gray}
+#page-header{background-color:#dbdbdb}.wiki-red-link{color:#c90c0c}.wiki-red-link:hover{color:#980c0c}:not(a).masked{color:gray}
