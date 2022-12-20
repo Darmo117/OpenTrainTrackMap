@@ -297,7 +297,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
         if user.has_permission(PERM_WIKI_MASK):
             actions.append(wiki_inner_link(
                 context,
-                f'Special:Mask/{revision.page.full_title}',
+                f'Special:MaskRevision/{revision.page.full_title}',
                 text='',
                 tooltip=wiki_translate(context, 'revisions_list.mask.tooltip'),
                 css_classes='mdi mdi-eye-outline wiki-revision-action',
@@ -357,6 +357,9 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
                 css_classes='mdi mdi-undo-variant wiki-revision-action',
                 ignore_current_title=True,
             ))
+        else:
+            # language=HTML
+            actions.append(dj_safe.mark_safe('<span class="mdi mdi-undo-variant wiki-revision-action"></span>'))
 
         match mode:
             case 'history':
