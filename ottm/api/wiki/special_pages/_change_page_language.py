@@ -23,7 +23,8 @@ class ChangePageLanguageSpecialPage(_core.SpecialPage):
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:
         target_page = None
-        global_errors = []
+        form = _Form()
+        global_errors = {form.name: []}
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
@@ -33,22 +34,20 @@ class ChangePageLanguageSpecialPage(_core.SpecialPage):
                     done = _pages.set_page_content_language(params.user, target_page, content_language,
                                                             form.cleaned_data['reason'])
                 except _errors.PageDoesNotExistError:
-                    global_errors.append('page_does_not_exist')
+                    global_errors[form.name].append('page_does_not_exist')
                 except _errors.MissingPermissionError:
-                    global_errors.append('missing_permission')
+                    global_errors[form.name].append('missing_permission')
                 except _errors.EditSpecialPageError:
-                    global_errors.append('edit_special_page')
+                    global_errors[form.name].append('edit_special_page')
                 else:
                     if done:
                         return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
         else:
             if args:
                 target_page = _pages.get_page(*_pages.split_title('/'.join(args)))
-            if not target_page:
-                form = _Form()
-            else:
+            if target_page:
                 if not target_page.exists:
-                    global_errors.append('page_does_not_exist')
+                    global_errors[form.name].append('page_does_not_exist')
                     form = _Form(initial={'page_name': target_page.full_title})
                 else:
                     form = _Form(initial={'page_name': target_page.full_title,

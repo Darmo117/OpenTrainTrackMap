@@ -13,7 +13,8 @@ class LoginPageHandler(_ottm_handler.OTTMHandler):
     """Handler for the login page."""
 
     def handle_request(self) -> _dj_response.HttpResponse:
-        global_errors = []
+        form = LoginForm()
+        global_errors = {form.name: []}
         if not self._request_params.user.is_authenticated:
             if self._request_params.post:
                 form = LoginForm(post=self._request_params.post)
@@ -23,9 +24,7 @@ class LoginPageHandler(_ottm_handler.OTTMHandler):
                                     form.cleaned_data['username'],
                                     form.cleaned_data['password']):
                         return self.redirect(self._request_params.return_to)
-                    global_errors.append('invalid_credentials')
-            else:
-                form = LoginForm()
+                    global_errors[form.name].append('invalid_credentials')
         else:
             form = None
         title, tab_title = self.get_page_titles(page_id='log_in')
@@ -75,7 +74,7 @@ class LoginPageContext(_core.PageContext):
             edit_warning: bool,
             password_update_info: bool,
             form: LoginForm = None,
-            global_errors: list[str] = None,
+            global_errors: dict[str, list[str]] = None,
     ):
         """Create a page context for the login page.
 
@@ -111,5 +110,5 @@ class LoginPageContext(_core.PageContext):
         return self._form
 
     @property
-    def global_errors(self) -> list[str]:
+    def global_errors(self) -> dict[str, list[str]]:
         return self._global_errors

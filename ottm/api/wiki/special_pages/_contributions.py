@@ -32,11 +32,11 @@ class ContributionsSpecialPage(_core.SpecialPage):
                 return _core.Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["username"]}')
         target_user = None
         contributions = _dj_auth_models.EmptyManager(_models.PageRevision)
-        global_errors = []
+        global_errors = {form.name: []}
         if args:
             target_user = _auth.get_user_from_name(args[0])
             if not target_user:
-                global_errors.append('user_does_not_exist')
+                global_errors[form.name].append('user_does_not_exist')
                 form = _Form(initial={'username': args[0]})
             else:
                 query_set = target_user.internal_object.pagerevision_set

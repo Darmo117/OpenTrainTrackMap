@@ -3,11 +3,11 @@
 {% load utils %}
 
 {% with trans_prefix=prefix|add:'form.'|add:form.name|add:'.' %}
-  {% if context.global_errors %}
+  {% if context.global_errors and context.global_errors|get_item:form.name %}
     <div class="alert alert-danger form-errors-alert" role="alert">
       {% ottm_translate 'form.global_error.title' %}
       <ul class="form-errors">
-        {% for error in context.global_errors %}
+        {% for error in context.global_errors|get_item:form.name %}
           <li>{% ottm_translate trans_prefix|add:'error.'|add:error %}</li>
         {% endfor %}
       </ul>

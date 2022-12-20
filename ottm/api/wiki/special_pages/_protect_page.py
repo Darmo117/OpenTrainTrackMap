@@ -24,7 +24,8 @@ class ProtectPageSpecialPage(_core.SpecialPage):
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:
         target_page = None
-        global_errors = []
+        form = _Form()
+        global_errors = {form.name: []}
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
@@ -36,20 +37,18 @@ class ProtectPageSpecialPage(_core.SpecialPage):
                                                form.cleaned_data['reason'],
                                                form.cleaned_data['end_date'])
                 except _errors.MissingPermissionError:
-                    global_errors.append('missing_permission')
+                    global_errors[form.name].append('missing_permission')
                 except _errors.EditSpecialPageError:
-                    global_errors.append('edit_special_page')
+                    global_errors[form.name].append('edit_special_page')
                 except _errors.PastDateError:
-                    global_errors.append('past_date')
+                    global_errors[form.name].append('past_date')
                 else:
                     if done:
                         return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
         else:
             if args:
                 target_page = _pages.get_page(*_pages.split_title('/'.join(args)))
-            if not target_page:
-                form = _Form()
-            else:
+            if target_page:
                 block = target_page.get_edit_protection()
                 form = _Form(initial={
                     'page_name': target_page.full_title,

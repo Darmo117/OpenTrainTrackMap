@@ -21,3 +21,15 @@ def replace(value: str, pattern: str) -> str:
 def concat(value, v) -> str:
     """Concatenate two values as strings."""
     return str(value) + str(v)
+
+
+@register.filter
+def get_attr(value, name: str):
+    """Return the value of the given attribute of an object or None if the attribute does not exist."""
+    return getattr(value, name, None)
+
+
+@register.filter
+def get_item(value, key):
+    """Return the value for the given key or None if it does not exist."""
+    return value.get(key)

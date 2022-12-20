@@ -53,7 +53,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
         if not self._request_params.user.has_permission(_perms.PERM_BLOCK_USERS):
             return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
 
-        global_errors = []
+        global_errors = {}
         form = BlockUserForm(initial={
             'allow_messages_on_own_user_page': True,
             'allow_editing_own_settings': True,
@@ -63,6 +63,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
             if self._request_params.post.get('form-name') == 'block':
                 form = BlockUserForm(post=self._request_params.post)
                 if form.is_valid():
+                    global_errors[form.name] = []
                     try:
                         _auth.block_user(target_user, self._request_params.user,
                                          form.cleaned_data['allow_messages_on_own_user_page'],
@@ -70,9 +71,9 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                                          form.cleaned_data['end_date'],
                                          form.cleaned_data['reason'])
                     except _errors.MissingPermissionError:
-                        global_errors.append('missing_permission')
+                        global_errors[form.name].append('missing_permission')
                     except _errors.PastDateError:
-                        global_errors.append('past_date')
+                        global_errors[form.name].append('past_date')
                     else:
                         return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
             else:
@@ -81,7 +82,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                     try:
                         _auth.unblock_user(target_user, self._request_params.user, unblock_form.cleaned_data['reason'])
                     except _errors.MissingPermissionError:
-                        global_errors.append('missing_permission')
+                        global_errors[unblock_form.name] = ['missing_permission']
                     else:
                         return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
 
@@ -102,7 +103,10 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
         if not self._request_params.user.has_permission(_perms.PERM_MASK) or not target_user.is_authenticated:
             return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
 
-        global_errors = []
+        form = MaskUsernameForm(initial={
+            'mask': not target_user.hide_username,
+        })
+        global_errors = {form.name: []}
         if self._request_params.post:
             form = MaskUsernameForm(post=self._request_params.post)
             if form.is_valid():
@@ -110,15 +114,11 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                     _auth.mask_username(target_user, self._request_params.user, mask=form.cleaned_data['mask'],
                                         reason=form.cleaned_data['reason'])
                 except _errors.MissingPermissionError:
-                    global_errors.append('missing_permission')
+                    global_errors[form.name].append('missing_permission')
                 except _errors.AnonymousMaskUsernameError:
-                    global_errors.append('anonymous_user')
+                    global_errors[form.name].append('anonymous_user')
                 else:
                     return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
-        else:
-            form = MaskUsernameForm(initial={
-                'mask': not target_user.hide_username,
-            })
 
         title, tab_title = self.get_page_titles(page_id='user_profile.mask_username',
                                                 titles_args={'username': target_user.username})
@@ -140,7 +140,10 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                 or not target_user.is_authenticated):
             return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
 
-        global_errors = []
+        form = EditUserGroupsForm(initial={
+            'groups': [g.label for g in target_user.get_groups()],
+        })
+        global_errors = {form.name: []}
         if self._request_params.post:
             form = EditUserGroupsForm(post=self._request_params.post)
             if form.is_valid():
@@ -154,15 +157,11 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                                                   performer=self._request_params.user,
                                                   reason=form.cleaned_data['reason'])
                 except _errors.MissingPermissionError:
-                    global_errors.append('missing_permission')
+                    global_errors[form.name].append('missing_permission')
                 except _errors.AnonymousEditGroupsError:
-                    global_errors.append('anonymous_user')
+                    global_errors[form.name].append('anonymous_user')
                 else:
                     return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
-        else:
-            form = EditUserGroupsForm(initial={
-                'groups': [g.label for g in target_user.get_groups()],
-            })
 
         title, tab_title = self.get_page_titles(page_id='user_profile.edit_groups',
                                                 titles_args={'username': target_user.username})
@@ -219,7 +218,7 @@ class UserProfileActionPageContext(_user_page_context.UserPageContext):
             title: str | None,
             target_user: _models.User,
             form: _forms.CustomForm,
-            global_errors: list[str],
+            global_errors: dict[str, list[str]],
             log_entries: _dj_models.QuerySet[_models.UserLog],
     ):
         """Create a page context for a user profile action page.
@@ -247,7 +246,7 @@ class UserProfileActionPageContext(_user_page_context.UserPageContext):
         return self._form
 
     @property
-    def global_errors(self) -> list[str]:
+    def global_errors(self) -> dict[str, list[str]]:
         return self._global_errors
 
     @property
@@ -265,7 +264,7 @@ class UserBlockPageContext(UserProfileActionPageContext):
             title: str | None,
             target_user: _models.User,
             form: _forms.CustomForm,
-            global_errors: list[str],
+            global_errors: dict[str, list[str]],
             log_entries: _dj_models.QuerySet[_models.UserLog],
             unblock_form: _forms.CustomForm,
     ):
