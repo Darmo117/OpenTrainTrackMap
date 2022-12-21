@@ -1968,7 +1968,7 @@ class Page(_dj_models.Model, NonDeletableMixin):
         """Whether this pages exists in the database or is a predefined special page."""
         from .api.wiki import special_pages
         if self.namespace == _w_ns.NS_SPECIAL:
-            return special_pages.SPECIAL_PAGES.get(self.title) is not None
+            return special_pages.SPECIAL_PAGES.get(self.base_name) is not None
         return self.pk is not None
 
     @property
