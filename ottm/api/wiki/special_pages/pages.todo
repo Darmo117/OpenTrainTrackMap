@@ -9,7 +9,7 @@ X- Logs
 X- DeletePage
 X- RenamePage
 V- ProtectPage
-X- SendEmail
+V- SendEmail
 V- ChangePageLanguage
 V- ChangePageContentType
 X- EditFollowList

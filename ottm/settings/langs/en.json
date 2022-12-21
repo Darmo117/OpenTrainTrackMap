@@ -919,6 +919,7 @@
                 "label": "Username:",
                 "error": {
                   "invalid": "Invalid username!",
+                  "user_does_not_exist": "This user does not exist!",
                   "required": "Missing username!"
                 }
               },
@@ -933,10 +934,48 @@
         },
         "SendEmail": {
           "title": "Send an email to a user",
-          "title_user": "Send an email to user “{value}”",
+          "title_user": "Send an email to “{value}”",
+          "done": "Email successfully sent.",
+          "copy_sent": "Copy successfully sent.",
+          "copy_error": "The copy could not be sent due to an unknown error.",
+          "info": "The email address you indicated in your profile settings will show up in the “Sender” field of your message so that the recipient can respond.",
           "menu": {
             "label": "Send an email",
             "tooltip": "Send an email to this user"
+          },
+          "form": {
+            "send_email": {
+              "username": {
+                "label": "Recipient",
+                "error": {
+                  "invalid": "Invalid username!",
+                  "user_does_not_exist": "This user does not exist!",
+                  "required": "Missing recipient’s username!"
+                }
+              },
+              "subject": {
+                "label": "Subject",
+                "error": {
+                  "required": "Missing subject!"
+                }
+              },
+              "content": {
+                "label": "Content",
+                "error": {
+                  "required": "Missing content!"
+                }
+              },
+              "send_copy": {
+                "label": "Send me a copy"
+              },
+              "submit": {
+                "label": "Send"
+              },
+              "error": {
+                "user_does_not_exist": "User does not exist!",
+                "email_error": "An unexpected error occured. Please try again later."
+              }
+            }
           }
         },
         "ChangePageLanguage": {

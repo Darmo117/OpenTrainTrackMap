@@ -59,6 +59,8 @@ def get_page(ns: _w_ns.Namespace, title: str) -> _models.Page:
     """Return the page object for the given namespace and title.
     If the page does not exist, a new Page object is returned.
 
+    `Does not check if the title is valid.`
+
     :param ns: Page’s namespace.
     :param title: Page’s title.
     :return: A Page object.

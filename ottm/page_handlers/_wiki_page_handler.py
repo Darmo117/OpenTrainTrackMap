@@ -72,7 +72,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
 
         # Check if title is invalid
         if m := _settings.INVALID_TITLE_REGEX.search(title):
-            page = _models.Page(namespace_id=_w_ns.NS_SPECIAL.id, title=title)
+            page = _w_pages.get_page(_w_ns.NS_SPECIAL, title)
             js_config = _w_pages.get_js_config(self._request_params, page)
             return self.render_page(
                 'ottm/wiki/page.html',

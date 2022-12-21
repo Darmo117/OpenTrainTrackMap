@@ -932,10 +932,15 @@ class User:
         :param other: A user.
         :return: True if this user can send emails to the specified one, false otherwise.
         """
-        return (self != other and self.is_authenticated and not self.is_blocked
-                and other.exists and other.users_can_send_emails
+        return (self != other and other.can_receive_emails and self.is_authenticated and not self.is_blocked
                 and (not self.is_new or other.new_users_can_send_emails)
                 and self.username not in other.email_user_blacklist)
+
+    @property
+    def can_receive_emails(self):
+        """Whether this user can receive emails."""
+        return (self.exists and not self.is_bot and self.is_authenticated
+                and not self.is_blocked and self.users_can_send_emails)
 
     def has_permission(self, perm: str) -> bool:
         """Check whether this user has the given permission.
@@ -1915,7 +1920,7 @@ class Page(_dj_models.Model, NonDeletableMixin):
                                         default=_w_cons.CT_WIKIPAGE)
     deleted = _dj_models.BooleanField(default=False)
     is_category_hidden = _dj_models.BooleanField(null=True, blank=True)
-    content_language = _dj_models.ForeignKey(Language, on_delete=_dj_models.PROTECT)
+    content_language = _dj_models.ForeignKey(Language, on_delete=_dj_models.PROTECT, default=Language.get_default)
     # May redirect to non-existent page
     redirects_to_namespace_id = _dj_models.IntegerField(null=True, blank=True)
     redirects_to_title = _dj_models.CharField(max_length=200, validators=[page_title_validator], null=True, blank=True)

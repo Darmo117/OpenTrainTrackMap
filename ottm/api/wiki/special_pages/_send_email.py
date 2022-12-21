@@ -1,0 +1,95 @@
+"""This module defines the email special page."""
+import typing as _typ
+
+import django.contrib.auth.models as _dj_auth_models
+import django.forms as _dj_forms
+
+from . import _core
+from ... import auth as _auth, emails as _emails
+from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
+
+
+class SendEmailSpecialPage(_core.SpecialPage):
+    """This special page lets users send emails to others.
+
+    Args: ``/<username:str>``
+        - ``username``: the username of the user to send the email to.
+    """
+
+    def __init__(self):
+        super().__init__('SendEmail', category=_core.Section.USERS)
+
+    def _process_request(self, params: _requests.RequestParams, args: list[str]) \
+            -> dict[str, _typ.Any] | _core.Redirect:
+        user = _auth.get_user_from_request(params.request)
+        target_user = None
+        form = _Form(user)
+        global_errors = {form.name: []}
+        if params.post:
+            form = _Form(user, post=params.post)
+            if form.is_valid():
+                target_user = _auth.get_user_from_name(form.cleaned_data['username'])
+                sent = _emails.send_email(target_user, form.cleaned_data['subject'],
+                                          form.cleaned_data['content'], sender=user)
+                if form.cleaned_data['send_copy']:
+                    copy_sent = _emails.send_email(user, form.cleaned_data['subject'],
+                                                   form.cleaned_data['content'])
+                else:
+                    copy_sent = None
+                if sent:
+                    kwargs = {'done': True}
+                    if copy_sent is not None:
+                        kwargs['copy-sent'] = copy_sent
+                    return _core.Redirect(f'Special:{self.name}/{target_user.username}', args=kwargs)
+                global_errors[form.name].append('email_error')
+        elif args:
+            target_user = _auth.get_user_from_name(args[0])
+            if not target_user:
+                global_errors[form.name].append('user_does_not_exist')
+                form = _Form(user, initial={'username': args[0]})
+            else:
+                form = _Form(user, initial={'username': target_user.username})
+        return {
+            'title_key': 'title_user' if target_user else 'title',
+            'title_value': target_user.username if target_user else None,
+            'target_user': target_user,
+            'form': form,
+            'global_errors': global_errors,
+            'done': params.get.get('done'),
+            'copy_sent': params.get.get('copy-sent'),
+        }
+
+
+class _Form(_ph.WikiForm):
+    username = _dj_forms.CharField(
+        label='username',
+        max_length=_dj_auth_models.AbstractUser._meta.get_field('username').max_length,
+        required=True,
+        strip=True,
+        validators=[_models.username_validator, _forms.user_exists_validator],
+    )
+    subject = _dj_forms.CharField(
+        label='subject',
+        max_length=200,
+        required=True,
+        strip=True,
+    )
+    content = _dj_forms.CharField(
+        label='content',
+        widget=_dj_forms.Textarea(attrs={'rows': 20}),
+        required=True,
+        strip=True,
+    )
+    send_copy = _dj_forms.BooleanField(
+        label='send_copy',
+        required=False,
+    )
+
+    def __init__(self, user: _models.User, post=None, initial=None):
+        if not initial:
+            initial = {}
+        initial.update({
+            'subject': _emails.DEFAULT_SUBJECT,
+            'send_copy': user.send_copy_of_sent_emails,
+        })
+        super().__init__('send_email', False, post=post, initial=initial)

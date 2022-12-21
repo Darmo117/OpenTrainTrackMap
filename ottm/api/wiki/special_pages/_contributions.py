@@ -8,7 +8,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import namespaces as _w_ns
 from ... import auth as _auth, permissions as _perms
-from .... import models as _models, page_handlers as _ph, requests as _requests
+from .... import models as _models, page_handlers as _ph, requests as _requests, forms as _forms
 
 
 class ContributionsSpecialPage(_core.SpecialPage):
@@ -24,16 +24,16 @@ class ContributionsSpecialPage(_core.SpecialPage):
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:
         user = _auth.get_user_from_request(params.request)
+        target_user = None
+        contributions = _dj_auth_models.EmptyManager(_models.PageRevision)
         form = _Form()
+        global_errors = {form.name: []}
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
                 return _core.Redirect(
                     _w_ns.NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["username"]}')
-        target_user = None
-        contributions = _dj_auth_models.EmptyManager(_models.PageRevision)
-        global_errors = {form.name: []}
-        if args:
+        elif args:
             target_user = _auth.get_user_from_name(args[0])
             if not target_user:
                 global_errors[form.name].append('user_does_not_exist')
@@ -63,7 +63,7 @@ class _Form(_ph.WikiForm):
         max_length=_dj_auth_models.AbstractUser._meta.get_field('username').max_length,
         required=True,
         strip=True,
-        validators=[_models.username_validator],
+        validators=[_models.username_validator, _forms.user_exists_validator],
     )
 
     def __init__(self, post=None, initial=None):

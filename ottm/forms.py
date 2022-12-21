@@ -18,6 +18,12 @@ def page_exists_validator(value: str):
         raise _dj_exc.ValidationError('page does not exist', code='page_does_not_exist')
 
 
+def user_exists_validator(value: str):
+    from .api import auth as _auth
+    if not _auth.get_user_from_name(value):
+        raise _dj_exc.ValidationError('user does not exist', code='user_does_not_exist')
+
+
 class CustomForm(_dj_forms.Form):
     """Base class for all forms. Applies custom CSS styles to widgets."""
 
