@@ -932,7 +932,7 @@ class User:
         :param other: A user.
         :return: True if this user can send emails to the specified one, false otherwise.
         """
-        return (self != other and other.can_receive_emails and self.is_authenticated and not self.is_blocked
+        return (other.can_receive_emails and self.is_authenticated and not self.is_blocked
                 and (not self.is_new or other.new_users_can_send_emails)
                 and self.username not in other.email_user_blacklist)
 

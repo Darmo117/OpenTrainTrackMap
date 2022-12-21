@@ -97,6 +97,7 @@ def _get_builtin_menu(page_context: _ph.WikiPageContext, menu_id: str) -> Menu:
                 items.append({'title': 'Special:Contributions', 'subpage': username})
                 if target_user and user.can_send_emails_to(target_user):
                     items.append({'title': 'Special:SendEmail', 'subpage': username})
+                items.append({'title': 'Special:Mute', 'subpage': username})
             if page.namespace != _w_ns.NS_SPECIAL:
                 items.append({'title': 'Special:Subpages', 'subpage': page.full_title})
             elif hasattr(page_context, 'target_user') and page_context.target_user:

@@ -5,7 +5,7 @@ import django.contrib.auth.models as _dj_auth_models
 import django.forms as _dj_forms
 
 from . import _core
-from .. import constants as _constants, pages as _pages
+from .. import constants as _constants, namespaces as _w_ns, pages as _w_pages
 from ... import errors as _errors
 from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
 
@@ -28,21 +28,24 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
-                target_page = _pages.get_page(*_pages.split_title(form.cleaned_data['page_name']))
+                target_page = _w_pages.get_page(*_w_pages.split_title(form.cleaned_data['page_name']))
                 content_type = form.cleaned_data['content_type']
                 try:
-                    done = _pages.set_page_content_type(params.user, target_page, content_type,
-                                                        form.cleaned_data['reason'])
+                    done = _w_pages.set_page_content_type(params.user, target_page, content_type,
+                                                          form.cleaned_data['reason'])
                 except _errors.PageDoesNotExistError:  # Keep as the page may have been deleted right before submit
                     global_errors[form.name].append('page_does_not_exist')
                 except _errors.MissingPermissionError:
                     global_errors[form.name].append('missing_permission')
                 else:
                     if done:
-                        return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
+                        return _core.Redirect(
+                            f'{_w_ns.NS_SPECIAL.get_full_page_title(self.name)}/{target_page.full_title}',
+                            args={'done': True}
+                        )
         else:
             if args:
-                target_page = _pages.get_page(*_pages.split_title('/'.join(args)))
+                target_page = _w_pages.get_page(*_w_pages.split_title('/'.join(args)))
             if target_page:
                 if not target_page.exists:
                     global_errors[form.name].append('page_does_not_exist')

@@ -20,7 +20,7 @@ def user_send_email(recipient: _models.User, subject: str, content: str, sender:
     :return: Whether the email was successfully sent.
     """
     content_html = _get_email_html_template(recipient, sender, content, TEMPLATE_USER_COPY if copy else TEMPLATE_USER)
-    return _send_email(sender if copy else recipient, subject, content, content_html, sender)
+    return _send_email(sender if copy else recipient, subject, content, content_html, None if copy else sender)
 
 
 def _send_email(recipient: _models.User, subject: str, message_plain: str, message_html: str,
@@ -39,7 +39,7 @@ def _send_email(recipient: _models.User, subject: str, message_plain: str, messa
     if sender and not recipient.can_send_emails_to(sender):
         return False
     content = message_html if recipient.html_email_updates else message_plain
-    email = _dj_mail.EmailMessage(subject, content, to=recipient.email, reply_to=sender.email if sender else None)
+    email = _dj_mail.EmailMessage(subject, content, to=[recipient.email], reply_to=[sender.email] if sender else None)
     email.content_subtype = 'html' if recipient.html_email_updates else 'plain'
     return email.send() == 1
 

@@ -32,7 +32,7 @@ class ContributionsSpecialPage(_core.SpecialPage):
             form = _Form(params.post)
             if form.is_valid():
                 return _core.Redirect(
-                    _w_ns.NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["username"]}')
+                    f'{_w_ns.NS_SPECIAL.get_full_page_title(self.name)}/{form.cleaned_data["username"]}')
         elif args:
             target_user = _auth.get_user_from_name(args[0])
             if not target_user:

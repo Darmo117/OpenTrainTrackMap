@@ -5,7 +5,7 @@ import django.contrib.auth.models as _dj_auth_models
 import django.forms as _dj_forms
 
 from . import _core
-from .. import pages as _pages
+from .. import namespaces as _w_ns, pages as _w_pages
 from ... import errors as _errors, permissions as _perms
 from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
 
@@ -28,21 +28,24 @@ class ProtectPageSpecialPage(_core.SpecialPage):
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
-                target_page = _pages.get_page(*_pages.split_title(form.cleaned_data['page_name']))
+                target_page = _w_pages.get_page(*_w_pages.split_title(form.cleaned_data['page_name']))
                 protection_level = _models.UserGroup.objects.get(label=form.cleaned_data['protection_level'])
                 try:
-                    done = _pages.protect_page(params.user, target_page, protection_level,
-                                               form.cleaned_data['protect_talks'],
-                                               form.cleaned_data['reason'],
-                                               form.cleaned_data['end_date'])
+                    done = _w_pages.protect_page(params.user, target_page, protection_level,
+                                                 form.cleaned_data['protect_talks'],
+                                                 form.cleaned_data['reason'],
+                                                 form.cleaned_data['end_date'])
                 except _errors.MissingPermissionError:
                     global_errors[form.name].append('missing_permission')
                 else:
                     if done:
-                        return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
+                        return _core.Redirect(
+                            f'{_w_ns.NS_SPECIAL.get_full_page_title(self.name)}/{target_page.full_title}',
+                            args={'done': True}
+                        )
         else:
             if args:
-                target_page = _pages.get_page(*_pages.split_title('/'.join(args)))
+                target_page = _w_pages.get_page(*_w_pages.split_title('/'.join(args)))
             if target_page:
                 block = target_page.get_edit_protection()
                 form = _Form(initial={

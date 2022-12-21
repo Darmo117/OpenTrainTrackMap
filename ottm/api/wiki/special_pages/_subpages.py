@@ -32,7 +32,7 @@ class SubpagesSpecialPage(_core.SpecialPage):
             form = _Form(params.post)
             if form.is_valid():
                 return _core.Redirect(
-                    _w_ns.NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["page_name"]}')
+                    f'{_w_ns.NS_SPECIAL.get_full_page_title(self.name)}/{form.cleaned_data["page_name"]}')
         else:
             if target_page:
                 form = _Form(initial={'page_name': target_page.full_title})

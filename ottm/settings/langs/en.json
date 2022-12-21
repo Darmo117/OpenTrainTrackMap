@@ -873,7 +873,7 @@
           "form": {
             "select_page": {
               "page": {
-                "label": "Page:",
+                "label": "Page",
                 "error": {
                   "page_invalid_title": "Invalid page title!",
                   "page_does_not_exist": "This page does not exist.",
@@ -916,7 +916,7 @@
           "form": {
             "select_user": {
               "username": {
-                "label": "Username:",
+                "label": "Username",
                 "error": {
                   "invalid": "Invalid username!",
                   "user_does_not_exist": "This user does not exist!",
@@ -986,7 +986,7 @@
           "form": {
             "set_page_language": {
               "page": {
-                "label": "Page:",
+                "label": "Page",
                 "error": {
                   "page_invalid_title": "Invalid page name!",
                   "page_does_not_exist": "This page does not exist.",
@@ -995,13 +995,13 @@
                 }
               },
               "content_language": {
-                "label": "Content language:",
+                "label": "Content language",
                 "error": {
                   "invalid_choice": "Invalid language!"
                 }
               },
               "reason": {
-                "label": "Reason:"
+                "label": "Reason"
               },
               "submit": {
                 "label": "Submit"
@@ -1021,7 +1021,7 @@
           "form": {
             "set_page_content_type": {
               "page": {
-                "label": "Page:",
+                "label": "Page",
                 "error": {
                   "page_invalid_title": "Invalid page name!",
                   "page_does_not_exist": "This page does not exist.",
@@ -1030,13 +1030,13 @@
                 }
               },
               "content_type": {
-                "label": "Content type:",
+                "label": "Content type",
                 "error": {
                   "invalid_choice": "Invalid content type!"
                 }
               },
               "reason": {
-                "label": "Reason:"
+                "label": "Reason"
               },
               "submit": {
                 "label": "Submit"
@@ -1044,6 +1044,34 @@
               "error": {
                 "missing_permission": "You do not have the permissions required to edit this page.",
                 "page_does_not_exist": "This page does not exist."
+              }
+            }
+          }
+        },
+        "Mute": {
+          "title": "Send an email to a user",
+          "title_user": "Send an email to “{value}”",
+          "done": "Email successfully sent.",
+          "menu": {
+            "label": "Mute",
+            "tooltip": "Mute emails and/or notifications from this user"
+          },
+          "form": {
+            "mute_user": {
+              "username": {
+                "label": "User to mute"
+              },
+              "mute_emails": {
+                "label": "Mute emails from this user"
+              },
+              "mute_notifications": {
+                "label": "Mute notifications from this user"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "anonymous_user": "Anonymous users cannot mute others."
               }
             }
           }

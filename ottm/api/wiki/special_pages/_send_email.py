@@ -5,6 +5,7 @@ import django.contrib.auth.models as _dj_auth_models
 import django.forms as _dj_forms
 
 from . import _core
+from .. import namespaces as _w_ns
 from ... import auth as _auth, emails as _emails
 from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
 
@@ -40,7 +41,10 @@ class SendEmailSpecialPage(_core.SpecialPage):
                     kwargs = {'done': True}
                     if copy_sent is not None:
                         kwargs['copy-sent'] = copy_sent
-                    return _core.Redirect(f'Special:{self.name}/{target_user.username}', args=kwargs)
+                    return _core.Redirect(
+                        f'{_w_ns.NS_SPECIAL.get_full_page_title(self.name)}/{target_user.username}',
+                        args=kwargs
+                    )
                 global_errors[form.name].append('email_error')
         elif args:
             target_user = _auth.get_user_from_name(args[0])
