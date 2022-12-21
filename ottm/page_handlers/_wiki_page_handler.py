@@ -103,111 +103,198 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         ns, title = result
         page = _w_pages.get_page(ns, title)
         if ns == _w_ns.NS_SPECIAL:
-            special_page = _w_sp.SPECIAL_PAGES.get(page.base_name)
-            if special_page is None:
-                context = WikiSpecialPageContext(
-                    self._request_params,
-                    page=page,
-                    page_exists=False,
-                    forbidden=False,
-                    js_config=_w_pages.get_js_config(self._request_params, page),
-                )
-                status = 404
-            elif not special_page.can_user_access(self._request_params.user):
-                context = WikiSpecialPageContext(
-                    self._request_params,
-                    page=page,
-                    page_exists=True,
-                    forbidden=True,
-                    js_config=_w_pages.get_js_config(self._request_params, page),
-                    required_perms=special_page.permissions_required,
-                )
-                status = 403
-            else:
-                data = special_page.process_request(self._request_params, title)
-                if isinstance(data, _w_sp.Redirect):
-                    args = {k: v for k, v in self._request_params.get.items()}
-                    # Replace False and None values by an empty strings
-                    args.update({k: '' if v is False or v is None else v for k, v in data.args.items()})
-                    return self.redirect(
-                        'ottm:wiki_page',
-                        reverse=True,
-                        get_params=args,
-                        raw_page_title=_w_pages.url_encode_page_title(data.page_title),
-                    )
-                context = WikiSpecialPageContext(
-                    self._request_params,
-                    page=page,
-                    page_exists=True,
-                    forbidden=False,
-                    js_config=_w_pages.get_js_config(self._request_params, page, data),
-                    required_perms=special_page.permissions_required,
-                    kwargs=data,
-                )
-                status = 200
-
+            res = self._handle_special_page(page)
         else:
-            revid: str | None = self._request_params.get.get('revid')
-            if revid and revid.isascii() and revid.isnumeric():
-                revision_id = int(revid)
-            else:
-                revision_id = None
-            js_config = _w_pages.get_js_config(self._request_params, page, revision_id=revision_id)
-
-            match self._request_params.wiki_action:
-                case _w_cons.ACTION_RAW:
-                    return self.response(
-                        content=page.get_content(),
-                        content_type=_w_cons.MIME_TYPES[page.content_type],
-                        status=200 if page.exists else 404,
-                    )
-                case _w_cons.ACTION_EDIT:
-                    context = self._page_edit_context(page, revision_id, js_config)
-                case _w_cons.ACTION_SUBMIT:
-                    form = WikiEditPageForm(post=self._request_params.request.POST)
-                    if not form.is_valid():
-                        context = self._page_edit_context(page, revision_id, js_config, form=form)
-                    else:
-                        try:
-                            _w_pages.edit_page(
-                                self._request_params.request,
-                                self._request_params.user,
-                                page,
-                                form.cleaned_data['content'],
-                                form.cleaned_data['comment'],
-                                form.cleaned_data['minor_edit'],
-                                form.cleaned_data['follow_page'],
-                                form.cleaned_data['hidden_category'],
-                                form.cleaned_data['section_id']
-                            )
-                        except _errors.MissingPermissionError:
-                            context = self._page_edit_context(page, revision_id, js_config)
-                        except _errors.ConcurrentWikiEditError:
-                            # TODO form containing concurrent page content
-                            context = self._page_edit_context(page, revision_id, js_config,
-                                                              concurrent_edit_error=True)
-                        else:
-                            # Redirect to normal view
-                            return self.redirect(
-                                'ottm:wiki_page',
-                                reverse=True,
-                                raw_page_title=_w_pages.url_encode_page_title(page.full_title),
-                            )
-                case _w_cons.ACTION_HISTORY:
-                    context = self._page_history_context(page, js_config)
-                case _w_cons.ACTION_TALK:
-                    context = self._page_talk_context(page, js_config)
-                case _w_cons.ACTION_INFO:
-                    context = self._page_info_context(page, js_config)
-                case _:
-                    context = self._page_read_context(page, revision_id, js_config)
-            status = 200 if context.page.exists else 404
+            res = self._handle_normal_page(page)
+        if not isinstance(res, tuple):
+            return res
+        context, status = res
 
         return self.render_page('ottm/wiki/page.html', context, status=status, kwargs={
             **{k: v for k, v in _w_cons.__dict__.items() if k.startswith('ACTION_') or k.startswith('CT_')},
             **_w_ns.NAMESPACES_DICT,
             'MAIN_PAGE_TITLE': _w_pages.MAIN_PAGE_TITLE,
         })
+
+    def _handle_special_page(self, page: _models.Page) \
+            -> tuple[WikiSpecialPageContext, int] | _dj_response.HttpResponseRedirect:
+        """Handle the given special page.
+
+        :param page: Dummy Page object representing the special page.
+        :return: A tuple containing a PageContext object and a status code, or a HttpResponseRedirect object.
+        """
+        special_page = _w_sp.SPECIAL_PAGES.get(page.base_name)
+        if special_page is None:
+            context = WikiSpecialPageContext(
+                self._request_params,
+                page=page,
+                page_exists=False,
+                forbidden=False,
+                js_config=_w_pages.get_js_config(self._request_params, page),
+            )
+            status = 404
+        elif not special_page.can_user_access(self._request_params.user):
+            context = WikiSpecialPageContext(
+                self._request_params,
+                page=page,
+                page_exists=True,
+                forbidden=True,
+                js_config=_w_pages.get_js_config(self._request_params, page),
+                required_perms=special_page.permissions_required,
+            )
+            status = 403
+        else:
+            data = special_page.process_request(self._request_params, page.title)
+            if isinstance(data, _w_sp.Redirect):
+                args = {k: v for k, v in self._request_params.get.items()}
+                # Replace False and None values by an empty strings
+                args.update({k: '' if v is False or v is None else v for k, v in data.args.items()})
+                return self.redirect(
+                    'ottm:wiki_page',
+                    reverse=True,
+                    get_params=args,
+                    raw_page_title=_w_pages.url_encode_page_title(data.page_title),
+                )
+            context = WikiSpecialPageContext(
+                self._request_params,
+                page=page,
+                page_exists=True,
+                forbidden=False,
+                js_config=_w_pages.get_js_config(self._request_params, page, data),
+                required_perms=special_page.permissions_required,
+                kwargs=data,
+            )
+            status = 200
+        return context, status
+
+    def _handle_normal_page(self, page: _models.Page) \
+            -> tuple[WikiPageContext, int] | _dj_response.HttpResponseRedirect:
+        """Handle the given page.
+
+        :param page: A Page object.
+        :return: A tuple containing a PageContext object and a status code, or a HttpResponseRedirect object.
+        """
+        revid: str | None = self._request_params.get.get('revid')
+        if revid and revid.isascii() and revid.isnumeric():
+            revision_id = int(revid)
+        else:
+            revision_id = None
+        js_config = _w_pages.get_js_config(self._request_params, page, revision_id=revision_id)
+
+        match self._request_params.wiki_action:
+            case _w_cons.ACTION_RAW:
+                return self.response(
+                    content=page.get_content(),
+                    content_type=_w_cons.MIME_TYPES[page.content_type],
+                    status=200 if page.exists else 404,
+                )
+            case _w_cons.ACTION_EDIT:
+                context = self._page_edit_context(page, revision_id, js_config)
+            case _w_cons.ACTION_SUBMIT:
+                res = self._handle_submit_action(page, revision_id, js_config)
+                if not isinstance(res, WikiPageContext):
+                    return res
+                context = res
+            case _w_cons.ACTION_HISTORY:
+                res = self._handle_history_action(page, js_config)
+                if not isinstance(res, WikiPageContext):
+                    return res
+                context = res
+            case _w_cons.ACTION_TALK:
+                context = self._page_talk_context(page, js_config)
+            case _w_cons.ACTION_INFO:
+                context = self._page_info_context(page, js_config)
+            case _:
+                context = self._page_read_context(page, revision_id, js_config)
+        status = 200 if context.page.exists else 404
+        return context, status
+
+    def _handle_submit_action(self, page: _models.Page, revision_id: int, js_config: dict[str, _typ.Any]) \
+            -> WikiPageEditActionContext | _dj_response.HttpResponseRedirect:
+        """Handle the submit action.
+
+        :param page: A page object.
+        :param revision_id: The page’s revision.
+        :param js_config: The JS config dict object.
+        :return: A PageContext or a HttpResponseRedirect object.
+        """
+        form = WikiEditPageForm(post=self._request_params.request.POST)
+        if not form.is_valid():
+            return self._page_edit_context(page, revision_id, js_config, form=form)
+        try:
+            _w_pages.edit_page(
+                self._request_params.request,
+                self._request_params.user,
+                page,
+                form.cleaned_data['content'],
+                form.cleaned_data['comment'],
+                form.cleaned_data['minor_edit'],
+                form.cleaned_data['follow_page'],
+                form.cleaned_data['hidden_category'],
+                form.cleaned_data['section_id']
+            )
+        except _errors.MissingPermissionError:
+            return self._page_edit_context(page, revision_id, js_config)
+        except _errors.ConcurrentWikiEditError:
+            # TODO textarea containing concurrent page content
+            return self._page_edit_context(page, revision_id, js_config, concurrent_edit_error=True)
+        # Redirect to normal view
+        return self.redirect(
+            'ottm:wiki_page',
+            reverse=True,
+            raw_page_title=_w_pages.url_encode_page_title(page.full_title),
+        )
+
+    def _handle_history_action(self, page: _models.Page, js_config: dict[str, _typ.Any]) \
+            -> WikiPageHistoryActionContext | _dj_response.HttpResponseRedirect:
+        """Handle the history action.
+
+        :param page: A page object.
+        :param js_config: The JS config dict object.
+        :return: A PageContext or a HttpResponseRedirect object.
+        """
+        form = WikiHistoryFilterForm()
+        global_errors = {form.name: []}
+        revisions = _dj_auth_models.EmptyManager(_models.PageRevision).all()
+        if self._request_params.post:
+            form = WikiHistoryFilterForm(post=self._request_params.post)
+            if form.is_valid():
+                if (not form.cleaned_data['start_date'] or not form.cleaned_data['end_date']
+                        or form.cleaned_data['start_date'] <= form.cleaned_data['end_date']):
+                    return self.redirect(
+                        'ottm:wiki_page',
+                        reverse=True,
+                        raw_page_title=_w_pages.url_encode_page_title(page.full_title),
+                        get_params={
+                            'action': 'history',
+                            'hidden_revisions_only': form.cleaned_data['hidden_revisions_only'],
+                            'page_creations_only': form.cleaned_data['page_creations_only'],
+                            'mask_minor_edits': form.cleaned_data['mask_minor_edits'],
+                            'start_date': form.cleaned_data['start_date'],
+                            'end_date': form.cleaned_data['end_date'],
+                        }
+                    )
+                global_errors[form.name].append('invalid_dates')
+        else:
+            form = WikiHistoryFilterForm(post=self._request_params.get)
+            if page.exists:
+                query_set = page.revisions
+                if self._request_params.user.has_permission(_permissions.PERM_MASK):
+                    revisions = query_set.all()
+                else:
+                    revisions = query_set.filter(hidden=False)
+                if form.is_valid():
+                    if form.cleaned_data['hidden_revisions_only']:
+                        revisions = revisions.filter(hidden=True)
+                    if form.cleaned_data['page_creations_only']:
+                        revisions = revisions.filter(page_creation=True)
+                    if form.cleaned_data['mask_minor_edits']:
+                        revisions = revisions.filter(is_minor=False)
+                    if start_date := form.cleaned_data['start_date']:
+                        revisions = revisions.filter(date__gte=start_date)
+                    if end_date := form.cleaned_data['end_date']:
+                        revisions = revisions.filter(date__lte=end_date)
+        return self._page_history_context(page, js_config, revisions, form, global_errors)
 
     def _page_error_context(
             self,
@@ -232,12 +319,8 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             empty_title=empty_title,
         )
 
-    def _page_read_context(
-            self,
-            page: _models.Page,
-            revision_id: int | None,
-            js_config: dict,
-    ) -> WikiPageReadActionContext:
+    def _page_read_context(self, page: _models.Page, revision_id: int | None, js_config: dict) \
+            -> WikiPageReadActionContext:
         """Create a wiki page read context object.
 
         :param page: Page object.
@@ -278,11 +361,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             no_page_notice=no_page_notice,
         )
 
-    def _page_info_context(
-            self,
-            page: _models.Page,
-            js_config: dict,
-    ) -> WikiPageInfoActionContext:
+    def _page_info_context(self, page: _models.Page, js_config: dict) -> WikiPageInfoActionContext:
         """Create a wiki page info context object.
 
         :param page: Page object.
@@ -355,11 +434,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             edit_protection_log_entry=_w_pages.get_page_protection_log_entry(page),
         )
 
-    def _page_talk_context(
-            self,
-            page: _models.Page,
-            js_config: dict,
-    ) -> WikiPageTalkActionContext:
+    def _page_talk_context(self, page: _models.Page, js_config: dict) -> WikiPageTalkActionContext:
         """Create a wiki page talk context object.
 
         :param page: Page object.
@@ -390,26 +465,26 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             self,
             page: _models.Page,
             js_config: dict,
+            revisions: _dj_models.QuerySet[_models.PageRevision],
+            form: WikiHistoryFilterForm,
+            global_errors: dict[str, list[str]],
     ) -> WikiPageHistoryActionContext:
         """Create a wiki page history context object.
 
         :param page: Page object.
         :param js_config: Dict object containing JS config values.
+        :param revisions: List of revisions.
+        :param form: The filter form.
+        :param global_errors: Global errors.
         :return: A WikiPageContext object.
         """
-        user = self._request_params.user
-        if page.exists:
-            if user.has_permission(_permissions.PERM_MASK):
-                revisions = page.revisions.all()
-            else:
-                revisions = page.revisions.filter(hidden=False)
-        else:
-            revisions = _dj_auth_models.EmptyManager(_models.PageRevision)
         return WikiPageHistoryActionContext(
             self._request_params,
             page=page,
             js_config=js_config,
             revisions=revisions.order_by('-date'),
+            form=form,
+            global_errors=global_errors,
         )
 
 
@@ -464,6 +539,34 @@ class WikiEditPageForm(_wiki_base_form.WikiForm):
             self.fields['hidden_category'].widget.attrs['disabled'] = True
         if disabled:
             self.fields['content'].widget.attrs['disabled'] = True
+
+
+class WikiHistoryFilterForm(_wiki_base_form.WikiForm):
+    hidden_revisions_only = _dj_forms.BooleanField(
+        label='hidden_revisions_only',
+        required=False,
+    )
+    page_creations_only = _dj_forms.BooleanField(
+        label='page_creations_only',
+        required=False,
+    )
+    mask_minor_edits = _dj_forms.BooleanField(
+        label='mask_minor_edits',
+        required=False,
+    )
+    start_date = _dj_forms.DateField(
+        label='start_date',
+        widget=_dj_forms.DateInput(attrs={'type': 'date'}),
+        required=False,
+    )
+    end_date = _dj_forms.DateField(
+        label='end_date',
+        widget=_dj_forms.DateInput(attrs={'type': 'date'}),
+        required=False,
+    )
+
+    def __init__(self, post=None, initial=None):
+        super().__init__('filter', False, post=post, initial=initial)
 
 
 class WikiPageContext(_core.PageContext, _abc.ABC):
@@ -893,7 +996,9 @@ class WikiPageHistoryActionContext(WikiPageContext):
             request_params: _requests.RequestParams,
             page: _models.Page,
             js_config: dict[str, _typ.Any],
-            revisions: list[_models.PageRevision],
+            revisions: _dj_models.QuerySet[_models.PageRevision],
+            form: WikiHistoryFilterForm,
+            global_errors: dict[str, list[str]],
     ):
         """Create a page context for a wiki page with the 'history' action.
 
@@ -902,6 +1007,8 @@ class WikiPageHistoryActionContext(WikiPageContext):
         :param js_config: Dict object containing the wiki’s JS config.
          It is converted to a JSON object before being inserted in the HTML page.
         :param revisions: List of page revisions.
+        :param form: The filter form.
+        :param global_errors: Global errors.
         """
         self._revisions = _dj_paginator.Paginator(revisions, request_params.results_per_page)
         super().__init__(
@@ -914,10 +1021,20 @@ class WikiPageHistoryActionContext(WikiPageContext):
             js_config=js_config,
             max_page_index=self._revisions.num_pages,
         )
+        self._form = form
+        self._global_errors = global_errors
 
     @property
     def revisions(self) -> _dj_paginator.Paginator:
         return self._revisions
+
+    @property
+    def form(self):
+        return self._form
+
+    @property
+    def global_errors(self) -> dict[str, list[str]]:
+        return self._global_errors
 
 
 class WikiSpecialPageContext(WikiPageContext):

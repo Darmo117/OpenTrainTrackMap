@@ -48,8 +48,7 @@ class ContributionsSpecialPage(_core.SpecialPage):
                             'end_date': form.cleaned_data['end_date'],
                         }
                     )
-                else:
-                    global_errors[form.name].append('invalid_dates')
+                global_errors[form.name].append('invalid_dates')
         elif args:
             kwargs = {k: v for k, v in params.get.items()}
             target_user = _auth.get_user_from_name(args[0])

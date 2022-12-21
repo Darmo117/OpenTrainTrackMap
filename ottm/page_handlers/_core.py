@@ -46,7 +46,7 @@ class PageHandler(_abc.ABC):
         if reverse:
             url = _dj_scut.reverse(url, kwargs=kwargs)
         if get_params:
-            url += '?' + _url_parse.urlencode(get_params)
+            url += '?' + _url_parse.urlencode({k: '' if v is False or v is None else v for k, v in get_params.items()})
         return _dj_response.HttpResponseRedirect(url)
 
     def render_page(self, template_name: str, context: PageContext, status: int = None,

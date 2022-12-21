@@ -1220,7 +1220,41 @@
           }
         },
         "history": {
-          "no_history": "This page has no history as it does not exist."
+          "no_history": "This page has no history as it does not exist.",
+          "form_spoiler": {
+            "label": "Filter revisions"
+          },
+          "form": {
+            "filter": {
+              "hidden_revisions_only": {
+                "label": "Show only hidden revisions"
+              },
+              "page_creations_only": {
+                "label": "Show only page creations"
+              },
+              "mask_minor_edits": {
+                "label": "Mask minor edits"
+              },
+              "start_date": {
+                "label": "From",
+                "error": {
+                  "invalid": "Invalid date!"
+                }
+              },
+              "end_date": {
+                "label": "Until",
+                "error": {
+                  "invalid": "Invalid date!"
+                }
+              },
+              "submit": {
+                "label": "Show contributions"
+              },
+              "error": {
+                "invalid_dates": "Invalid dates!"
+              }
+            }
+          }
         },
         "info": {
           "no_info": "Cannot fetch information on this page as it does not exist.",
