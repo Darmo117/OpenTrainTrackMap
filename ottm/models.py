@@ -285,7 +285,7 @@ class User:
         return list(self._user.email_user_blacklist) or []
 
     @email_user_blacklist.setter
-    def email_user_blacklist(self, value: list[str]):
+    def email_user_blacklist(self, value: _typ.Iterable[str]):
         """Set the list of users that cannot send emails to this user."""
         self._check_authenticated()
         self._user.email_user_blacklist = value
@@ -872,7 +872,7 @@ class User:
         return list(self._user.user_notification_blacklist) or []
 
     @user_notification_blacklist.setter
-    def user_notification_blacklist(self, value: list[str]):
+    def user_notification_blacklist(self, value: _typ.Iterable[str]):
         """Set the list of users whose notifications should be ignored."""
         self._check_authenticated()
         self._user.user_notification_blacklist = value
@@ -883,7 +883,7 @@ class User:
         return list(self._user.page_notification_blacklist) or []
 
     @page_notification_blacklist.setter
-    def page_notification_blacklist(self, value: list[str]):
+    def page_notification_blacklist(self, value: _typ.Iterable[str]):
         """Set the list of pages whose notifications should be ignored."""
         self._check_authenticated()
         self._user.page_notification_blacklist = value

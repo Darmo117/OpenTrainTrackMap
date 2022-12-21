@@ -47,8 +47,8 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
                 user.users_can_send_emails = form.cleaned_data['users_can_send_emails']
                 user.new_users_can_send_emails = form.cleaned_data['new_users_can_send_emails']
                 user.send_copy_of_sent_emails = form.cleaned_data['send_copy_of_sent_emails']
-                user.email_user_blacklist = _utils.normalize_line_returns(
-                    form.cleaned_data['email_user_blacklist']).split('\n')
+                user.email_user_blacklist = set(_utils.normalize_line_returns(
+                    form.cleaned_data['email_user_blacklist']).split('\n'))
                 n1, n2 = form.cleaned_data['max_file_preview_size'].split(',')
                 user.max_file_preview_size = (int(n1), int(n2))
                 user.thumbnails_size = form.cleaned_data['thumbnails_size']
@@ -104,10 +104,10 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
                 user.web_notify_cancelled_edits = form.cleaned_data['web_notify_cancelled_edits']
                 user.email_notify_cancelled_edits = form.cleaned_data['email_notify_cancelled_edits']
                 user.web_notify_edit_count_milestones = form.cleaned_data['web_notify_edit_count_milestones']
-                user.user_notification_blacklist = _utils.normalize_line_returns(
-                    form.cleaned_data['user_notification_blacklist']).split('\n')
-                user.page_notification_blacklist = _utils.normalize_line_returns(
-                    form.cleaned_data['page_notification_blacklist']).split('\n')
+                user.user_notification_blacklist = set(_utils.normalize_line_returns(
+                    form.cleaned_data['user_notification_blacklist']).split('\n'))
+                user.page_notification_blacklist = set(_utils.normalize_line_returns(
+                    form.cleaned_data['page_notification_blacklist']).split('\n'))
                 user.internal_object.save()
                 if changed_password:
                     return self.redirect('ottm:log_in', reverse=True, get_params={
