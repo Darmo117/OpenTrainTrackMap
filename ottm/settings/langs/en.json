@@ -1051,7 +1051,7 @@
         "Mute": {
           "title": "Mute a user",
           "title_user": "Mute “{value}”",
-          "done": "Changes successfully saved.",
+          "done": "Changes saved.",
           "menu": {
             "label": "Mute",
             "tooltip": "Mute emails and/or notifications from this user"
