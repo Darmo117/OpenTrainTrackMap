@@ -76,7 +76,11 @@
             {% endif %}
           {% elif context.page.namespace == NS_SPECIAL %}
             {% if context.page_exists %}
-              {% wiki_translate 'special_page.'|add:context.page.base_name|add:'.'|add:context.title_key value=context.title_value %}
+              {% if context.forbidden %}
+                {% wiki_translate 'special_page.forbidden.title' %}
+              {% else %}
+                {% wiki_translate 'special_page.'|add:context.page.base_name|add:'.'|add:context.title_key value=context.title_value %}
+              {% endif %}
             {% else %}
               {% wiki_translate 'special_page.does_not_exist.title' %}
             {% endif %}
@@ -167,7 +171,10 @@
               {% include path %}
             {% endwith %}
           {% else %}
-            {% wiki_translate 'special.error.permission_required' perms=context.required_perms|join:', ' %}
+            <div class="alert alert-danger" role="alert">
+              {% wiki_inner_link page_title=MAIN_PAGE_TITLE only_url=True as link %}
+              {% wiki_translate 'special_page.forbidden.message' perms=context.required_perms|join:', ' main_page_url=link %}
+            </div>
           {% endif %}
         {% elif context.action == ACTION_READ %}
           {% include 'ottm/wiki/read-component.html' %}

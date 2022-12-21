@@ -758,6 +758,10 @@
           "title": "Special page does not exist",
           "message": "**This special page does not exist.**\n\nA list of all special pages can be found [here]({special_pages_link}).\n\nGo back to the [main page]({main_page_url})."
         },
+        "forbidden": {
+          "title": "Forbidden access",
+          "message": "**You do not have the permissions required to access this special page.**\n\nGo back to the [main page]({main_page_url})."
+        },
         "RandomPage": {
           "title": "Random page",
           "menu": {

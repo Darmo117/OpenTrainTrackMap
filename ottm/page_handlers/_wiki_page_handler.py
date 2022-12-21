@@ -109,6 +109,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                     self._request_params,
                     page=page,
                     page_exists=False,
+                    forbidden=False,
                     js_config=_w_pages.get_js_config(self._request_params, page),
                 )
                 status = 404
@@ -117,6 +118,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                     self._request_params,
                     page=page,
                     page_exists=True,
+                    forbidden=True,
                     js_config=_w_pages.get_js_config(self._request_params, page),
                     required_perms=special_page.permissions_required,
                 )
@@ -136,6 +138,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                     self._request_params,
                     page=page,
                     page_exists=True,
+                    forbidden=False,
                     js_config=_w_pages.get_js_config(self._request_params, page, data),
                     required_perms=special_page.permissions_required,
                     kwargs=data,
@@ -472,6 +475,7 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
             no_index: bool,
             show_title: bool,
             page_exists: bool,
+            forbidden: bool,
             js_config: dict[str, _typ.Any],
             max_page_index: int = None,
     ):
@@ -496,6 +500,7 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
         self._page = page
         self._show_title = show_title
         self._page_exists = page_exists
+        self._forbidden = forbidden
         if page.namespace.allows_subpages and '/' in page.title:
             self._parent_pages = page.get_parent_page_titles()
         else:
@@ -533,6 +538,10 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
         return self._page_exists
 
     @property
+    def forbidden(self) -> bool:
+        return self._forbidden
+
+    @property
     def can_user_edit(self) -> bool:
         return self.page.can_user_edit(self.user)
 
@@ -567,6 +576,7 @@ class WikiPageErrorContext(WikiPageContext):
             no_index=True,
             show_title=True,
             page_exists=False,
+            forbidden=False,
             js_config=js_config,
         )
         self._char = char
@@ -625,6 +635,7 @@ class WikiPageReadActionContext(WikiPageContext):
             no_index=no_index,
             show_title=show_title,
             page_exists=page.exists,
+            forbidden=False,
             js_config=js_config,
             max_page_index=self._cat_pages.num_pages,
         )
@@ -695,6 +706,7 @@ class WikiPageInfoActionContext(WikiPageContext):
             no_index=True,
             show_title=True,
             page_exists=page.exists,
+            forbidden=False,
             js_config=js_config,
         )
         self._revisions = revisions
@@ -785,6 +797,7 @@ class WikiPageEditActionContext(WikiPageContext):
             no_index=True,
             show_title=True,
             page_exists=page.exists,
+            forbidden=False,
             js_config=js_config,
         )
         self._revision = revision
@@ -856,6 +869,7 @@ class WikiPageTalkActionContext(WikiPageContext):
             no_index=True,
             show_title=True,
             page_exists=page.exists,
+            forbidden=False,
             js_config=js_config,
             max_page_index=self._topics.num_pages,
         )
@@ -895,6 +909,7 @@ class WikiPageHistoryActionContext(WikiPageContext):
             no_index=True,
             show_title=True,
             page_exists=page.exists,
+            forbidden=False,
             js_config=js_config,
             max_page_index=self._revisions.num_pages,
         )
@@ -912,6 +927,7 @@ class WikiSpecialPageContext(WikiPageContext):
             request_params: _requests.RequestParams,
             page: _models.Page,
             page_exists: bool,
+            forbidden: bool,
             js_config: dict[str, _typ.Any],
             required_perms: tuple[str, ...] = (),
             kwargs: dict[str, _typ.Any] = None,
@@ -921,6 +937,7 @@ class WikiSpecialPageContext(WikiPageContext):
         :param request_params: Page request parameters.
         :param page: Wiki page object.
         :param page_exists: Whether the page exists.
+        :param forbidden: Whether the user is forbidden from reading the page.
         :param js_config: Dict object containing the wiki’s JS config.
             It is converted to a JSON object before being inserted in the HTML page.
         :param required_perms: Tuple of all permissions required to access the special page.
@@ -934,6 +951,7 @@ class WikiSpecialPageContext(WikiPageContext):
             no_index=True,
             show_title=True,
             page_exists=page_exists,
+            forbidden=forbidden,
             js_config=js_config,
             max_page_index=kwargs.get('max_page_index', 1),
         )
