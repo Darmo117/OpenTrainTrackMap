@@ -32,15 +32,17 @@ class MuteSpecialPage(_core.SpecialPage):
                 target_user = _auth.get_user_from_name(form.cleaned_data['username'])
                 username = target_user.username
                 if user.is_authenticated:
-                    email_bl = list(user.email_user_blacklist)
+                    email_bl = user.email_user_blacklist
                     if form.cleaned_data['mute_emails']:
-                        email_bl.append(username)
+                        if username not in email_bl:
+                            email_bl.append(username)
                     elif username in email_bl:
                         email_bl.remove(username)
                     user.email_user_blacklist = email_bl
-                    notif_bl = list(user.user_notification_blacklist)
+                    notif_bl = user.user_notification_blacklist
                     if form.cleaned_data['mute_notifications']:
-                        notif_bl.append(username)
+                        if username not in notif_bl:
+                            notif_bl.append(username)
                     elif username in notif_bl:
                         notif_bl.remove(username)
                     user.user_notification_blacklist = notif_bl

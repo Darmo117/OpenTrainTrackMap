@@ -280,9 +280,9 @@ class User:
         self._user.send_copy_of_sent_emails = value
 
     @property
-    def email_user_blacklist(self) -> _typ.Sequence[str]:
+    def email_user_blacklist(self) -> list[str]:
         """List of users that cannot send emails to this user."""
-        return self._user.email_user_blacklist or []
+        return list(self._user.email_user_blacklist) or []
 
     @email_user_blacklist.setter
     def email_user_blacklist(self, value: list[str]):
@@ -867,9 +867,9 @@ class User:
         self._user.notif_edit_count_milestones_web = value
 
     @property
-    def user_notification_blacklist(self) -> _typ.Sequence[str]:
+    def user_notification_blacklist(self) -> list[str]:
         """List of users whose notifications should be ignored."""
-        return self._user.user_notification_blacklist or []
+        return list(self._user.user_notification_blacklist) or []
 
     @user_notification_blacklist.setter
     def user_notification_blacklist(self, value: list[str]):
@@ -878,9 +878,9 @@ class User:
         self._user.user_notification_blacklist = value
 
     @property
-    def page_notification_blacklist(self) -> _typ.Sequence[str]:
+    def page_notification_blacklist(self) -> list[str]:
         """List of pages whose notifications should be ignored."""
-        return self._user.page_notification_blacklist or []
+        return list(self._user.page_notification_blacklist) or []
 
     @page_notification_blacklist.setter
     def page_notification_blacklist(self, value: list[str]):

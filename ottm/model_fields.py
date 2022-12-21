@@ -75,11 +75,11 @@ class CommaSeparatedStringsField(_dj_models.TextField):
     def get_prep_value(self, value: _typ.Sequence[str] | None) -> str | None:
         if value is None:
             return None
-        return ','.join(value)
+        return ','.join(v for v in value if v)
 
     def value_to_string(self, obj) -> str | None:
         return self.get_prep_value(self.value_from_object(obj))
 
     @staticmethod
-    def _parse(s: str) -> _typ.Sequence[str]:
-        return s.split(',')
+    def _parse(value: str) -> list[str]:
+        return [s for s in value.split(',') if s]

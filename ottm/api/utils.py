@@ -21,6 +21,11 @@ def clamp(v: int | float, mini: int | float = -_math.inf, maxi: int | float = _m
     return max(min(v, maxi), mini)
 
 
+def normalize_line_returns(s: str) -> str:
+    """Replace any CRLF and CR by LF."""
+    return s.replace('\r\n', '\n').replace('\r', '\n')
+
+
 def now() -> _dt.datetime:
     """Return the current UTC time."""
     return _dt.datetime.now().astimezone(_pytz.UTC)
