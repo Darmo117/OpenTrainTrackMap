@@ -11,7 +11,6 @@ class RequestParams:
 
     MIN_RESULTS_PER_PAGE = 20
     MAX_RESULTS_PER_PAGE = 500
-    DEFAULT_RESULTS_PER_PAGE = 50
 
     def __init__(self, request: _dj_wsgi.WSGIRequest):
         get_params = request.GET
@@ -105,15 +104,17 @@ class RequestParams:
             return request.COOKIES['dark_mode'] == 'true'
         return user.uses_dark_mode
 
-    @classmethod
-    def _get_results_per_page(cls, get_params: _dj_wsgi.QueryDict) -> int:
+    def _get_results_per_page(self, get_params: _dj_wsgi.QueryDict) -> int:
         if 'results_per_page' in get_params:
             try:
-                return _utils.clamp(int(get_params.get('results_per_page', cls.DEFAULT_RESULTS_PER_PAGE)),
-                                    cls.MIN_RESULTS_PER_PAGE, cls.MAX_RESULTS_PER_PAGE)
+                return _utils.clamp(
+                    int(get_params.get('results_per_page', self.user.default_edits_nb_in_wiki_edit_lists)),
+                    self.MIN_RESULTS_PER_PAGE,
+                    self.MAX_RESULTS_PER_PAGE
+                )
             except ValueError:
                 pass
-        return cls.DEFAULT_RESULTS_PER_PAGE
+        return self.user.default_edits_nb_in_wiki_edit_lists
 
     @staticmethod
     def _get_page_index(get_params: _dj_wsgi.QueryDict) -> int:

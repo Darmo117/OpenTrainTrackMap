@@ -492,7 +492,7 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
         """
         super().__init__(
             request_params,
-            tab_title=page.full_title,  # FIXME use localized name for special pages and error pages
+            tab_title=page.full_title,
             title=page.title,
             no_index=no_index,
             max_page_index=max_page_index,

@@ -1068,7 +1068,7 @@ class CustomUser(_dj_auth_models.AbstractUser):
     show_preview_above_edit_form = _dj_models.BooleanField(default=True)  # TODO use
     show_preview_without_reload = _dj_models.BooleanField(default=True)  # TODO use
     days_nb_rc_fl_logs = _dj_models.IntegerField(validators=[days_nb_rc_fl_logs_validator], default=30)  # TODO use
-    edits_nb_rc_fl_logs = _dj_models.IntegerField(validators=[edits_nb_rc_fl_logs_validator], default=50)  # TODO use
+    edits_nb_rc_fl_logs = _dj_models.IntegerField(validators=[edits_nb_rc_fl_logs_validator], default=50)
     group_edits_per_page_rc_fl = _dj_models.BooleanField(default=False)  # TODO use
     mask_wiki_minor_edits = _dj_models.BooleanField(default=False)  # TODO use
     mask_wiki_bot_edits = _dj_models.BooleanField(default=False)  # TODO use
