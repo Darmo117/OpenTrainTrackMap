@@ -1049,9 +1049,9 @@
           }
         },
         "Mute": {
-          "title": "Send an email to a user",
-          "title_user": "Send an email to “{value}”",
-          "done": "Email successfully sent.",
+          "title": "Mute a user",
+          "title_user": "Mute “{value}”",
+          "done": "Changes successfully saved.",
           "menu": {
             "label": "Mute",
             "tooltip": "Mute emails and/or notifications from this user"
@@ -1059,7 +1059,10 @@
           "form": {
             "mute_user": {
               "username": {
-                "label": "User to mute"
+                "label": "User to mute",
+                "error": {
+                  "user_does_not_exist": "This user does not exist!"
+                }
               },
               "mute_emails": {
                 "label": "Mute emails from this user"
@@ -1071,7 +1074,8 @@
                 "label": "Submit"
               },
               "error": {
-                "anonymous_user": "Anonymous users cannot mute others."
+                "anonymous_user": "Anonymous users cannot mute others.",
+                "user_does_not_exist": "This user does not exist!"
               }
             }
           }
