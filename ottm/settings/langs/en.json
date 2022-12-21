@@ -1061,6 +1061,7 @@
               "username": {
                 "label": "User to mute",
                 "error": {
+                  "required": "Missing username!",
                   "user_does_not_exist": "This user does not exist!"
                 }
               },
