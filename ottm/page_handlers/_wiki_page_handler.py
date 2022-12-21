@@ -127,7 +127,8 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                 data = special_page.process_request(self._request_params, title)
                 if isinstance(data, _w_sp.Redirect):
                     args = {k: v for k, v in self._request_params.get.items()}
-                    args.update(data.args)
+                    # Replace False and None values by an empty strings
+                    args.update({k: '' if v is False or v is None else v for k, v in data.args.items()})
                     return self.redirect(
                         'ottm:wiki_page',
                         reverse=True,

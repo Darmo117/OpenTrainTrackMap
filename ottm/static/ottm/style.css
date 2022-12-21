@@ -63,6 +63,10 @@ html, body {
   padding-bottom: 1em;
 }
 
+#accordion {
+  margin-bottom: 1em;
+}
+
 .dropdown-menu, .dropdown-menu .dropdown-item {
   cursor: pointer;
 }

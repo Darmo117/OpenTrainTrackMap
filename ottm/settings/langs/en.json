@@ -146,7 +146,10 @@
               "title": "Block",
               "end_date": {
                 "label": "End date",
-                "help": "Leave empty for infinite duration."
+                "help": "Leave empty for infinite duration.",
+                "error": {
+                  "invalid": "Invalid date!"
+                }
               },
               "allow_messages_on_own_user_page": {
                 "label": "Allow posting messages on own page"
@@ -636,62 +639,6 @@
     "form": {
       "global_error": {
         "title": "The following errors were encountered:"
-      },
-      "sign_up": {
-        "username": {
-          "label": "Username",
-          "help": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
-          "error": {
-            "invalid": "Invalid username.",
-            "duplicate": "This username is already taken.",
-            "min_length": "Username is too short.",
-            "max_length": "Username is too long.",
-            "required": "This field is required."
-          }
-        },
-        "email": {
-          "label": "Email",
-          "help": "Required.",
-          "error": {
-            "invalid": "Invalid email address.",
-            "required": "This field is required."
-          }
-        },
-        "password": {
-          "label": "Password",
-          "help": "Required.",
-          "error": {
-            "min_length": "Password is too short.",
-            "max_length": "Password is too long.",
-            "required": "This field is required."
-          }
-        },
-        "password_confirm": {
-          "label": "Confirm password",
-          "help": "Required."
-        },
-        "submit": {
-          "label": "Create account"
-        }
-      },
-      "log_in": {
-        "username": {
-          "label": "Username",
-          "error": {
-            "not_exists": "No accounts registered with this username.",
-            "required": "This field is required."
-          }
-        },
-        "password": {
-          "label": "Password",
-          "help": "Required.",
-          "error": {
-            "required": "This field is required."
-          }
-        },
-        "submit": {
-          "label": "Log in"
-        }
       }
     },
     "js": {
@@ -742,6 +689,11 @@
     "wiki": {
       "name": "{site_name} Wiki",
       "main_page_title": "Main page",
+      "namespace": {
+        "0": {
+          "display_name": "(Main)"
+        }
+      },
       "special_page": {
         "requires_perms": {
           "tooltip": "This special page requires specific permissions"
@@ -912,9 +864,11 @@
             "label": "Wiki contributions",
             "tooltip": "Display the contributions to the wiki of this user"
           },
-          "user_links": "User page: {username}",
+          "form_spoiler": {
+            "label": "Filter contributions"
+          },
           "form": {
-            "select_user": {
+            "filter": {
               "username": {
                 "label": "Username",
                 "error": {
@@ -923,11 +877,47 @@
                   "required": "Missing username!"
                 }
               },
+              "namespace": {
+                "label": "Namespace",
+                "all": "All",
+                "error": {
+                  "invalid": "Invalid choice!",
+                  "required": "Missing namespace!"
+                }
+              },
+              "invert_selection": {
+                "label": "Invert selection",
+                "help": "Ignored if no specific namespace is selected."
+              },
+              "hidden_revisions_only": {
+                "label": "Show only hidden revisions"
+              },
+              "last_revisions_only": {
+                "label": "Show only revisions that are the latest of their page"
+              },
+              "page_creations_only": {
+                "label": "Show only page creations"
+              },
+              "mask_minor_edits": {
+                "label": "Mask minor edits"
+              },
+              "start_date": {
+                "label": "From",
+                "error": {
+                  "invalid": "Invalid date!"
+                }
+              },
+              "end_date": {
+                "label": "Until",
+                "error": {
+                  "invalid": "Invalid date!"
+                }
+              },
               "submit": {
                 "label": "Show contributions"
               },
               "error": {
-                "user_does_not_exist": "User does not exist!"
+                "invalid_dates": "Invalid dates!"
               }
             }
           }
@@ -1345,6 +1335,10 @@
           "bot": {
             "label": "b",
             "tooltip": "Bot edit"
+          },
+          "creation": {
+            "label": "c",
+            "tooltip": "Page creation"
           }
         },
         "no_results_message": "No results"

@@ -12,7 +12,7 @@
         {{ line.page_link|safe }} ·
         {% if line.flags %}
           {% for flag in line.flags %}
-            <abbr class="badge badge-info" title="{{ flag.1 }}">{{ flag.0 }}</abbr>
+            <abbr class="badge badge-{{ flag.2 }}" title="{{ flag.1 }}">{{ flag.0 }}</abbr>
           {% endfor %}
           ·
         {% endif %}

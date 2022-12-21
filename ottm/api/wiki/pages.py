@@ -262,7 +262,8 @@ def edit_page(request: _dj_wsgi.WSGIRequest | None, author: _models.User, page: 
         else:
             raise ValueError('missing request')
     if not page.exists or page.get_content() != content:
-        if not page.exists:
+        creation = not page.exists
+        if creation:
             # Set content type
             page.content_type = _get_page_content_type(page)
             page.save()
@@ -275,6 +276,7 @@ def edit_page(request: _dj_wsgi.WSGIRequest | None, author: _models.User, page: 
             is_minor=minor_edit,
             content=content,
             is_bot=author.is_bot,
+            page_creation=creation,
         ).save()
         if page.content_type == _w_cons.CT_JS:
             page.minified_content = minify_js(content)

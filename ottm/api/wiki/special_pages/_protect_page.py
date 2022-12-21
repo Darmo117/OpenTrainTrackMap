@@ -89,7 +89,7 @@ class _Form(_ph.WikiForm):
         widget=_dj_forms.DateInput(attrs={'type': 'date'}),
         required=False,
         help_text=True,
-        validators=[_models.end_date_validator],
+        validators=[_models.future_date_validator],
     )
     protect_talks = _dj_forms.BooleanField(
         label='protect_talks',

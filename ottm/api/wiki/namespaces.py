@@ -35,6 +35,17 @@ class Namespace:
         """
         return self.is_editable and all(user.has_permission(p) for p in self.perms_required)
 
+    def get_display_name(self, language) -> str:
+        """Return the name of this namespace in the given language.
+
+        :param language: The language.
+        :type language: ottm.settings.UILanguage
+        :return: The namespace’s name.
+        """
+        if self.name:
+            return self.name
+        return language.translate(f'wiki.namespace.{self.id}.display_name')
+
 
 NS_SPECIAL = Namespace(id=-1, name='Special', is_editable=False, allows_subpages=False)
 NS_MAIN = Namespace(id=0, name='', is_content=True, allows_subpages=False)

@@ -388,12 +388,18 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
             ignore_current_title=True,
         )
         flags = []
+        if revision.page_creation:
+            flags.append((wiki_translate(context, 'revisions_list.flag.creation.label'),
+                          wiki_translate(context, 'revisions_list.flag.creation.tooltip'),
+                          'success'))
         if revision.is_minor:
             flags.append((wiki_translate(context, 'revisions_list.flag.minor.label'),
-                          wiki_translate(context, 'revisions_list.flag.minor.tooltip')))
+                          wiki_translate(context, 'revisions_list.flag.minor.tooltip'),
+                          'secondary'))
         if revision.is_bot:
             flags.append((wiki_translate(context, 'revisions_list.flag.bot.label'),
-                          wiki_translate(context, 'revisions_list.flag.bot.tooltip')))
+                          wiki_translate(context, 'revisions_list.flag.bot.tooltip'),
+                          'light'))
         size = _ottm.ottm_format_number(context, revision.bytes_size, value_only=True)
         size_text = wiki_translate(context, 'revisions_list.size.label', n=size)
         variation = revision.get_byte_size_diff(ignore_hidden=ignore_hidden)

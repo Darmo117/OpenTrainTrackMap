@@ -282,7 +282,8 @@ class User:
     @property
     def email_user_blacklist(self) -> list[str]:
         """List of users that cannot send emails to this user."""
-        return list(self._user.email_user_blacklist) or []
+        # noinspection PyTypeChecker
+        return list(self._user.email_user_blacklist or [])
 
     @email_user_blacklist.setter
     def email_user_blacklist(self, value: _typ.Iterable[str]):
@@ -869,7 +870,8 @@ class User:
     @property
     def user_notification_blacklist(self) -> list[str]:
         """List of users whose notifications should be ignored."""
-        return list(self._user.user_notification_blacklist) or []
+        # noinspection PyTypeChecker
+        return list(self._user.user_notification_blacklist or [])
 
     @user_notification_blacklist.setter
     def user_notification_blacklist(self, value: _typ.Iterable[str]):
@@ -880,7 +882,8 @@ class User:
     @property
     def page_notification_blacklist(self) -> list[str]:
         """List of pages whose notifications should be ignored."""
-        return list(self._user.page_notification_blacklist) or []
+        # noinspection PyTypeChecker
+        return list(self._user.page_notification_blacklist or [])
 
     @page_notification_blacklist.setter
     def page_notification_blacklist(self, value: _typ.Iterable[str]):
@@ -1825,8 +1828,11 @@ class UnitTranslation(Translation):
 ########
 
 
-def end_date_validator(value: _dt.date):
-    if value and value <= _utils.now().date():
+def future_date_validator(value: _dt.date | _dt.datetime):
+    now = _utils.now()
+    if isinstance(value, _dt.date):
+        now = now.date()
+    if value and value <= now:
         raise _dj_exc.ValidationError('date is in the past', code='past_date')
 
 
@@ -2257,6 +2263,7 @@ class PageRevision(Revision):
     """A page revision is a version of a page’s content at a given time."""
     page = _dj_models.ForeignKey(Page, on_delete=_dj_models.PROTECT, related_name='revisions')
     content = _dj_models.TextField()
+    page_creation = _dj_models.BooleanField()
 
     def _get_object(self) -> tuple[str, _typ.Any]:
         return 'page', self.page
