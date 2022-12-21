@@ -8,7 +8,7 @@ from . import _core
 from .. import pages as _pages
 from ..namespaces import *
 from ... import errors as _errors
-from .... import models as _models, page_handlers as _ph, requests as _requests
+from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
 
 
 class ProtectPageSpecialPage(_core.SpecialPage):
@@ -38,10 +38,6 @@ class ProtectPageSpecialPage(_core.SpecialPage):
                                                form.cleaned_data['end_date'])
                 except _errors.MissingPermissionError:
                     global_errors[form.name].append('missing_permission')
-                except _errors.EditSpecialPageError:
-                    global_errors[form.name].append('edit_special_page')
-                except _errors.PastDateError:
-                    global_errors[form.name].append('past_date')
                 else:
                     if done:
                         return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
@@ -77,7 +73,7 @@ class _Form(_ph.WikiForm):
         max_length=_models.Page._meta.get_field('title').max_length,
         required=True,
         strip=True,
-        validators=[_models.page_title_validator],
+        validators=[_models.page_title_validator, _forms.non_special_page_validator],
     )
     protection_level = _dj_forms.ChoiceField(
         label='protection_level',
@@ -91,6 +87,7 @@ class _Form(_ph.WikiForm):
         widget=_dj_forms.DateInput(attrs={'type': 'date'}),
         required=False,
         help_text=True,
+        validators=[_models.end_date_validator],
     )
     protect_talks = _dj_forms.BooleanField(
         label='protect_talks',

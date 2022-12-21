@@ -1819,6 +1819,11 @@ class UnitTranslation(Translation):
 ########
 
 
+def end_date_validator(value: datetime.date):
+    if value and value <= utils.now().date():
+        raise dj_exc.ValidationError('date is in the past', code='past_date')
+
+
 class NonDeletableMixin:
     def delete(self, *args, **kwargs):
         raise RuntimeError(f'cannot delete instances of {self.__class__.__name__}')
@@ -1959,6 +1964,7 @@ class Page(dj_models.Model, NonDeletableMixin):
 
     @property
     def exists(self) -> bool:
+        # FIXME for special pages
         """Whether this pages exists in the database."""
         return self.pk is not None
 

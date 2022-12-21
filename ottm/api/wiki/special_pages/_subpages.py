@@ -8,7 +8,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import pages as _pages
 from ..namespaces import *
-from .... import models as _models, page_handlers as _ph, requests as _requests
+from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
 
 
 class SubpagesSpecialPage(_core.SpecialPage):
@@ -24,16 +24,18 @@ class SubpagesSpecialPage(_core.SpecialPage):
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:
         form = _Form()
-        if params.post:
-            form = _Form(params.post)
-            if form.is_valid():
-                return _core.Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["page_name"]}')
         target_page = None
         subpages = _dj_auth_models.EmptyManager(_models.PageRevision)
         if title := '/'.join(args):
             target_page = _pages.get_page(*_pages.split_title(title))
             subpages = target_page.get_subpages()
-            form = _Form(initial={'page_name': target_page.full_title})
+        if params.post:
+            form = _Form(params.post)
+            if form.is_valid():
+                return _core.Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["page_name"]}')
+        else:
+            if target_page:
+                form = _Form(initial={'page_name': target_page.full_title})
         paginator = _dj_paginator.Paginator(subpages, params.results_per_page)
         return {
             'title_key': 'title_page' if target_page else 'title',
@@ -51,7 +53,7 @@ class _Form(_ph.WikiForm):
         max_length=_models.Page._meta.get_field('title').max_length,
         required=True,
         strip=True,
-        validators=[_models.page_title_validator],
+        validators=[_models.page_title_validator, _forms.non_special_page_validator, _forms.page_exists_validator],
     )
 
     def __init__(self, post=None, initial=None):

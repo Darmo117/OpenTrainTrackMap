@@ -825,15 +825,24 @@
           "form": {
             "protect_page": {
               "page": {
-                "label": "Page to protect"
+                "label": "Page to protect",
+                "error": {
+                  "special_page": "Special pages cannot be modified."
+                }
               },
               "protection_level": {
                 "label": "Protection level",
-                "help": "Only users from this group will be able to edit the page."
+                "help": "Only users from this group will be able to edit the page.",
+                "error": {
+                  "invalid_choice": "Invalid choice!"
+                }
               },
               "end_date": {
                 "label": "End date",
-                "help": "Leave empty for infinite duration. Ignored if the selected group is 'all'."
+                "help": "Leave empty for infinite duration. Ignored if the selected group is 'all'.",
+                "error": {
+                  "past_date": "The specified date is in the past."
+                }
               },
               "protect_talks": {
                 "label": "Protect talks"
@@ -845,9 +854,7 @@
                 "label": "Submit"
               },
               "error": {
-                "missing_permission": "You do not have the permissions required to edit this page.",
-                "edit_special_page": "Special pages cannot be modified.",
-                "past_date": "The specified date is in the past."
+                "missing_permission": "You do not have the permissions required to edit this page."
               }
             }
           }
@@ -865,6 +872,8 @@
                 "label": "Page:",
                 "error": {
                   "page_invalid_title": "Invalid page title!",
+                  "page_does_not_exist": "This page does not exist.",
+                  "special_page": "Special pages do not have subpages.",
                   "required": "Missing page title!"
                 }
               },
@@ -937,6 +946,8 @@
                 "label": "Page:",
                 "error": {
                   "page_invalid_title": "Invalid page name!",
+                  "page_does_not_exist": "This page does not exist.",
+                  "special_page": "Special pages cannot be modified.",
                   "required": "Missing page name!"
                 }
               },
@@ -954,8 +965,7 @@
               },
               "error": {
                 "missing_permission": "You do not have the permissions required to edit this page.",
-                "page_does_not_exist": "This page does not exist.",
-                "edit_special_page": "Special pages cannot be modified."
+                "page_does_not_exist": "This page does not exist."
               }
             }
           }
@@ -971,6 +981,8 @@
                 "label": "Page:",
                 "error": {
                   "page_invalid_title": "Invalid page name!",
+                  "page_does_not_exist": "This page does not exist.",
+                  "special_page": "Special pages cannot be modified.",
                   "required": "Missing page name!"
                 }
               },
@@ -988,8 +1000,7 @@
               },
               "error": {
                 "missing_permission": "You do not have the permissions required to edit this page.",
-                "page_does_not_exist": "This page does not exist.",
-                "edit_special_page": "Special pages cannot be modified."
+                "page_does_not_exist": "This page does not exist."
               }
             }
           }

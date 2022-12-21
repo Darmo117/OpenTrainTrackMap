@@ -7,7 +7,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import constants as _constants, pages as _pages
 from ... import errors as _errors
-from .... import models as _models, page_handlers as _ph, requests as _requests
+from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
 
 
 class ChangePageContentTypeSpecialPage(_core.SpecialPage):
@@ -33,12 +33,10 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
                 try:
                     done = _pages.set_page_content_type(params.user, target_page, content_type,
                                                         form.cleaned_data['reason'])
-                except _errors.PageDoesNotExistError:
+                except _errors.PageDoesNotExistError:  # Keep as the page may have been deleted right before submit
                     global_errors[form.name].append('page_does_not_exist')
                 except _errors.MissingPermissionError:
                     global_errors[form.name].append('missing_permission')
-                except _errors.EditSpecialPageError:
-                    global_errors[form.name].append('edit_special_page')
                 else:
                     if done:
                         return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
@@ -73,7 +71,7 @@ class _Form(_ph.WikiForm):
         max_length=_models.Page._meta.get_field('title').max_length,
         required=True,
         strip=True,
-        validators=[_models.page_title_validator],
+        validators=[_models.page_title_validator, _forms.non_special_page_validator, _forms.page_exists_validator],
     )
     content_type = _dj_forms.ChoiceField(
         label='content_type',

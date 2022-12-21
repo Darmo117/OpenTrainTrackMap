@@ -5,6 +5,19 @@ import django.core.exceptions as _dj_exc
 import django.forms as _dj_forms
 
 
+def non_special_page_validator(value: str):
+    from .api.wiki import namespaces as _w_ns, pages as _w_pages
+    ns, _ = _w_pages.split_title(value)
+    if ns == _w_ns.NS_SPECIAL:
+        raise _dj_exc.ValidationError('special page', code='special_page')
+
+
+def page_exists_validator(value: str):
+    from .api.wiki import pages as _w_pages
+    if not _w_pages.get_page(*_w_pages.split_title(value)).exists:
+        raise _dj_exc.ValidationError('page does not exist', code='page_does_not_exist')
+
+
 class CustomForm(_dj_forms.Form):
     """Base class for all forms. Applies custom CSS styles to widgets."""
 

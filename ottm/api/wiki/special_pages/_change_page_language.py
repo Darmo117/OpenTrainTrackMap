@@ -7,7 +7,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import pages as _pages
 from ... import errors as _errors
-from .... import models as _models, page_handlers as _ph, requests as _requests, settings as _settings
+from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests, settings as _settings
 
 
 class ChangePageLanguageSpecialPage(_core.SpecialPage):
@@ -33,12 +33,10 @@ class ChangePageLanguageSpecialPage(_core.SpecialPage):
                 try:
                     done = _pages.set_page_content_language(params.user, target_page, content_language,
                                                             form.cleaned_data['reason'])
-                except _errors.PageDoesNotExistError:
+                except _errors.PageDoesNotExistError:  # Keep as the page may have been deleted right before submit
                     global_errors[form.name].append('page_does_not_exist')
                 except _errors.MissingPermissionError:
                     global_errors[form.name].append('missing_permission')
-                except _errors.EditSpecialPageError:
-                    global_errors[form.name].append('edit_special_page')
                 else:
                     if done:
                         return _core.Redirect(f'Special:{self.name}/{"/".join(args)}', args={'done': True})
@@ -73,7 +71,7 @@ class _Form(_ph.WikiForm):
         max_length=_models.Page._meta.get_field('title').max_length,
         required=True,
         strip=True,
-        validators=[_models.page_title_validator],
+        validators=[_models.page_title_validator, _forms.non_special_page_validator, _forms.page_exists_validator],
     )
     content_language = _dj_forms.ChoiceField(
         label='content_language',
