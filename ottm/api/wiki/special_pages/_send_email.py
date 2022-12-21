@@ -29,11 +29,11 @@ class SendEmailSpecialPage(_core.SpecialPage):
             form = _Form(user, post=params.post)
             if form.is_valid():
                 target_user = _auth.get_user_from_name(form.cleaned_data['username'])
-                sent = _emails.send_email(target_user, form.cleaned_data['subject'],
-                                          form.cleaned_data['content'], sender=user)
+                sent = _emails.user_send_email(target_user, form.cleaned_data['subject'],
+                                               form.cleaned_data['content'], user, copy=False)
                 if form.cleaned_data['send_copy']:
-                    copy_sent = _emails.send_email(user, form.cleaned_data['subject'],
-                                                   form.cleaned_data['content'])
+                    copy_sent = _emails.user_send_email(target_user, form.cleaned_data['subject'],
+                                                        form.cleaned_data['content'], user, copy=True)
                 else:
                     copy_sent = None
                 if sent:

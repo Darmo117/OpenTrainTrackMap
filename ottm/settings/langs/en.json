@@ -938,7 +938,7 @@
           "done": "Email successfully sent.",
           "copy_sent": "Copy successfully sent.",
           "copy_error": "The copy could not be sent due to an unknown error.",
-          "info": "The email address you indicated in your profile settings will show up in the “Sender” field of your message so that the recipient can respond.",
+          "info": "The email address you indicated in your profile settings will show up in the “Reply to” field of your message so that the recipient can respond.",
           "menu": {
             "label": "Send an email",
             "tooltip": "Send an email to this user"
