@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import abc as _abc
 import datetime as _dt
-import re
+import re as _re
 import typing as _typ
 
 import django.contrib.auth.models as _dj_auth_models
@@ -47,7 +47,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             )
 
         # Remove all trailing '/'
-        if match := re.search('/+$', self._raw_page_title):
+        if match := _re.search('/+$', self._raw_page_title):
             return self.redirect(
                 'ottm:wiki_page',
                 reverse=True,

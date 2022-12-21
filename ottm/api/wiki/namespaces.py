@@ -1,7 +1,7 @@
 """This module defines the wiki’s namespaces."""
 import dataclasses as _dt
 
-from ..permissions import *
+from .. import permissions as _perms
 
 SEPARATOR = ':'
 
@@ -44,7 +44,7 @@ NS_HELP = Namespace(id=3, name='Help')
 NS_USER = Namespace(id=4, name='User')
 NS_TEMPLATE = Namespace(id=10, name='Template')
 NS_MODULE = Namespace(id=11, name='Module')
-NS_INTERFACE = Namespace(id=12, name='Interface', perms_required=(PERM_WIKI_EDIT_INTERFACE,))
+NS_INTERFACE = Namespace(id=12, name='Interface', perms_required=(_perms.PERM_WIKI_EDIT_INTERFACE,))
 NS_FILE = Namespace(id=13, name='File', allows_subpages=False)
 
 NAMESPACE_IDS: dict[int, Namespace] = {v.id: v for k, v in globals().items() if k.startswith('NS_')}

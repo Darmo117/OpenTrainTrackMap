@@ -1,7 +1,7 @@
 """This module defines utility template tags."""
-import django.template as dj_template
+import django.template as _dj_template
 
-register = dj_template.Library()
+register = _dj_template.Library()
 
 
 @register.filter

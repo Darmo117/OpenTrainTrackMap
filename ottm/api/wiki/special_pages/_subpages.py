@@ -6,8 +6,7 @@ import django.core.paginator as _dj_paginator
 import django.forms as _dj_forms
 
 from . import _core
-from .. import pages as _pages
-from ..namespaces import *
+from .. import namespaces as _w_ns, pages as _w_pages
 from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
 
 
@@ -27,12 +26,13 @@ class SubpagesSpecialPage(_core.SpecialPage):
         target_page = None
         subpages = _dj_auth_models.EmptyManager(_models.PageRevision)
         if title := '/'.join(args):
-            target_page = _pages.get_page(*_pages.split_title(title))
+            target_page = _w_pages.get_page(*_w_pages.split_title(title))
             subpages = target_page.get_subpages()
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
-                return _core.Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["page_name"]}')
+                return _core.Redirect(
+                    _w_ns.NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["page_name"]}')
         else:
             if target_page:
                 form = _Form(initial={'page_name': target_page.full_title})

@@ -6,9 +6,8 @@ import django.core.paginator as _dj_paginator
 import django.forms as _dj_forms
 
 from . import _core
-from ..namespaces import *
-from ... import auth as _auth
-from ...permissions import *
+from .. import namespaces as _w_ns
+from ... import auth as _auth, permissions as _perms
 from .... import models as _models, page_handlers as _ph, requests as _requests
 
 
@@ -29,7 +28,8 @@ class ContributionsSpecialPage(_core.SpecialPage):
         if params.post:
             form = _Form(params.post)
             if form.is_valid():
-                return _core.Redirect(NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["username"]}')
+                return _core.Redirect(
+                    _w_ns.NS_SPECIAL.get_full_page_title(self.name) + f'/{form.cleaned_data["username"]}')
         target_user = None
         contributions = _dj_auth_models.EmptyManager(_models.PageRevision)
         global_errors = {form.name: []}
@@ -40,7 +40,7 @@ class ContributionsSpecialPage(_core.SpecialPage):
                 form = _Form(initial={'username': args[0]})
             else:
                 query_set = target_user.internal_object.pagerevision_set
-                if user.has_permission(PERM_MASK):
+                if user.has_permission(_perms.PERM_MASK):
                     contributions = query_set.all()
                 else:
                     contributions = query_set.filter(hidden=False)

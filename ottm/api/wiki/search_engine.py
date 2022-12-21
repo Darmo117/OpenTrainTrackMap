@@ -1,7 +1,7 @@
-import enum
+import enum as _enum
 
 
-class SearchMode(enum.Enum):
+class SearchMode(_enum.Enum):
     DEFAULT = 'default'
     STRICT = 'strict'
     PREFIX = 'prefix'

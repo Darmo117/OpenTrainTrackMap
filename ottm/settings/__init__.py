@@ -1,8 +1,8 @@
 """This package defines the website’s settings."""
-import datetime
+import datetime as _dt
 import json as _json
 import logging as _logging
-import math
+import math as _math
 import pathlib as _pathlib
 import re as _re
 
@@ -161,7 +161,7 @@ class UILanguage:
         text = text.format(**kwargs)
         return text
 
-    def format_datetime(self, dt: datetime.datetime, format_: str) -> str:
+    def format_datetime(self, dt: _dt.datetime, format_: str) -> str:
         """Format a datetime object according to the given format.
         All format codes from ``datetime.strftime()`` are available except ``%c``, ``%x`` and ``%X``.
 
@@ -192,7 +192,7 @@ class UILanguage:
         """
         s = str(n)
         dec_part = s.split('.')[1] if '.' in s else ''
-        int_part = ('{:,}'.format(math.floor(n))).replace(',', self._thousands_sep).replace('-', '−')
+        int_part = ('{:,}'.format(_math.floor(n))).replace(',', self._thousands_sep).replace('-', '−')
         return int_part + (self._decimal_sep + dec_part if dec_part else '')
 
 

@@ -1,7 +1,7 @@
-import enum
+import enum as _enum
 
 
-class NotificationEmailFrequency(enum.Enum):
+class NotificationEmailFrequency(_enum.Enum):
     NONE = 'none'
     IMMEDIATELY = 'immediately'
     DAILY = 'daily'

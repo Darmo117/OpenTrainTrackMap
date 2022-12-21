@@ -1,36 +1,36 @@
 """This module defines the website’s database models."""
 from __future__ import annotations
 
-import abc
-import datetime
-import math
-import typing as typ
+import abc as _abc
+import datetime as _dt
+import math as _math
+import typing as _typ
 
-from django.conf import settings as dj_settings
-import django.contrib.auth.models as dj_auth_models
-import django.core.exceptions as dj_exc
-import django.core.validators as dj_valid
-import django.db.models as dj_models
-import pytz
+from django.conf import settings as _dj_settings
+import django.contrib.auth.models as _dj_auth_models
+import django.core.exceptions as _dj_exc
+import django.core.validators as _dj_valid
+import django.db.models as _dj_models
+import pytz as _pytz
 
 from . import model_fields, settings
-from .api import constants, data_types, groups, timezones, utils
-from .api.permissions import *
-from .api.wiki import constants as w_cons, namespaces, notifications, search_engine
+from .api import constants as _cons, data_types as _data_types, groups as _groups, timezones as _tz, utils as _utils
+from .api import permissions as _perms
+from .api.wiki import constants as _w_cons, namespaces as _w_ns, notifications as _notif, search_engine as _se
 
 
-class DateTimeFormat(dj_models.Model):
-    format = dj_models.CharField(max_length=50)
+class DateTimeFormat(_dj_models.Model):
+    format = _dj_models.CharField(max_length=50)
 
 
-class Language(dj_models.Model):
+class Language(_dj_models.Model):
     DIRECTIONS = ('ltr', 'rtl')
 
-    code = dj_models.CharField(max_length=20, unique=True)
-    name = dj_models.CharField(max_length=100, unique=True)
-    writing_direction = dj_models.CharField(max_length=3, choices=tuple((d, d) for d in DIRECTIONS))
-    available_for_ui = dj_models.BooleanField(default=False)
-    default_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
+    code = _dj_models.CharField(max_length=20, unique=True)
+    name = _dj_models.CharField(max_length=100, unique=True)
+    writing_direction = _dj_models.CharField(max_length=3, choices=tuple((d, d) for d in DIRECTIONS))
+    available_for_ui = _dj_models.BooleanField(default=False)
+    default_datetime_format = _dj_models.ForeignKey(DateTimeFormat, on_delete=_dj_models.PROTECT)
 
     @classmethod
     def get_default(cls) -> Language:
@@ -38,7 +38,7 @@ class Language(dj_models.Model):
 
     def delete(self, using=None, keep_parents=False):
         if self.available_for_ui:
-            raise dj_exc.ValidationError('cannot delete UI language', code='delete_ui_language')
+            raise _dj_exc.ValidationError('cannot delete UI language', code='delete_ui_language')
         super().delete(using=using, keep_parents=keep_parents)
 
 
@@ -49,20 +49,20 @@ class Language(dj_models.Model):
 
 def user_group_label_validator(value: str):
     if not value.isascii() or not value.isalnum():
-        raise dj_exc.ValidationError('invalid user group label', code='user_group_invalid_label')
+        raise _dj_exc.ValidationError('invalid user group label', code='user_group_invalid_label')
 
 
-class UserGroup(dj_models.Model):
+class UserGroup(_dj_models.Model):
     """User groups define permissions to grant to user that belong to them."""
-    label = dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
-    assignable_by_users = dj_models.BooleanField(default=True)
+    label = _dj_models.CharField(max_length=20, unique=True, validators=[user_group_label_validator])
+    assignable_by_users = _dj_models.BooleanField(default=True)
     permissions = model_fields.CommaSeparatedStringsField()
 
     class Meta:
         ordering = ('assignable_by_users', 'label')
 
     @classmethod
-    def get_assignable_groups(cls) -> dj_models.QuerySet[UserGroup]:
+    def get_assignable_groups(cls) -> _dj_models.QuerySet[UserGroup]:
         """Return a query set of all user groups that are assignable by users."""
         return cls.objects.filter(assignable_by_users=True)
 
@@ -86,7 +86,7 @@ def username_validator(value: str):
     :param value: The username.
     """
     if '/' in value or settings.INVALID_TITLE_REGEX.search(value):
-        raise dj_exc.ValidationError('invalid username', code='invalid')
+        raise _dj_exc.ValidationError('invalid username', code='invalid')
 
 
 class User:
@@ -124,7 +124,7 @@ class User:
     @property
     def is_new(self):
         """Whether this user is new (anonymous or less than 30 days)."""
-        return not self.exists or (self._user.date_joined - utils.now()).days <= 30
+        return not self.exists or (self._user.date_joined - _utils.now()).days <= 30
 
     @property
     def ip(self) -> str | None:
@@ -194,15 +194,15 @@ class User:
             raise ValueError(f'invalid language code {value.code}')
 
     @property
-    def preferred_timezone(self) -> pytz.BaseTzInfo:
+    def preferred_timezone(self) -> _pytz.BaseTzInfo:
         """This user’s preferred timezone."""
         if self.exists:
-            return pytz.timezone(self._user.preferred_timezone)
+            return _pytz.timezone(self._user.preferred_timezone)
         else:
-            return pytz.timezone(dj_settings.TIME_ZONE)
+            return _pytz.timezone(_dj_settings.TIME_ZONE)
 
     @preferred_timezone.setter
-    def preferred_timezone(self, value: pytz.BaseTzInfo):
+    def preferred_timezone(self, value: _pytz.BaseTzInfo):
         """Set this user’s preferred timezone. User must not be anonymous."""
         self._check_authenticated()
         self._user.preferred_timezone = value.zone
@@ -225,12 +225,12 @@ class User:
             raise ValueError(f'invalid datetime format ID: {value}')
 
     @property
-    def gender(self) -> data_types.UserGender:
+    def gender(self) -> _data_types.UserGender:
         """This user’s gender."""
-        return data_types.GENDERS[self._user.gender_code]
+        return _data_types.GENDERS[self._user.gender_code]
 
     @gender.setter
-    def gender(self, value: data_types.UserGender):
+    def gender(self, value: _data_types.UserGender):
         """Set this user’s gender. User must not be anonymous."""
         self._check_authenticated()
         self._user.gender_code = value.label
@@ -280,7 +280,7 @@ class User:
         self._user.send_copy_of_sent_emails = value
 
     @property
-    def email_user_blacklist(self) -> typ.Sequence[str]:
+    def email_user_blacklist(self) -> _typ.Sequence[str]:
         """List of users that cannot send emails to this user."""
         return self._user.email_user_blacklist or []
 
@@ -622,26 +622,26 @@ class User:
         self._user.search_default_results_nb = value
 
     @property
-    def search_mode(self) -> search_engine.SearchMode:
+    def search_mode(self) -> _se.SearchMode:
         """Search engine mode."""
-        return search_engine.SearchMode(self._user.search_mode)
+        return _se.SearchMode(self._user.search_mode)
 
     @search_mode.setter
-    def search_mode(self, value: search_engine.SearchMode):
+    def search_mode(self, value: _se.SearchMode):
         """Set the search engine mode."""
         self._check_authenticated()
         self._user.search_mode = value.value
 
     @property
-    def email_update_notification_frequency(self) -> notifications.NotificationEmailFrequency:
+    def email_update_notification_frequency(self) -> _notif.NotificationEmailFrequency:
         """Frequency of notification emails."""
         if self.exists:
-            return notifications.NotificationEmailFrequency(self._user.notif_email_frequency)
+            return _notif.NotificationEmailFrequency(self._user.notif_email_frequency)
         else:
-            return notifications.NotificationEmailFrequency.NONE
+            return _notif.NotificationEmailFrequency.NONE
 
     @email_update_notification_frequency.setter
-    def email_update_notification_frequency(self, value: notifications.NotificationEmailFrequency):
+    def email_update_notification_frequency(self, value: _notif.NotificationEmailFrequency):
         """Set the frequency of notification emails."""
         self._check_authenticated()
         self._user.notif_email_frequency = value.value
@@ -867,7 +867,7 @@ class User:
         self._user.notif_edit_count_milestones_web = value
 
     @property
-    def user_notification_blacklist(self) -> typ.Sequence[str]:
+    def user_notification_blacklist(self) -> _typ.Sequence[str]:
         """List of users whose notifications should be ignored."""
         return self._user.user_notification_blacklist or []
 
@@ -878,7 +878,7 @@ class User:
         self._user.user_notification_blacklist = value
 
     @property
-    def page_notification_blacklist(self) -> typ.Sequence[str]:
+    def page_notification_blacklist(self) -> _typ.Sequence[str]:
         """List of pages whose notifications should be ignored."""
         return self._user.page_notification_blacklist or []
 
@@ -895,7 +895,7 @@ class User:
             return None
         try:
             return self._user.block
-        except dj_exc.ObjectDoesNotExist:
+        except _dj_exc.ObjectDoesNotExist:
             return None
 
     @property
@@ -904,27 +904,27 @@ class User:
         return (b := self.block) and b.is_active
 
     @property
-    def edits(self) -> dj_models.Manager[EditGroup]:
+    def edits(self) -> _dj_models.Manager[EditGroup]:
         """A Manager object for this user’s edit groups."""
-        return self._user.edit_groups if self.exists else dj_auth_models.EmptyManager(EditGroup)
+        return self._user.edit_groups if self.exists else _dj_auth_models.EmptyManager(EditGroup)
 
     @property
-    def wiki_edits(self) -> dj_models.QuerySet[PageRevision]:
+    def wiki_edits(self) -> _dj_models.QuerySet[PageRevision]:
         """A QuerySet object for the wiki page edits made by this user."""
         if self.exists:
             return PageRevision.objects.filter(author=self._user)
         else:
-            return dj_auth_models.EmptyManager(Message).all()
+            return _dj_auth_models.EmptyManager(Message).all()
 
     @property
-    def wiki_topics(self) -> dj_models.Manager[Topic]:
+    def wiki_topics(self) -> _dj_models.Manager[Topic]:
         """A Manager object for the wiki topics created by this user."""
         return self._user.wiki_topics
 
     @property
-    def wiki_messages(self) -> dj_models.Manager[Message]:
+    def wiki_messages(self) -> _dj_models.Manager[Message]:
         """A Manager object for the wiki messages posted by this user."""
-        return self._user.wiki_messages if self.exists else dj_auth_models.EmptyManager(Message)
+        return self._user.wiki_messages if self.exists else _dj_auth_models.EmptyManager(Message)
 
     def can_send_emails_to(self, other: User) -> bool:
         """Check whether this user can send emails to the given one.
@@ -953,10 +953,10 @@ class User:
         """
         return self.get_groups().filter(id=group.id).exists()
 
-    def get_groups(self) -> dj_models.QuerySet[UserGroup]:
+    def get_groups(self) -> _dj_models.QuerySet[UserGroup]:
         """Return a query set of this user’s groups."""
         if not self.exists:
-            return UserGroup.objects.filter(label=groups.GROUP_ALL)
+            return UserGroup.objects.filter(label=_groups.GROUP_ALL)
         return self._user.groups.all()
 
     def notes_count(self) -> int:
@@ -965,7 +965,7 @@ class User:
             return 0
         return (ObjectEdit.objects  # Get all object creation edits
                 # Keep only those made by this user that are of type "Note"
-                .filter(edit_group__author=self._user, operation=constants.OBJECT_CREATED, object_type__label='Note')
+                .filter(edit_group__author=self._user, operation=_cons.OBJECT_CREATED, object_type__label='Note')
                 .count())
 
     def edits_count(self) -> int:
@@ -1006,150 +1006,151 @@ class User:
 
 def thumbnail_size_validator(n: int):
     if not (100 <= n <= 600):
-        raise dj_exc.ValidationError('invalid thumbnail size', code='invalid_thumbnail_size')
+        raise _dj_exc.ValidationError('invalid thumbnail size', code='invalid_thumbnail_size')
 
 
 def days_nb_rc_fl_logs_validator(n: int):
     if not (1 <= n <= 30):
-        raise dj_exc.ValidationError('invalid number of days', code='invalid_revisions_days_nb')
+        raise _dj_exc.ValidationError('invalid number of days', code='invalid_revisions_days_nb')
 
 
 def edits_nb_rc_fl_logs_validator(n: int):
     if not (1 <= n <= 1000):
-        raise dj_exc.ValidationError('invalid number of edits', code='invalid_revisions_edits_nb')
+        raise _dj_exc.ValidationError('invalid number of edits', code='invalid_revisions_edits_nb')
 
 
 def search_results_nb_validator(n: int):
     if not (1 <= n <= 50):
-        raise dj_exc.ValidationError('invalid number of search results', code='invalid_search_results_nb')
+        raise _dj_exc.ValidationError('invalid number of search results', code='invalid_search_results_nb')
 
 
-class CustomUser(dj_auth_models.AbstractUser):
+class CustomUser(_dj_auth_models.AbstractUser):
     """Custom user class to override the default username validator and add additional data.
     Never edit instances of this model directly, always do it through the ``User`` class.
     """
     username_validator = username_validator
-    hide_username = dj_models.BooleanField(default=False)
+    hide_username = _dj_models.BooleanField(default=False)
     # IP for anonymous accounts
-    ip = dj_models.CharField(max_length=39, null=True, blank=True)
-    preferred_language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
-    groups = dj_models.ManyToManyField(UserGroup, related_name='users')
-    gender_code = dj_models.CharField(max_length=10, choices=tuple((v, v) for v in data_types.GENDERS.keys()),
-                                      default=data_types.GENDER_N.label)
-    uses_dark_mode = dj_models.BooleanField(default=False)
-    preferred_datetime_format = dj_models.ForeignKey(DateTimeFormat, on_delete=dj_models.PROTECT)
-    preferred_timezone = dj_models.CharField(max_length=50, choices=((tz, tz) for tz in timezones.TIMEZONES),
-                                             default=pytz.UTC.zone)
-    is_bot = dj_models.BooleanField(default=False)
+    ip = _dj_models.CharField(max_length=39, null=True, blank=True)
+    preferred_language = _dj_models.ForeignKey(Language, on_delete=_dj_models.PROTECT)
+    groups = _dj_models.ManyToManyField(UserGroup, related_name='users')
+    gender_code = _dj_models.CharField(max_length=10, choices=tuple((v, v) for v in _data_types.GENDERS.keys()),
+                                       default=_data_types.GENDER_N.label)
+    uses_dark_mode = _dj_models.BooleanField(default=False)
+    preferred_datetime_format = _dj_models.ForeignKey(DateTimeFormat, on_delete=_dj_models.PROTECT)
+    preferred_timezone = _dj_models.CharField(max_length=50, choices=((tz, tz) for tz in _tz.TIMEZONES),
+                                              default=_pytz.UTC.zone)
+    is_bot = _dj_models.BooleanField(default=False)
     # Wiki-related
-    users_can_send_emails = dj_models.BooleanField(default=True)
-    new_users_can_send_emails = dj_models.BooleanField(default=True)
-    send_copy_of_sent_emails = dj_models.BooleanField(default=False)  # TODO use
+    users_can_send_emails = _dj_models.BooleanField(default=True)
+    new_users_can_send_emails = _dj_models.BooleanField(default=True)
+    send_copy_of_sent_emails = _dj_models.BooleanField(default=False)  # TODO use
     email_user_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
-    max_file_preview_size = dj_models.CharField(
+    max_file_preview_size = _dj_models.CharField(
         max_length=15,
-        choices=tuple((f'{n1},{n2}', f'{n1},{n2}') for n1, n2 in w_cons.FILE_PREVIEW_SIZES),
-        default=f'{w_cons.FILE_PREVIEW_SIZES[2][0]},{w_cons.FILE_PREVIEW_SIZES[2][1]}',
+        choices=tuple((f'{n1},{n2}', f'{n1},{n2}') for n1, n2 in _w_cons.FILE_PREVIEW_SIZES),
+        default=f'{_w_cons.FILE_PREVIEW_SIZES[2][0]},{_w_cons.FILE_PREVIEW_SIZES[2][1]}',
     )  # TODO use
-    thumbnails_size = dj_models.IntegerField(validators=[thumbnail_size_validator], default=200)  # TODO use
-    show_page_content_in_diffs = dj_models.BooleanField(default=True)  # TODO use
-    show_diff_after_revert = dj_models.BooleanField(default=True)  # TODO use
-    show_hidden_categories = dj_models.BooleanField(default=False)  # TODO use
-    ask_revert_confirmation = dj_models.BooleanField(default=True)  # TODO use
-    uses_editor_syntax_highlighting = dj_models.BooleanField(default=True)
-    mark_all_wiki_edits_as_minor = dj_models.BooleanField(default=False)
-    warn_when_no_wiki_edit_comment = dj_models.BooleanField(default=True)
-    warn_when_wiki_edit_not_published = dj_models.BooleanField(default=True)
-    show_preview_above_edit_form = dj_models.BooleanField(default=True)  # TODO use
-    show_preview_without_reload = dj_models.BooleanField(default=True)  # TODO use
-    days_nb_rc_fl_logs = dj_models.IntegerField(validators=[days_nb_rc_fl_logs_validator], default=30)  # TODO use
-    edits_nb_rc_fl_logs = dj_models.IntegerField(validators=[edits_nb_rc_fl_logs_validator], default=50)  # TODO use
-    group_edits_per_page_rc_fl = dj_models.BooleanField(default=False)  # TODO use
-    mask_wiki_minor_edits = dj_models.BooleanField(default=False)  # TODO use
-    mask_wiki_bot_edits = dj_models.BooleanField(default=False)  # TODO use
-    mask_wiki_own_edits = dj_models.BooleanField(default=True)  # TODO use
-    mask_wiki_anonymous_edits = dj_models.BooleanField(default=False)  # TODO use
-    mask_wiki_authenticated_edits = dj_models.BooleanField(default=False)  # TODO use
-    mask_wiki_categorization_edits = dj_models.BooleanField(default=False)  # TODO use
-    mask_wiki_patrolled_edits = dj_models.BooleanField(default=False)  # TODO use
-    fl_add_created_pages = dj_models.BooleanField(default=False)
-    fl_add_modified_pages = dj_models.BooleanField(default=False)
-    fl_add_renamed_pages = dj_models.BooleanField(default=False)  # TODO use
-    fl_add_deleted_pages = dj_models.BooleanField(default=False)  # TODO use
-    fl_add_reverted_pages = dj_models.BooleanField(default=False)  # TODO use
-    fl_add_created_topics = dj_models.BooleanField(default=True)  # TODO use
-    fl_add_replied_to_topics = dj_models.BooleanField(default=False)  # TODO use
-    search_default_results_nb = dj_models.IntegerField(validators=[search_results_nb_validator], default=20)  # TODO use
-    search_mode = dj_models.CharField(
+    thumbnails_size = _dj_models.IntegerField(validators=[thumbnail_size_validator], default=200)  # TODO use
+    show_page_content_in_diffs = _dj_models.BooleanField(default=True)  # TODO use
+    show_diff_after_revert = _dj_models.BooleanField(default=True)  # TODO use
+    show_hidden_categories = _dj_models.BooleanField(default=False)  # TODO use
+    ask_revert_confirmation = _dj_models.BooleanField(default=True)  # TODO use
+    uses_editor_syntax_highlighting = _dj_models.BooleanField(default=True)
+    mark_all_wiki_edits_as_minor = _dj_models.BooleanField(default=False)
+    warn_when_no_wiki_edit_comment = _dj_models.BooleanField(default=True)
+    warn_when_wiki_edit_not_published = _dj_models.BooleanField(default=True)
+    show_preview_above_edit_form = _dj_models.BooleanField(default=True)  # TODO use
+    show_preview_without_reload = _dj_models.BooleanField(default=True)  # TODO use
+    days_nb_rc_fl_logs = _dj_models.IntegerField(validators=[days_nb_rc_fl_logs_validator], default=30)  # TODO use
+    edits_nb_rc_fl_logs = _dj_models.IntegerField(validators=[edits_nb_rc_fl_logs_validator], default=50)  # TODO use
+    group_edits_per_page_rc_fl = _dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_minor_edits = _dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_bot_edits = _dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_own_edits = _dj_models.BooleanField(default=True)  # TODO use
+    mask_wiki_anonymous_edits = _dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_authenticated_edits = _dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_categorization_edits = _dj_models.BooleanField(default=False)  # TODO use
+    mask_wiki_patrolled_edits = _dj_models.BooleanField(default=False)  # TODO use
+    fl_add_created_pages = _dj_models.BooleanField(default=False)
+    fl_add_modified_pages = _dj_models.BooleanField(default=False)
+    fl_add_renamed_pages = _dj_models.BooleanField(default=False)  # TODO use
+    fl_add_deleted_pages = _dj_models.BooleanField(default=False)  # TODO use
+    fl_add_reverted_pages = _dj_models.BooleanField(default=False)  # TODO use
+    fl_add_created_topics = _dj_models.BooleanField(default=True)  # TODO use
+    fl_add_replied_to_topics = _dj_models.BooleanField(default=False)  # TODO use
+    search_default_results_nb = _dj_models.IntegerField(validators=[search_results_nb_validator],
+                                                        default=20)  # TODO use
+    search_mode = _dj_models.CharField(
         max_length=10,
-        choices=tuple((sm.value, sm.value) for sm in search_engine.SearchMode),
-        default=search_engine.SearchMode.DEFAULT.value,
+        choices=tuple((sm.value, sm.value) for sm in _se.SearchMode),
+        default=_se.SearchMode.DEFAULT.value,
     )  # TODO use
-    notif_email_frequency = dj_models.CharField(
+    notif_email_frequency = _dj_models.CharField(
         max_length=15,
-        choices=tuple((neu.value, neu.value) for neu in notifications.NotificationEmailFrequency),
-        default=notifications.NotificationEmailFrequency.IMMEDIATELY.value,
+        choices=tuple((neu.value, neu.value) for neu in _notif.NotificationEmailFrequency),
+        default=_notif.NotificationEmailFrequency.IMMEDIATELY.value,
     )  # TODO use
-    html_email_updates = dj_models.BooleanField(default=True)  # TODO use
-    notif_user_talk_edits_email = dj_models.BooleanField(default=True)  # TODO use
-    notif_followed_pages_edits_web = dj_models.BooleanField(default=True)  # TODO use
-    notif_followed_pages_edits_email = dj_models.BooleanField(default=True)  # TODO use
-    notif_talk_mentions_web = dj_models.BooleanField(default=True)  # TODO use
-    notif_talk_mentions_email = dj_models.BooleanField(default=True)  # TODO use
-    notif_message_answers_web = dj_models.BooleanField(default=True)  # TODO use
-    notif_message_answers_email = dj_models.BooleanField(default=True)  # TODO use
-    notif_topic_answers_web = dj_models.BooleanField(default=True)  # TODO use
-    notif_topic_answers_email = dj_models.BooleanField(default=True)  # TODO use
-    notif_thanks_web = dj_models.BooleanField(default=True)  # TODO use
-    notif_thanks_email = dj_models.BooleanField(default=False)  # TODO use
-    notif_failed_connection_attempts_web = dj_models.BooleanField(default=True)  # TODO use
-    notif_failed_connection_attempts_email = dj_models.BooleanField(default=True)  # TODO use
-    notif_permissions_edit_web = dj_models.BooleanField(default=True)  # TODO use
-    notif_permissions_edit_email = dj_models.BooleanField(default=True)  # TODO use
-    notif_user_email_web = dj_models.BooleanField(default=True)  # TODO use
-    notif_cancelled_edits_web = dj_models.BooleanField(default=True)  # TODO use
-    notif_cancelled_edits_email = dj_models.BooleanField(default=False)  # TODO use
-    notif_edit_count_milestones_web = dj_models.BooleanField(default=True)  # TODO use
+    html_email_updates = _dj_models.BooleanField(default=True)  # TODO use
+    notif_user_talk_edits_email = _dj_models.BooleanField(default=True)  # TODO use
+    notif_followed_pages_edits_web = _dj_models.BooleanField(default=True)  # TODO use
+    notif_followed_pages_edits_email = _dj_models.BooleanField(default=True)  # TODO use
+    notif_talk_mentions_web = _dj_models.BooleanField(default=True)  # TODO use
+    notif_talk_mentions_email = _dj_models.BooleanField(default=True)  # TODO use
+    notif_message_answers_web = _dj_models.BooleanField(default=True)  # TODO use
+    notif_message_answers_email = _dj_models.BooleanField(default=True)  # TODO use
+    notif_topic_answers_web = _dj_models.BooleanField(default=True)  # TODO use
+    notif_topic_answers_email = _dj_models.BooleanField(default=True)  # TODO use
+    notif_thanks_web = _dj_models.BooleanField(default=True)  # TODO use
+    notif_thanks_email = _dj_models.BooleanField(default=False)  # TODO use
+    notif_failed_connection_attempts_web = _dj_models.BooleanField(default=True)  # TODO use
+    notif_failed_connection_attempts_email = _dj_models.BooleanField(default=True)  # TODO use
+    notif_permissions_edit_web = _dj_models.BooleanField(default=True)  # TODO use
+    notif_permissions_edit_email = _dj_models.BooleanField(default=True)  # TODO use
+    notif_user_email_web = _dj_models.BooleanField(default=True)  # TODO use
+    notif_cancelled_edits_web = _dj_models.BooleanField(default=True)  # TODO use
+    notif_cancelled_edits_email = _dj_models.BooleanField(default=False)  # TODO use
+    notif_edit_count_milestones_web = _dj_models.BooleanField(default=True)  # TODO use
     user_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)  # TODO use
     page_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)  # TODO use
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
         if self.groups.count() == 0:  # Add default group when saving anonymous user for the first time
-            self.groups.add(UserGroup.objects.get(label=groups.GROUP_ALL))
+            self.groups.add(UserGroup.objects.get(label=_groups.GROUP_ALL))
 
 
-class UserBlock(dj_models.Model):
+class UserBlock(_dj_models.Model):
     """Defines the block status of a user.
     Users can be prevented from editing pages, post messages and editing their own settings.
     Blocks expire after a specified date. If no end date is specified, the block will never expire.
     """
-    user = dj_models.OneToOneField(CustomUser, on_delete=dj_models.PROTECT, related_name='block')
-    end_date = dj_models.DateTimeField(null=True, blank=True)
-    allow_messages_on_own_user_page = dj_models.BooleanField(default=True)
-    allow_editing_own_settings = dj_models.BooleanField(default=True)
+    user = _dj_models.OneToOneField(CustomUser, on_delete=_dj_models.PROTECT, related_name='block')
+    end_date = _dj_models.DateTimeField(null=True, blank=True)
+    allow_messages_on_own_user_page = _dj_models.BooleanField(default=True)
+    allow_editing_own_settings = _dj_models.BooleanField(default=True)
 
     @property
     def is_active(self):
-        return self.end_date and self.end_date > utils.now()
+        return self.end_date and self.end_date > _utils.now()
 
 
-class IPBlock(dj_models.Model):
+class IPBlock(_dj_models.Model):
     """Defines the block status of an IP address.
     Non-authenticated users under specific IPs can be prevented from editing pages, posting messages
      and creating new accounts.
     Blocks expire after a specified date. If no end date is specified, the block will never expire.
     """
-    ip = dj_models.CharField(max_length=39)
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='ip_blocks_given')
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
-    end_date = dj_models.DateTimeField(null=True, blank=True)
-    allow_messages_on_own_user_page = dj_models.BooleanField(default=True)
-    allow_account_creation = dj_models.BooleanField(default=True)
+    ip = _dj_models.CharField(max_length=39)
+    performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT, related_name='ip_blocks_given')
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+    end_date = _dj_models.DateTimeField(null=True, blank=True)
+    allow_messages_on_own_user_page = _dj_models.BooleanField(default=True)
+    allow_account_creation = _dj_models.BooleanField(default=True)
 
     @property
     def is_active(self):
-        return self.end_date and self.end_date > utils.now()
+        return self.end_date and self.end_date > _utils.now()
 
 
 ###################
@@ -1157,41 +1158,41 @@ class IPBlock(dj_models.Model):
 ###################
 
 
-class UnitType(dj_models.Model):
-    label = dj_models.CharField(unique=True, max_length=30)
+class UnitType(_dj_models.Model):
+    label = _dj_models.CharField(unique=True, max_length=30)
 
 
-class Unit(dj_models.Model):
-    symbol = dj_models.CharField(unique=True, max_length=10)
-    type = dj_models.ForeignKey(UnitType, on_delete=dj_models.CASCADE, related_name='units')
-    may_be_negative = dj_models.BooleanField()
-    to_base_unit_coef = dj_models.FloatField()
+class Unit(_dj_models.Model):
+    symbol = _dj_models.CharField(unique=True, max_length=10)
+    type = _dj_models.ForeignKey(UnitType, on_delete=_dj_models.CASCADE, related_name='units')
+    may_be_negative = _dj_models.BooleanField()
+    to_base_unit_coef = _dj_models.FloatField()
 
 
 def structure_label_validator(value: str):
     if not value.isascii() or not value.isalnum():
-        raise dj_exc.ValidationError('invalid structure label', code='structure_invalid_label')
+        raise _dj_exc.ValidationError('invalid structure label', code='structure_invalid_label')
 
 
-class Structure(dj_models.Model):
-    label = dj_models.CharField(max_length=50, validators=[structure_label_validator])
-    deprecated = dj_models.BooleanField()
-    wikidata_qid = dj_models.CharField(null=True, blank=True, max_length=15,
-                                       validators=[dj_valid.RegexValidator(r'^Q\d+$')])
+class Structure(_dj_models.Model):
+    label = _dj_models.CharField(max_length=50, validators=[structure_label_validator])
+    deprecated = _dj_models.BooleanField()
+    wikidata_qid = _dj_models.CharField(null=True, blank=True, max_length=15,
+                                        validators=[_dj_valid.RegexValidator(r'^Q\d+$')])
 
     class Meta:
         abstract = True
 
 
 class Type(Structure):
-    is_abstract = dj_models.BooleanField()
-    enum = dj_models.BooleanField()
-    super_type = dj_models.ForeignKey('self', on_delete=dj_models.CASCADE, related_name='sub_types')
+    is_abstract = _dj_models.BooleanField()
+    enum = _dj_models.BooleanField()
+    super_type = _dj_models.ForeignKey('self', on_delete=_dj_models.CASCADE, related_name='sub_types')
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if Type.objects.filter(dj_models.Q(label=self.label) & ~dj_models.Q(id=self.id)).exists():
-            raise dj_exc.ValidationError(
+        if Type.objects.filter(_dj_models.Q(label=self.label) & ~_dj_models.Q(id=self.id)).exists():
+            raise _dj_exc.ValidationError(
                 f'type with label {self.label} already exist',
                 code='type_duplicate'
             )
@@ -1202,7 +1203,7 @@ class Type(Structure):
 
 def property_multiplicity_validator(m: int):
     if m < 0:
-        raise dj_exc.ValidationError(
+        raise _dj_exc.ValidationError(
             'negative property multiplicity',
             code='property_negative_multiplicity'
         )
@@ -1210,32 +1211,32 @@ def property_multiplicity_validator(m: int):
 
 class Property(Structure):
     # Common fields
-    host_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='properties')
-    multiplicity_min = dj_models.IntegerField(validators=[property_multiplicity_validator])
-    multiplicity_max = dj_models.IntegerField(validators=[property_multiplicity_validator], null=True, blank=True)
-    is_temporal = dj_models.BooleanField()
-    absent_means_unknown_value = dj_models.BooleanField(null=True, blank=True)
-    is_value_unique = dj_models.BooleanField()
-    property_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in constants.PROPERTY_TYPES))
+    host_type = _dj_models.ForeignKey(Type, on_delete=_dj_models.CASCADE, related_name='properties')
+    multiplicity_min = _dj_models.IntegerField(validators=[property_multiplicity_validator])
+    multiplicity_max = _dj_models.IntegerField(validators=[property_multiplicity_validator], null=True, blank=True)
+    is_temporal = _dj_models.BooleanField()
+    absent_means_unknown_value = _dj_models.BooleanField(null=True, blank=True)
+    is_value_unique = _dj_models.BooleanField()
+    property_type = _dj_models.CharField(max_length=20, choices=tuple((v, v) for v in _cons.PROPERTY_TYPES))
     # Type property fields
-    target_type = dj_models.ForeignKey(Type, on_delete=dj_models.PROTECT, related_name='targetting_properties',
-                                       null=True, blank=True)
-    allows_itself = dj_models.BooleanField(null=True, blank=True)
+    target_type = _dj_models.ForeignKey(Type, on_delete=_dj_models.PROTECT, related_name='targetting_properties',
+                                        null=True, blank=True)
+    allows_itself = _dj_models.BooleanField(null=True, blank=True)
     # Int property fields
-    min_int = dj_models.IntegerField(null=True, blank=True)
-    max_int = dj_models.IntegerField(null=True, blank=True)
+    min_int = _dj_models.IntegerField(null=True, blank=True)
+    max_int = _dj_models.IntegerField(null=True, blank=True)
     # Float property fields
-    min_float = dj_models.FloatField(null=True, blank=True)
-    max_float = dj_models.FloatField(null=True, blank=True)
+    min_float = _dj_models.FloatField(null=True, blank=True)
+    max_float = _dj_models.FloatField(null=True, blank=True)
     # Unit type property fields
-    unit_type = dj_models.ForeignKey(UnitType, on_delete=dj_models.PROTECT, related_name='properties',
-                                     null=True, blank=True)
+    unit_type = _dj_models.ForeignKey(UnitType, on_delete=_dj_models.PROTECT, related_name='properties',
+                                      null=True, blank=True)
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if Property.objects.filter(dj_models.Q(label=self.label, host_type__label=self.host_type.label)
-                                   & ~dj_models.Q(id=self.id)).exists():
-            raise dj_exc.ValidationError(
+        if Property.objects.filter(_dj_models.Q(label=self.label, host_type__label=self.host_type.label)
+                                   & ~_dj_models.Q(id=self.id)).exists():
+            raise _dj_exc.ValidationError(
                 f'property with name {self.label} already exists for type {self.host_type}',
                 code='duplicate_property'
             )
@@ -1243,33 +1244,33 @@ class Property(Structure):
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
         match self.property_type:
-            case constants.PROPERTY_TYPE:
+            case _cons.PROPERTY_TYPE:
                 self._check_type_property()
-            case constants.PROPERTY_LOCALIZED:
+            case _cons.PROPERTY_LOCALIZED:
                 self._check_localized_property()
-            case constants.PROPERTY_STRING:
+            case _cons.PROPERTY_STRING:
                 self._check_string_property()
-            case constants.PROPERTY_INT:
+            case _cons.PROPERTY_INT:
                 self._check_int_property()
-            case constants.PROPERTY_FLOAT:
+            case _cons.PROPERTY_FLOAT:
                 self._check_float_property()
-            case constants.PROPERTY_BOOLEAN:
+            case _cons.PROPERTY_BOOLEAN:
                 self._check_boolean_property()
-            case constants.PROPERTY_UNIT:
+            case _cons.PROPERTY_UNIT:
                 self._check_unit_property()
-            case constants.PROPERTY_DATE_INTERVAL:
+            case _cons.PROPERTY_DATE_INTERVAL:
                 self._check_date_interval_property()
 
         if self.multiplicity_min > self.multiplicity_max:
-            raise dj_exc.ValidationError('invalid property multiplicities', code='property_invalid_multiplicities')
+            raise _dj_exc.ValidationError('invalid property multiplicities', code='property_invalid_multiplicities')
         if not self.is_temporal and self.absent_means_unknown_value is not None:
-            raise dj_exc.ValidationError('property is not temporal', code='property_not_temporal')
+            raise _dj_exc.ValidationError('property is not temporal', code='property_not_temporal')
         if self.is_temporal:
             if self.multiplicity_min > 0:
-                raise dj_exc.ValidationError('temporal property must have a min multipliticy of 0',
-                                             code='temporal_property_invalid_min_multiplicity')
+                raise _dj_exc.ValidationError('temporal property must have a min multipliticy of 0',
+                                              code='temporal_property_invalid_min_multiplicity')
             if self.absent_means_unknown_value is None:
-                raise dj_exc.ValidationError('property is temporal', code='property_is_temporal')
+                raise _dj_exc.ValidationError('property is temporal', code='property_is_temporal')
 
     @staticmethod
     def _any_not_null(*fields) -> bool:
@@ -1277,17 +1278,17 @@ class Property(Structure):
 
     def _check_type_property(self):
         if self._any_not_null(self.min_int, self.max_int, self.min_float, self.max_float, self.unit_type):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'type property should only have common fields set',
                 code='type_property_invalid_fields'
             )
         if self.target_type is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing target_type field',
                 code='type_property_missing_target_type_field'
             )
         if self.allows_itself is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing allows_itself field',
                 code='type_property_missing_allows_itself_field'
             )
@@ -1295,12 +1296,12 @@ class Property(Structure):
     def _check_localized_property(self):
         if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
                               self.min_float, self.max_float, self.unit_type):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'localized property should only have common fields set',
                 code='localized_property_invalid_fields'
             )
         if self.is_temporal:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'localized property cannot be temporal',
                 code='localized_property_temporal'
             )
@@ -1308,7 +1309,7 @@ class Property(Structure):
     def _check_string_property(self):
         if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
                               self.min_float, self.max_float, self.unit_type):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'string property should only have common fields set',
                 code='string_property_invalid_fields'
             )
@@ -1316,18 +1317,18 @@ class Property(Structure):
     def _check_int_property(self):
         if self._any_not_null(self.target_type, self.allows_itself, self.min_float, self.max_float,
                               self.unit_type):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'int property should only have min_int and min_max fields set',
                 code='int_property_invalid_fields'
             )
         if self.min_int is not None and self.max_int is not None:
             if self.min_int > self.max_int:
-                raise dj_exc.ValidationError(
+                raise _dj_exc.ValidationError(
                     'max should be greater than min',
                     code='int_property_invalid_bounds'
                 )
             if self.min_int == self.max_int:
-                raise dj_exc.ValidationError(
+                raise _dj_exc.ValidationError(
                     'min and max must be different',
                     code='int_property_same_bounds'
                 )
@@ -1335,18 +1336,18 @@ class Property(Structure):
     def _check_float_property(self):
         if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
                               self.unit_type):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'string property should only have min_float and max_float fields set',
                 code='float_property_invalid_fields'
             )
         if self.min_float is not None and self.max_float is not None:
             if self.min_float > self.max_float:
-                raise dj_exc.ValidationError(
+                raise _dj_exc.ValidationError(
                     'max should be greater than min',
                     code='float_property_invalid_bounds'
                 )
             if self.min_float == self.max_float:
-                raise dj_exc.ValidationError(
+                raise _dj_exc.ValidationError(
                     'min and max must be different',
                     code='float_property_same_bounds'
                 )
@@ -1354,7 +1355,7 @@ class Property(Structure):
     def _check_boolean_property(self):
         if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
                               self.min_float, self.max_float, self.unit_type):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'boolean property should only have common fields set',
                 code='boolean_property_invalid_fields'
             )
@@ -1362,12 +1363,12 @@ class Property(Structure):
     def _check_unit_property(self):
         if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
                               self.min_float, self.max_float, self.unit_type):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'unit property should only have unit_type field set',
                 code='unit_property_invalid_fields'
             )
         if self.unit_type is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 f'missing unit type for unit property {self.label}',
                 code='unit_property_missing_unit_type'
             )
@@ -1375,12 +1376,12 @@ class Property(Structure):
     def _check_date_interval_property(self):
         if self._any_not_null(self.target_type, self.allows_itself, self.min_int, self.max_int,
                               self.min_float, self.max_float, self.unit_type):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'date interval property should only have common fields set',
                 code='date_interval_property_invalid_fields'
             )
         if self.is_temporal:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'date interval property cannot be temporal',
                 code='date_interval_property_temporal'
             )
@@ -1394,37 +1395,37 @@ class Property(Structure):
 ##############
 
 
-class Object(dj_models.Model):
-    type = dj_models.ForeignKey(Type, on_delete=dj_models.PROTECT, related_name='instances')
+class Object(_dj_models.Model):
+    type = _dj_models.ForeignKey(Type, on_delete=_dj_models.PROTECT, related_name='instances')
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
         if self.type.is_abstract:
-            raise dj_exc.ValidationError('abstract types cannot have instances', code='object_with_abstract_type')
+            raise _dj_exc.ValidationError('abstract types cannot have instances', code='object_with_abstract_type')
 
 
-class Relation(dj_models.Model):
+class Relation(_dj_models.Model):
     # Common fields
-    property = dj_models.ForeignKey(Property, on_delete=dj_models.PROTECT, related_name='instances')
-    left_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_left')
+    property = _dj_models.ForeignKey(Property, on_delete=_dj_models.PROTECT, related_name='instances')
+    left_object = _dj_models.ForeignKey(Object, on_delete=_dj_models.CASCADE, related_name='relations_left')
     existence_interval = model_fields.DateIntervalField()
     # Object relation fields
-    right_object = dj_models.ForeignKey(Object, on_delete=dj_models.CASCADE, related_name='relations_right',
-                                        null=True, blank=True)
+    right_object = _dj_models.ForeignKey(Object, on_delete=_dj_models.CASCADE, related_name='relations_right',
+                                         null=True, blank=True)
     # Localized relation fields
-    language_code = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT, null=True, blank=True)
-    value_localized_p = dj_models.TextField(null=True, blank=True)
+    language_code = _dj_models.ForeignKey(Language, on_delete=_dj_models.PROTECT, null=True, blank=True)
+    value_localized_p = _dj_models.TextField(null=True, blank=True)
     # String relation fields
-    value_string_p = dj_models.CharField(max_length=200, null=True, blank=True)
+    value_string_p = _dj_models.CharField(max_length=200, null=True, blank=True)
     # Int relation fields
-    value_int_p = dj_models.IntegerField(null=True, blank=True)
+    value_int_p = _dj_models.IntegerField(null=True, blank=True)
     # Float relation fields
-    value_float_p = dj_models.FloatField(null=True, blank=True)
+    value_float_p = _dj_models.FloatField(null=True, blank=True)
     # Boolean relation fields
-    value_boolean_p = dj_models.BooleanField(null=True, blank=True)
+    value_boolean_p = _dj_models.BooleanField(null=True, blank=True)
     # Unit relation fields
-    value_unit_p = dj_models.FloatField(null=True, blank=True)
-    unit = dj_models.ForeignKey(Unit, on_delete=dj_models.PROTECT, related_name='relations', null=True, blank=True)
+    value_unit_p = _dj_models.FloatField(null=True, blank=True)
+    unit = _dj_models.ForeignKey(Unit, on_delete=_dj_models.PROTECT, related_name='relations', null=True, blank=True)
     # Date interval relation fields
     value_date_interval_p = model_fields.DateIntervalField(null=True, blank=True)
 
@@ -1432,22 +1433,22 @@ class Relation(dj_models.Model):
         super().validate_unique(exclude=exclude)
         if self.property.is_value_unique:
             k = self._get_right_value_attribute_name()
-            filters = dj_models.Q(**{
+            filters = _dj_models.Q(**{
                 'property': self.property,
                 'left_object': self.left_object,
                 k: getattr(self, k),
             })
-            if Relation.objects.filter(filters & ~dj_models.Q(id=self.id)).exists():
-                raise dj_exc.ValidationError(
+            if Relation.objects.filter(filters & ~_dj_models.Q(id=self.id)).exists():
+                raise _dj_exc.ValidationError(
                     f'duplicate value for property {self.property}',
                     code='relation_duplicate_for_unique_property'
                 )
 
         match self.property.property_type:
-            case constants.PROPERTY_LOCALIZED:
-                if Relation.objects.filter(dj_models.Q(language_code=self.language_code, left_object=self.left_object)
-                                           & ~dj_models.Q(id=self.id)).exists():
-                    raise dj_exc.ValidationError(
+            case _cons.PROPERTY_LOCALIZED:
+                if Relation.objects.filter(_dj_models.Q(language_code=self.language_code, left_object=self.left_object)
+                                           & ~_dj_models.Q(id=self.id)).exists():
+                    raise _dj_exc.ValidationError(
                         f'duplicate localization for language {self.language_code} and object {self.left_object}',
                         code='localized_relation_duplicate'
                     )
@@ -1455,38 +1456,38 @@ class Relation(dj_models.Model):
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
         match self.property.property_type:
-            case constants.PROPERTY_TYPE:
+            case _cons.PROPERTY_TYPE:
                 self._check_object_relation()
-            case constants.PROPERTY_LOCALIZED:
+            case _cons.PROPERTY_LOCALIZED:
                 self._check_localized_relation()
-            case constants.PROPERTY_STRING:
+            case _cons.PROPERTY_STRING:
                 self._check_string_relation()
-            case constants.PROPERTY_INT:
+            case _cons.PROPERTY_INT:
                 self._check_int_relation()
-            case constants.PROPERTY_FLOAT:
+            case _cons.PROPERTY_FLOAT:
                 self._check_float_relation()
-            case constants.PROPERTY_BOOLEAN:
+            case _cons.PROPERTY_BOOLEAN:
                 self._check_boolean_relation()
-            case constants.PROPERTY_UNIT:
+            case _cons.PROPERTY_UNIT:
                 self._check_unit_relation()
-            case constants.PROPERTY_DATE_INTERVAL:
+            case _cons.PROPERTY_DATE_INTERVAL:
                 self._check_date_interval_relation()
 
         if self.property.is_temporal and self.existence_interval is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'temporal relation must have an associated date interval',
                 code='temporal_relation_without_date_interval'
             )
 
-        maxi = self.property.multiplicity_max or math.inf
+        maxi = self.property.multiplicity_max or _math.inf
         if not self.property.is_temporal:
             if Relation.objects.filter(left_object=self.left_object, property=self.property).count() >= maxi:
-                raise dj_exc.ValidationError(
+                raise _dj_exc.ValidationError(
                     f'too many relations for property {self.property} on object {self.left_object}',
                     code='too_many_relations'
                 )
         else:
-            def overlaps(f: tuple[str, typ.Any] = None):
+            def overlaps(f: tuple[str, _typ.Any] = None):
                 filters = {
                     'property': self.property,
                     'left_object': self.left_object,
@@ -1497,7 +1498,7 @@ class Relation(dj_models.Model):
                            for relation in Relation.objects.filter(**filters))
 
             if maxi == 1 and overlaps():
-                raise dj_exc.ValidationError(
+                raise _dj_exc.ValidationError(
                     f'overlapping date intervals for temporal property {self.property}',
                     code='temporal_relation_overlap_single_value'
                 )
@@ -1505,28 +1506,28 @@ class Relation(dj_models.Model):
                 k = self._get_right_value_attribute_name()
                 v = getattr(self, k)
                 if overlaps((k, v)):
-                    raise dj_exc.ValidationError(
+                    raise _dj_exc.ValidationError(
                         f'overlapping date intervals for property {self.property} and value {v}',
                         code='temporal_relation_overlap_many_values'
                     )
 
     def _get_right_value_attribute_name(self) -> str:
         match self.property.property_type:
-            case constants.PROPERTY_TYPE:
+            case _cons.PROPERTY_TYPE:
                 return 'right_object'
-            case constants.PROPERTY_LOCALIZED:
+            case _cons.PROPERTY_LOCALIZED:
                 return 'value_localized_p'
-            case constants.PROPERTY_STRING:
+            case _cons.PROPERTY_STRING:
                 return 'value_string_p'
-            case constants.PROPERTY_INT:
+            case _cons.PROPERTY_INT:
                 return 'value_int_p'
-            case constants.PROPERTY_FLOAT:
+            case _cons.PROPERTY_FLOAT:
                 return 'value_float_p'
-            case constants.PROPERTY_BOOLEAN:
+            case _cons.PROPERTY_BOOLEAN:
                 return 'value_boolean_p'
-            case constants.PROPERTY_UNIT:
+            case _cons.PROPERTY_UNIT:
                 return 'value_unit_p'
-            case constants.PROPERTY_DATE_INTERVAL:
+            case _cons.PROPERTY_DATE_INTERVAL:
                 return 'value_date_interval_p'
 
     @staticmethod
@@ -1538,17 +1539,17 @@ class Relation(dj_models.Model):
                 self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p, self.value_float_p,
                 self.value_boolean_p, self.value_unit_p, self.unit, self.value_date_interval_p
         ):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'object relation should only have right_object field set',
                 code='object_relation_invalid_fields'
             )
         if self.right_object is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing right object',
                 code='object_relation_missing_right_object'
             )
         if not self.property.allows_itself and self.left_object == self.right_object:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'relation not allowed to have same object on both sides',
                 code='object_relation_same_object_on_both_sides'
             )
@@ -1558,17 +1559,17 @@ class Relation(dj_models.Model):
                 self.right_object, self.value_string_p, self.value_int_p, self.value_float_p, self.value_boolean_p,
                 self.value_unit_p, self.unit, self.value_date_interval_p
         ):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'localized relation should only have language_code and value_localized_p fields set',
                 code='localized_relation_invalid_fields'
             )
         if self.language_code is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing language code',
                 code='localized_relation_missing_language_code'
             )
         if self.value_localized_p is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing localized value',
                 code='localized_relation_missing_language_code'
             )
@@ -1578,12 +1579,12 @@ class Relation(dj_models.Model):
                 self.right_object, self.language_code, self.value_localized_p, self.value_int_p, self.value_float_p,
                 self.value_boolean_p, self.value_unit_p, self.unit, self.value_date_interval_p
         ):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'string relation should only have value_string_p field set',
                 code='string_relation_invalid_fields'
             )
         if self.value_string_p is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing string value',
                 code='string_relation_missing_value'
             )
@@ -1593,18 +1594,18 @@ class Relation(dj_models.Model):
                 self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_float_p,
                 self.value_boolean_p, self.value_unit_p, self.unit, self.value_date_interval_p
         ):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'int relation should only have value_int_p field set',
                 code='int_relation_invalid_fields'
             )
         if self.value_int_p is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing int value',
                 code='int_relation_missing_value'
             )
         if (self.property.min_int is not None and self.value_int_p < self.property.min_int
                 or self.property.max_int is not None and self.value_int_p > self.property.max_int):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 f'{self.value_int_p} outside of [{self.property.min_int}, {self.property.max_int}]',
                 code='int_relation_invalid_value'
             )
@@ -1614,18 +1615,18 @@ class Relation(dj_models.Model):
                 self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p,
                 self.value_boolean_p, self.value_unit_p, self.unit, self.value_date_interval_p
         ):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'float relation should only have value_float_p field set',
                 code='float_relation_invalid_fields'
             )
         if self.value_int_p is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing float value',
                 code='float_relation_missing_value'
             )
         if (self.property.min_float is not None and self.value_float_p < self.property.min_float
                 or self.property.max_float is not None and self.value_float_p > self.property.max_float):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 f'{self.value_float_p} outside of [{self.property.min_float}, {self.property.max_float}]',
                 code='float_relation_invalid_value'
             )
@@ -1635,12 +1636,12 @@ class Relation(dj_models.Model):
                 self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p,
                 self.value_float_p, self.value_unit_p, self.unit, self.value_date_interval_p
         ):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'boolean relation should only have value_boolean_p field set',
                 code='boolean_relation_invalid_fields'
             )
         if self.value_boolean_p is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing boolean value',
                 code='boolean_relation_missing_value'
             )
@@ -1650,22 +1651,22 @@ class Relation(dj_models.Model):
                 self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p,
                 self.value_float_p, self.value_boolean_p, self.value_date_interval_p
         ):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'unit relation should only have value_boolean_p field set',
                 code='unit_relation_invalid_fields'
             )
         if self.value_unit_p is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing unit value',
                 code='unit_relation_missing_value'
             )
         if self.unit is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing unit',
                 code='unit_relation_missing_unit'
             )
         if not self.unit.may_be_negative and self.value_unit_p < 0:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'value cannot be negative',
                 code='unit_relation_negative_value'
             )
@@ -1675,17 +1676,17 @@ class Relation(dj_models.Model):
                 self.right_object, self.language_code, self.value_localized_p, self.value_string_p, self.value_int_p,
                 self.value_float_p, self.value_boolean_p, self.value_unit_p, self.unit
         ):
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'date interval relation should only have value_date_interval_p field set',
                 code='date_interval_relation_invalid_fields'
             )
         if self.value_date_interval_p is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'missing date interval',
                 code='date_interval_missing_value'
             )
         if self.property.is_temporal:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'date interval relation cannot be temporal',
                 code='temporal_date_interval_relation'
             )
@@ -1696,9 +1697,9 @@ class Relation(dj_models.Model):
 ###############
 
 
-class EditGroup(dj_models.Model):
-    date = dj_models.DateTimeField()
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='edit_groups')
+class EditGroup(_dj_models.Model):
+    date = _dj_models.DateTimeField()
+    author = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT, related_name='edit_groups')
 
     class Meta:
         get_latest_by = 'date'
@@ -1706,10 +1707,10 @@ class EditGroup(dj_models.Model):
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if EditGroup.objects.filter(dj_models.Q(date=self.date, author=self.author)
-                                    & ~dj_models.Q(id=self.id)).exists():
+        if EditGroup.objects.filter(_dj_models.Q(date=self.date, author=self.author)
+                                    & ~_dj_models.Q(id=self.id)).exists():
             # noinspection PyUnresolvedReferences
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 f'user {self.user.user.username} cannot make multiple edits at the exact same time',
                 code='edit_group_duplicate_date'
             )
@@ -1717,35 +1718,35 @@ class EditGroup(dj_models.Model):
 
 def _edit_validate_object_id(i: int):
     if i < 0:
-        raise dj_exc.ValidationError(
+        raise _dj_exc.ValidationError(
             f'invalid object ID {i}',
             code='edit_invalid_object_id'
         )
 
 
-class Edit(dj_models.Model):
-    edit_group = dj_models.ForeignKey(EditGroup, on_delete=dj_models.CASCADE)
-    object_id = dj_models.IntegerField(validators=[_edit_validate_object_id])
+class Edit(_dj_models.Model):
+    edit_group = _dj_models.ForeignKey(EditGroup, on_delete=_dj_models.CASCADE)
+    object_id = _dj_models.IntegerField(validators=[_edit_validate_object_id])
 
     class Meta:
         abstract = True
 
 
 class ObjectEdit(Edit):
-    object_type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE)
-    operation = dj_models.CharField(max_length=10, choices=tuple((v, v) for v in constants.OBJECT_EDIT_ACTIONS))
+    object_type = _dj_models.ForeignKey(Type, on_delete=_dj_models.CASCADE)
+    operation = _dj_models.CharField(max_length=10, choices=tuple((v, v) for v in _cons.OBJECT_EDIT_ACTIONS))
 
 
 class RelationEdit(Edit):
-    property_name = dj_models.ForeignKey(Relation, on_delete=dj_models.CASCADE, related_name='edits')
-    old_value = dj_models.JSONField(null=True, blank=True)
-    new_value = dj_models.JSONField(null=True, blank=True)
-    operation = dj_models.CharField(max_length=10, choices=tuple((v, v) for v in constants.RELATION_EDIT_ACTIONS))
+    property_name = _dj_models.ForeignKey(Relation, on_delete=_dj_models.CASCADE, related_name='edits')
+    old_value = _dj_models.JSONField(null=True, blank=True)
+    new_value = _dj_models.JSONField(null=True, blank=True)
+    operation = _dj_models.CharField(max_length=10, choices=tuple((v, v) for v in _cons.RELATION_EDIT_ACTIONS))
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
         if self.old_value is None and self.new_value is None:
-            raise dj_exc.ValidationError(
+            raise _dj_exc.ValidationError(
                 'old and new value cannot both be None',
                 code='relation_edit_missing_values'
             )
@@ -1756,9 +1757,9 @@ class RelationEdit(Edit):
 ################
 
 
-class Translation(dj_models.Model):
-    language_code = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
-    label = dj_models.CharField(max_length=100)
+class Translation(_dj_models.Model):
+    language_code = _dj_models.ForeignKey(Language, on_delete=_dj_models.PROTECT)
+    label = _dj_models.CharField(max_length=100)
 
     class Meta:
         abstract = True
@@ -1767,23 +1768,23 @@ class Translation(dj_models.Model):
         super().validate_unique(exclude=exclude)
         k = self._get_object_attr_name()
         obj = getattr(self, k)
-        filters = dj_models.Q(**{
+        filters = _dj_models.Q(**{
             'language_code': self.language_code,
             'label': self.label,
             k: obj,
         })
-        if Translation.objects.filter(filters & ~dj_models.Q(id=self.id)).exists():
-            raise dj_exc.ValidationError(f'duplicate translation for object {obj} and language {self.language_code}',
-                                         code='duplicate_translation')
+        if Translation.objects.filter(filters & ~_dj_models.Q(id=self.id)).exists():
+            raise _dj_exc.ValidationError(f'duplicate translation for object {obj} and language {self.language_code}',
+                                          code='duplicate_translation')
 
     @classmethod
-    @abc.abstractmethod
+    @_abc.abstractmethod
     def _get_object_attr_name(cls) -> str:
         pass
 
 
 class TypeTranslation(Translation):
-    type = dj_models.ForeignKey(Type, on_delete=dj_models.CASCADE, related_name='translations')
+    type = _dj_models.ForeignKey(Type, on_delete=_dj_models.CASCADE, related_name='translations')
 
     @classmethod
     def _get_object_attr_name(cls) -> str:
@@ -1791,7 +1792,7 @@ class TypeTranslation(Translation):
 
 
 class PropertyTranslation(Translation):
-    property = dj_models.ForeignKey(Property, on_delete=dj_models.CASCADE, related_name='translations')
+    property = _dj_models.ForeignKey(Property, on_delete=_dj_models.CASCADE, related_name='translations')
 
     @classmethod
     def _get_object_attr_name(cls) -> str:
@@ -1799,7 +1800,7 @@ class PropertyTranslation(Translation):
 
 
 class UnitTypeTranslation(Translation):
-    unit_type = dj_models.ForeignKey(UnitType, on_delete=dj_models.CASCADE, related_name='translations')
+    unit_type = _dj_models.ForeignKey(UnitType, on_delete=_dj_models.CASCADE, related_name='translations')
 
     @classmethod
     def _get_object_attr_name(cls) -> str:
@@ -1807,7 +1808,7 @@ class UnitTypeTranslation(Translation):
 
 
 class UnitTranslation(Translation):
-    unit = dj_models.ForeignKey(Unit, on_delete=dj_models.CASCADE, related_name='translations')
+    unit = _dj_models.ForeignKey(Unit, on_delete=_dj_models.CASCADE, related_name='translations')
 
     @classmethod
     def _get_object_attr_name(cls) -> str:
@@ -1819,9 +1820,9 @@ class UnitTranslation(Translation):
 ########
 
 
-def end_date_validator(value: datetime.date):
-    if value and value <= utils.now().date():
-        raise dj_exc.ValidationError('date is in the past', code='past_date')
+def end_date_validator(value: _dt.date):
+    if value and value <= _utils.now().date():
+        raise _dj_exc.ValidationError('date is in the past', code='past_date')
 
 
 class NonDeletableMixin:
@@ -1829,16 +1830,16 @@ class NonDeletableMixin:
         raise RuntimeError(f'cannot delete instances of {self.__class__.__name__}')
 
 
-class Revision(dj_models.Model, NonDeletableMixin):
+class Revision(_dj_models.Model, NonDeletableMixin):
     """Base class for all revision models."""
-    date = dj_models.DateTimeField(auto_now_add=True)
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)
-    comment = dj_models.CharField(max_length=200, null=True, blank=True)
-    comment_hidden = dj_models.BooleanField(default=False)
-    hidden = dj_models.BooleanField(default=False)
-    is_minor = dj_models.BooleanField(default=False)
-    is_bot = dj_models.BooleanField(default=False)
-    tags = dj_models.ManyToManyField('Tag')
+    date = _dj_models.DateTimeField(auto_now_add=True)
+    author = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT)
+    comment = _dj_models.CharField(max_length=200, null=True, blank=True)
+    comment_hidden = _dj_models.BooleanField(default=False)
+    hidden = _dj_models.BooleanField(default=False)
+    is_minor = _dj_models.BooleanField(default=False)
+    is_bot = _dj_models.BooleanField(default=False)
+    tags = _dj_models.ManyToManyField('Tag')
 
     class Meta:
         abstract = True
@@ -1856,40 +1857,40 @@ class Revision(dj_models.Model, NonDeletableMixin):
             return self.bytes_size
 
     def get_next(self, ignore_hidden: bool) -> Revision | None:
-        f = dj_models.Q(date__gt=self.date, **{self._get_object()[0]: self._get_object()[1]})
+        f = _dj_models.Q(date__gt=self.date, **{self._get_object()[0]: self._get_object()[1]})
         if ignore_hidden:
-            f &= dj_models.Q(hidden=False)
+            f &= _dj_models.Q(hidden=False)
         try:
             return self._manager().filter(f).earliest()
-        except dj_models.ObjectDoesNotExist:
+        except _dj_models.ObjectDoesNotExist:
             return None
 
     def get_previous(self, ignore_hidden: bool) -> Revision | None:
-        f = dj_models.Q(date__lt=self.date, **{self._get_object()[0]: self._get_object()[1]})
+        f = _dj_models.Q(date__lt=self.date, **{self._get_object()[0]: self._get_object()[1]})
         if ignore_hidden:
-            f &= dj_models.Q(hidden=False)
+            f &= _dj_models.Q(hidden=False)
         try:
             return self._manager().filter(f).latest()
-        except dj_models.ObjectDoesNotExist:
+        except _dj_models.ObjectDoesNotExist:
             return None
 
     def is_latest(self, ignore_hidden: bool):
-        f = dj_models.Q(date__gt=self.date, **{self._get_object()[0]: self._get_object()[1]})
+        f = _dj_models.Q(date__gt=self.date, **{self._get_object()[0]: self._get_object()[1]})
         if ignore_hidden:
-            f &= dj_models.Q(hidden=False)
+            f &= _dj_models.Q(hidden=False)
         return not self._manager().filter(f).exists()
 
     def is_first(self, ignore_hidden: bool):
-        f = dj_models.Q(date__lt=self.date, **{self._get_object()[0]: self._get_object()[1]})
+        f = _dj_models.Q(date__lt=self.date, **{self._get_object()[0]: self._get_object()[1]})
         if ignore_hidden:
-            f &= dj_models.Q(hidden=False)
+            f &= _dj_models.Q(hidden=False)
         return not self._manager().filter(f).exists()
 
     @classmethod
-    def _manager(cls) -> dj_models.Manager:
+    def _manager(cls) -> _dj_models.Manager:
         return cls.objects
 
-    def _get_object(self) -> tuple[str, typ.Any]:
+    def _get_object(self) -> tuple[str, _typ.Any]:
         raise NotImplementedError()
 
     def _get_content(self) -> tuple[str, str]:
@@ -1903,23 +1904,23 @@ class Revision(dj_models.Model, NonDeletableMixin):
 
 def page_title_validator(value: str):
     if settings.INVALID_TITLE_REGEX.search(value) or value.startswith(' ') or value.endswith(' '):
-        raise dj_exc.ValidationError('invalid page title', code='page_invalid_title')
+        raise _dj_exc.ValidationError('invalid page title', code='page_invalid_title')
 
 
-class Page(dj_models.Model, NonDeletableMixin):
+class Page(_dj_models.Model, NonDeletableMixin):
     """Represents a wiki page."""
-    namespace_id = dj_models.IntegerField()
-    title = dj_models.CharField(max_length=200, validators=[page_title_validator])
-    content_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in w_cons.CONTENT_TYPES.values()),
-                                       default=w_cons.CT_WIKIPAGE)
-    deleted = dj_models.BooleanField(default=False)
-    is_category_hidden = dj_models.BooleanField(null=True, blank=True)
-    content_language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
+    namespace_id = _dj_models.IntegerField()
+    title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
+    content_type = _dj_models.CharField(max_length=20, choices=tuple((v, v) for v in _w_cons.CONTENT_TYPES.values()),
+                                        default=_w_cons.CT_WIKIPAGE)
+    deleted = _dj_models.BooleanField(default=False)
+    is_category_hidden = _dj_models.BooleanField(null=True, blank=True)
+    content_language = _dj_models.ForeignKey(Language, on_delete=_dj_models.PROTECT)
     # May redirect to non-existent page
-    redirects_to_namespace_id = dj_models.IntegerField(null=True, blank=True)
-    redirects_to_title = dj_models.CharField(max_length=200, validators=[page_title_validator], null=True, blank=True)
+    redirects_to_namespace_id = _dj_models.IntegerField(null=True, blank=True)
+    redirects_to_title = _dj_models.CharField(max_length=200, validators=[page_title_validator], null=True, blank=True)
     # Cache for CSS/JS/JSON pages
-    minified_content = dj_models.TextField(null=True, blank=True)
+    minified_content = _dj_models.TextField(null=True, blank=True)
 
     class Meta:
         unique_together = ('namespace_id', 'title')
@@ -1927,8 +1928,8 @@ class Page(dj_models.Model, NonDeletableMixin):
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
-        if self.namespace == namespaces.NS_CATEGORY and self.is_category_hidden is not None:
-            raise dj_exc.ValidationError(
+        if self.namespace == _w_ns.NS_CATEGORY and self.is_category_hidden is not None:
+            raise _dj_exc.ValidationError(
                 'page is not a category',
                 code='page_not_category'
             )
@@ -1936,12 +1937,12 @@ class Page(dj_models.Model, NonDeletableMixin):
                 self.title.startswith('/') or self.title.endswith('/')
                 or '//' in self.title or '' in map(str.strip, self.title.split('/'))
         ):
-            raise dj_exc.ValidationError('invalid page title', code='page_invalid_title')
+            raise _dj_exc.ValidationError('invalid page title', code='page_invalid_title')
 
     @property
-    def namespace(self) -> namespaces.Namespace:
+    def namespace(self) -> _w_ns.Namespace:
         """Page’s namespace."""
-        return namespaces.NAMESPACE_IDS[self.namespace_id]
+        return _w_ns.NAMESPACE_IDS[self.namespace_id]
 
     @property
     def full_title(self) -> str:
@@ -1951,7 +1952,7 @@ class Page(dj_models.Model, NonDeletableMixin):
     @property
     def base_name(self) -> str:
         """Page’s base name. If the namespace allows subpages or is "Special", it is the value before the first '/'."""
-        if '/' in self.title and (self.namespace.allows_subpages or self.namespace == namespaces.NS_SPECIAL):
+        if '/' in self.title and (self.namespace.allows_subpages or self.namespace == _w_ns.NS_SPECIAL):
             return self.title.split('/')[0]
         return self.title
 
@@ -1966,7 +1967,7 @@ class Page(dj_models.Model, NonDeletableMixin):
     def exists(self) -> bool:
         """Whether this pages exists in the database or is a predefined special page."""
         from .api.wiki import special_pages
-        if self.namespace == namespaces.NS_SPECIAL:
+        if self.namespace == _w_ns.NS_SPECIAL:
             return special_pages.SPECIAL_PAGES.get(self.title) is not None
         return self.pk is not None
 
@@ -1982,8 +1983,9 @@ class Page(dj_models.Model, NonDeletableMixin):
             - They cannot edit the page’s namespace.
             - They are logged in and blocked.
             - They are not logged in and their IP is blocked.
-            - The page is a user page but not theirs and they do not have the {PERM_WIKI_EDIT_USER_PAGES} permission.
-            - The page is protected an they do not have the {PERM_WIKI_PROTECT} permission.
+            - The page is a user page but not theirs and they do not have the
+                {_perms.PERM_WIKI_EDIT_USER_PAGES} permission.
+            - The page is protected an they do not have the {_perms.PERM_WIKI_PROTECT} permission.
 
         :param user: The user.
         :return: True if the user can edit, false otherwise.
@@ -2009,9 +2011,9 @@ class Page(dj_models.Model, NonDeletableMixin):
         if pp and pp.is_active and not user.is_in_group(pp.protection_level):
             return False
 
-        if (self.namespace == namespaces.NS_USER
+        if (self.namespace == _w_ns.NS_USER
                 and self.base_name != user.username
-                and not user.has_permission(PERM_WIKI_EDIT_USER_PAGES)):
+                and not user.has_permission(_perms.PERM_WIKI_EDIT_USER_PAGES)):
             return False
 
         return True
@@ -2031,7 +2033,7 @@ class Page(dj_models.Model, NonDeletableMixin):
         if not self.namespace.is_editable:
             return False
 
-        own_page = self.namespace == namespaces.NS_USER and self.base_name == user.username
+        own_page = self.namespace == _w_ns.NS_USER and self.base_name == user.username
         if user.is_blocked and (not own_page or not user.block.allow_messages_on_own_user_page):
             return False
 
@@ -2071,12 +2073,12 @@ class Page(dj_models.Model, NonDeletableMixin):
 
     def get_latest_revision(self) -> PageRevision | None:
         """Return the latest visible revision of this page."""
-        if (self.exists and self.namespace != namespaces.NS_SPECIAL
+        if (self.exists and self.namespace != _w_ns.NS_SPECIAL
                 and (revision := self.revisions.filter(hidden=False).latest())):
             return revision
         return None
 
-    def last_revision_date(self) -> datetime.datetime | None:
+    def last_revision_date(self) -> _dt.datetime | None:
         """Return the date of the latest visible edit made on this page or None if it does not exist."""
         if r := self.get_latest_revision():
             return r.date
@@ -2095,7 +2097,7 @@ class Page(dj_models.Model, NonDeletableMixin):
         except PageProtection.DoesNotExist:
             return None
 
-    def get_redirects(self) -> dj_models.QuerySet[Page]:
+    def get_redirects(self) -> _dj_models.QuerySet[Page]:
         """Return a query set of all pages that redirect to this page."""
         return Page.objects.filter(redirects_to_namespace_id=self.namespace_id, redirects_to_title=self.title)
 
@@ -2114,101 +2116,101 @@ class Page(dj_models.Model, NonDeletableMixin):
                            self.namespace.get_full_page_title(parts[i]) if i == 0 else parts[i]))
         return titles
 
-    def get_subpages(self) -> dj_models.QuerySet[Page]:
+    def get_subpages(self) -> _dj_models.QuerySet[Page]:
         """Return a query set of all subpages of this page."""
         if not self.namespace.allows_subpages:
-            return dj_auth_models.EmptyManager(Page).all()
+            return _dj_auth_models.EmptyManager(Page).all()
         return Page.objects.filter(namespace_id=self.namespace_id, title__startswith=self.title + '/')
 
-    def get_categories(self) -> dj_models.QuerySet[PageCategory]:
+    def get_categories(self) -> _dj_models.QuerySet[PageCategory]:
         """Return a query set of all categories of this page"""
-        if not self.exists or self.namespace != namespaces.NS_SPECIAL:
-            return dj_auth_models.EmptyManager(PageCategory).all()
+        if not self.exists or self.namespace != _w_ns.NS_SPECIAL:
+            return _dj_auth_models.EmptyManager(PageCategory).all()
         return PageCategory.objects.filter(page=self).order_by('page__namespace_id', 'page__title')
 
 
-class PageCategory(dj_models.Model):
+class PageCategory(_dj_models.Model):
     """Model that associates a page to a category with an optional sort key.
     Pages can be in non-existent categories."""
-    page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT, related_name='categories')
-    cat_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
-    sort_key = dj_models.CharField(max_length=200, null=True, blank=True)
+    page = _dj_models.ForeignKey(Page, on_delete=_dj_models.PROTECT, related_name='categories')
+    cat_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
+    sort_key = _dj_models.CharField(max_length=200, null=True, blank=True)
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
-        if PageCategory.objects.filter(dj_models.Q(page=self.page, cat_title=self.cat_title)
-                                       & ~dj_models.Q(id=self.id)).exists():
-            raise dj_exc.ValidationError('duplicate category for page', code='duplicate_category')
+        if PageCategory.objects.filter(_dj_models.Q(page=self.page, cat_title=self.cat_title)
+                                       & ~_dj_models.Q(id=self.id)).exists():
+            raise _dj_exc.ValidationError('duplicate category for page', code='duplicate_category')
 
     @staticmethod
-    def subcategories_for_category(cat_title: str) -> dj_models.QuerySet[Page]:
+    def subcategories_for_category(cat_title: str) -> _dj_models.QuerySet[Page]:
         """Get a query set of pages that are subcategories of the given category.
 
         :param cat_title: Category’s title.
         :return: A QuerySet of Page objects.
         """
-        return Page.objects.filter(categories__cat_title=cat_title, namespace_id=namespaces.NS_CATEGORY.id)
+        return Page.objects.filter(categories__cat_title=cat_title, namespace_id=_w_ns.NS_CATEGORY.id)
 
     @staticmethod
-    def pages_for_category(cat_title: str) -> dj_models.QuerySet[Page]:
+    def pages_for_category(cat_title: str) -> _dj_models.QuerySet[Page]:
         """Get a query set of pages that are in the given category.
 
         :param cat_title: Category’s title.
         :return: A QuerySet of Page objects.
         """
-        return Page.objects.filter(dj_models.Q(categories__cat_title=cat_title)
-                                   & ~dj_models.Q(namespace_id=namespaces.NS_CATEGORY.id))
+        return Page.objects.filter(_dj_models.Q(categories__cat_title=cat_title)
+                                   & ~_dj_models.Q(namespace_id=_w_ns.NS_CATEGORY.id))
 
 
-class PageProtection(dj_models.Model):
+class PageProtection(_dj_models.Model):
     """Defines the protection status of a page. Non-existent pages can be protected."""
     # No foreign key to Page as it allows protecting non-existent pages.
-    page_namespace_id = dj_models.IntegerField()
-    page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
-    end_date = dj_models.DateTimeField(null=True, blank=True)
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
-    protection_level = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
-    protect_talks = dj_models.BooleanField(default=False)
+    page_namespace_id = _dj_models.IntegerField()
+    page_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
+    end_date = _dj_models.DateTimeField(null=True, blank=True)
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+    protection_level = _dj_models.ForeignKey(UserGroup, on_delete=_dj_models.PROTECT)
+    protect_talks = _dj_models.BooleanField(default=False)
 
     class Meta:
         unique_together = ('page_namespace_id', 'page_title')
 
     @property
     def is_active(self):
-        return not self.end_date or self.end_date > utils.now()
+        return not self.end_date or self.end_date > _utils.now()
 
 
-class PageFollowStatus(dj_models.Model):
+class PageFollowStatus(_dj_models.Model):
     """Defines the follow status of a page. Non-existent pages can be followed."""
-    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='followed_pages')
+    user = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT, related_name='followed_pages')
     # No foreign key to Page as it allows following non-existent pages.
-    page_namespace_id = dj_models.IntegerField()
-    page_title = dj_models.CharField(max_length=200, validators=[page_title_validator])
-    end_date = dj_models.DateTimeField(null=True, blank=True)
+    page_namespace_id = _dj_models.IntegerField()
+    page_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
+    end_date = _dj_models.DateTimeField(null=True, blank=True)
 
     def validate_unique(self, exclude=None):
         super().validate_unique(exclude=exclude)
         if PageFollowStatus.objects.filter(
-                dj_models.Q(user=self.user, page_namespace_id=self.page_namespace_id, page_title=self.page_title)
-                & ~dj_models.Q(id=self.id)).exists():
-            raise dj_exc.ValidationError(
+                _dj_models.Q(user=self.user, page_namespace_id=self.page_namespace_id, page_title=self.page_title)
+                & ~_dj_models.Q(id=self.id)).exists():
+            raise _dj_exc.ValidationError(
                 'duplicate follow list entry',
                 code='page_follow_list_duplicate_entry'
             )
 
     @property
     def is_active(self):
-        return not self.end_date or self.end_date > utils.now()
+        return not self.end_date or self.end_date > _utils.now()
 
 
 def tag_label_validator(value: str):
     if not value.isascii() or not value.isalnum():
-        raise dj_exc.ValidationError('invalid tag label', code='tag_invalid_label')
+        raise _dj_exc.ValidationError('invalid tag label', code='tag_invalid_label')
 
 
-class Tag(dj_models.Model):
+class Tag(_dj_models.Model):
     """Tags are used to add metadata to page revisions."""
-    label = dj_models.CharField(max_length=20, validators=[tag_label_validator])
+    label = _dj_models.CharField(max_length=20, validators=[tag_label_validator])
 
 
 ###############
@@ -2216,25 +2218,25 @@ class Tag(dj_models.Model):
 ###############
 
 
-class Topic(dj_models.Model, NonDeletableMixin):
+class Topic(_dj_models.Model, NonDeletableMixin):
     """A talk topic groups a hierarchical list of user messages."""
-    page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT, related_name='topics')
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='wiki_topics')
-    date = dj_models.DateTimeField(auto_now_add=True)
-    deleted = dj_models.BooleanField(default=False)
+    page = _dj_models.ForeignKey(Page, on_delete=_dj_models.PROTECT, related_name='topics')
+    author = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT, related_name='wiki_topics')
+    date = _dj_models.DateTimeField(auto_now_add=True)
+    deleted = _dj_models.BooleanField(default=False)
 
     def get_title(self) -> str:
         """Return the title of this topic or an empty string if it does not exist."""
         return revision.title if (revision := self.revisions.latest()) else ''
 
 
-class Message(dj_models.Model, NonDeletableMixin):
+class Message(_dj_models.Model, NonDeletableMixin):
     """Messages can be posted by users under specific topics."""
-    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.PROTECT, related_name='messages')
-    author = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='wiki_messages')
-    date = dj_models.DateTimeField(auto_now_add=True)
-    response_to = dj_models.ForeignKey('self', on_delete=dj_models.PROTECT, related_name='responses', null=True)
-    deleted = dj_models.BooleanField(default=False)
+    topic = _dj_models.ForeignKey(Topic, on_delete=_dj_models.PROTECT, related_name='messages')
+    author = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT, related_name='wiki_messages')
+    date = _dj_models.DateTimeField(auto_now_add=True)
+    response_to = _dj_models.ForeignKey('self', on_delete=_dj_models.PROTECT, related_name='responses', null=True)
+    deleted = _dj_models.BooleanField(default=False)
 
     def get_content(self) -> str:
         """Return the content of this message or an empty string if it does not exist."""
@@ -2248,10 +2250,10 @@ class Message(dj_models.Model, NonDeletableMixin):
 
 class PageRevision(Revision):
     """A page revision is a version of a page’s content at a given time."""
-    page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT, related_name='revisions')
-    content = dj_models.TextField()
+    page = _dj_models.ForeignKey(Page, on_delete=_dj_models.PROTECT, related_name='revisions')
+    content = _dj_models.TextField()
 
-    def _get_object(self) -> tuple[str, typ.Any]:
+    def _get_object(self) -> tuple[str, _typ.Any]:
         return 'page', self.page
 
     def _get_content(self) -> tuple[str, str]:
@@ -2260,10 +2262,10 @@ class PageRevision(Revision):
 
 class TopicRevision(Revision):
     """A topic revision is a version of a topic’s title at a given time."""
-    topic = dj_models.ForeignKey(Topic, on_delete=dj_models.PROTECT, related_name='revisions')
-    title = dj_models.CharField(max_length=200)
+    topic = _dj_models.ForeignKey(Topic, on_delete=_dj_models.PROTECT, related_name='revisions')
+    title = _dj_models.CharField(max_length=200)
 
-    def _get_object(self) -> tuple[str, typ.Any]:
+    def _get_object(self) -> tuple[str, _typ.Any]:
         return 'topic', self.topic
 
     def _get_content(self) -> tuple[str, str]:
@@ -2272,10 +2274,10 @@ class TopicRevision(Revision):
 
 class MessageRevision(Revision):
     """A message revision is a version of a message’s content at a given time."""
-    message = dj_models.ForeignKey(Message, on_delete=dj_models.PROTECT, related_name='revisions')
-    text = dj_models.TextField()
+    message = _dj_models.ForeignKey(Message, on_delete=_dj_models.PROTECT, related_name='revisions')
+    text = _dj_models.TextField()
 
-    def _get_object(self) -> tuple[str, typ.Any]:
+    def _get_object(self) -> tuple[str, _typ.Any]:
         return 'message', self.message
 
     def _get_content(self) -> tuple[str, str]:
@@ -2287,9 +2289,9 @@ class MessageRevision(Revision):
 ########
 
 
-class Log(dj_models.Model, NonDeletableMixin):
+class Log(_dj_models.Model, NonDeletableMixin):
     """Base class for logs. Logs are models that store all operations performed by users."""
-    date = dj_models.DateTimeField(auto_now_add=True)
+    date = _dj_models.DateTimeField(auto_now_add=True)
 
     class Meta:
         abstract = True
@@ -2297,8 +2299,8 @@ class Log(dj_models.Model, NonDeletableMixin):
 
 class PageLog(Log):
     """Base class for page-related operations."""
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)
-    page = dj_models.ForeignKey(Page, on_delete=dj_models.PROTECT)
+    performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT)
+    page = _dj_models.ForeignKey(Page, on_delete=_dj_models.PROTECT)
 
     class Meta:
         abstract = True
@@ -2314,7 +2316,7 @@ class PageCreationLog(PageLog):
 
 class PageDeletionLog(PageLog):
     """New entries are added each time a page is deleted."""
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
         get_latest_by = 'date'
@@ -2323,10 +2325,10 @@ class PageDeletionLog(PageLog):
 
 class PageProtectionLog(PageLog):
     """New entries are added each time a page’s protection status changes."""
-    end_date = dj_models.DateTimeField(null=True, blank=True)
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
-    protection_level = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
-    protect_talks = dj_models.BooleanField()
+    end_date = _dj_models.DateTimeField(null=True, blank=True)
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+    protection_level = _dj_models.ForeignKey(UserGroup, on_delete=_dj_models.PROTECT)
+    protect_talks = _dj_models.BooleanField()
 
     class Meta:
         get_latest_by = 'date'
@@ -2335,8 +2337,8 @@ class PageProtectionLog(PageLog):
 
 class PageContentLanguageLog(PageLog):
     """New entries are added each time the content language of a page is modified."""
-    language = dj_models.ForeignKey(Language, on_delete=dj_models.PROTECT)
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
+    language = _dj_models.ForeignKey(Language, on_delete=_dj_models.PROTECT)
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
         get_latest_by = 'date'
@@ -2345,8 +2347,8 @@ class PageContentLanguageLog(PageLog):
 
 class PageContentTypeLog(PageLog):
     """New entries are added each time the content type of a page is modified."""
-    content_type = dj_models.CharField(max_length=20, choices=tuple((v, v) for v in w_cons.CONTENT_TYPES.values()))
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
+    content_type = _dj_models.CharField(max_length=20, choices=tuple((v, v) for v in _w_cons.CONTENT_TYPES.values()))
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
 
     class Meta:
         get_latest_by = 'date'
@@ -2355,7 +2357,7 @@ class PageContentTypeLog(PageLog):
 
 class UserLog(Log):
     """Base class for user-related operations."""
-    user = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)
+    user = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT)
 
     class Meta:
         abstract = True
@@ -2371,10 +2373,10 @@ class UserAccountCreationLog(UserLog):
 
 class UserMaskLog(UserLog):
     """New entries are added each time a user account is created."""
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT,
-                                     related_name='usermasklog_performer_set')
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
-    masked = dj_models.BooleanField()
+    performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT,
+                                      related_name='usermasklog_performer_set')
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+    masked = _dj_models.BooleanField()
 
     class Meta:
         get_latest_by = 'date'
@@ -2383,12 +2385,12 @@ class UserMaskLog(UserLog):
 
 class UserGroupLog(UserLog):
     """New entries are added each time a user account is created."""
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT,
-                                     related_name='usergrouplog_performer_set',
-                                     null=True, blank=True)
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
-    joined = dj_models.BooleanField()
-    group = dj_models.ForeignKey(UserGroup, on_delete=dj_models.PROTECT)
+    performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT,
+                                      related_name='usergrouplog_performer_set',
+                                      null=True, blank=True)
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+    joined = _dj_models.BooleanField()
+    group = _dj_models.ForeignKey(UserGroup, on_delete=_dj_models.PROTECT)
 
     class Meta:
         get_latest_by = 'date'
@@ -2397,12 +2399,13 @@ class UserGroupLog(UserLog):
 
 class UserBlockLog(UserLog):
     """New entries are added each time a user’s block status changes."""
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT, related_name='userblocklog_performer_set')
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
-    end_date = dj_models.DateTimeField(null=True, blank=True)
-    allow_messages_on_own_user_page = dj_models.BooleanField()
-    allow_editing_own_settings = dj_models.BooleanField()
-    blocked = dj_models.BooleanField()
+    performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT,
+                                      related_name='userblocklog_performer_set')
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+    end_date = _dj_models.DateTimeField(null=True, blank=True)
+    allow_messages_on_own_user_page = _dj_models.BooleanField()
+    allow_editing_own_settings = _dj_models.BooleanField()
+    blocked = _dj_models.BooleanField()
 
     class Meta:
         get_latest_by = 'date'
@@ -2411,12 +2414,12 @@ class UserBlockLog(UserLog):
 
 class IPBlockLog(Log):
     """New entries are added each time an IP address’ block status changes."""
-    performer = dj_models.ForeignKey(CustomUser, on_delete=dj_models.PROTECT)
-    reason = dj_models.CharField(max_length=200, null=True, blank=True)
-    end_date = dj_models.DateTimeField(null=True, blank=True)
-    allow_messages_on_own_user_page = dj_models.BooleanField()
-    ip = dj_models.CharField(max_length=39)
-    allow_account_creation = dj_models.BooleanField()
+    performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT)
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+    end_date = _dj_models.DateTimeField(null=True, blank=True)
+    allow_messages_on_own_user_page = _dj_models.BooleanField()
+    ip = _dj_models.CharField(max_length=39)
+    allow_account_creation = _dj_models.BooleanField()
 
     class Meta:
         get_latest_by = 'date'

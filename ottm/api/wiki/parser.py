@@ -1,10 +1,10 @@
 """This module defines the wikicode parser."""
-import urllib.parse
+import urllib.parse as _url_parse
 
-import django.shortcuts as dj_scut
-from . import namespaces, pages, special_pages
-from .constants import *
-from ... import settings
+import django.shortcuts as _dj_scut
+
+from . import namespaces as _w_ns, pages as _w_pages, constants as _w_cons
+from ... import settings as _settings
 
 
 class Parser:
@@ -14,7 +14,7 @@ class Parser:
     def format_internal_link(
             cls,
             page_title: str,
-            language: settings.UILanguage,
+            language: _settings.UILanguage,
             text: str = None,
             tooltip: str = None,
             anchor: str = None,
@@ -28,7 +28,7 @@ class Parser:
             open_in_new_tab: bool = False,
     ):
         url_params = url_params or {}
-        page = pages.get_page(*pages.split_title(page_title))
+        page = _w_pages.get_page(*_w_pages.split_title(page_title))
         page_exists = page.exists and not page.deleted
 
         link_text = page.full_title if text is None else text
@@ -36,20 +36,21 @@ class Parser:
         if current_page_title == page.full_title and not anchor and not url_params:
             return f'<strong class="wiki-recursive-link">{link_text}</strong>' if not only_url else ''
 
-        url = dj_scut.reverse('ottm:wiki_page', kwargs={
-            'raw_page_title': pages.url_encode_page_title(page.full_title)
+        url = _dj_scut.reverse('ottm:wiki_page', kwargs={
+            'raw_page_title': _w_pages.url_encode_page_title(page.full_title)
         })
         link_tooltip = tooltip or page.full_title
 
         if (page_exists or no_red_link
-                or url_params.get('action') in (ACTION_TALK, ACTION_INFO, ACTION_HISTORY, ACTION_RAW)):
-            params = urllib.parse.urlencode(url_params)
+                or url_params.get('action') in (
+                _w_cons.ACTION_TALK, _w_cons.ACTION_INFO, _w_cons.ACTION_HISTORY, _w_cons.ACTION_RAW)):
+            params = _url_parse.urlencode(url_params)
             if params:
                 url += '?' + params
             if anchor:
                 url += '#' + anchor
         else:
-            if page.namespace != namespaces.NS_SPECIAL:
+            if page.namespace != _w_ns.NS_SPECIAL:
                 url += '?action=edit&red_link=1'
             paren = language.translate('wiki.link.red_link.tooltip')
             link_tooltip += f' ({paren})'

@@ -1,6 +1,5 @@
 """Core module of the special_pages package."""
 import abc as _abc
-import dataclasses
 import dataclasses as _dt
 import enum as _enum
 import typing as _typ
@@ -23,7 +22,7 @@ class Section(_enum.Enum):
 @_dt.dataclass(frozen=True)
 class Redirect:
     page_title: str
-    args: dict[str, _typ.Any] = dataclasses.field(default_factory=lambda: {})
+    args: dict[str, _typ.Any] = _dt.field(default_factory=lambda: {})
 
 
 class SpecialPage(_abc.ABC):

@@ -1,5 +1,5 @@
-import django.db.utils as dj_utils
 from django.apps import AppConfig
+import django.db.utils as _dj_utils
 
 
 class OTTMConfig(AppConfig):
@@ -11,5 +11,5 @@ class OTTMConfig(AppConfig):
         try:
             # Run only now as the database needs to be initialized first
             settings.init_languages()
-        except dj_utils.OperationalError:
+        except _dj_utils.OperationalError:
             pass

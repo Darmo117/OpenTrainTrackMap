@@ -1,22 +1,22 @@
 """This module defines functions to interact with the wiki’s database."""
-import datetime
+import datetime as _dt
 import typing as _typ
-import urllib.parse
+import urllib.parse as _url_parse
 
-import cssmin
-import django.core.handlers.wsgi as dj_wsgi
-import django.db.transaction as dj_db_trans
-import django.shortcuts as dj_scut
-import rjsmin
+import cssmin as _cssmin
+import django.core.handlers.wsgi as _dj_wsgi
+import django.db.transaction as _dj_db_trans
+import django.shortcuts as _dj_scut
+import rjsmin as _rjsmin
 
-from . import constants, namespaces
-from .. import errors, groups, permissions, utils
-from ... import models, requests, settings
+from . import constants as _w_cons, namespaces as _w_ns
+from .. import errors as _errors, groups as _groups, permissions as _perms, utils as _utils
+from ... import models as _models, requests as _requests, settings as _settings
 
-MAIN_PAGE_TITLE = namespaces.NS_WIKI.get_full_page_title('Main Page')
+MAIN_PAGE_TITLE = _w_ns.NS_WIKI.get_full_page_title('Main Page')
 
 
-def split_title(title: str) -> tuple[namespaces.Namespace, str]:
+def split_title(title: str) -> tuple[_w_ns.Namespace, str]:
     """Split the given full page title’s namespace and title.
 
     :param title: Full page title.
@@ -24,16 +24,16 @@ def split_title(title: str) -> tuple[namespaces.Namespace, str]:
     """
     title = title.strip()
     ns_id = 0
-    if namespaces.SEPARATOR in title:
-        a, b = title.split(namespaces.SEPARATOR, maxsplit=1)
-        if ns := namespaces.NAMESPACE_NAMES.get(a.strip()):
+    if _w_ns.SEPARATOR in title:
+        a, b = title.split(_w_ns.SEPARATOR, maxsplit=1)
+        if ns := _w_ns.NAMESPACE_NAMES.get(a.strip()):
             ns_id = ns.id
             page_title = b.strip()
         else:
             page_title = title
     else:
         page_title = title
-    return namespaces.NAMESPACE_IDS[ns_id], page_title
+    return _w_ns.NAMESPACE_IDS[ns_id], page_title
 
 
 def get_correct_title(raw_title: str) -> str:
@@ -43,7 +43,7 @@ def get_correct_title(raw_title: str) -> str:
     :param raw_title: A URL-compatible page title.
     :return: The actual page title.
     """
-    return urllib.parse.unquote(raw_title.replace('_', ' ')).strip()
+    return _url_parse.unquote(raw_title.replace('_', ' ')).strip()
 
 
 def url_encode_page_title(title: str) -> str:
@@ -55,7 +55,7 @@ def url_encode_page_title(title: str) -> str:
     return title.replace(' ', '_')
 
 
-def get_page(ns: namespaces.Namespace, title: str) -> models.Page:
+def get_page(ns: _w_ns.Namespace, title: str) -> _models.Page:
     """Return the page object for the given namespace and title.
     If the page does not exist, a new Page object is returned.
 
@@ -64,16 +64,16 @@ def get_page(ns: namespaces.Namespace, title: str) -> models.Page:
     :return: A Page object.
     """
     try:
-        return models.Page.objects.get(namespace_id=ns.id, title=title)
-    except models.Page.DoesNotExist:
-        return models.Page(
+        return _models.Page.objects.get(namespace_id=ns.id, title=title)
+    except _models.Page.DoesNotExist:
+        return _models.Page(
             namespace_id=ns.id,
             title=title,
-            content_language=models.Language.get_default(),
+            content_language=_models.Language.get_default(),
         )
 
 
-def get_js_config(request_params: requests.RequestParams, page: models.Page,
+def get_js_config(request_params: _requests.RequestParams, page: _models.Page,
                   special_page_data: dict[str, _typ.Any] = None, revision_id: int = None) -> dict:
     """Return a dict object representing the page’s JS configuration object to insert into the HTML template.
 
@@ -85,25 +85,25 @@ def get_js_config(request_params: requests.RequestParams, page: models.Page,
     """
     user = request_params.user
     special_page_data = special_page_data or {}
-    if page.namespace == namespaces.NS_SPECIAL:
+    if page.namespace == _w_ns.NS_SPECIAL:
         username = (tu := special_page_data.get('target_user')) and tu.username
-    elif page.namespace == namespaces.NS_USER:
+    elif page.namespace == _w_ns.NS_USER:
         username = page.base_name
     else:
         username = None
     action = request_params.wiki_action
     return {
         'config': {
-            'wApiPath': dj_scut.reverse('ottm:wiki_api'),
-            'wPath': dj_scut.reverse('ottm:wiki_main_page'),
-            'wContentNamespaces': [ns_id for ns_id, ns in namespaces.NAMESPACE_IDS.items() if ns.is_content],
-            'wNamespaceNames': {ns_id: ns.name for ns_id, ns in namespaces.NAMESPACE_IDS.items()},
-            'wNamespaceIDs': list(namespaces.NAMESPACE_IDS.keys()),
+            'wApiPath': _dj_scut.reverse('ottm:wiki_api'),
+            'wPath': _dj_scut.reverse('ottm:wiki_main_page'),
+            'wContentNamespaces': [ns_id for ns_id, ns in _w_ns.NAMESPACE_IDS.items() if ns.is_content],
+            'wNamespaceNames': {ns_id: ns.name for ns_id, ns in _w_ns.NAMESPACE_IDS.items()},
+            'wNamespaceIDs': list(_w_ns.NAMESPACE_IDS.keys()),
         },
         'page': {
             'wIsMainPage': page.full_title == MAIN_PAGE_TITLE,
             'wAction': action,
-            'wID': page.id if page.exists and page.namespace != namespaces.NS_SPECIAL else 0,
+            'wID': page.id if page.exists and page.namespace != _w_ns.NS_SPECIAL else 0,
             'wNamespaceID': page.namespace.id,
             'wNamespaceName': page.namespace.name,
             'wNamespaceNameURL': url_encode_page_title(page.namespace.name),
@@ -117,8 +117,8 @@ def get_js_config(request_params: requests.RequestParams, page: models.Page,
             'wNameURL': url_encode_page_title(page.page_name),
             'wCategories': [cat.cat_title for cat in page.get_categories()],
             'wLatestsRevisionID':
-                page.get_latest_revision().id if page.exists and page.namespace != namespaces.NS_SPECIAL else 0,
-            'wIsNormalPage': action == constants.ACTION_READ and page.namespace != namespaces.NS_SPECIAL,
+                page.get_latest_revision().id if page.exists and page.namespace != _w_ns.NS_SPECIAL else 0,
+            'wIsNormalPage': action == _w_cons.ACTION_READ and page.namespace != _w_ns.NS_SPECIAL,
             'wIsRedirect': page.redirects_to_namespace_id is not None and page.redirects_to_title is not None,
             'wContentLanguage': page.content_language.code,
             'wContentType': page.content_type,
@@ -138,7 +138,7 @@ def get_js_config(request_params: requests.RequestParams, page: models.Page,
     }
 
 
-def render_wikicode(code: str, user: models.User, language: settings.UILanguage) -> str:
+def render_wikicode(code: str, user: _models.User, language: _settings.UILanguage) -> str:
     """Render the given wikicode.
 
     :param code: The wikicode to render.
@@ -149,7 +149,7 @@ def render_wikicode(code: str, user: models.User, language: settings.UILanguage)
     return code  # TODO
 
 
-def get_edit_notice(user: models.User, language: settings.UILanguage, page: models.Page) -> str:
+def get_edit_notice(user: _models.User, language: _settings.UILanguage, page: _models.Page) -> str:
     """Return the rendered edit notice from "Interface:EditNotice/<lang_code>".
 
     :param user: Current user.
@@ -160,7 +160,7 @@ def get_edit_notice(user: models.User, language: settings.UILanguage, page: mode
     return get_interface_page(f'EditNotice', user, language, page=page)
 
 
-def get_new_page_notice(user: models.User, language: settings.UILanguage, page: models.Page) -> str:
+def get_new_page_notice(user: _models.User, language: _settings.UILanguage, page: _models.Page) -> str:
     """Return the rendered edit notice from "Interface:NewPageNotice/<lang_code>".
 
     :param user: Current user.
@@ -171,7 +171,7 @@ def get_new_page_notice(user: models.User, language: settings.UILanguage, page: 
     return get_interface_page(f'NewPageNotice', user, language, page=page)
 
 
-def get_no_page_notice(user: models.User, language: settings.UILanguage) -> str:
+def get_no_page_notice(user: _models.User, language: _settings.UILanguage) -> str:
     """Return the rendered edit notice from "Interface:NoPageNotice/<lang_code>".
 
     :param user: Current user.
@@ -181,8 +181,8 @@ def get_no_page_notice(user: models.User, language: settings.UILanguage) -> str:
     return get_interface_page('NoPageNotice', user, language)
 
 
-def get_interface_page(title: str, user: models.User = None, language: settings.UILanguage = None,
-                       page: models.Page = None, render: bool = True) -> str:
+def get_interface_page(title: str, user: _models.User = None, language: _settings.UILanguage = None,
+                       page: _models.Page = None, render: bool = True) -> str:
     """Return the rendered interface page from "Interface:<title>/<lang_code>" if language is defined,
     "Interface:<title>" otherwise.
 
@@ -209,7 +209,7 @@ def get_interface_page(title: str, user: models.User = None, language: settings.
     return render_wikicode(interface_page.get_content(), user, language) if render else interface_page.get_content()
 
 
-def _get_interface_page(title: str, language: settings.UILanguage = None) -> models.Page | None:
+def _get_interface_page(title: str, language: _settings.UILanguage = None) -> _models.Page | None:
     """Return the interface page with the given title.
 
     :param title: Page’s title.
@@ -219,13 +219,13 @@ def _get_interface_page(title: str, language: settings.UILanguage = None) -> mod
     if language:
         title += f'/{language.code}'
     try:
-        return models.Page.objects.get(namespace_id=namespaces.NS_INTERFACE.id, title=title)
-    except models.Page.DoesNotExist:
+        return _models.Page.objects.get(namespace_id=_w_ns.NS_INTERFACE.id, title=title)
+    except _models.Page.DoesNotExist:
         return None
 
 
-@dj_db_trans.atomic
-def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: models.Page, content: str,
+@_dj_db_trans.atomic
+def edit_page(request: _dj_wsgi.WSGIRequest | None, author: _models.User, page: _models.Page, content: str,
               comment: str = None, minor_edit: bool = False, follow: bool = False, hidden_category: bool = False,
               section_id: str = None):
     """Submit a new revision for the given page.
@@ -246,14 +246,14 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
     :raise ConcurrentWikiEditError: If another edit was made on the same page before this edit.
     :raise ValueError: If the request is None and the user is anonymous.
     """
-    if page.namespace == namespaces.NS_SPECIAL:
-        raise errors.EditSpecialPageError()
+    if page.namespace == _w_ns.NS_SPECIAL:
+        raise _errors.EditSpecialPageError()
     if not page.can_user_edit(author):
-        raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
-    if hidden_category and page.namespace != namespaces.NS_CATEGORY:
-        raise errors.NotACategoryPageError()
+        raise _errors.MissingPermissionError(_perms.PERM_WIKI_EDIT)
+    if hidden_category and page.namespace != _w_ns.NS_CATEGORY:
+        raise _errors.NotACategoryPageError()
     if False:  # TODO check if another edit was made while editing
-        raise errors.ConcurrentWikiEditError()
+        raise _errors.ConcurrentWikiEditError()
     if not author.exists:
         if request:
             author.internal_object.save()
@@ -265,19 +265,19 @@ def edit_page(request: dj_wsgi.WSGIRequest | None, author: models.User, page: mo
             page.content_type = _get_page_content_type(page)
             page.save()
             # Add to log
-            models.PageCreationLog(performer=author.internal_object, page=page).save()
-        models.PageRevision(
+            _models.PageCreationLog(performer=author.internal_object, page=page).save()
+        _models.PageRevision(
             page=page,
             author=author.internal_object,
-            comment=utils.escape_html(comment),
+            comment=_utils.escape_html(comment),
             is_minor=minor_edit,
             content=content,
             is_bot=author.is_bot,
         ).save()
-        if page.content_type == constants.CT_JS:
+        if page.content_type == _w_cons.CT_JS:
             page.minified_content = minify_js(content)
             page.save()
-        elif page.content_type == constants.CT_CSS:
+        elif page.content_type == _w_cons.CT_CSS:
             page.minified_content = minify_css(content)
             page.save()
     if author.is_authenticated:
@@ -290,7 +290,7 @@ def minify_js(code: str) -> str:  # TODO check syntax and return 'console.log("e
     :param code: JavaScript code to minify.
     :return: The minified code.
     """
-    return rjsmin.jsmin(code)
+    return _rjsmin.jsmin(code)
 
 
 def minify_css(code: str) -> str:  # TODO check syntax and return None if any error
@@ -299,26 +299,26 @@ def minify_css(code: str) -> str:  # TODO check syntax and return None if any er
     :param code: CSS code to minify.
     :return: The minified code.
     """
-    return cssmin.cssmin(code)
+    return _cssmin.cssmin(code)
 
 
-def _get_page_content_type(page: models.Page) -> str:
-    if page.namespace == namespaces.NS_MODULE:
-        return constants.CT_MODULE
+def _get_page_content_type(page: _models.Page) -> str:
+    if page.namespace == _w_ns.NS_MODULE:
+        return _w_cons.CT_MODULE
     # Only pages in namespace Interface and User are allowd to have JS, CSS or JSON pages.
     # For User namespace, only subpages can have either of these types, user page itself cannot.
-    if page.namespace == namespaces.NS_INTERFACE or page.namespace == namespaces.NS_USER and '/' in page.title:
+    if page.namespace == _w_ns.NS_INTERFACE or page.namespace == _w_ns.NS_USER and '/' in page.title:
         if page.title.endswith('.js'):
-            return constants.CT_JS
+            return _w_cons.CT_JS
         if page.title.endswith('.css'):
-            return constants.CT_CSS
+            return _w_cons.CT_CSS
         if page.title.endswith('.json'):
-            return constants.CT_JSON
-    return constants.CT_WIKIPAGE
+            return _w_cons.CT_JSON
+    return _w_cons.CT_WIKIPAGE
 
 
-@dj_db_trans.atomic
-def set_page_content_language(author: models.User, page: models.Page, language: settings.UILanguage, reason: str):
+@_dj_db_trans.atomic
+def set_page_content_language(author: _models.User, page: _models.Page, language: _settings.UILanguage, reason: str):
     """Change the content language of the given page.
 
     :param author: User performing the action.
@@ -331,18 +331,18 @@ def set_page_content_language(author: models.User, page: models.Page, language: 
     :raise MissingPermissionError: If the user cannot edit the page.
     """
     if not page.exists:
-        raise errors.PageDoesNotExistError(page.full_title)
-    if page.namespace == namespaces.NS_SPECIAL:
-        raise errors.EditSpecialPageError()
+        raise _errors.PageDoesNotExistError(page.full_title)
+    if page.namespace == _w_ns.NS_SPECIAL:
+        raise _errors.EditSpecialPageError()
     if not page.can_user_edit(author):
-        raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
+        raise _errors.MissingPermissionError(_perms.PERM_WIKI_EDIT)
     if not author.exists:
         author.internal_object.save()
     if language.internal_language == page.content_language:
         return False
     page.content_language = language.internal_language
     page.save()
-    models.PageContentLanguageLog(
+    _models.PageContentLanguageLog(
         performer=author.internal_object,
         page=page,
         language=page.content_language,
@@ -351,8 +351,8 @@ def set_page_content_language(author: models.User, page: models.Page, language: 
     return True
 
 
-@dj_db_trans.atomic
-def set_page_content_type(author: models.User, page: models.Page, content_type: str, reason: str):
+@_dj_db_trans.atomic
+def set_page_content_type(author: _models.User, page: _models.Page, content_type: str, reason: str):
     """Change the content type of the given page.
 
     :param author: User performing the action.
@@ -365,18 +365,18 @@ def set_page_content_type(author: models.User, page: models.Page, content_type: 
     :raise MissingPermissionError: If the user cannot edit the page.
     """
     if not page.exists:
-        raise errors.PageDoesNotExistError(page.full_title)
-    if page.namespace == namespaces.NS_SPECIAL:
-        raise errors.EditSpecialPageError()
+        raise _errors.PageDoesNotExistError(page.full_title)
+    if page.namespace == _w_ns.NS_SPECIAL:
+        raise _errors.EditSpecialPageError()
     if not page.can_user_edit(author):
-        raise errors.MissingPermissionError(permissions.PERM_WIKI_EDIT)
+        raise _errors.MissingPermissionError(_perms.PERM_WIKI_EDIT)
     if not author.exists:
         author.internal_object.save()
     if content_type == page.content_type:
         return False
     page.content_type = content_type
     page.save()
-    models.PageContentTypeLog(
+    _models.PageContentTypeLog(
         performer=author.internal_object,
         page=page,
         content_type=content_type,
@@ -385,8 +385,8 @@ def set_page_content_type(author: models.User, page: models.Page, content_type: 
     return True
 
 
-@dj_db_trans.atomic
-def follow_page(user: models.User, page: models.Page, follow: bool, until: datetime.datetime = None):
+@_dj_db_trans.atomic
+def follow_page(user: _models.User, page: _models.Page, follow: bool, until: _dt.datetime = None):
     """Make a user follow/unfollow the given page.
 
     :param user: The user.
@@ -398,9 +398,9 @@ def follow_page(user: models.User, page: models.Page, follow: bool, until: datet
     :raise FollowSpecialPageError: If the page is in the "Special" namespace.
     """
     if not user.is_authenticated:
-        raise errors.AnonymousFollowPageError()
-    if page.namespace == namespaces.NS_SPECIAL:
-        raise errors.FollowSpecialPageError()
+        raise _errors.AnonymousFollowPageError()
+    if page.namespace == _w_ns.NS_SPECIAL:
+        raise _errors.FollowSpecialPageError()
 
     def delete_follow():
         try:
@@ -408,12 +408,12 @@ def follow_page(user: models.User, page: models.Page, follow: bool, until: datet
                 page_namespace_id=page.namespace_id,
                 page_title=page.title,
             ).delete()
-        except models.PageFollowStatus.DoesNotExist:
+        except _models.PageFollowStatus.DoesNotExist:
             pass
 
     if follow:
         delete_follow()
-        models.PageFollowStatus(
+        _models.PageFollowStatus(
             user=user.internal_object,
             page_namespace_id=page.namespace_id,
             page_title=page.title,
@@ -423,44 +423,44 @@ def follow_page(user: models.User, page: models.Page, follow: bool, until: datet
         delete_follow()
 
 
-@dj_db_trans.atomic
-def protect_page(author: models.User, page: models.Page, protection_level: models.UserGroup, protect_talks: bool,
-                 reason: str = None, until: datetime.datetime = None) -> bool:
+@_dj_db_trans.atomic
+def protect_page(author: _models.User, page: _models.Page, protection_level: _models.UserGroup, protect_talks: bool,
+                 reason: str = None, until: _dt.datetime = None) -> bool:
     f"""Change the protection status of the given page.
     If a the page is already protected, the status will be replaced by the new one.
 
     :param author: User performing the action.
     :param page: The page.
-    :param protection_level: The new protection level. If the new level is {groups.GROUP_ALL},
+    :param protection_level: The new protection level. If the new level is {_groups.GROUP_ALL},
         any pre-existing protection will be removed.
     :param protect_talks: Whether to also protect talks.
     :param reason: The reason behind the new protection status.
     :param until: The date until which the page will be protected. If None, the protection will never end.
     :return: True if the operation succeeded, false otherwise.
-    :raise MissingPermissionError: If the user does not have the {permissions.PERM_WIKI_PROTECT} permission.
+    :raise MissingPermissionError: If the user does not have the {_perms.PERM_WIKI_PROTECT} permission.
     :raise ProtectSpecialPageError: If the page is in the "Special" namespace.
     :raise PastDateError: If the date is in the past.
     """
-    if not author.has_permission(permissions.PERM_WIKI_PROTECT):
-        raise errors.MissingPermissionError(permissions.PERM_WIKI_PROTECT)
-    if page.namespace == namespaces.NS_SPECIAL:
-        raise errors.ProtectSpecialPageError()
-    if until and until <= utils.now().date():
-        raise errors.PastDateError()
+    if not author.has_permission(_perms.PERM_WIKI_PROTECT):
+        raise _errors.MissingPermissionError(_perms.PERM_WIKI_PROTECT)
+    if page.namespace == _w_ns.NS_SPECIAL:
+        raise _errors.ProtectSpecialPageError()
+    if until and until <= _utils.now().date():
+        raise _errors.PastDateError()
     try:
-        pp = models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
-    except models.PageProtection.DoesNotExist:
-        if protection_level.label == groups.GROUP_ALL:
+        pp = _models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
+    except _models.PageProtection.DoesNotExist:
+        if protection_level.label == _groups.GROUP_ALL:
             return False
     else:
         if pp.protection_level == protection_level and pp.end_date == until and pp.protect_talks == protect_talks:
             return False
         pp.delete()
-    reason = utils.escape_html(reason)
-    protect = protection_level.label != groups.GROUP_ALL
+    reason = _utils.escape_html(reason)
+    protect = protection_level.label != _groups.GROUP_ALL
     end_date = until if protect else None
     if protect:
-        models.PageProtection(
+        _models.PageProtection(
             page_namespace_id=page.namespace_id,
             page_title=page.title,
             end_date=end_date,
@@ -468,7 +468,7 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
             protect_talks=protect_talks,
             protection_level=protection_level,
         ).save()
-    models.PageProtectionLog(
+    _models.PageProtectionLog(
         performer=author.internal_object,
         page=page,
         end_date=end_date,
@@ -479,19 +479,19 @@ def protect_page(author: models.User, page: models.Page, protection_level: model
     return True
 
 
-def get_page_protection_log_entry(page: models.Page) -> models.PageProtectionLog | None:
+def get_page_protection_log_entry(page: _models.Page) -> _models.PageProtectionLog | None:
     """Return the latest page protection log entry for the given page.
 
     :param page: The page.
     :return: The log entry or None if there is none.
     """
     try:
-        pp = models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
-    except models.PageProtection.DoesNotExist:
+        pp = _models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
+    except _models.PageProtection.DoesNotExist:
         return None
     if not pp.is_active:
         return None
     try:
-        return models.PageProtectionLog.objects.filter(page=page).latest()
-    except models.PageProtectionLog.DoesNotExist:
+        return _models.PageProtectionLog.objects.filter(page=page).latest()
+    except _models.PageProtectionLog.DoesNotExist:
         return None

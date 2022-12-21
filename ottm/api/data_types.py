@@ -1,10 +1,10 @@
 """This module defines various classes for representing data."""
 from __future__ import annotations
 
-import dataclasses
-import datetime
+import dataclasses as _dc
+import datetime as _dt
 
-from . import utils
+from . import utils as _utils
 
 
 class DateInterval:
@@ -17,8 +17,8 @@ class DateInterval:
         - is_current is true and end_date is not None
     """
 
-    def __init__(self, start_date: datetime.datetime | None, approx_start: bool,
-                 end_date: datetime.datetime | None, approx_end: bool, is_current: bool = False):
+    def __init__(self, start_date: _dt.datetime | None, approx_start: bool,
+                 end_date: _dt.datetime | None, approx_end: bool, is_current: bool = False):
         """TimeInterval objects represent time intervals whose bounds may be fuzzy.
 
         A ValueError may be raised if at least one of these situations is encountered:
@@ -66,12 +66,12 @@ class DateInterval:
         self._fuzzy_end_date = fuzzy
 
     @property
-    def start_date(self) -> datetime.datetime | None:
+    def start_date(self) -> _dt.datetime | None:
         """The start date of this interval."""
         return self._start_date
 
     @start_date.setter
-    def start_date(self, start_date: datetime.datetime | None):
+    def start_date(self, start_date: _dt.datetime | None):
         if start_date and self.end_date and self.end_date < start_date:
             raise ValueError('start date after end date')
         self._start_date = start_date
@@ -79,12 +79,12 @@ class DateInterval:
             self._start_date = self._start_date.replace(tzinfo=None)
 
     @property
-    def end_date(self) -> datetime.datetime | None:
+    def end_date(self) -> _dt.datetime | None:
         """The end date of this interval."""
         return self._end_date
 
     @end_date.setter
-    def end_date(self, end_date: datetime.datetime | None):
+    def end_date(self, end_date: _dt.datetime | None):
         if end_date and self.start_date and end_date < self.start_date:
             raise ValueError('end date before start date')
         self._end_date = end_date
@@ -111,7 +111,7 @@ class DateInterval:
         :param other: The property to check against.
         :return: True if the time intervals are overlapping; False otherwise; None if it cannot be evaluated.
         """
-        now = utils.now()
+        now = _utils.now()
         self_end = now if self.is_current else self.end_date
         other_end = now if other.is_current else other.end_date
         return (
@@ -149,11 +149,11 @@ class DateInterval:
         return (hash(self.fuzzy_start_date) ^ hash(self.fuzzy_end_date)
                 ^ hash(self.start_date) ^ hash(self.end_date) ^ hash(self.is_current) ^ 31)
 
-    def timedelta(self) -> datetime.timedelta | None:
+    def timedelta(self) -> _dt.timedelta | None:
         """The time delta between the start and end dates. May be None if any of them is undefined.
         If end date is undefined but still_exists is True, the current date will be used.
         """
-        end = utils.now() if self.is_current else self.end_date
+        end = _utils.now() if self.is_current else self.end_date
         return (self.start_date - end) if self.start_date and end else None
 
     def __str__(self):
@@ -169,7 +169,7 @@ class DateInterval:
         return f'[{start}, {end}]'
 
 
-@dataclasses.dataclass(frozen=True)
+@_dc.dataclass(frozen=True)
 class UserGender:
     """Represents a user’s gender."""
     label: str

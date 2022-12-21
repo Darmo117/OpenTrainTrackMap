@@ -6,8 +6,7 @@ import django.forms as _dj_forms
 
 from . import _core
 from .. import pages as _pages
-from ..namespaces import *
-from ... import errors as _errors
+from ... import errors as _errors, permissions as _perms
 from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
 
 
@@ -19,7 +18,7 @@ class ProtectPageSpecialPage(_core.SpecialPage):
     """
 
     def __init__(self):
-        super().__init__('ProtectPage', PERM_WIKI_PROTECT, accesskey='p', category=_core.Section.REDIRECTS)
+        super().__init__('ProtectPage', _perms.PERM_WIKI_PROTECT, accesskey='p', category=_core.Section.REDIRECTS)
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:

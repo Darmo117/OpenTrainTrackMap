@@ -1,14 +1,14 @@
-import dataclasses
+"""This module defines functions to generate the wiki’s side menus."""
+import dataclasses as _dc
 import urllib.parse as _url_parse
-from . import pages, parser, special_pages as w_sp
-from .constants import *
-from .namespaces import *
-from ..permissions import *
-from .. import auth
-from ... import page_handlers as _ph, settings
+
+from . import constants as _w_cons, namespaces as _w_ns, pages as _w_pages, parser as _parser, special_pages as _w_sp
+from .. import auth as _auth
+from .. import permissions as _perms
+from ... import page_handlers as _ph, settings as _settings
 
 
-@dataclasses.dataclass(frozen=True)
+@_dc.dataclass(frozen=True)
 class Menu:
     id: str
     title: str
@@ -24,7 +24,7 @@ def get_menus(page_context: _ph.WikiPageContext, menu_id: str) -> list[Menu]:
 
 def _get_dynamic_menus(page_context: _ph.WikiPageContext) -> list[Menu]:
     language = page_context.language
-    menu = pages.get_interface_page('SideMenu', render=False)
+    menu = _w_pages.get_interface_page('SideMenu', render=False)
     menus = []
     title = None
     items = []
@@ -43,27 +43,27 @@ def _get_dynamic_menus(page_context: _ph.WikiPageContext) -> list[Menu]:
                     menus.append(_get_menu_object(language, '', title, items))
                     items = []
                 entry = line[1:].strip()
-                title = pages.get_interface_page(f'Menu{entry}', language=language, render=False) or entry
+                title = _w_pages.get_interface_page(f'Menu{entry}', language=language, render=False) or entry
     return menus
 
 
 def _get_menu_item_page_title(page_title: str) -> str:
     match page_title:
         case 'MainPage-url':
-            return pages.MAIN_PAGE_TITLE
+            return _w_pages.MAIN_PAGE_TITLE
         case title:
             return title
 
 
-def _get_menu_item_label(item_label: str, language: settings.UILanguage) -> str | None:
+def _get_menu_item_label(item_label: str, language: _settings.UILanguage) -> str | None:
     match item_label:
         case 'MainPage-name':
             return language.translate('wiki.main_page_title')
         case label if item_label.endswith('-name'):
             label = label[:-5]
-            if w_sp.SPECIAL_PAGES.get(label):
+            if _w_sp.SPECIAL_PAGES.get(label):
                 return None
-            return NS_INTERFACE.get_full_page_title(f'MenuItem{label}/{language.code}')
+            return _w_ns.NS_INTERFACE.get_full_page_title(f'MenuItem{label}/{language.code}')
         case label:
             return label
 
@@ -80,24 +80,24 @@ def _get_builtin_menu(page_context: _ph.WikiPageContext, menu_id: str) -> Menu:
             items.append({'title': 'Special:SpecialPages'})
 
         case 'page_tools':
-            if page.namespace != NS_SPECIAL:
+            if page.namespace != _w_ns.NS_SPECIAL:
                 if page.exists:
-                    if user.has_permission(PERM_WIKI_DELETE):
+                    if user.has_permission(_perms.PERM_WIKI_DELETE):
                         items.append({'title': 'Special:DeletePage', 'subpage': page.full_title})
-                    if user.has_permission(PERM_WIKI_RENAME):
+                    if user.has_permission(_perms.PERM_WIKI_RENAME):
                         items.append({'title': 'Special:RenamePage', 'subpage': page.full_title})
-                if user.has_permission(PERM_WIKI_PROTECT):
+                if user.has_permission(_perms.PERM_WIKI_PROTECT):
                     items.append({'title': 'Special:ProtectPage', 'subpage': page.full_title})
-            elif w_sp.SPECIAL_PAGES.get(page.base_name):
-                items.append({'title': NS_SPECIAL.get_full_page_title(page.base_name), 'label': 'special_page'})
-            if page.namespace == NS_USER and auth.get_user_from_name(page.base_name):
+            elif _w_sp.SPECIAL_PAGES.get(page.base_name):
+                items.append({'title': _w_ns.NS_SPECIAL.get_full_page_title(page.base_name), 'label': 'special_page'})
+            if page.namespace == _w_ns.NS_USER and _auth.get_user_from_name(page.base_name):
                 username = page.base_name
-                target_user = auth.get_user_from_name(username)
+                target_user = _auth.get_user_from_name(username)
                 items.append({'url': f'/user/{username}', 'label': 'user_profile'})
                 items.append({'title': 'Special:Contributions', 'subpage': username})
                 if target_user and user.can_send_emails_to(target_user):
                     items.append({'title': 'Special:SendEmail', 'subpage': username})
-            if page.namespace != NS_SPECIAL:
+            if page.namespace != _w_ns.NS_SPECIAL:
                 items.append({'title': 'Special:Subpages', 'subpage': page.full_title})
             elif hasattr(page_context, 'target_user') and page_context.target_user:
                 items.append({'title': f'User:{page_context.target_user.username}', 'label': 'user_page'})
@@ -105,9 +105,10 @@ def _get_builtin_menu(page_context: _ph.WikiPageContext, menu_id: str) -> Menu:
                 items.append({'title': page_context.target_page.full_title, 'label': 'page'})
 
         case 'more':
-            if page.namespace != NS_SPECIAL:
+            if page.namespace != _w_ns.NS_SPECIAL:
                 items.append({'title': 'Special:LinkedPages', 'subpage': page.full_title})
-                if hasattr(page_context, 'revision') and page_context.revision and page_context.action == ACTION_READ:
+                if (hasattr(page_context, 'revision') and page_context.revision
+                        and page_context.action == _w_cons.ACTION_READ):
                     items.append({'title': page.full_title, 'label': 'permalink',
                                   'args': {'revid': page_context.revision.id}})
                 if page_context.page_exists:
@@ -130,16 +131,16 @@ def _get_menu_object(language, id_: str, title: str, items: list[dict[str, str |
         access_key = None
         if 'title' in item:
             page_title = item['title']
-            ns, p_title = pages.split_title(page_title)
+            ns, p_title = _w_pages.split_title(page_title)
             if 'subpage' in item:
                 page_title += '/' + item['subpage']
-            if not item.get('label') and ns == NS_SPECIAL:
+            if not item.get('label') and ns == _w_ns.NS_SPECIAL:
                 label = language.translate(f'wiki.special_page.{p_title}.menu.label')
                 tooltip = language.translate(f'wiki.special_page.{p_title}.menu.tooltip')
-                if sp := w_sp.SPECIAL_PAGES.get(p_title):
+                if sp := _w_sp.SPECIAL_PAGES.get(p_title):
                     access_key = sp.access_key
-            elif not item.get('label') and ns == NS_INTERFACE:
-                label = pages.get_interface_page(p_title, None, language, render=False)
+            elif not item.get('label') and ns == _w_ns.NS_INTERFACE:
+                label = _w_pages.get_interface_page(p_title, None, language, render=False)
             else:
                 if id_:
                     label_ = item['label']
@@ -147,7 +148,7 @@ def _get_menu_object(language, id_: str, title: str, items: list[dict[str, str |
                     tooltip = language.translate(f'wiki.menu.side.{id_}.item.{label_}.tooltip')
                 else:
                     label = item['label']
-            menu_items.append(parser.Parser.format_internal_link(
+            menu_items.append(_parser.Parser.format_internal_link(
                 page_title,
                 language,
                 text=label,
@@ -165,7 +166,7 @@ def _get_menu_object(language, id_: str, title: str, items: list[dict[str, str |
             url = item['url']
             if 'args' in item:
                 url += '?' + _url_parse.urlencode(item['args'])
-            menu_items.append(parser.Parser.format_link(
+            menu_items.append(_parser.Parser.format_link(
                 url,
                 label,
                 tooltip,

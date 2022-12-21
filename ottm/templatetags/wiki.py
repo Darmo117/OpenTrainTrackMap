@@ -1,25 +1,25 @@
 """This module defines template tags for the wiki."""
-import collections
-import pathlib
-import urllib.parse
+import collections as _coll
+import pathlib as _pl
+import urllib.parse as _url_parse
 
-import django.core.paginator as dj_paginator
-import django.template as dj_template
-import django.utils.safestring as dj_safe
+import django.core.paginator as _dj_paginator
 import django.shortcuts as _dj_scut
+import django.template as _dj_template
+import django.utils.safestring as _dj_safe
 
-from .ottm import *
+from . import ottm as _ottm
 from .. import models, page_handlers as _ph
-from ..api.permissions import *
-from ..api.wiki import constants as w_cons, menus, namespaces as w_ns, pages as w_pages, parser
+from ..api import permissions as _perms
+from ..api.wiki import constants as _w_cons, menus as _menus, namespaces as _w_ns, pages as _w_pages, parser as _parser
 
-register = dj_template.Library()
+register = _dj_template.Library()
 
-JS_TEMPLATE_FILE = pathlib.Path(__file__).parent / 'gadgets-loading-template.min.js'
+JS_TEMPLATE_FILE = _pl.Path(__file__).parent / 'gadgets-loading-template.min.js'
 
 
 @register.simple_tag(takes_context=True)
-def wiki_translate(context: TemplateContext, key: str, **kwargs) -> str:
+def wiki_translate(context: _ottm.TemplateContext, key: str, **kwargs) -> str:
     """Translate the given key. The prefix 'wiki.' is appended automatically.
 
     :param context: Page context.
@@ -27,12 +27,12 @@ def wiki_translate(context: TemplateContext, key: str, **kwargs) -> str:
     :param kwargs: Translation’s arguments.
     :return: The translated text or the key in it is undefined for the current language.
     """
-    return ottm_translate(context, 'wiki.' + key, **kwargs)
+    return _ottm.ottm_translate(context, 'wiki.' + key, **kwargs)
 
 
 @register.simple_tag(takes_context=True)
 def wiki_inner_link(
-        context: TemplateContext,
+        context: _ottm.TemplateContext,
         page_title: str,
         text: str = None,
         tooltip: str = None,
@@ -68,7 +68,7 @@ def wiki_inner_link(
         params = {k: v for k, v in map(lambda v: v.split('='), url_params.split('&'))}
     else:
         params = {}
-    link = parser.Parser.format_internal_link(
+    link = _parser.Parser.format_internal_link(
         page_title,
         wiki_context.language,
         text=text,
@@ -82,11 +82,11 @@ def wiki_inner_link(
         only_url=only_url,
         open_in_new_tab=new_tab,
     )
-    return dj_safe.mark_safe(link)
+    return _dj_safe.mark_safe(link)
 
 
 @register.simple_tag(takes_context=True)
-def wiki_page_menu_item(context: TemplateContext, action: str) -> str:
+def wiki_page_menu_item(context: _ottm.TemplateContext, action: str) -> str:
     """Render a page menu item.
 
     :param context: Page context.
@@ -98,7 +98,7 @@ def wiki_page_menu_item(context: TemplateContext, action: str) -> str:
     css_classes = ['col-2', 'page-menu-item', 'mdi']
     if action == wiki_context.action:
         css_classes.append('selected')
-    if action == w_cons.ACTION_EDIT:
+    if action == _w_cons.ACTION_EDIT:
         if wiki_context.page_exists:
             if wiki_context.can_user_edit:
                 text = wiki_translate(context, f'menu.page.edit.label')
@@ -117,24 +117,24 @@ def wiki_page_menu_item(context: TemplateContext, action: str) -> str:
         tooltip = wiki_translate(context, f'menu.page.{action}.tooltip')
         css_classes.append(
             {
-                w_cons.ACTION_READ: 'mdi-file-document-outline',
-                w_cons.ACTION_TALK: 'mdi-forum-outline',
-                w_cons.ACTION_HISTORY: 'mdi-history',
+                _w_cons.ACTION_READ: 'mdi-file-document-outline',
+                _w_cons.ACTION_TALK: 'mdi-forum-outline',
+                _w_cons.ACTION_HISTORY: 'mdi-history',
             }[action]
         )
     access_key = {
-        w_cons.ACTION_READ: 'r',
-        w_cons.ACTION_TALK: 't',
-        w_cons.ACTION_EDIT: 'e',
-        w_cons.ACTION_HISTORY: 'h',
+        _w_cons.ACTION_READ: 'r',
+        _w_cons.ACTION_TALK: 't',
+        _w_cons.ACTION_EDIT: 'e',
+        _w_cons.ACTION_HISTORY: 'h',
     }[action]
-    if action == w_cons.ACTION_READ:
+    if action == _w_cons.ACTION_READ:
         params = {}
     else:
         params = {'action': action}
-    if action in (w_cons.ACTION_EDIT, w_cons.ACTION_READ) and wiki_context.request_params.get.get('revid'):
+    if action in (_w_cons.ACTION_EDIT, _w_cons.ACTION_READ) and wiki_context.request_params.get.get('revid'):
         params['revid'] = wiki_context.request_params.get.get('revid')
-    link = parser.Parser.format_internal_link(
+    link = _parser.Parser.format_internal_link(
         page_title,
         wiki_context.language,
         text=text,
@@ -143,11 +143,11 @@ def wiki_page_menu_item(context: TemplateContext, action: str) -> str:
         css_classes=css_classes,
         access_key=access_key,
     )
-    return dj_safe.mark_safe(link)
+    return _dj_safe.mark_safe(link)
 
 
 @register.simple_tag(takes_context=True)
-def wiki_static(context: TemplateContext, page_title: str) -> str:
+def wiki_static(context: _ottm.TemplateContext, page_title: str) -> str:
     """Return the static resource link for the given wiki page.
 
     :param context: Page context.
@@ -159,21 +159,21 @@ def wiki_static(context: TemplateContext, page_title: str) -> str:
         gadgetNames = []  # TODO get from user object
         with JS_TEMPLATE_FILE.open(encoding='utf-8') as f:
             js_code = f.read().replace('"`<PLACEHOLDER>`"', ','.join(repr(g) for g in gadgetNames))
-        tag = f'<script>{w_pages.minify_js(js_code)}</script>'
+        tag = f'<script>{_w_pages.minify_js(js_code)}</script>'
     else:
-        page = w_pages.get_page(*w_pages.split_title(page_title))
+        page = _w_pages.get_page(*_w_pages.split_title(page_title))
         if page.exists:
             link = _dj_scut.reverse('ottm:wiki_api')
-            title = urllib.parse.urlencode({'title': w_pages.url_encode_page_title(page.full_title)})
-            if page.content_type == w_cons.CT_JS:
+            title = _url_parse.urlencode({'title': _w_pages.url_encode_page_title(page.full_title)})
+            if page.content_type == _w_cons.CT_JS:
                 tag = f'<script src="{link}?action=query&query=static&{title}"></script>'
-            elif page.content_type == w_cons.CT_CSS:
+            elif page.content_type == _w_cons.CT_CSS:
                 tag = f'<link href="{link}?action=query&query=static&{title}" rel="stylesheet">'
-    return dj_safe.mark_safe(tag)
+    return _dj_safe.mark_safe(tag)
 
 
 @register.simple_tag(takes_context=True)
-def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, against: str) -> str:
+def wiki_diff_link(context: _ottm.TemplateContext, revision: models.PageRevision, against: str) -> str:
     """Render a revision’s diff link.
 
     :param context: Page context.
@@ -183,7 +183,7 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
     """
     wiki_context: _ph.WikiPageReadActionContext = context.get('context')
     page = wiki_context.page
-    ignore_hidden = not wiki_context.user.has_permission(PERM_MASK)
+    ignore_hidden = not wiki_context.user.has_permission(_perms.PERM_MASK)
 
     match against:
         case 'previous':
@@ -231,33 +231,33 @@ def wiki_diff_link(context: TemplateContext, revision: models.PageRevision, agai
         case _:
             raise ValueError(f'invalid value {against}')
 
-    return dj_safe.mark_safe(text)
+    return _dj_safe.mark_safe(text)
 
 
 @register.simple_tag(takes_context=True)
-def wiki_revision_author(context: TemplateContext, revision: models.PageRevision) -> str:
+def wiki_revision_author(context: _ottm.TemplateContext, revision: models.PageRevision) -> str:
     """Format a revision’s author.
 
     :param context: Page context.
     :param revision: The revision to render the author of.
     :return: The formatted username.
     """
-    return dj_safe.mark_safe(_format_username(context, revision.author))
+    return _dj_safe.mark_safe(_format_username(context, revision.author))
 
 
 @register.simple_tag(takes_context=True)
-def wiki_revision_comment(context: TemplateContext, revision: models.PageRevision) -> str:
+def wiki_revision_comment(context: _ottm.TemplateContext, revision: models.PageRevision) -> str:
     """Format a revision’s comment.
 
     :param context: Page context.
     :param revision: The revision to render the comment of.
     :return: The formatted comment.
     """
-    return dj_safe.mark_safe(_format_comment(context, revision.comment, revision.comment_hidden))
+    return _dj_safe.mark_safe(_format_comment(context, revision.comment, revision.comment_hidden))
 
 
 @register.simple_tag(takes_context=True)
-def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, classify: bool = True,
+def wiki_page_list(context: _ottm.TemplateContext, pages: _dj_paginator.Paginator, classify: bool = True,
                    paginate: bool = True, no_results_key: str = None) -> str:
     """Render a list of pages.
 
@@ -272,7 +272,7 @@ def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, clas
     if pages.count == 0:
         message = wiki_translate(context, no_results_key)
         # language=HTML
-        return dj_safe.mark_safe(f'<div class="alert alert-warning text-center">{message}</div>')
+        return _dj_safe.mark_safe(f'<div class="alert alert-warning text-center">{message}</div>')
     if paginate:
         pagination = wiki_pagination(context, pages)
     else:
@@ -281,12 +281,12 @@ def wiki_page_list(context: TemplateContext, pages: dj_paginator.Paginator, clas
     for page in pages.get_page(wiki_context.page_index):
         link = wiki_inner_link(context, page.full_title)
         res += f'<li>{link}</li>\n'
-    return dj_safe.mark_safe(res + f'</ul>\n{pagination}')
+    return _dj_safe.mark_safe(res + f'</ul>\n{pagination}')
 
 
 @register.inclusion_tag('ottm/wiki/tags/revisions_list.html', takes_context=True)
-def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Paginator, mode: str) \
-        -> TemplateContext:
+def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator.Paginator, mode: str) \
+        -> _ottm.TemplateContext:
     """Render a list of revisions.
 
     :param context: Page context.
@@ -296,8 +296,8 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     """
     wiki_context: _ph.WikiPageHistoryActionContext | _ph.WikiSpecialPageContext = context.get('context')
     user = wiki_context.user
-    ignore_hidden = not user.has_permission(PERM_MASK)
-    Line = collections.namedtuple(
+    ignore_hidden = not user.has_permission(_perms.PERM_MASK)
+    Line = _coll.namedtuple(
         'Line',
         ('actions', 'date', 'page_link', 'flags', 'size', 'size_text', 'variation', 'variation_text', 'comment')
     )
@@ -305,7 +305,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
     for revision in revisions.get_page(wiki_context.page_index):
         actions = []
 
-        if user.has_permission(PERM_MASK):
+        if user.has_permission(_perms.PERM_MASK):
             actions.append(wiki_inner_link(
                 context,
                 f'Special:MaskRevision/{revision.page.full_title}',
@@ -327,7 +327,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
             ))
         else:
             # language=HTML
-            actions.append(dj_safe.mark_safe(
+            actions.append(_dj_safe.mark_safe(
                 '<span class="mdi mdi-file-arrow-up-down-outline wiki-revision-action"></span>'))
 
         if previous := revision.get_previous(ignore_hidden):
@@ -342,7 +342,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
             ))
         else:
             # language=HTML
-            actions.append(dj_safe.mark_safe(
+            actions.append(_dj_safe.mark_safe(
                 '<span class="mdi mdi-file-arrow-left-right-outline wiki-revision-action"></span>'))
 
         is_first = revision.is_first(ignore_hidden)
@@ -357,9 +357,9 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
             ))
         else:
             # language=HTML
-            actions.append(dj_safe.mark_safe('<span class="mdi mdi-undo wiki-revision-action"></span>'))
+            actions.append(_dj_safe.mark_safe('<span class="mdi mdi-undo wiki-revision-action"></span>'))
 
-        if not is_first and user.has_permission(PERM_WIKI_REVERT):
+        if not is_first and user.has_permission(_perms.PERM_WIKI_REVERT):
             actions.append(wiki_inner_link(  # TODO URL params
                 context,
                 revision.page.full_title,
@@ -370,7 +370,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
             ))
         else:
             # language=HTML
-            actions.append(dj_safe.mark_safe('<span class="mdi mdi-undo-variant wiki-revision-action"></span>'))
+            actions.append(_dj_safe.mark_safe('<span class="mdi mdi-undo-variant wiki-revision-action"></span>'))
 
         match mode:
             case 'history':
@@ -383,7 +383,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
         date = wiki_inner_link(
             context,
             page_title=revision.page.full_title,
-            text=ottm_format_date(context, revision.date),
+            text=_ottm.ottm_format_date(context, revision.date),
             url_params=f'revid={revision.id}',
             ignore_current_title=True,
         )
@@ -394,10 +394,10 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
         if revision.is_bot:
             flags.append((wiki_translate(context, 'revisions_list.flag.bot.label'),
                           wiki_translate(context, 'revisions_list.flag.bot.tooltip')))
-        size = ottm_format_number(context, revision.bytes_size, value_only=True)
+        size = _ottm.ottm_format_number(context, revision.bytes_size, value_only=True)
         size_text = wiki_translate(context, 'revisions_list.size.label', n=size)
         variation = revision.get_byte_size_diff(ignore_hidden=ignore_hidden)
-        variation_text = ('+' if variation > 0 else '') + ottm_format_number(context, variation, value_only=True)
+        variation_text = ('+' if variation > 0 else '') + _ottm.ottm_format_number(context, variation, value_only=True)
         comment = _format_comment(context, revision.comment, revision.comment_hidden)
 
         lines.append(Line(actions, date, page_link, flags, size, size_text, variation, variation_text, comment))
@@ -409,7 +409,7 @@ def wiki_revisions_list(context: TemplateContext, revisions: dj_paginator.Pagina
 
 
 @register.inclusion_tag('ottm/wiki/tags/topics.html', takes_context=True)
-def wiki_render_topics(context: TemplateContext, topics: dj_paginator.Paginator) -> TemplateContext:
+def wiki_render_topics(context: _ottm.TemplateContext, topics: _dj_paginator.Paginator) -> _ottm.TemplateContext:
     """Render a list of revisions.
 
     :param context: Page context.
@@ -420,7 +420,7 @@ def wiki_render_topics(context: TemplateContext, topics: dj_paginator.Paginator)
 
 
 @register.simple_tag(takes_context=True)
-def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> str:
+def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log) -> str:
     """Format a log entry.
 
     :param context: Page context.
@@ -430,7 +430,7 @@ def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> st
     if not isinstance(log_entry, models.Log):
         raise TypeError(f'expected instance of {models.Log} class, got {type(log_entry)}')
 
-    formatted_date = ottm_format_date(context, log_entry.date)
+    formatted_date = _ottm.ottm_format_date(context, log_entry.date)
     match log_entry:
         case models.PageCreationLog(performer=performer, page=page):
             return wiki_translate(
@@ -459,7 +459,8 @@ def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> st
                     user=_format_username(context, performer),
                     page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
                     group=protection_level.label,
-                    until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
+                    until=(_ottm.ottm_format_date(context, end_date)
+                           if end_date else wiki_translate(context, 'log.infinite')),
                     talks=str(protect_talks).lower(),
                     reason=_format_comment(context, reason, False),
                 )
@@ -544,7 +545,7 @@ def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> st
                         user=_format_username(context, user),
                         edit_settings=str(allow_editing_own_settings).lower(),
                         post_messages=str(allow_messages_on_own_user_page).lower(),
-                        until=ottm_format_date(context, end_date),
+                        until=_ottm.ottm_format_date(context, end_date),
                         reason=_format_comment(context, reason, False),
                     )
                 return wiki_translate(
@@ -573,16 +574,17 @@ def wiki_format_log_entry(context: TemplateContext, log_entry: models.Log) -> st
                 'log.ip_block',
                 date=formatted_date,
                 performer=_format_username(context, performer),
-                user=wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(ip), ignore_current_title=True),
+                user=wiki_inner_link(context, _w_ns.NS_USER.get_full_page_title(ip), ignore_current_title=True),
                 create_accounts=str(allow_account_creation).lower(),
                 post_messages=str(allow_messages_on_own_user_page).lower(),
-                until=ottm_format_date(context, end_date) if end_date else wiki_translate(context, 'log.infinite'),
+                until=(_ottm.ottm_format_date(context, end_date)
+                       if end_date else wiki_translate(context, 'log.infinite')),
                 reason=_format_comment(context, reason, False),
             )
 
 
 @register.inclusion_tag('ottm/wiki/tags/side_menu.html', takes_context=True)
-def wiki_side_menu(context: TemplateContext, menu_id: str) -> TemplateContext:
+def wiki_side_menu(context: _ottm.TemplateContext, menu_id: str) -> _ottm.TemplateContext:
     """Format the menu with the given ID.
 
     :param context: Page context.
@@ -590,11 +592,11 @@ def wiki_side_menu(context: TemplateContext, menu_id: str) -> TemplateContext:
     :return: The formatted menu.
     """
     wiki_context: _ph.WikiPageContext = context.get('context')
-    return {'menus': menus.get_menus(wiki_context, menu_id)}
+    return {'menus': _menus.get_menus(wiki_context, menu_id)}
 
 
 @register.simple_tag(takes_context=True)
-def wiki_pagination(context: TemplateContext, paginator: dj_paginator.Paginator) -> str:
+def wiki_pagination(context: _ottm.TemplateContext, paginator: _dj_paginator.Paginator) -> str:
     """Render a the pagination list for the given paginator object.
 
     :param context: Page context.
@@ -630,11 +632,11 @@ def wiki_pagination(context: TemplateContext, paginator: dj_paginator.Paginator)
         numbers.append(
             f'<li class="page-item {active}" title="{tooltip}"><a class="page-link" href="{url}">{nb}</a></li>')
     number_per_page_list = '<ul class="pagination justify-content-center">' + ''.join(numbers) + '</ul>'
-    return dj_safe.mark_safe(nav + number_per_page_list)
+    return _dj_safe.mark_safe(nav + number_per_page_list)
 
 
 @register.simple_tag(takes_context=True)
-def wiki_add_url_params(context: TemplateContext, **kwargs) -> str:
+def wiki_add_url_params(context: _ottm.TemplateContext, **kwargs) -> str:
     """Return the current URL with the specified parameters added to it.
 
     :param context: Page context.
@@ -646,25 +648,25 @@ def wiki_add_url_params(context: TemplateContext, **kwargs) -> str:
     url_path = request.path
     get_params = {k: v for k, v in request.GET.items()}
     get_params.update(kwargs)
-    url_params = urllib.parse.urlencode(get_params)
+    url_params = _url_parse.urlencode(get_params)
     return url_path + ('?' + url_params if url_params else '')
 
 
-def _format_username(context: TemplateContext, user: models.CustomUser) -> str:
+def _format_username(context: _ottm.TemplateContext, user: models.CustomUser) -> str:
     wiki_context: _ph.WikiPageContext = context.get('context')
-    can_view = wiki_context.user.has_permission(PERM_MASK)
+    can_view = wiki_context.user.has_permission(_perms.PERM_MASK)
     css_classes = ''
     if user.hide_username:
         if not can_view:
             return f'<span class="masked">{wiki_translate(context, "username_hidden")}</span>'
         css_classes = 'masked'
-    return wiki_inner_link(context, w_ns.NS_USER.get_full_page_title(user.username),
+    return wiki_inner_link(context, _w_ns.NS_USER.get_full_page_title(user.username),
                            text=user.username, ignore_current_title=True, css_classes=css_classes)
 
 
-def _format_comment(context: TemplateContext, comment: str, hide: bool) -> str:
+def _format_comment(context: _ottm.TemplateContext, comment: str, hide: bool) -> str:
     wiki_context: _ph.WikiPageContext = context.get('context')
-    can_view = wiki_context.user.has_permission(PERM_MASK)
+    can_view = wiki_context.user.has_permission(_perms.PERM_MASK)
     css_classes = ''
     if hide:
         if not can_view:
