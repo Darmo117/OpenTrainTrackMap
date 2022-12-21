@@ -1964,8 +1964,10 @@ class Page(dj_models.Model, NonDeletableMixin):
 
     @property
     def exists(self) -> bool:
-        # FIXME for special pages
-        """Whether this pages exists in the database."""
+        """Whether this pages exists in the database or is a predefined special page."""
+        from .api.wiki import special_pages
+        if self.namespace == namespaces.NS_SPECIAL:
+            return special_pages.SPECIAL_PAGES.get(self.title) is not None
         return self.pk is not None
 
     @property
@@ -2069,7 +2071,8 @@ class Page(dj_models.Model, NonDeletableMixin):
 
     def get_latest_revision(self) -> PageRevision | None:
         """Return the latest visible revision of this page."""
-        if self.exists and (revision := self.revisions.filter(hidden=False).latest()):
+        if (self.exists and self.namespace != namespaces.NS_SPECIAL
+                and (revision := self.revisions.filter(hidden=False).latest())):
             return revision
         return None
 
@@ -2119,7 +2122,7 @@ class Page(dj_models.Model, NonDeletableMixin):
 
     def get_categories(self) -> dj_models.QuerySet[PageCategory]:
         """Return a query set of all categories of this page"""
-        if not self.exists:
+        if not self.exists or self.namespace != namespaces.NS_SPECIAL:
             return dj_auth_models.EmptyManager(PageCategory).all()
         return PageCategory.objects.filter(page=self).order_by('page__namespace_id', 'page__title')
 
