@@ -760,7 +760,7 @@
           "done": "Page successfully deleted.",
           "history_warning": {
             "link_text": "page history",
-            "message": "Warning: you are about to delete a page with a history of {nb} revision(s): {link}."
+            "message": "**Warning: you are about to delete a page with a history of {nb} revision(s): {link}.**"
           },
           "menu": {
             "label": "Delete",
