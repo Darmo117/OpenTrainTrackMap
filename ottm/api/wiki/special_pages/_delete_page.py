@@ -57,6 +57,7 @@ class DeletePageSpecialPage(_core.SpecialPage):
             'global_errors': global_errors,
             'log_entries': log_entries,
             'revisions_nb': target_page.revisions.count() if target_page and target_page.exists else 0,
+            'linked_pages': target_page.get_linked_pages() if target_page else None,
             'done': params.get.get('done'),
         }
 

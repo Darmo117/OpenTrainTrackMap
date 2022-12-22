@@ -11,7 +11,7 @@
   </div>
 </div>
 {% if context.log_entries.count %}
-  {% wiki_translate 'special_page.ChangePageLanguage.log_entries' %}
+  <h2>{% wiki_translate 'special_page.ChangePageLanguage.log_entries' %}</h2>
   <ul>
     {% for log_entry in context.log_entries %}
       <li>{% wiki_format_log_entry log_entry %}</li>

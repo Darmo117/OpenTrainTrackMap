@@ -2056,10 +2056,7 @@ class Page(_dj_models.Model, NonDeletableMixin):
             if ip_block and ip_block.is_active and (not own_page or not ip_block.allow_messages_on_own_user_page):
                 return False
 
-        try:
-            pp = PageProtection.objects.get(page_namespace_id=self.namespace_id, page_title=self.title)
-        except PageProtection.DoesNotExist:
-            pp = None
+        pp = self.get_edit_protection()
         if pp and pp.protect_talks and pp.is_active and not user.is_in_group(pp.protection_level):
             return False
 
@@ -2139,10 +2136,16 @@ class Page(_dj_models.Model, NonDeletableMixin):
             return _dj_auth_models.EmptyManager(PageCategory).all()
         return PageCategory.objects.filter(page=self).order_by('page__namespace_id', 'page__title')
 
+    def get_linked_pages(self) -> _dj_models.QuerySet[Page]:
+        """Return a query set of all pages linking to this page."""
+        return Page.objects.filter(embedded_links__page_namespace_id=self.namespace_id,
+                                   embedded_links__page_title=self.title)
+
 
 class PageCategory(_dj_models.Model):
     """Model that associates a page to a category with an optional sort key.
-    Pages can be in non-existent categories."""
+    Pages can be in non-existent categories.
+    """
     page = _dj_models.ForeignKey(Page, on_delete=_dj_models.PROTECT, related_name='categories')
     cat_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
     sort_key = _dj_models.CharField(max_length=200, null=True, blank=True)
@@ -2171,6 +2174,14 @@ class PageCategory(_dj_models.Model):
         """
         return Page.objects.filter(_dj_models.Q(categories__cat_title=cat_title)
                                    & ~_dj_models.Q(namespace_id=_w_ns.NS_CATEGORY.id))
+
+
+class PageLink(_dj_models.Model):
+    """Defines a link between two pages."""
+    page = _dj_models.ForeignKey(Page, on_delete=_dj_models.PROTECT, related_name='embedded_links')
+    # No foreign key to Page as pages may link to non-existent pages.
+    page_namespace_id = _dj_models.IntegerField()
+    page_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
 
 
 class PageProtection(_dj_models.Model):

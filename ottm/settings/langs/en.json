@@ -757,7 +757,8 @@
         "DeletePage": {
           "title": "Delete a page",
           "title_page": "Delete “{value}”",
-          "log_entries": "Related log entries:",
+          "linked_pages": "Linked pages",
+          "log_entries": "Related log entries",
           "done": "Page successfully deleted.",
           "history_warning": {
             "link_text": "page history",
@@ -802,7 +803,7 @@
         "ProtectPage": {
           "title": "Protect a page",
           "title_page": "Change protection level of “{value}”",
-          "log_entries": "Related log entries:",
+          "log_entries": "Related log entries",
           "done": "Protection level successfully changed.",
           "menu": {
             "label": "Protect",
@@ -1001,7 +1002,7 @@
         "ChangePageLanguage": {
           "title": "Change page content language",
           "title_page": "Change content language of page “{value}”",
-          "log_entries": "Related log entries:",
+          "log_entries": "Related log entries",
           "done": "Content language successfully changed.",
           "form": {
             "set_page_language": {
@@ -1036,7 +1037,7 @@
         "ChangePageContentType": {
           "title": "Change page content type",
           "title_page": "Change content type of page “{value}”",
-          "log_entries": "Related log entries:",
+          "log_entries": "Related log entries",
           "done": "Content type successfully changed.",
           "form": {
             "set_page_content_type": {
