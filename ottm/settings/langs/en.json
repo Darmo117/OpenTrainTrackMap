@@ -758,7 +758,10 @@
           "title_page": "Delete “{value}”",
           "log_entries": "Related log entries:",
           "done": "Page successfully deleted.",
-          "history_warning": "Warning: you are about to delete a page with a history of {nb} revision(s): {link}.",
+          "history_warning": {
+            "link_text": "page history",
+            "message": "Warning: you are about to delete a page with a history of {nb} revision(s): {link}."
+          },
           "menu": {
             "label": "Delete",
             "tooltip": "Delete this page"

@@ -7,8 +7,9 @@
 {% endif %}
 {% if context.revisions_nb %}
   <div class="alert alert-warning" role="alert">
-    {% wiki_inner_link page_title=context.target_page.full_title url_params='action=history' as link %}
-    {% wiki_translate 'special_page.DeletePage.history_warning' nb=context.revisions_nb link=link %}
+    {% wiki_translate 'special_page.DeletePage.history_warning.link_text' as text %}
+    {% wiki_inner_link page_title=context.target_page.full_title text=text url_params='action=history' as link %}
+    {% wiki_translate 'special_page.DeletePage.history_warning.message' nb=context.revisions_nb link=link %}
   </div>
 {% endif %}
 <div class="row justify-content-center">
