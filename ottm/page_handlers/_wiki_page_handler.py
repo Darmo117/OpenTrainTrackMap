@@ -333,17 +333,22 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         no_index = not page.exists
         cat_subcategories = []
         cat_pages = []
-        if revision_id is None:
+        content = ''
+        archived = False
+        if revision_id is None or not page.exists:
             content = _w_pages.render_wikicode(page.get_content(), user, language)
             revision = page.revisions.latest() if page.exists else None
-            archived = False
             if page.namespace == _w_ns.NS_CATEGORY:
                 cat_subcategories = list(_models.PageCategory.subcategories_for_category(page.full_title))
                 cat_pages = list(_models.PageCategory.pages_for_category(page.full_title))
         else:
-            revision = page.revisions.get(id=revision_id)
-            content = _w_pages.render_wikicode(revision.content, user, language)
-            archived = True
+            try:
+                revision = page.revisions.get(id=revision_id)
+            except _models.PageRevision.DoesNotExist:
+                revision = page.revisions.latest()
+            else:
+                content = _w_pages.render_wikicode(revision.content, user, language)
+                archived = True
         if not page.exists:
             no_page_notice = _w_pages.get_no_page_notice(user, language)
         else:
@@ -397,12 +402,16 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         :param concurrent_edit_error: Whether another edit was made before submitting.
         :return: A WikiPageContext object.
         """
-        if revision_id is None:
+        archived = False
+        if revision_id is None or not page.exists:
             revision = page.revisions.latest() if page.exists else None
-            archived = False
         else:
-            revision = page.revisions.get(id=revision_id)
-            archived = True
+            try:
+                revision = page.revisions.get(id=revision_id)
+            except _models.PageRevision.DoesNotExist:
+                revision = page.revisions.latest()
+            else:
+                archived = True
         user = self._request_params.user
         language = self._request_params.ui_language
         follow = (page.is_user_following(user)
@@ -912,6 +921,7 @@ class WikiPageEditActionContext(WikiPageContext):
         self._perm_error = perm_error
         self._concurrent_edit_error = concurrent_edit_error
         self._edit_protection_log_entry = edit_protection_log_entry
+        self._deletion_log_entry = deletion_log_entry
 
     @property
     def archived(self) -> bool:
