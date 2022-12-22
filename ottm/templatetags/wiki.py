@@ -449,7 +449,7 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
         case models.PageDeletionLog(performer=performer, page=page, reason=reason):
             return wiki_translate(
                 context,
-                'log.page_creation',
+                'log.page_deletion',
                 date=formatted_date,
                 user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),

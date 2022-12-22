@@ -264,10 +264,10 @@ def edit_page(request: _dj_wsgi.WSGIRequest | None, author: _models.User, page: 
     if not page.exists or page.get_content() != content:
         creation = not page.exists
         if creation:
-            # Set content type
+            if page.deleted:
+                page.deleted = False
             page.content_type = _get_page_content_type(page)
             page.save()
-            # Add to log
             _models.PageCreationLog(performer=author.internal_object, page=page).save()
         _models.PageRevision(
             page=page,
@@ -322,10 +322,10 @@ def _get_page_content_type(page: _models.Page) -> str:
 
 
 @_dj_db_trans.atomic
-def set_page_content_language(author: _models.User, page: _models.Page, language: _settings.UILanguage, reason: str):
+def set_page_content_language(performer: _models.User, page: _models.Page, language: _settings.UILanguage, reason: str):
     """Change the content language of the given page.
 
-    :param author: User performing the action.
+    :param performer: User performing the action.
     :param page: Page to alter.
     :param language: New content language.
     :param reason: Reason for the change.
@@ -338,16 +338,16 @@ def set_page_content_language(author: _models.User, page: _models.Page, language
         raise _errors.PageDoesNotExistError(page.full_title)
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.EditSpecialPageError()
-    if not page.can_user_edit(author):
+    if not page.can_user_edit(performer):
         raise _errors.MissingPermissionError(_perms.PERM_WIKI_EDIT)
-    if not author.exists:
-        author.internal_object.save()
+    if not performer.exists:
+        performer.internal_object.save()
     if language.internal_language == page.content_language:
         return False
     page.content_language = language.internal_language
     page.save()
     _models.PageContentLanguageLog(
-        performer=author.internal_object,
+        performer=performer.internal_object,
         page=page,
         language=page.content_language,
         reason=reason,
@@ -356,10 +356,10 @@ def set_page_content_language(author: _models.User, page: _models.Page, language
 
 
 @_dj_db_trans.atomic
-def set_page_content_type(author: _models.User, page: _models.Page, content_type: str, reason: str):
+def set_page_content_type(performer: _models.User, page: _models.Page, content_type: str, reason: str):
     """Change the content type of the given page.
 
-    :param author: User performing the action.
+    :param performer: User performing the action.
     :param page: Page to alter.
     :param content_type: New content type.
     :param reason: Reason for the change.
@@ -372,16 +372,16 @@ def set_page_content_type(author: _models.User, page: _models.Page, content_type
         raise _errors.PageDoesNotExistError(page.full_title)
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.EditSpecialPageError()
-    if not page.can_user_edit(author):
+    if not page.can_user_edit(performer):
         raise _errors.MissingPermissionError(_perms.PERM_WIKI_EDIT)
-    if not author.exists:
-        author.internal_object.save()
+    if not performer.exists:
+        performer.internal_object.save()
     if content_type == page.content_type:
         return False
     page.content_type = content_type
     page.save()
     _models.PageContentTypeLog(
-        performer=author.internal_object,
+        performer=performer.internal_object,
         page=page,
         content_type=content_type,
         reason=reason,
@@ -428,12 +428,12 @@ def follow_page(user: _models.User, page: _models.Page, follow: bool, until: _dt
 
 
 @_dj_db_trans.atomic
-def protect_page(author: _models.User, page: _models.Page, protection_level: _models.UserGroup, protect_talks: bool,
+def protect_page(performer: _models.User, page: _models.Page, protection_level: _models.UserGroup, protect_talks: bool,
                  reason: str = None, until: _dt.datetime = None) -> bool:
     f"""Change the protection status of the given page.
     If a the page is already protected, the status will be replaced by the new one.
 
-    :param author: User performing the action.
+    :param performer: User performing the action.
     :param page: The page.
     :param protection_level: The new protection level. If the new level is {_groups.GROUP_ALL},
         any pre-existing protection will be removed.
@@ -445,12 +445,14 @@ def protect_page(author: _models.User, page: _models.Page, protection_level: _mo
     :raise ProtectSpecialPageError: If the page is in the "Special" namespace.
     :raise PastDateError: If the date is in the past.
     """
-    if not author.has_permission(_perms.PERM_WIKI_PROTECT):
+    if not performer.has_permission(_perms.PERM_WIKI_PROTECT):
         raise _errors.MissingPermissionError(_perms.PERM_WIKI_PROTECT)
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.ProtectSpecialPageError()
     if until and until <= _utils.now().date():
         raise _errors.PastDateError()
+    if not performer.exists:
+        performer.internal_object.save()
     try:
         pp = _models.PageProtection.objects.get(page_namespace_id=page.namespace_id, page_title=page.title)
     except _models.PageProtection.DoesNotExist:
@@ -473,7 +475,7 @@ def protect_page(author: _models.User, page: _models.Page, protection_level: _mo
             protection_level=protection_level,
         ).save()
     _models.PageProtectionLog(
-        performer=author.internal_object,
+        performer=performer.internal_object,
         page=page,
         end_date=end_date,
         reason=reason,
@@ -481,6 +483,31 @@ def protect_page(author: _models.User, page: _models.Page, protection_level: _mo
         protection_level=protection_level,
     ).save()
     return True
+
+
+@_dj_db_trans.atomic
+def delete_page(performer: _models.User, page: _models.Page, reason: str = None):
+    f"""Delete a page.
+
+    :param performer: The user performing the action.
+    :param page: The page to delete.
+    :param reason: The deletion reason.
+    :raise MissingPermissionError: If the user does not have the {_perms.PERM_WIKI_DELETE} permission.
+    :raise DeleteSpecialPageError: If the page is in the "Special" namespace.
+    """
+    if not performer.has_permission(_perms.PERM_WIKI_DELETE):
+        raise _errors.MissingPermissionError(_perms.PERM_WIKI_DELETE)
+    if page.namespace == _w_ns.NS_SPECIAL:
+        raise _errors.DeleteSpecialPageError()
+    if not performer.exists:
+        performer.internal_object.save()
+    page.deleted = True
+    page.save()
+    _models.PageDeletionLog(
+        page=page,
+        performer=performer.internal_object,
+        reason=reason,
+    ).save()
 
 
 def get_page_protection_log_entry(page: _models.Page) -> _models.PageProtectionLog | None:

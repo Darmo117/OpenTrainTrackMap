@@ -417,6 +417,12 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         follow = (page.is_user_following(user)
                   or user.add_modified_pages_to_follow_list
                   or (not page.exists and user.add_created_pages_to_follow_list))
+        deletion_log_entry = None
+        if page.deleted:
+            try:
+                deletion_log_entry = _models.PageDeletionLog.objects.filter(page=page).latest()
+            except _models.PageDeletionLog.DoesNotExist:
+                pass
         form = form or WikiEditPageForm(
             user=user,
             page=page,
@@ -441,6 +447,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             perm_error=not page.can_user_edit(user),
             concurrent_edit_error=concurrent_edit_error,
             edit_protection_log_entry=_w_pages.get_page_protection_log_entry(page),
+            deletion_log_entry=deletion_log_entry,
         )
 
     def _page_talk_context(self, page: _models.Page, js_config: dict) -> WikiPageTalkActionContext:
@@ -888,6 +895,7 @@ class WikiPageEditActionContext(WikiPageContext):
             perm_error: bool = False,
             concurrent_edit_error: bool = False,
             edit_protection_log_entry: _models.PageProtectionLog = None,
+            deletion_log_entry: _models.PageDeletionLog = None,
     ):
         """Create a page context for a wiki page with the 'edit' action.
 
@@ -903,6 +911,7 @@ class WikiPageEditActionContext(WikiPageContext):
         :param perm_error: Whether the user lacks the permission to edit wiki pages.
         :param concurrent_edit_error: Whether another edit was made before submitting.
         :param edit_protection_log_entry: The page’s PageProtectionLog entry if it exists.
+        :param deletion_log_entry: The page’s latest PageDeletionLog entry if it has been deleted.
         """
         super().__init__(
             request_params,
@@ -954,6 +963,10 @@ class WikiPageEditActionContext(WikiPageContext):
     @property
     def edit_protection_log_entry(self) -> _models.PageProtectionLog | None:
         return self._edit_protection_log_entry
+
+    @property
+    def deletion_log_entry(self) -> _models.PageDeletionLog | None:
+        return self._deletion_log_entry
 
 
 class WikiPageTalkActionContext(WikiPageContext):

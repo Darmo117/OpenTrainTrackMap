@@ -47,6 +47,10 @@ class ProtectSpecialPageError(RuntimeError):
     pass
 
 
+class DeleteSpecialPageError(RuntimeError):
+    pass
+
+
 class FollowSpecialPageError(RuntimeError):
     pass
 

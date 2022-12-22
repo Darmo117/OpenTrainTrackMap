@@ -29,7 +29,6 @@ class Parser:
     ):
         url_params = url_params or {}
         page = _w_pages.get_page(*_w_pages.split_title(page_title))
-        page_exists = page.exists and not page.deleted
 
         link_text = page.full_title if text is None else text
 
@@ -41,7 +40,7 @@ class Parser:
         })
         link_tooltip = tooltip or page.full_title
 
-        if (page_exists or no_red_link
+        if (page.exists or no_red_link
                 or url_params.get('action') in (
                 _w_cons.ACTION_TALK, _w_cons.ACTION_INFO, _w_cons.ACTION_HISTORY, _w_cons.ACTION_RAW)):
             params = _url_parse.urlencode(url_params)
@@ -61,7 +60,7 @@ class Parser:
             url,
             link_text,
             link_tooltip,
-            page_exists,
+            page.exists,
             css_classes or [],
             id_=id_,
             access_key=access_key,

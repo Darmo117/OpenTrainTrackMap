@@ -1980,7 +1980,7 @@ class Page(_dj_models.Model, NonDeletableMixin):
         from .api.wiki import special_pages
         if self.namespace == _w_ns.NS_SPECIAL:
             return special_pages.SPECIAL_PAGES.get(self.base_name) is not None
-        return self.pk is not None
+        return not self.deleted and self.pk is not None
 
     @property
     def default_sort_key(self) -> str:

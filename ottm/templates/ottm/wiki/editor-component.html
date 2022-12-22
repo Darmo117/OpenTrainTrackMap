@@ -51,17 +51,25 @@
   </div>
 {% endif %}
 
-{% with edit_protection=context.edit_protection_log_entry %}{# Cached to avoid making several DB requests #}
-  {% if edit_protection %}
-    <div class="wiki-edit-interface-warning-box alert alert-warning" role="alert">
-      <p class="text-center">
-        {% wiki_translate 'page.edit.protection_warning' group_name=edit_protection.protection_level.label reason=edit_protection.reason|default_if_none:'-' %}
-      </p>
-      {% wiki_translate 'page.edit.log_entry' %}<br>
-      {% wiki_format_log_entry context.edit_protection_log_entry %}
-    </div>
-  {% endif %}
-{% endwith %}
+{% if context.edit_protection_log_entry %}
+  <div class="wiki-edit-interface-warning-box alert alert-warning" role="alert">
+    <p class="text-center">
+      {% wiki_translate 'page.edit.protection_warning' %}
+    </p>
+    {% wiki_translate 'page.edit.log_entry' %}<br>
+    {% wiki_format_log_entry context.edit_protection_log_entry %}
+  </div>
+{% endif %}
+
+{% if context.deletion_log_entry %}
+  <div class="wiki-edit-interface-warning-box alert alert-warning" role="alert">
+    <p class="text-center">
+      {% wiki_translate 'page.edit.deletion_warning' %}
+    </p>
+    {% wiki_translate 'page.edit.log_entry' %}<br>
+    {% wiki_format_log_entry context.deletion_log_entry %}
+  </div>
+{% endif %}
 
 {% with form=context.edit_form trans_prefix='page.edit.form.' %}
   <form

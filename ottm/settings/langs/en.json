@@ -756,9 +756,35 @@
         "DeletePage": {
           "title": "Delete a page",
           "title_page": "Delete “{value}”",
+          "log_entries": "Related log entries:",
+          "done": "Page successfully deleted.",
+          "history_warning": "Warning: you are about to delete a page with a history of {nb} revision(s): {link}.",
           "menu": {
             "label": "Delete",
             "tooltip": "Delete this page"
+          },
+          "form": {
+            "delete": {
+              "page": {
+                "label": "Page",
+                "error": {
+                  "page_invalid_title": "Invalid page name!",
+                  "page_does_not_exist": "This page does not exist.",
+                  "special_page": "Special pages cannot be modified.",
+                  "required": "Missing page name!"
+                }
+              },
+              "reason": {
+                "label": "Reason"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "You do not have the permissions required to delete pages.",
+                "page_does_not_exist": "This page does not exist."
+              }
+            }
           }
         },
         "RenamePage": {
@@ -1181,7 +1207,8 @@
           "revision_warning": {
             "edit": "**You are editing an archived version of this page published on {date}.**\n\nIf you publish your changes, all subsequent revisions will be reverted."
           },
-          "protection_warning": "**This page is protected.**<br>Reason: *{reason}*",
+          "protection_warning": "**This page is protected.**",
+          "deletion_warning": "**You are creating a page that has been deleted previously.** Please ensure that it is relevent to recreate it before submitting your changes.",
           "permission_error": "You do not have the permissions required to edit this page.",
           "concurrent_edit_error": "Another user published a new version of this page while you were editing it. Please compare your version with the new one below before publishing.",
           "log_entry": "Log entry:",
