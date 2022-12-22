@@ -10,6 +10,7 @@ from .... import models as _models, requests as _requests
 class Section(_enum.Enum):
     MAINTENANCE = 'maintenance'
     PAGE_LISTS = 'page_lists'
+    PAGE_OPERATIONS = 'page_operations'
     USERS = 'users'
     LOGS = 'logs'
     FILES = 'files'

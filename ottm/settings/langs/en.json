@@ -744,6 +744,7 @@
           "section": {
             "maintenance": "Maintenance",
             "page_lists": "Page lists",
+            "page_operations": "Page operations",
             "users": "Users and permissions",
             "logs": "Recent changes and logs",
             "files": "Files and media",

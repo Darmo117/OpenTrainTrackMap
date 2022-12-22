@@ -18,7 +18,7 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
     """
 
     def __init__(self):
-        super().__init__('ChangePageContentType', category=_core.Section.OTHER)
+        super().__init__('ChangePageContentType', category=_core.Section.PAGE_OPERATIONS)
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:

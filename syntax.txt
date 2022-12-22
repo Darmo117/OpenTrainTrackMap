@@ -36,6 +36,9 @@ files:
 functions:
 {{#name:arg1|args…}}
 
+redirects:
+#REDIRECT[[page_title]]
+
 titles:
 = title =
 == title ==
