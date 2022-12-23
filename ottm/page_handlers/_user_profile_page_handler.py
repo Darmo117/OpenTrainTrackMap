@@ -332,7 +332,7 @@ class MaskUsernameForm(_forms.CustomForm):
     )
 
     def __init__(self, post=None, initial=None):
-        super().__init__('mask_username', False, post=post, initial=initial)
+        super().__init__('mask_username', False, danger=True, post=post, initial=initial)
 
 
 class BlockUserForm(_forms.CustomForm):
@@ -360,7 +360,7 @@ class BlockUserForm(_forms.CustomForm):
     )
 
     def __init__(self, post=None, initial=None):
-        super().__init__('block', False, post=post, initial=initial)
+        super().__init__('block', False, danger=True, post=post, initial=initial)
 
 
 class UnblockUserForm(_forms.CustomForm):

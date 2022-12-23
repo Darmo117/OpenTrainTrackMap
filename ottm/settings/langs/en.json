@@ -161,7 +161,7 @@
                 "label": "Reason"
               },
               "submit": {
-                "label": "Submit"
+                "label": "Block user"
               },
               "error": {
                 "missing_permission": "You do not have the permission to block users.",
@@ -174,14 +174,14 @@
                 "label": "Reason"
               },
               "submit": {
-                "label": "Submit"
+                "label": "Unblock user"
               },
               "error": {
                 "missing_permission": "You do not have the permission to unblock users."
               }
             }
           },
-          "log_entries": "Related log entries:"
+          "log_entries": "Related log entries"
         },
         "edit_groups": {
           "title": "Edit groups of “{username}”",
@@ -206,7 +206,7 @@
               }
             }
           },
-          "log_entries": "Related log entries:"
+          "log_entries": "Related log entries"
         },
         "mask_username": {
           "title": "Mask username of “{username}”",
@@ -220,7 +220,7 @@
                 "label": "Reason"
               },
               "submit": {
-                "label": "Submit"
+                "label": "Mask username"
               },
               "error": {
                 "missing_permission": "You do not have the permission to change the visibility of usernames.",
@@ -228,7 +228,7 @@
               }
             }
           },
-          "log_entries": "Related log entries:"
+          "log_entries": "Related log entries"
         }
       },
       "user_notes": {
@@ -783,7 +783,7 @@
                 "label": "Reason"
               },
               "submit": {
-                "label": "Submit"
+                "label": "Delete the page"
               },
               "error": {
                 "missing_permission": "You do not have the permissions required to delete pages.",

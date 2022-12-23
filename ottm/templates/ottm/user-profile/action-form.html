@@ -9,7 +9,7 @@
     </div>
   </div>
   {% if context.log_entries.count %}
-    {% ottm_translate 'page.user_profile.'|add:context.form.name|add:'.log_entries' %}
+    <h2>{% ottm_translate 'page.user_profile.'|add:context.form.name|add:'.log_entries' %}</h2>
     <ul>
       {% for log_entry in context.log_entries %}
         <li>{% wiki_format_log_entry log_entry %}</li>

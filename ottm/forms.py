@@ -33,8 +33,8 @@ def user_not_anonymous_validator(value: str):
 class CustomForm(_dj_forms.Form):
     """Base class for all forms. Applies custom CSS styles to widgets."""
 
-    def __init__(self, name: str, warn_unsaved_changes: bool, sections: dict[str, dict[str, list[str]]] = None,
-                 post=None, initial=None):
+    def __init__(self, name: str, warn_unsaved_changes: bool, danger: bool = False,
+                 sections: dict[str, dict[str, list[str]]] = None, post=None, initial=None):
         super().__init__(post, initial=initial)
         self._name = name
         self._warn_unsaved_changes = warn_unsaved_changes
@@ -55,10 +55,15 @@ class CustomForm(_dj_forms.Form):
                 visible.field.widget.attrs['class'] = 'custom-control-input'
             else:
                 visible.field.widget.attrs['class'] = 'form-control'
+        self._danger = danger
 
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def danger(self) -> bool:
+        return self._danger
 
     @property
     def warn_unsaved_changes(self) -> bool:
