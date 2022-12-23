@@ -1004,6 +1004,10 @@
           "title_page": "Change content language of page “{value}”",
           "log_entries": "Related log entries",
           "done": "Content language successfully changed.",
+          "menu": {
+            "label": "Change page content language",
+            "tooltip": "Change the content language of a page"
+          },
           "form": {
             "set_page_language": {
               "page": {
@@ -1039,6 +1043,10 @@
           "title_page": "Change content type of page “{value}”",
           "log_entries": "Related log entries",
           "done": "Content type successfully changed.",
+          "menu": {
+            "label": "Change page content type",
+            "tooltip": "Change the content type of a page"
+          },
           "form": {
             "set_page_content_type": {
               "page": {
@@ -1100,6 +1108,57 @@
                 "user_does_not_exist": "This user does not exist!"
               }
             }
+          }
+        },
+        "EditFollowList": {
+          "title": "Edit your follow list",
+          "title_clear": "Clear your follow list",
+          "done": "Your follow list has been successfully updated.",
+          "menu": {
+            "label": "Edit follow list",
+            "tooltip": "Edit your follow list"
+          },
+          "form": {
+            "edit": {
+              "message": "Pages that you follow are listed below, categorized by namespace. To unfollow a page, check the box besides it then click the button at the bottom of the page. You can also edit it as a {edit_raw_url} or {clear_url}.",
+              "raw_text": "raw list",
+              "clear_text": "clear it",
+              "pages": {
+                "label": "Pages"
+              },
+              "submit": {
+                "label": "Update the follow list"
+              }
+            },
+            "edit_raw": {
+              "message": "Pages that you follow are listed here. You can follow or unfollow pages by adding or removing their titles in the list below (one per line). You can also use the {edit_url}.",
+              "normal_text": "normal editor",
+              "page_names": {
+                "label": "Page titles",
+                "help": "One title per line."
+              },
+              "submit": {
+                "label": "Update the follow list"
+              },
+              "error": {
+                "follow_special_page": "You cannot follow special pages."
+              }
+            },
+            "clear": {
+              "message": "All page titles will be removed from your follow list. You can also use the {edit_url} or the {raw_url}.",
+              "normal_text": "normal editor",
+              "raw_text": "raw list",
+              "submit": {
+                "label": "Clear the follow list (no rollback possible!)"
+              }
+            }
+          }
+        },
+        "Forum": {
+          "title": "Forum",
+          "menu": {
+            "label": "Forum",
+            "tooltip": "The place to discuss"
           }
         }
       },
@@ -1212,6 +1271,7 @@
           "revision_warning": {
             "edit": "**You are editing an archived version of this page published on {date}.**\n\nIf you publish your changes, all subsequent revisions will be reverted."
           },
+          "interface_warning": "**You are editing an page that modifies the wiki’s interface.**\n\nPlease be very carefull of the changes you make as they will impact other users.",
           "protection_warning": "**This page is protected.**",
           "deletion_warning": "**You are creating a page that has been deleted previously.** Please ensure that it is relevent to recreate it before submitting your changes.",
           "permission_error": "You do not have the permissions required to edit this page.",

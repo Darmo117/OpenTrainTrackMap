@@ -1,6 +1,6 @@
 V- Contributions
 V- RandomPage
-~- RecentChanges
+X- RecentChanges
 X- UploadFile
 V- SpecialPages
 V- SubPages
@@ -12,8 +12,9 @@ V- ProtectPage
 V- SendEmail
 V- ChangePageLanguage
 V- ChangePageContentType
-X- EditFollowList
-X- EditFollowList/raw
-X- EditFollowList/clear
+V- EditFollowList
+V- EditFollowList/raw
+V- EditFollowList/clear
 X- MaskRevision
 V- Mute
+X- Forum

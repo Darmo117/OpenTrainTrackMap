@@ -967,6 +967,16 @@ class User:
             return UserGroup.objects.filter(label=_groups.GROUP_ALL)
         return self._user.groups.all()
 
+    def get_followed_pages(self) -> list[Page]:
+        """Return the list of pages this user follows, ordered by namespace ID and title."""
+        from .api.wiki import pages
+        if not self.is_authenticated:
+            return []
+        return [
+            pages.get_page(_w_ns.NAMESPACE_IDS[pfs.page_namespace_id], pfs.page_title)
+            for pfs in self.internal_object.followed_pages.order_by('page_namespace_id', 'page_title')
+        ]
+
     def notes_count(self) -> int:
         """Return the total number of notes created by this user."""
         if not self.exists:

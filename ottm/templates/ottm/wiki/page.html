@@ -14,7 +14,7 @@
   {% endif %}
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_css %}
     {# Using "with" to avoid warning #}
-    {% with path='ottm/wiki/special_pages/css/'|add:context.page.title|add:'.min.css' %}
+    {% with path='ottm/wiki/special_pages/'|add:context.page.base_name|add:'/style.min.css' %}
       <link href="{% static path %}" rel="stylesheet">
     {% endwith %}
   {% endif %}
@@ -225,7 +225,7 @@
   <script src="{% static 'ottm/wiki/main.min.js' %}"></script>
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}
     {# Using "with" to avoid warning #}
-    {% with path='ottm/wiki/special_pages/js/'|add:context.page.title|add:'.min.js' %}
+    {% with path='ottm/wiki/special_pages/'|add:context.page.base_name|add:'/script.min.js' %}
       <link href="{% static path %}" rel="stylesheet">
     {% endwith %}
   {% endif %}

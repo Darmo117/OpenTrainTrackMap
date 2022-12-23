@@ -162,7 +162,7 @@ class Command(dj_mngmt.BaseCommand):
 ** MainPage-url|MainPage-name
 ** Special:RandomPage|RandomPage-name
 * Contribute
-** Wiki:Forum|Forum
+** Special:Forum|Forum-name
 ** Special:RecentChanges|RecentChanges-name
 * Help
 ** Help:Help|HelpPage-name

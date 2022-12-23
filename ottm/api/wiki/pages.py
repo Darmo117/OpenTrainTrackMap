@@ -390,6 +390,24 @@ def set_page_content_type(performer: _models.User, page: _models.Page, content_t
 
 
 @_dj_db_trans.atomic
+def update_follow_list(user: _models.User, *pages: _models.Page):
+    """Update the given user’s follow list.
+
+    :param user: The user.
+    :param pages: The list of pages.
+    :raise AnonymousFollowPageError: If the user is not logged in.
+    :raise FollowSpecialPageError: If one of the pages is in the "Special" namespace.
+    """
+    followed_pages = user.get_followed_pages()
+    for page in followed_pages:
+        if page not in pages:
+            unfollow_page(user, page)
+    for page in pages:
+        if page not in followed_pages:
+            follow_page(user, page, follow=True)
+
+
+@_dj_db_trans.atomic
 def follow_page(user: _models.User, page: _models.Page, follow: bool, until: _dt.datetime = None):
     """Make a user follow/unfollow the given page.
 
@@ -406,17 +424,8 @@ def follow_page(user: _models.User, page: _models.Page, follow: bool, until: _dt
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.FollowSpecialPageError()
 
-    def delete_follow():
-        try:
-            user.internal_object.followed_pages.get(
-                page_namespace_id=page.namespace_id,
-                page_title=page.title,
-            ).delete()
-        except _models.PageFollowStatus.DoesNotExist:
-            pass
-
     if follow:
-        delete_follow()
+        unfollow_page(user, page)
         _models.PageFollowStatus(
             user=user.internal_object,
             page_namespace_id=page.namespace_id,
@@ -424,7 +433,40 @@ def follow_page(user: _models.User, page: _models.Page, follow: bool, until: _dt
             end_date=until,
         ).save()
     elif not follow:
-        delete_follow()
+        unfollow_page(user, page)
+
+
+@_dj_db_trans.atomic
+def unfollow_page(user: _models.User, page: _models.Page):
+    """Make a user unfollow a specific page.
+
+    :param user: The user.
+    :param page: The page to unfollow.
+    """
+    if not user.is_authenticated:
+        return
+    try:
+        user.internal_object.followed_pages.get(
+            page_namespace_id=page.namespace_id,
+            page_title=page.title,
+        ).delete()
+    except _models.PageFollowStatus.DoesNotExist:
+        pass
+
+
+@_dj_db_trans.atomic
+def clear_follow_list(user: _models.User):
+    """Clear the follow list of the specified user.
+
+    :param user: The user.
+    """
+    if not user.is_authenticated:
+        return
+    for pfs in user.internal_object.followed_pages.all():
+        try:
+            pfs.delete()
+        except _models.PageFollowStatus.DoesNotExist:
+            pass
 
 
 @_dj_db_trans.atomic
