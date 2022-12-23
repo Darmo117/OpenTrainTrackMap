@@ -94,7 +94,8 @@
     {% endfor %}
     {# @formatter:on #}
     <div class="text-center">
-      <input type="submit" class="btn btn-primary" value="{% ottm_translate trans_prefix|add:'submit.label' %}">
+      <input type="submit" class="btn btn-{% if form.danger %}danger{% else %}primary{% endif %}"
+             value="{% ottm_translate trans_prefix|add:'submit.label' %}">
     </div>
   </form>
 {% endwith %}
