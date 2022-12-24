@@ -634,10 +634,6 @@ class WikiPageContext(_core.PageContext, _abc.ABC):
         return False
 
     @property
-    def site_name(self) -> str:
-        return self.language.translate('wiki.name', site_name=_settings.SITE_NAME)
-
-    @property
     def main_page_full_title(self) -> str:
         return _w_pages.MAIN_PAGE_TITLE
 

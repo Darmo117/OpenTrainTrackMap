@@ -56,9 +56,12 @@
       {# TODO put in burger menu on mobile (≤ 800px) #}
       <nav id="wiki-nav-bar-left">
         <div id="wiki-nav-bar-logo" class="card mb-3">
-          <a href="{% url 'ottm:wiki_main_page' %}" title="{% ottm_translate 'wiki.menu.side.logo.tooltip' %}">
-            <img class="card-img-top" src="{% static 'ottm/images/wiki_icon.svg' %}" alt="OTTM Wiki Logo">
-          </a>
+          <div class="card-header">{% ottm_translate 'wiki.name' %}</div>
+          <div class="card-body">
+            <a href="{% url 'ottm:wiki_main_page' %}" title="{% ottm_translate 'wiki.menu.side.logo.tooltip' %}">
+              <img class="card-img-top" src="{% static 'ottm/images/wiki_icon.svg' %}" alt="OTTM Wiki Logo">
+            </a>
+          </div>
         </div>
         {% wiki_side_menu 'main' %}
         {% wiki_side_menu 'wiki_tools' %}
