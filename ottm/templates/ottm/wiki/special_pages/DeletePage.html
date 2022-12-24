@@ -1,15 +1,16 @@
 {% load wiki %}
+{% load ottm %}
 
 {% if context.done %}
   <div class="alert alert-success" role="alert">
-    {% wiki_translate 'special_page.DeletePage.done' %}
+    {% ottm_translate 'wiki.special_page.DeletePage.done' %}
   </div>
 {% endif %}
 {% if context.revisions_nb %}
   <div class="alert alert-warning" role="alert">
-    {% wiki_translate 'special_page.DeletePage.history_warning.link_text' as text %}
+    {% ottm_translate 'wiki.special_page.DeletePage.history_warning.link_text' as text %}
     {% wiki_inner_link page_title=context.target_page.full_title text=text url_params='action=history' as link %}
-    {% wiki_translate 'special_page.DeletePage.history_warning.message' nb=context.revisions_nb link=link %}
+    {% ottm_translate 'wiki.special_page.DeletePage.history_warning.message' nb=context.revisions_nb link=link %}
   </div>
 {% endif %}
 <div class="row justify-content-center">
@@ -18,7 +19,7 @@
   </div>
 </div>
 {% if context.linked_pages %}
-  <h2>{% wiki_translate 'special_page.DeletePage.linked_pages' %}</h2>
+  <h2>{% ottm_translate 'wiki.special_page.DeletePage.linked_pages' %}</h2>
   <ul>
     {% for linked_page in context.linked_pages %}
       <li>{% wiki_inner_link page_title=linked_page.full_title %}</li>
@@ -26,7 +27,7 @@
   </ul>
 {% endif %}
 {% if context.log_entries.count %}
-  <h2>{% wiki_translate 'special_page.DeletePage.log_entries' %}</h2>
+  <h2>{% ottm_translate 'wiki.special_page.DeletePage.log_entries' %}</h2>
   <ul>
     {% for log_entry in context.log_entries %}
       <li>{% wiki_format_log_entry log_entry %}</li>

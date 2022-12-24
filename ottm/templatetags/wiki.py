@@ -19,18 +19,6 @@ JS_TEMPLATE_FILE = _pl.Path(__file__).parent / 'gadgets-loading-template.min.js'
 
 
 @register.simple_tag(takes_context=True)
-def wiki_translate(context: _ottm.TemplateContext, key: str, **kwargs) -> str:
-    """Translate the given key. The prefix 'wiki.' is appended automatically.
-
-    :param context: Page context.
-    :param key: Key to translate.
-    :param kwargs: Translation’s arguments.
-    :return: The translated text or the key in it is undefined for the current language.
-    """
-    return _ottm.ottm_translate(context, 'wiki.' + key, **kwargs)
-
-
-@register.simple_tag(takes_context=True)
 def wiki_inner_link(
         context: _ottm.TemplateContext,
         page_title: str,
@@ -101,20 +89,20 @@ def wiki_page_menu_item(context: _ottm.TemplateContext, action: str) -> str:
     if action == _w_cons.ACTION_EDIT:
         if wiki_context.page_exists:
             if wiki_context.can_user_edit:
-                text = wiki_translate(context, f'menu.page.edit.label')
-                tooltip = wiki_translate(context, f'menu.page.edit.tooltip')
+                text = _ottm.ottm_translate(context, f'wiki.menu.page.edit.label')
+                tooltip = _ottm.ottm_translate(context, f'wiki.menu.page.edit.tooltip')
                 css_classes.append('mdi-file-document-edit-outline')
             else:
-                text = wiki_translate(context, f'menu.page.source.label')
-                tooltip = wiki_translate(context, f'menu.page.source.tooltip')
+                text = _ottm.ottm_translate(context, f'wiki.menu.page.source.label')
+                tooltip = _ottm.ottm_translate(context, f'wiki.menu.page.source.tooltip')
                 css_classes.append('mdi-xml')
         else:
             css_classes.append('mdi-file-document-plus-outline')
-            text = wiki_translate(context, f'menu.page.create.label')
-            tooltip = wiki_translate(context, f'menu.page.create.tooltip')
+            text = _ottm.ottm_translate(context, f'wiki.menu.page.create.label')
+            tooltip = _ottm.ottm_translate(context, f'wiki.menu.page.create.tooltip')
     else:
-        text = wiki_translate(context, f'menu.page.{action}.label')
-        tooltip = wiki_translate(context, f'menu.page.{action}.tooltip')
+        text = _ottm.ottm_translate(context, f'wiki.menu.page.{action}.label')
+        tooltip = _ottm.ottm_translate(context, f'wiki.menu.page.{action}.tooltip')
         css_classes.append(
             {
                 _w_cons.ACTION_READ: 'mdi-file-document-outline',
@@ -146,11 +134,10 @@ def wiki_page_menu_item(context: _ottm.TemplateContext, action: str) -> str:
     return _dj_safe.mark_safe(link)
 
 
-@register.simple_tag(takes_context=True)
-def wiki_static(context: _ottm.TemplateContext, page_title: str) -> str:
+@register.simple_tag
+def wiki_static(page_title: str) -> str:
     """Return the static resource link for the given wiki page.
 
-    :param context: Page context.
     :param page_title: Title of the page to get the static resource from.
     :return: The resource’s link.
     """
@@ -190,7 +177,7 @@ def wiki_diff_link(context: _ottm.TemplateContext, revision: models.PageRevision
             prev_r = revision.get_previous(ignore_hidden)
             # language=HTML
             text = ('<span class="mdi mdi-arrow-left-thick"></span> '
-                    + wiki_translate(context, 'page.read.revision_nav_box.diff_previous'))
+                    + _ottm.ottm_translate(context, 'wiki.page.read.revision_nav_box.diff_previous'))
             if prev_r:
                 link = wiki_inner_link(context, page.full_title, text, url_params=f'revid={prev_r.id}')
                 diff = wiki_inner_link(context, page.full_title, '',
@@ -204,7 +191,7 @@ def wiki_diff_link(context: _ottm.TemplateContext, revision: models.PageRevision
             current_r = page.get_latest_revision()
             # language=HTML
             text = ('<span class="mdi mdi-arrow-up-thick"></span> '
-                    + wiki_translate(context, 'page.read.revision_nav_box.diff_current'))
+                    + _ottm.ottm_translate(context, 'wiki.page.read.revision_nav_box.diff_current'))
             link = wiki_inner_link(context, page.full_title, text, ignore_current_title=True)
             if current_r.id != revision.id:
                 diff = wiki_inner_link(context, page.full_title, '',
@@ -216,7 +203,7 @@ def wiki_diff_link(context: _ottm.TemplateContext, revision: models.PageRevision
                 text = f'{link} (<span class="mdi mdi-file-compare"></span>)'
         case 'next':
             next_r = revision.get_next(ignore_hidden)
-            text = (wiki_translate(context, 'page.read.revision_nav_box.diff_next')
+            text = (_ottm.ottm_translate(context, 'wiki.page.read.revision_nav_box.diff_next')
                     # language=HTML
                     + ' <span class="mdi mdi-arrow-right-thick"></span>')
             if next_r:
@@ -270,7 +257,7 @@ def wiki_page_list(context: _ottm.TemplateContext, pages: _dj_paginator.Paginato
     """
     wiki_context: _ph.WikiPageContext = context.get('context')
     if pages.count == 0:
-        message = wiki_translate(context, no_results_key)
+        message = _ottm.ottm_translate(context, no_results_key)
         # language=HTML
         return _dj_safe.mark_safe(f'<div class="alert alert-warning text-center">{message}</div>')
     if paginate:
@@ -310,7 +297,7 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
                 context,
                 f'Special:MaskRevision/{revision.page.full_title}',
                 text='',
-                tooltip=wiki_translate(context, 'revisions_list.mask.tooltip'),
+                tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.mask.tooltip'),
                 css_classes='mdi mdi-eye-outline wiki-revision-action',
                 ignore_current_title=True,
             ))
@@ -320,7 +307,7 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
                 context,
                 revision.page.full_title,
                 text='',
-                tooltip=wiki_translate(context, 'revisions_list.current.tooltip'),
+                tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.current.tooltip'),
                 css_classes='mdi mdi-file-arrow-up-down-outline wiki-revision-action',
                 url_params=f'oldid={revision.id}&newid={revision.page.get_latest_revision().id}',
                 ignore_current_title=True,
@@ -335,7 +322,7 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
                 context,
                 revision.page.full_title,
                 text='',
-                tooltip=wiki_translate(context, 'revisions_list.diff.tooltip'),
+                tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.diff.tooltip'),
                 css_classes='mdi mdi-file-arrow-left-right-outline wiki-revision-action',
                 url_params=f'oldid={previous.id}&newid={revision.id}',
                 ignore_current_title=True,
@@ -351,7 +338,7 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
                 context,
                 revision.page.full_title,
                 text='',
-                tooltip=wiki_translate(context, 'revisions_list.cancel.tooltip'),
+                tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.cancel.tooltip'),
                 css_classes='mdi mdi-undo wiki-revision-action',
                 ignore_current_title=True,
             ))
@@ -364,7 +351,8 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
                 context,
                 revision.page.full_title,
                 text='',
-                tooltip=wiki_translate(context, 'revisions_list.revert.tooltip', nb=0),  # TODO number of revisions
+                # TODO number of revisions
+                tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.revert.tooltip', nb=0),
                 css_classes='mdi mdi-undo-variant wiki-revision-action',
                 ignore_current_title=True,
             ))
@@ -389,19 +377,19 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
         )
         flags = []
         if revision.page_creation:
-            flags.append((wiki_translate(context, 'revisions_list.flag.creation.label'),
-                          wiki_translate(context, 'revisions_list.flag.creation.tooltip'),
+            flags.append((_ottm.ottm_translate(context, 'wiki.revisions_list.flag.creation.label'),
+                          _ottm.ottm_translate(context, 'wiki.revisions_list.flag.creation.tooltip'),
                           'success'))
         if revision.is_minor:
-            flags.append((wiki_translate(context, 'revisions_list.flag.minor.label'),
-                          wiki_translate(context, 'revisions_list.flag.minor.tooltip'),
+            flags.append((_ottm.ottm_translate(context, 'wiki.revisions_list.flag.minor.label'),
+                          _ottm.ottm_translate(context, 'wiki.revisions_list.flag.minor.tooltip'),
                           'secondary'))
         if revision.is_bot:
-            flags.append((wiki_translate(context, 'revisions_list.flag.bot.label'),
-                          wiki_translate(context, 'revisions_list.flag.bot.tooltip'),
+            flags.append((_ottm.ottm_translate(context, 'wiki.revisions_list.flag.bot.label'),
+                          _ottm.ottm_translate(context, 'wiki.revisions_list.flag.bot.tooltip'),
                           'light'))
         size = _ottm.ottm_format_number(context, revision.bytes_size, value_only=True)
-        size_text = wiki_translate(context, 'revisions_list.size.label', n=size)
+        size_text = _ottm.ottm_translate(context, 'wiki.revisions_list.size.label', n=size)
         variation = revision.get_byte_size_diff(ignore_hidden=ignore_hidden)
         variation_text = ('+' if variation > 0 else '') + _ottm.ottm_format_number(context, variation, value_only=True)
         comment = _format_comment(context, revision.comment, revision.comment_hidden)
@@ -410,7 +398,7 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
     return {
         'lines': lines,
         'pagination': wiki_pagination(context, revisions),
-        'no_results_message': wiki_translate(context, 'revisions_list.no_results_message'),
+        'no_results_message': _ottm.ottm_translate(context, 'wiki.revisions_list.no_results_message'),
     }
 
 
@@ -439,17 +427,17 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
     formatted_date = _ottm.ottm_format_date(context, log_entry.date)
     match log_entry:
         case models.PageCreationLog(performer=performer, page=page):
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.page_creation',
+                'wiki.log.page_creation',
                 date=formatted_date,
                 user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
             )
         case models.PageDeletionLog(performer=performer, page=page, reason=reason):
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.page_deletion',
+                'wiki.log.page_deletion',
                 date=formatted_date,
                 user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
@@ -458,21 +446,21 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
         case models.PageProtectionLog(performer=performer, page=page, reason=reason, end_date=end_date,
                                       protection_level=protection_level, protect_talks=protect_talks):
             if end_date:
-                return wiki_translate(
+                return _ottm.ottm_translate(
                     context,
-                    'log.page_protection',
+                    'wiki.log.page_protection',
                     date=formatted_date,
                     user=_format_username(context, performer),
                     page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
                     group=protection_level.label,
                     until=(_ottm.ottm_format_date(context, end_date)
-                           if end_date else wiki_translate(context, 'log.infinite')),
+                           if end_date else _ottm.ottm_translate(context, 'wiki.log.infinite')),
                     talks=str(protect_talks).lower(),
                     reason=_format_comment(context, reason, False),
                 )
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.page_protection_infinite',
+                'wiki.log.page_protection_infinite',
                 date=formatted_date,
                 user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
@@ -481,9 +469,9 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 reason=_format_comment(context, reason, False),
             )
         case models.PageContentLanguageLog(performer=performer, page=page, language=language, reason=reason):
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.page_content_language',
+                'wiki.log.page_content_language',
                 date=formatted_date,
                 user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
@@ -492,9 +480,9 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 reason=_format_comment(context, reason, False),
             )
         case models.PageContentTypeLog(performer=performer, page=page, content_type=content_type, reason=reason):
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.page_content_type',
+                'wiki.log.page_content_type',
                 date=formatted_date,
                 user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
@@ -502,17 +490,17 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 reason=_format_comment(context, reason, False),
             )
         case models.UserAccountCreationLog(user=user):
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.user_account_creation',
+                'wiki.log.user_account_creation',
                 date=formatted_date,
                 user=_format_username(context, user),
             )
         case models.UserMaskLog(user=user, performer=performer, reason=reason, masked=masked):
             action = 'masked' if masked else 'unmasked'
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.user_mask_' + action,
+                'wiki.log.user_mask_' + action,
                 date=formatted_date,
                 performer=_format_username(context, performer),
                 user=_format_username(context, user),
@@ -521,18 +509,18 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
         case models.UserGroupLog(user=user, performer=performer, reason=reason, joined=joined, group=group):
             action = 'joined' if joined else 'left'
             if performer:
-                return wiki_translate(
+                return _ottm.ottm_translate(
                     context,
-                    'log.user_group_' + action,
+                    'wiki.log.user_group_' + action,
                     date=formatted_date,
                     performer=_format_username(context, performer),
                     user=_format_username(context, user),
                     group=group.label,
                     reason=_format_comment(context, reason, False),
                 )
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.user_group_internal_' + action,
+                'wiki.log.user_group_internal_' + action,
                 date=formatted_date,
                 user=_format_username(context, user),
                 group=group.label,
@@ -543,9 +531,9 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                                  user=user, allow_editing_own_settings=allow_editing_own_settings):
             if blocked:
                 if end_date:
-                    return wiki_translate(
+                    return _ottm.ottm_translate(
                         context,
-                        'log.user_block',
+                        'wiki.log.user_block',
                         date=formatted_date,
                         performer=_format_username(context, performer),
                         user=_format_username(context, user),
@@ -554,9 +542,9 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                         until=_ottm.ottm_format_date(context, end_date),
                         reason=_format_comment(context, reason, False),
                     )
-                return wiki_translate(
+                return _ottm.ottm_translate(
                     context,
-                    'log.user_block_infinite',
+                    'wiki.log.user_block_infinite',
                     date=formatted_date,
                     performer=_format_username(context, performer),
                     user=_format_username(context, user),
@@ -564,9 +552,9 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                     post_messages=str(allow_messages_on_own_user_page).lower(),
                     reason=_format_comment(context, reason, False),
                 )
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.user_unblock',
+                'wiki.log.user_unblock',
                 date=formatted_date,
                 performer=_format_username(context, performer),
                 user=_format_username(context, user),
@@ -575,16 +563,16 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
         case models.IPBlockLog(performer=performer, reason=reason, end_date=end_date,
                                allow_messages_on_own_user_page=allow_messages_on_own_user_page,
                                ip=ip, allow_account_creation=allow_account_creation):
-            return wiki_translate(
+            return _ottm.ottm_translate(
                 context,
-                'log.ip_block',
+                'wiki.log.ip_block',
                 date=formatted_date,
                 performer=_format_username(context, performer),
                 user=wiki_inner_link(context, _w_ns.NS_USER.get_full_page_title(ip), ignore_current_title=True),
                 create_accounts=str(allow_account_creation).lower(),
                 post_messages=str(allow_messages_on_own_user_page).lower(),
                 until=(_ottm.ottm_format_date(context, end_date)
-                       if end_date else wiki_translate(context, 'log.infinite')),
+                       if end_date else _ottm.ottm_translate(context, 'wiki.log.infinite')),
                 reason=_format_comment(context, reason, False),
             )
 
@@ -616,7 +604,7 @@ def wiki_pagination(context: _ottm.TemplateContext, paginator: _dj_paginator.Pag
     for index in paginator.get_elided_page_range(page_index, on_each_side=2):
         if isinstance(index, int):
             url = wiki_add_url_params(context, page=index)
-            tooltip = wiki_translate(context, 'pagination.page.tooltip', page=index)
+            tooltip = _ottm.ottm_translate(context, 'wiki.pagination.page.tooltip', page=index)
             active = 'active' if index == page_index else ''
             # noinspection HtmlUnknownTarget
             # language=HTML
@@ -631,7 +619,7 @@ def wiki_pagination(context: _ottm.TemplateContext, paginator: _dj_paginator.Pag
     numbers = []
     for nb in [20, 50, 100, 200, 500]:
         url = wiki_add_url_params(context, results_per_page=nb)
-        tooltip = wiki_translate(context, 'pagination.per_page_item.tooltip', nb=nb)
+        tooltip = _ottm.ottm_translate(context, 'wiki.pagination.per_page_item.tooltip', nb=nb)
         active = 'active' if nb == paginator.per_page else ''
         # noinspection HtmlUnknownTarget
         # language=HTML
@@ -664,7 +652,7 @@ def _format_username(context: _ottm.TemplateContext, user: models.CustomUser) ->
     css_classes = ''
     if user.hide_username:
         if not can_view:
-            return f'<span class="masked">{wiki_translate(context, "username_hidden")}</span>'
+            return f'<span class="masked">{_ottm.ottm_translate(context, "wiki.username_hidden")}</span>'
         css_classes = 'masked'
     return wiki_inner_link(context, _w_ns.NS_USER.get_full_page_title(user.username),
                            text=user.username, ignore_current_title=True, css_classes=css_classes)
@@ -676,6 +664,6 @@ def _format_comment(context: _ottm.TemplateContext, comment: str, hide: bool) ->
     css_classes = ''
     if hide:
         if not can_view:
-            return f'<span class="masked">{wiki_translate(context, "comment_hidden")}</span>'
+            return f'<span class="masked">{_ottm.ottm_translate(context, "wiki.comment_hidden")}</span>'
         css_classes = 'masked'
     return f'<span class="font-italic {css_classes}">({comment})</span>' if comment else ''

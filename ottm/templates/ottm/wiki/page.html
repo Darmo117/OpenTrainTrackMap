@@ -34,13 +34,13 @@
 {% block navbar-center %}
   <form id="wiki-navbar-search-form" class="form-inline my-2 my-lg-0" method="get"
         action="{% wiki_inner_link page_title='Special:Search' ignore_current_title=True only_url=True %}">
-    {% wiki_translate 'navbar.search.input.placeholder' as placeholder %}
+    {% ottm_translate 'wiki.navbar.search.input.placeholder' as placeholder %}
     <input type="search" id="wiki-navbar-search-input" class="form-control mr-sm-2" name="query"
            placeholder="{{ placeholder }}" aria-label="{{ placeholder }}" aria-describedby="wiki-navbar-search-button"
            accesskey="f">
     <button class="btn btn-outline-light my-2 my-sm-0" type="submit" id="wiki-navbar-search-button"
-            title="{% wiki_translate 'navbar.search.button.tooltip' %}">
-      <span class="mdi mdi-magnify"></span> {% wiki_translate 'navbar.search.button.label' %}
+            title="{% ottm_translate 'wiki.navbar.search.button.tooltip' %}">
+      <span class="mdi mdi-magnify"></span> {% ottm_translate 'wiki.navbar.search.button.label' %}
     </button>
     <input type="hidden" name="search_bar" value="1"/>
   </form>
@@ -56,7 +56,7 @@
       {# TODO put in burger menu on mobile (≤ 800px) #}
       <nav id="wiki-nav-bar-left">
         <div id="wiki-nav-bar-logo" class="card mb-3">
-          <a href="{% url 'ottm:wiki_main_page' %}" title="{% wiki_translate 'menu.side.logo.tooltip' %}">
+          <a href="{% url 'ottm:wiki_main_page' %}" title="{% ottm_translate 'wiki.menu.side.logo.tooltip' %}">
             <img class="card-img-top" src="{% static 'ottm/images/wiki_icon.svg' %}" alt="OTTM Wiki Logo">
           </a>
         </div>
@@ -70,45 +70,45 @@
         <h1 id="wiki-article-title" {% block title_attr %}{% endblock %}>
           {% if context.invalid_title %}
             {% if context.empty_title %}
-              {% wiki_translate 'special_page.empty_title.title' %}
+              {% ottm_translate 'wiki.special_page.empty_title.title' %}
             {% else %}
-              {% wiki_translate 'special_page.invalid_title.title' %}
+              {% ottm_translate 'wiki.special_page.invalid_title.title' %}
             {% endif %}
           {% elif context.page.namespace == NS_SPECIAL %}
             {% if context.page_exists %}
               {% if context.forbidden %}
-                {% wiki_translate 'special_page.forbidden.title' %}
+                {% ottm_translate 'wiki.special_page.forbidden.title' %}
               {% else %}
-                {% wiki_translate 'special_page.'|add:context.page.base_name|add:'.'|add:context.title_key value=context.title_value %}
+                {% ottm_translate 'wiki.special_page.'|add:context.page.base_name|add:'.'|add:context.title_key value=context.title_value %}
               {% endif %}
             {% else %}
-              {% wiki_translate 'special_page.does_not_exist.title' %}
+              {% ottm_translate 'wiki.special_page.does_not_exist.title' %}
             {% endif %}
           {% elif context.action == ACTION_READ %}
             {{ context.page.full_title }}
             {% if context.page.is_category_hidden %}
               <span id="wiki-maintenance-category-icon" class="mdi mdi-tools"
-                    title="{% wiki_translate 'title.maintenance_category.tooltip' %}"></span>
+                    title="{% ottm_translate 'wiki.title.maintenance_category.tooltip' %}"></span>
             {% endif %}
             {% if context.page.namespace == NS_USER %}
               <span class="float-right">{% ottm_user_type_icon context.page.base_name %}</span>
             {% endif %}
           {% elif context.action == ACTION_TALK %}
-            {% wiki_translate 'page.title.talk' page_title=context.page.full_title %}
+            {% ottm_translate 'wiki.page.title.talk' page_title=context.page.full_title %}
           {% elif context.action == ACTION_EDIT or context.action == ACTION_SUBMIT %}
             {% if context.page_exists %}
               {% if context.can_user_edit %}
-                {% wiki_translate 'page.title.edit' page_title=context.page.full_title %}
+                {% ottm_translate 'wiki.page.title.edit' page_title=context.page.full_title %}
               {% else %}
-                {% wiki_translate 'page.title.source' page_title=context.page.full_title %}
+                {% ottm_translate 'wiki.page.title.source' page_title=context.page.full_title %}
               {% endif %}
             {% else %}
-              {% wiki_translate 'page.title.create' page_title=context.page.full_title %}
+              {% ottm_translate 'wiki.page.title.create' page_title=context.page.full_title %}
             {% endif %}
           {% elif context.action == ACTION_HISTORY %}
-            {% wiki_translate 'page.title.history' page_title=context.page.full_title %}
+            {% ottm_translate 'wiki.page.title.history' page_title=context.page.full_title %}
           {% elif context.action == ACTION_INFO %}
-            {% wiki_translate 'page.title.info' page_title=context.page.full_title %}
+            {% ottm_translate 'wiki.page.title.info' page_title=context.page.full_title %}
           {% endif %}
         </h1>
       {% endif %}
@@ -138,12 +138,12 @@
       {% if context.is_redirection or context.redirected_from %}
         <div id="wiki-redirect-info" class="text-muted">
           {% if context.is_redirection %}
-            {% wiki_translate 'redirection_info.is_redirection' %}
+            {% ottm_translate 'wiki.redirection_info.is_redirection' %}
             {% if context.redirected_from %}<br>{% endif %}
           {% endif %}
           {% if context.redirected_from %}
             {% wiki_inner_link page_title=context.redirected_from url_params='no_redirect=1' as link %}
-            {% wiki_translate 'redirection_info.redirected_from' link=link %}
+            {% ottm_translate 'wiki.redirection_info.redirected_from' link=link %}
           {% endif %}
         </div>
       {% endif %}
@@ -154,16 +154,16 @@
             <div class="alert alert-danger" role="alert">
               {% wiki_inner_link page_title=MAIN_PAGE_TITLE only_url=True as link %}
               {% if context.empty_title %}
-                {% wiki_translate 'special_page.empty_title.message' main_page_url=link %}
+                {% ottm_translate 'wiki.special_page.empty_title.message' main_page_url=link %}
               {% else %}
-                {% wiki_translate 'special_page.invalid_title.message' main_page_url=link char=context.char %}
+                {% ottm_translate 'wiki.special_page.invalid_title.message' main_page_url=link char=context.char %}
               {% endif %}
             </div>
           {% elif not context.page_exists %}
             <div class="alert alert-danger" role="alert">
               {% wiki_inner_link page_title='Special:SpecialPages' only_url=True as sp_link %}
               {% wiki_inner_link page_title=MAIN_PAGE_TITLE only_url=True as link %}
-              {% wiki_translate 'special_page.does_not_exist.message' special_pages_link=sp_link main_page_url=link %}
+              {% ottm_translate 'wiki.special_page.does_not_exist.message' special_pages_link=sp_link main_page_url=link %}
             </div>
           {% elif context.can_user_read %}
             {# Using "with" to avoid warning #}
@@ -173,7 +173,7 @@
           {% else %}
             <div class="alert alert-danger" role="alert">
               {% wiki_inner_link page_title=MAIN_PAGE_TITLE only_url=True as link %}
-              {% wiki_translate 'special_page.forbidden.message' perms=context.required_perms|join:', ' main_page_url=link %}
+              {% ottm_translate 'wiki.special_page.forbidden.message' perms=context.required_perms|join:', ' main_page_url=link %}
             </div>
           {% endif %}
         {% elif context.action == ACTION_READ %}
@@ -212,9 +212,9 @@
       </p>
       {% if context.page.last_revision_date %}
         {% ottm_format_date context.page.last_revision_date as last_revision_date %}
-        <p>{% wiki_translate 'footer.last_edit' date=last_revision_date %}</p>
+        <p>{% ottm_translate 'wiki.footer.last_edit' date=last_revision_date %}</p>
       {% endif %}
-      <p>{% wiki_translate 'footer.license' %}</p>
+      <p>{% ottm_translate 'wiki.footer.license' %}</p>
     </div>
   </footer>
 {% endblock %}

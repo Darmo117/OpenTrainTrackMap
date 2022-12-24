@@ -3,85 +3,85 @@
 {% load utils %}
 
 {% if context.page_exists %}
-  <h2>{% wiki_translate 'page.info.basic_info.title' %}</h2>
+  <h2>{% ottm_translate 'wiki.page.info.basic_info.title' %}</h2>
   <table class="table table-striped table-bordered table-hover">
     <colgroup>
       <col style="width: 50%">
     </colgroup>
     <tbody>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.page_title.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.page_title.label' %}</th>
         <td>{{ context.page.full_title }}</td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.page_id.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.page_id.label' %}</th>
         <td>{{ context.page.id }}</td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.namespace_name.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.namespace_name.label' %}</th>
         <td>{{ context.page.namespace.name }}</td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.namespace_id.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.namespace_id.label' %}</th>
         <td>{{ context.page.namespace_id }}</td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.default_sort_key.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.default_sort_key.label' %}</th>
         <td>{{ context.page.default_sort_key }}</td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.size.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.size.label' %}</th>
         <td>{% ottm_format_number context.last_revision.bytes_size %}</td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.content_language.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.content_language.label' %}</th>
         <td>
           {{ context.page.content_language.code }} - {{ context.page.content_language.name }}
           ({% wiki_inner_link page_title='Special:ChangePageLanguage/'|add:context.page.full_title text='' css_classes='mdi mdi-pencil' %})
         </td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.content_type.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.content_type.label' %}</th>
         <td>
           {{ context.page.content_type }}
           ({% wiki_inner_link page_title='Special:ChangePageContentType/'|add:context.page.full_title text='' css_classes='mdi mdi-pencil' %})
         </td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.follow_list_nb.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.follow_list_nb.label' %}</th>
         <td>
           {% ottm_format_number context.followers_nb %}
-          {% wiki_translate 'page.info.basic_info.follow_list_nb.link' as text %}
+          {% ottm_translate 'wiki.page.info.basic_info.follow_list_nb.link' as text %}
           ({% wiki_inner_link page_title='Special:PageFollowers/'|add:context.page.full_title text=text %})
         </td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.redirects_nb.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.redirects_nb.label' %}</th>
         <td>
           {% ottm_format_number context.redirects_nb %}
-          {% wiki_translate 'page.info.basic_info.redirects_nb.link' as text %}
+          {% ottm_translate 'wiki.page.info.basic_info.redirects_nb.link' as text %}
           ({% wiki_inner_link page_title='Special:LinkedPages/'|add:context.page.full_title text=text %})
         </td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.basic_info.subpages_nb.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.basic_info.subpages_nb.label' %}</th>
         <td>
           {% ottm_format_number context.subpages_nb %}
-          {% wiki_translate 'page.info.basic_info.subpages_nb.link' as text %}
+          {% ottm_translate 'wiki.page.info.basic_info.subpages_nb.link' as text %}
           ({% wiki_inner_link page_title='Special:Subpages/'|add:context.page.full_title text=text %})
         </td>
       </tr>
     </tbody>
   </table>
 
-  <h2>{% wiki_translate 'page.info.protection.title' %}</h2>
+  <h2>{% ottm_translate 'wiki.page.info.protection.title' %}</h2>
   <table class="table table-striped table-bordered table-hover">
     <colgroup>
       <col style="width: 50%">
     </colgroup>
     <tbody>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.protection.namespace_perms.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.protection.namespace_perms.label' %}</th>
         <td>
           {% if context.page.namespace.perms_required %}
             {{ context.page.namespace.perms_required|join:', ' }}
@@ -91,14 +91,14 @@
         </td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.protection.user_group.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.protection.user_group.label' %}</th>
         <td>
           {% if context.protection %}
             {{ context.protection.protection_level.label }}
             {% if context.protection.end_date %}
               ({% ottm_format_date context.protection.end_date %})
             {% else %}
-              ({% wiki_translate 'log.infinite' %})
+              ({% ottm_translate 'wiki.log.infinite' %})
             {% endif %}
           {% else %}
             -
@@ -107,65 +107,65 @@
       </tr>
     </tbody>
   </table>
-  {% wiki_translate 'page.info.protection.see_logs' as text %}
+  {% ottm_translate 'wiki.page.info.protection.see_logs' as text %}
   {% wiki_inner_link page_title='Special:Logs/'|add:context.page.full_title text=text url_params='type=protectpage' %}
 
-  <h2>{% wiki_translate 'page.info.edit_history.title' %}</h2>
+  <h2>{% ottm_translate 'wiki.page.info.edit_history.title' %}</h2>
   <table class="table table-striped table-bordered table-hover">
     <colgroup>
       <col style="width: 50%">
     </colgroup>
     <tbody>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.edit_history.creator.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.edit_history.creator.label' %}</th>
         <td>
           {% if context.first_revision.author.hide_username %}
-            <span class="wiki-hidden">{% wiki_translate 'username_hidden' %}</span>
+            <span class="wiki-hidden">{% ottm_translate 'wiki.username_hidden' %}</span>
           {% else %}
             {% wiki_inner_link page_title='User:'|add:context.first_revision.author.username text=context.first_revision.author.username %}
           {% endif %}
         </td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.edit_history.creation_date.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.edit_history.creation_date.label' %}</th>
         <td>
           {% ottm_format_date context.first_revision.date as date %}
           {% wiki_inner_link page_title=context.page.full_title text=date url_params='revid='|concat:context.first_revision.id ignore_current_title=True %}
         </td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.edit_history.last_editor.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.edit_history.last_editor.label' %}</th>
         <td>
           {% if context.last_revision.author.hide_username %}
-            <span class="wiki-hidden">{% wiki_translate 'username_hidden' %}</span>
+            <span class="wiki-hidden">{% ottm_translate 'wiki.username_hidden' %}</span>
           {% else %}
             {% wiki_inner_link page_title='User:'|add:context.last_revision.author.username text=context.last_revision.author.username %}
           {% endif %}
         </td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.edit_history.last_edit_date.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.edit_history.last_edit_date.label' %}</th>
         <td>
           {% ottm_format_date context.last_revision.date as date %}
           {% wiki_inner_link page_title=context.page.full_title text=date url_params='revid='|concat:context.last_revision.id ignore_current_title=True %}
         </td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.edit_history.total_edits_nb.label' %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.edit_history.total_edits_nb.label' %}</th>
         <td>{% ottm_format_number context.revisions|length %}</td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.edit_history.recent_edits_nb.label' nb=context.recent_range %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.edit_history.recent_edits_nb.label' nb=context.recent_range %}</th>
         <td>{% ottm_format_number context.recent_revisions|length %}</td>
       </tr>
       <tr>
-        <th scope="row">{% wiki_translate 'page.info.edit_history.recent_distinct_editors_nb.label' nb=context.recent_range %}</th>
+        <th scope="row">{% ottm_translate 'wiki.page.info.edit_history.recent_distinct_editors_nb.label' nb=context.recent_range %}</th>
         <td>{% ottm_format_number context.recent_editors_nb %}</td>
       </tr>
     </tbody>
   </table>
 {% else %}
   <div id="wiki-info-nonexistent" class="alert alert-danger text-center" role="alert">
-    {% wiki_translate 'page.info.no_info' %}
+    {% ottm_translate 'wiki.page.info.no_info' %}
   </div>
 {% endif %}
