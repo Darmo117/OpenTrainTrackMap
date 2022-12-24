@@ -5,10 +5,9 @@
   {% if pages %}
     <h2>{% ottm_translate 'wiki.special_page.SpecialPages.section.'|add:section_name %}</h2>
     <ul class="wiki-columns">
-      {% for page in pages %}
+      {% for page, page_name in pages %}
         <li>
-          {% ottm_translate 'wiki.special_page.'|add:page.name|add:'.title' as text %}
-          {% wiki_inner_link page_title='Special:'|add:page.name text=text %}
+          {% wiki_inner_link page_title='Special:'|add:page.name text=page_name %}
           {% if page.permissions_required %}
             <span class="mdi mdi-security" title="{% ottm_translate 'wiki.special_page.requires_perms.tooltip' %}"></span>
           {% endif %}

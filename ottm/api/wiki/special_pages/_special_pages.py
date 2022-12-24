@@ -19,9 +19,9 @@ class SpecialPagesSpecialPage(_core.SpecialPage):
         for sp in SPECIAL_PAGES.values():
             if not sp.category:
                 continue
-            sections[sp.category.value].append(sp)
+            sections[sp.category.value].append((sp, params.ui_language.translate(f'wiki.special_page.{sp.name}.title')))
         for pages in sections.values():
-            pages.sort(key=lambda p: p.name)
+            pages.sort(key=lambda p: p[1])  # Sort by localized name
         return {
             'title_key': 'title',
             'special_page_sections': sections,
