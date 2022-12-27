@@ -9,7 +9,7 @@ import django.db.transaction as _dj_db_trans
 import django.shortcuts as _dj_scut
 import rjsmin as _rjsmin
 
-from . import constants as _w_cons, namespaces as _w_ns
+from . import constants as _w_cons, namespaces as _w_ns, parser as _parser
 from .. import errors as _errors, groups as _groups, permissions as _perms, utils as _utils
 from ... import models as _models, requests as _requests, settings as _settings
 
@@ -140,15 +140,19 @@ def get_js_config(request_params: _requests.RequestParams, page: _models.Page,
     }
 
 
-def render_wikicode(code: str, user: _models.User, language: _settings.UILanguage) -> str:
+def render_wikicode(code: str, user: _models.User, language: _settings.UILanguage, page: _models.Page) \
+        -> tuple[str, int]:
     """Render the given wikicode.
 
     :param code: The wikicode to render.
     :param user: The current user.
     :param language: Page’s language.
-    :return: The rendered wikicode.
+    :param page: The current page.
+    :return: The rendered wikicode and its render time in ms.
     """
-    return code  # TODO
+    parser = _parser.Parser(user, language, page)
+    parsed = parser.parse(code)
+    return parsed, parser.parse_duration
 
 
 def get_edit_notice(user: _models.User, language: _settings.UILanguage, page: _models.Page) -> str:
@@ -208,7 +212,9 @@ def get_interface_page(title: str, user: _models.User = None, language: _setting
         interface_page = _get_interface_page(title, language)
     if not interface_page:
         return ''
-    return render_wikicode(interface_page.get_content(), user, language) if render else interface_page.get_content()
+    if render:
+        return render_wikicode(interface_page.get_content(), user, language, page)[0]
+    return interface_page.get_content()
 
 
 def _get_interface_page(title: str, language: _settings.UILanguage = None) -> _models.Page | None:

@@ -333,10 +333,9 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         no_index = not page.exists
         cat_subcategories = []
         cat_pages = []
-        content = ''
         archived = False
         if revision_id is None or not page.exists:
-            content = _w_pages.render_wikicode(page.get_content(), user, language)
+            content, duration = _w_pages.render_wikicode(page.get_content(), user, language, page)
             revision = page.revisions.latest() if page.exists else None
             if page.namespace == _w_ns.NS_CATEGORY:
                 cat_subcategories = list(_models.PageCategory.subcategories_for_category(page.full_title))
@@ -347,8 +346,8 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             except _models.PageRevision.DoesNotExist:
                 revision = page.revisions.latest()
             else:
-                content = _w_pages.render_wikicode(revision.content, user, language)
                 archived = True
+            content, duration = _w_pages.render_wikicode(revision.content, user, language, page)
         if not page.exists:
             no_page_notice = _w_pages.get_no_page_notice(user, language)
         else:
@@ -359,6 +358,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             no_index=no_index,
             js_config=js_config,
             content=content,
+            parse_time=duration,
             revision=revision,
             archived=archived,
             cat_subcategories=cat_subcategories,
@@ -721,6 +721,7 @@ class WikiPageReadActionContext(WikiPageContext):
             no_index: bool,
             js_config: dict[str, _typ.Any],
             content: str,
+            parse_time: int,
             revision: _models.PageRevision | None,
             archived: bool,
             cat_subcategories: list[_models.Page] = None,
@@ -735,6 +736,7 @@ class WikiPageReadActionContext(WikiPageContext):
         :param js_config: Dict object containing the wiki’s JS config.
             It is converted to a JSON object before being inserted in the HTML page.
         :param content: Rendered page’s content.
+        :param parse_time: The total parsing time of the content.
         :param revision: A revision of the page. May be None.
         :param archived: Whether the revision is not the current one.
         :param cat_subcategories: The list of subcategories of the category represented by the page.
@@ -756,6 +758,7 @@ class WikiPageReadActionContext(WikiPageContext):
             max_page_index=self._cat_pages.num_pages,
         )
         self._content = content
+        self._parse_time = parse_time
         self._revision = revision
         self._archived = archived
         self._cat_subcategories = cat_subcategories or []
@@ -764,6 +767,10 @@ class WikiPageReadActionContext(WikiPageContext):
     @property
     def page_content(self) -> str:
         return self._content
+
+    @property
+    def page_parse_time(self) -> int:
+        return self._parse_time
 
     @property
     def page_language(self) -> str:

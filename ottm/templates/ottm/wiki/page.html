@@ -251,4 +251,9 @@
     {% endif %}
   {% endif %}
   {% wiki_static 'gadgets' %}
+  {% if context.page.namespace != NS_SPECIAL %}
+    <!--
+    Page generated in {{ context.page_parse_time }} ms.
+    -->
+  {% endif %}
 {% endblock %}

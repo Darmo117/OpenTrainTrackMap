@@ -1,14 +1,73 @@
 """This module defines the wikicode parser."""
+import random
+import time
 import urllib.parse as _url_parse
 
 import django.shortcuts as _dj_scut
 
-from . import namespaces as _w_ns, pages as _w_pages, constants as _w_cons
-from ... import settings as _settings
+from . import constants as _w_cons, namespaces as _w_ns, pages as _w_pages
+from ... import models as _models, settings as _settings
 
 
 class Parser:
     """The wikicode parser."""
+
+    def __init__(self, user: _models.User, language: _settings.UILanguage, page: _models.Page):
+        self._user = user
+        self._language = language
+        self._page = page
+        # noinspection PyTypeChecker
+        self._placeholder_index = random.randint(1e12, 1e13 - 1)
+        self._nowiki = {}
+        self._duration = 0
+
+    @property
+    def parse_duration(self) -> int:
+        """The total parsing time in ms."""
+        return self._duration
+
+    def parse(self, wikicode: str) -> str:
+        """Parse the given wikicode."""
+        start_time = time.time() * 1000
+
+        escaped = self._replace_nowiki(wikicode)
+
+        parsed = escaped
+        for placeholder, text in self._nowiki.items():
+            parsed = parsed.replace(placeholder, text)
+
+        self._duration = round((time.time() * 1000) - start_time)
+        return parsed
+
+    def _replace_nowiki(self, wikicode: str) -> str:
+        """Replace all <nowiki></nowiki> tags by placeholders in the given wikicode."""
+        res = ''
+        buffer = ''
+        stack = False
+        i = 0
+        len_nowiki = len('<nowiki>')
+        len_w = len(wikicode)
+        while i < len_w:
+            if i < len_w - len_nowiki and wikicode[i:i + len_nowiki] == '<nowiki>':
+                stack = True
+                i += len_nowiki
+            elif i < len_w - (len_nowiki + 1) and wikicode[i:i + len_nowiki + 1] == '</nowiki>':
+                stack = False
+                placeholder = f'`$:!PLACEHOLDER-{self._placeholder_index}!:$`'
+                self._placeholder_index += 1
+                self._nowiki[placeholder] = buffer
+                buffer = ''
+                res += placeholder
+                i += len_nowiki + 1
+            elif stack:
+                buffer += wikicode[i]
+                i += 1
+            else:
+                res += wikicode[i]
+                i += 1
+        if buffer:  # Case for non-closed tag
+            res += '<nowiki>' + buffer
+        return res
 
     @classmethod
     def format_internal_link(
@@ -42,7 +101,7 @@ class Parser:
 
         if (page.exists or no_red_link
                 or url_params.get('action') in (
-                _w_cons.ACTION_TALK, _w_cons.ACTION_INFO, _w_cons.ACTION_HISTORY, _w_cons.ACTION_RAW)):
+                        _w_cons.ACTION_TALK, _w_cons.ACTION_INFO, _w_cons.ACTION_HISTORY, _w_cons.ACTION_RAW)):
             params = _url_parse.urlencode(url_params)
             if params:
                 url += '?' + params
