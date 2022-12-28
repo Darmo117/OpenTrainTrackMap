@@ -203,6 +203,7 @@ INVALID_TITLE_REGEX = _re.compile(
 LANGUAGES: dict[str, UILanguage] = {}
 LOGGER: _logging.Logger
 WIKI_PAGE_CACHE_TTL = 3600  # 1 hour
+WIKI_SETUP_USERNAME = 'Wiki Setup'
 
 
 def init(debug: bool):

@@ -114,7 +114,7 @@ class Command(dj_mngmt.BaseCommand):
 
         # Create dummy user with throwaway password
         password = models.CustomUser.objects.make_random_password(length=50)
-        wiki_user = auth.create_user('Wiki Setup', password=password, ignore_email=True, is_bot=True)
+        wiki_user = auth.create_user(settings.WIKI_SETUP_USERNAME, password=password, ignore_email=True, is_bot=True)
         auth.add_user_to_groups(wiki_user, GROUP_WIKI_AUTOPATROLLED, GROUP_WIKI_ADMINISTRATORS)
         edit_comment = 'Wiki setup.'
 
