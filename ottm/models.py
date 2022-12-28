@@ -1063,7 +1063,7 @@ class CustomUser(_dj_auth_models.AbstractUser):
     users_can_send_emails = _dj_models.BooleanField(default=True)
     new_users_can_send_emails = _dj_models.BooleanField(default=True)
     send_copy_of_sent_emails = _dj_models.BooleanField(default=False)  # TODO use
-    email_user_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)
+    email_user_blacklist = model_fields.CommaSeparatedStringsField(separator='\n', null=True, blank=True)
     max_file_preview_size = _dj_models.CharField(
         max_length=15,
         choices=tuple((f'{n1},{n2}', f'{n1},{n2}') for n1, n2 in _w_cons.FILE_PREVIEW_SIZES),
@@ -1129,8 +1129,10 @@ class CustomUser(_dj_auth_models.AbstractUser):
     notif_cancelled_edits_web = _dj_models.BooleanField(default=True)  # TODO use
     notif_cancelled_edits_email = _dj_models.BooleanField(default=False)  # TODO use
     notif_edit_count_milestones_web = _dj_models.BooleanField(default=True)  # TODO use
-    user_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)  # TODO use
-    page_notification_blacklist = model_fields.CommaSeparatedStringsField(null=True, blank=True)  # TODO use
+    user_notification_blacklist = model_fields.CommaSeparatedStringsField(separator='\n', null=True,
+                                                                          blank=True)  # TODO use
+    page_notification_blacklist = model_fields.CommaSeparatedStringsField(separator='\n', null=True,
+                                                                          blank=True)  # TODO use
 
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)

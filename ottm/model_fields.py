@@ -60,6 +60,20 @@ class CommaSeparatedStringsField(_dj_models.TextField):
     """A model field that can store a list of string values."""
     description = 'Comma-separated strings'
 
+    def __init__(self, separator: str = ',', *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._separator = separator
+
+    def deconstruct(self):
+        name, path, args, kwargs = super().deconstruct()
+        if self._separator != ',':
+            kwargs['separator'] = self._separator
+        return name, path, args, kwargs
+
+    @property
+    def separator(self) -> str:
+        return self._separator
+
     def from_db_value(self, value: str | None, _expression, _connection) -> _typ.Sequence[str] | None:
         if value is None:
             return None
@@ -75,11 +89,10 @@ class CommaSeparatedStringsField(_dj_models.TextField):
     def get_prep_value(self, value: _typ.Sequence[str] | None) -> str | None:
         if value is None:
             return None
-        return ','.join(v for v in value if v)
+        return self._separator.join(v for v in value if v)
 
     def value_to_string(self, obj) -> str | None:
         return self.get_prep_value(self.value_from_object(obj))
 
-    @staticmethod
-    def _parse(value: str) -> list[str]:
-        return [s for s in value.split(',') if s]
+    def _parse(self, value: str) -> list[str]:
+        return [s for s in value.split(self._separator) if s]
