@@ -140,63 +140,57 @@ def get_js_config(request_params: _requests.RequestParams, page: _models.Page,
     }
 
 
-def render_wikicode(code: str, user: _models.User, language: _settings.UILanguage, page: _models.Page) \
-        -> tuple[str, int]:
+def render_wikicode(code: str, page: _models.Page) \
+        -> tuple[str, _parser.ParserMetadata]:
     """Render the given wikicode.
 
     :param code: The wikicode to render.
-    :param user: The current user.
-    :param language: Page’s language.
     :param page: The current page.
-    :return: The rendered wikicode and its render time in ms.
+    :return: The rendered wikicode and the associated parser metadata.
     """
-    parser = _parser.Parser(user, language, page)
+    parser = _parser.Parser(page)
     parsed = parser.parse(code)
-    return parsed, parser.parse_duration
+    return parsed, parser.output_metadata
 
 
-def get_edit_notice(user: _models.User, language: _settings.UILanguage, page: _models.Page) -> str:
+def get_edit_notice(language: _settings.UILanguage, page: _models.Page) -> str:
     """Return the rendered edit notice from "Interface:EditNotice/<lang_code>".
 
-    :param user: Current user.
     :param language: Page’s language.
     :param page: The page that is requesting the notice.
     :return: The rendered edit notice.
     """
-    return get_interface_page(f'EditNotice', user, language, page=page)
+    return get_interface_page(f'EditNotice', language, page=page)
 
 
-def get_new_page_notice(user: _models.User, language: _settings.UILanguage, page: _models.Page) -> str:
+def get_new_page_notice(language: _settings.UILanguage, page: _models.Page) -> str:
     """Return the rendered edit notice from "Interface:NewPageNotice/<lang_code>".
 
-    :param user: Current user.
     :param language: Page’s language.
     :param page: The page that is requesting the notice.
     :return: The rendered new page notice.
     """
-    return get_interface_page(f'NewPageNotice', user, language, page=page)
+    return get_interface_page(f'NewPageNotice', language, page=page)
 
 
-def get_no_page_notice(user: _models.User, language: _settings.UILanguage) -> str:
+def get_no_page_notice(language: _settings.UILanguage) -> str:
     """Return the rendered edit notice from "Interface:NoPageNotice/<lang_code>".
 
-    :param user: Current user.
     :param language: Page’s language.
     :return: The rendered no page notice.
     """
-    return get_interface_page('NoPageNotice', user, language)
+    return get_interface_page('NoPageNotice', language)
 
 
-def get_interface_page(title: str, user: _models.User = None, language: _settings.UILanguage = None,
-                       page: _models.Page = None, render: bool = True) -> str:
+def get_interface_page(title: str, language: _settings.UILanguage = None,
+                       page: _models.Page = None, rendered: bool = True) -> str:
     """Return the rendered interface page from "Interface:<title>/<lang_code>" if language is defined,
     "Interface:<title>" otherwise.
 
     :param title: Interface page title.
-    :param user: Current user. May be None if render=False.
     :param language: Page’s language. May be None if no localized subpage exists.
     :param page: The page that is requesting the notice.
-    :param render: Whether to render the page’s content.
+    :param rendered: True to return the cached rendered page content, false to return the wikicode.
     :return: The rendered notice.
     """
     interface_page = None
@@ -212,8 +206,8 @@ def get_interface_page(title: str, user: _models.User = None, language: _setting
         interface_page = _get_interface_page(title, language)
     if not interface_page:
         return ''
-    if render:
-        return render_wikicode(interface_page.get_content(), user, language, page)[0]
+    if rendered:
+        return interface_page.cached_parsed_content
     return interface_page.get_content()
 
 
@@ -275,7 +269,7 @@ def edit_page(request: _dj_wsgi.WSGIRequest | None, author: _models.User, page: 
             page.content_type = _get_page_content_type(page)
             page.save()
             _models.PageCreationLog(performer=author.internal_object, page=page).save()
-        _models.PageRevision(
+        revision = _models.PageRevision(
             page=page,
             author=author.internal_object,
             comment=_utils.escape_html(comment),
@@ -283,13 +277,40 @@ def edit_page(request: _dj_wsgi.WSGIRequest | None, author: _models.User, page: 
             content=content,
             is_bot=author.is_bot,
             page_creation=creation,
-        ).save()
-        if page.content_type == _w_cons.CT_JS:
-            page.minified_content = minify_js(content)
-            page.save()
-        elif page.content_type == _w_cons.CT_CSS:
-            page.minified_content = minify_css(content)
-            page.save()
+        )
+        revision.save()
+    else:
+        revision = page.get_latest_revision()
+    # All pages are parsed to at least detect categories and linked pages
+    # Actual parsed content is only used for pages other than JS, JSON and CSS.
+    parsed_content, parse_metadata = render_wikicode(content, page)
+    if page.content_type == _w_cons.CT_JS:
+        page.cached_parsed_content = minify_js(content)
+    elif page.content_type == _w_cons.CT_CSS:
+        page.cached_parsed_content = minify_css(content)
+    elif page.content_type == _w_cons.CT_JSON:
+        page.cached_parsed_content = minify_js(content)
+    elif page.content_type == _w_cons.CT_MODULE:
+        page.cached_parsed_content = content
+    elif page.content_type == _w_cons.CT_WIKIPAGE:
+        page.cached_parsed_content = parsed_content
+    page.parse_time = parse_metadata.parse_duration
+    page.parse_date = parse_metadata.parse_date
+    page.size_before_parse = parse_metadata.size_before
+    page.size_after_parse = parse_metadata.size_after
+    page.cached_parsed_revision_id = revision.id
+    page.cache_expiry_date = parse_metadata.parse_date + _dt.timedelta(seconds=_settings.WIKI_PAGE_CACHE_TTL)
+    # Update linked pages
+    for page_link_metadata in page.embedded_links.all():
+        page_link_metadata.delete()
+    for ns_id, title in parse_metadata.links:
+        _models.PageLink(page=page, page_namespace_id=ns_id, page_title=title).save()
+    # Update categories
+    for page_category in page.categories.all():
+        page_category.delete()
+    for category_name, sort_key in parse_metadata.categories:
+        _models.PageCategory(page=page, cat_title=category_name, sort_key=sort_key).save()
+    page.save()
     if author.is_authenticated:
         follow_page(author, page, follow)
 

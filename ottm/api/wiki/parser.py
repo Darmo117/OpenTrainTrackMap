@@ -1,34 +1,49 @@
 """This module defines the wikicode parser."""
-import random
-import time
+import dataclasses as _dataclasses
+import datetime as _dt
+import random as _random
+import time as _time
 import urllib.parse as _url_parse
 
 import django.shortcuts as _dj_scut
 
 from . import constants as _w_cons, namespaces as _w_ns, pages as _w_pages
+from .. import utils as _utils
 from ... import models as _models, settings as _settings
+
+
+@_dataclasses.dataclass(frozen=True)
+class ParserMetadata:
+    """Wrapper for metadata of a parsed page."""
+    links: list[tuple[int, str]]
+    categories: list[tuple[str, str | None]]
+    parse_duration: int
+    parse_date: _dt.datetime
+    size_before: int
+    size_after: int
 
 
 class Parser:
     """The wikicode parser."""
 
-    def __init__(self, user: _models.User, language: _settings.UILanguage, page: _models.Page):
-        self._user = user
-        self._language = language
+    def __init__(self, page: _models.Page):
         self._page = page
         # noinspection PyTypeChecker
-        self._placeholder_index = random.randint(1e12, 1e13 - 1)
+        self._placeholder_index = _random.randint(1e12, 1e13 - 1)
         self._nowiki = {}
-        self._duration = 0
+        self._metadata = None
 
     @property
-    def parse_duration(self) -> int:
-        """The total parsing time in ms."""
-        return self._duration
+    def output_metadata(self) -> ParserMetadata | None:
+        """Metadata for the parsed page."""
+        return self._metadata
 
     def parse(self, wikicode: str) -> str:
         """Parse the given wikicode."""
-        start_time = time.time() * 1000
+        start_time = _time.time() * 1000
+        links = []
+        categories = []
+        size_before = len(wikicode.encode('utf-8'))
 
         escaped = self._replace_nowiki(wikicode)
 
@@ -36,7 +51,14 @@ class Parser:
         for placeholder, text in self._nowiki.items():
             parsed = parsed.replace(placeholder, text)
 
-        self._duration = round((time.time() * 1000) - start_time)
+        self._metadata = ParserMetadata(
+            links=links,
+            categories=categories,
+            parse_duration=round((_time.time() * 1000) - start_time),
+            parse_date=_utils.now(),
+            size_before=size_before,
+            size_after=len(parsed.encode('utf-8')),
+        )
         return parsed
 
     def _replace_nowiki(self, wikicode: str) -> str:

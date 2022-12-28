@@ -34,9 +34,9 @@ class WikiAPIHandler(_core.PageHandler):
         if not page.exists:
             return self._not_found(f'page {page.full_title} does not exist')
         if resource_type == 'static':
-            return self.response(page.minified_content, _w_cons.MIME_TYPES[page.content_type])
+            return self.response(page.cached_parsed_content, _w_cons.MIME_TYPES[page.content_type])
         # TODO assemble gadgets’ code
-        return self.response(page.minified_content, _w_cons.MIME_TYPES[page.content_type])
+        return self.response(page.cached_parsed_content, _w_cons.MIME_TYPES[page.content_type])
 
     @staticmethod
     def _not_found(message: str) -> _dj_response.HttpResponseNotFound:

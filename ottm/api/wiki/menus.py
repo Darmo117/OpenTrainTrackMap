@@ -24,7 +24,7 @@ def get_menus(page_context: _ph.WikiPageContext, menu_id: str) -> list[Menu]:
 
 def _get_dynamic_menus(page_context: _ph.WikiPageContext) -> list[Menu]:
     language = page_context.language
-    menu = _w_pages.get_interface_page('SideMenu', render=False)
+    menu = _w_pages.get_interface_page('SideMenu', rendered=False)
     menus = []
     title = None
     items = []
@@ -43,7 +43,7 @@ def _get_dynamic_menus(page_context: _ph.WikiPageContext) -> list[Menu]:
                     menus.append(_get_menu_object(language, '', title, items))
                     items = []
                 entry = line[1:].strip()
-                title = _w_pages.get_interface_page(f'Menu{entry}', language=language, render=False) or entry
+                title = _w_pages.get_interface_page(f'Menu{entry}', language=language, rendered=False) or entry
     return menus
 
 
@@ -141,7 +141,7 @@ def _get_menu_object(language, id_: str, title: str, items: list[dict[str, str |
                 if sp := _w_sp.SPECIAL_PAGES.get(p_title):
                     access_key = sp.access_key
             elif not item.get('label') and ns == _w_ns.NS_INTERFACE:
-                label = _w_pages.get_interface_page(p_title, None, language, render=False)
+                label = _w_pages.get_interface_page(p_title, language, rendered=False)
             else:
                 if id_:
                     label_ = item['label']

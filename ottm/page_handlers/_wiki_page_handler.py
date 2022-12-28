@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import abc as _abc
+import dataclasses as _dataclasses
 import datetime as _dt
 import re as _re
 import typing as _typ
@@ -16,7 +17,7 @@ from django.http import response as _dj_response
 from . import _core, _ottm_handler, _wiki_base_form
 from .. import models as _models, requests as _requests, settings as _settings
 from ..api import errors as _errors, permissions as _permissions, utils as _utils
-from ..api.wiki import constants as _w_cons, namespaces as _w_ns, pages as _w_pages, special_pages as _w_sp
+from ..api.wiki import (constants as _w_cons, namespaces as _w_ns, pages as _w_pages, special_pages as _w_sp)
 
 
 class WikiPageHandler(_ottm_handler.OTTMHandler):
@@ -328,14 +329,21 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         :param js_config: Dict object containing JS config values.
         :return: A WikiPageContext object.
         """
-        user = self._request_params.user
         language = self._request_params.ui_language
         no_index = not page.exists
         cat_subcategories = []
         cat_pages = []
         archived = False
         if revision_id is None or not page.exists:
-            content, duration = _w_pages.render_wikicode(page.get_content(), user, language, page)
+            content = page.cached_parsed_content
+            cache_metadata = CacheMetadata(
+                parse_duration=page.parse_time,
+                parse_date=page.parse_date,
+                size_before=page.size_before_parse,
+                size_after=page.size_after_parse,
+                cached_parsed_revision_id=page.cached_parsed_revision_id,
+                cache_expiry_date=page.cache_expiry_date,
+            )
             revision = page.revisions.latest() if page.exists else None
             if page.namespace == _w_ns.NS_CATEGORY:
                 cat_subcategories = list(_models.PageCategory.subcategories_for_category(page.full_title))
@@ -347,9 +355,15 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                 revision = page.revisions.latest()
             else:
                 archived = True
-            content, duration = _w_pages.render_wikicode(revision.content, user, language, page)
+            content, parse_metadata = _w_pages.render_wikicode(revision.content, page)
+            cache_metadata = CacheMetadata(
+                parse_duration=parse_metadata.parse_duration,
+                parse_date=parse_metadata.parse_date,
+                size_before=parse_metadata.size_before,
+                size_after=parse_metadata.size_after,
+            )
         if not page.exists:
-            no_page_notice = _w_pages.get_no_page_notice(user, language)
+            no_page_notice = _w_pages.get_no_page_notice(language)
         else:
             no_page_notice = None
         return WikiPageReadActionContext(
@@ -358,7 +372,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             no_index=no_index,
             js_config=js_config,
             content=content,
-            parse_time=duration,
+            cache_metadata=cache_metadata,
             revision=revision,
             archived=archived,
             cat_subcategories=cat_subcategories,
@@ -442,8 +456,8 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             revision=revision,
             archived=archived,
             edit_form=form,
-            edit_notice=_w_pages.get_edit_notice(user, language, page),
-            new_page_notice=_w_pages.get_new_page_notice(user, language, page) if not page.exists else None,
+            edit_notice=_w_pages.get_edit_notice(language, page),
+            new_page_notice=_w_pages.get_new_page_notice(language, page) if not page.exists else None,
             perm_error=not page.can_user_edit(user),
             concurrent_edit_error=concurrent_edit_error,
             edit_protection_log_entry=_w_pages.get_page_protection_log_entry(page),
@@ -711,6 +725,16 @@ class WikiPageErrorContext(WikiPageContext):
         return self._empty_title
 
 
+@_dataclasses.dataclass(frozen=True)
+class CacheMetadata:
+    parse_duration: int
+    parse_date: _dt.datetime
+    size_before: int
+    size_after: int
+    cached_parsed_revision_id: int = None
+    cache_expiry_date: _dt.datetime = None
+
+
 class WikiPageReadActionContext(WikiPageContext):
     """Context class for the 'read' action."""
 
@@ -721,7 +745,7 @@ class WikiPageReadActionContext(WikiPageContext):
             no_index: bool,
             js_config: dict[str, _typ.Any],
             content: str,
-            parse_time: int,
+            cache_metadata: CacheMetadata,
             revision: _models.PageRevision | None,
             archived: bool,
             cat_subcategories: list[_models.Page] = None,
@@ -736,7 +760,7 @@ class WikiPageReadActionContext(WikiPageContext):
         :param js_config: Dict object containing the wiki’s JS config.
             It is converted to a JSON object before being inserted in the HTML page.
         :param content: Rendered page’s content.
-        :param parse_time: The total parsing time of the content.
+        :param cache_metadata: The metadata object for the page’s cache.
         :param revision: A revision of the page. May be None.
         :param archived: Whether the revision is not the current one.
         :param cat_subcategories: The list of subcategories of the category represented by the page.
@@ -758,7 +782,7 @@ class WikiPageReadActionContext(WikiPageContext):
             max_page_index=self._cat_pages.num_pages,
         )
         self._content = content
-        self._parse_time = parse_time
+        self._parse_metadata = cache_metadata
         self._revision = revision
         self._archived = archived
         self._cat_subcategories = cat_subcategories or []
@@ -769,8 +793,8 @@ class WikiPageReadActionContext(WikiPageContext):
         return self._content
 
     @property
-    def page_parse_time(self) -> int:
-        return self._parse_time
+    def page_cache_metadata(self) -> CacheMetadata:
+        return self._parse_metadata
 
     @property
     def page_language(self) -> str:

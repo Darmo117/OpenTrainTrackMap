@@ -2,6 +2,7 @@
 import datetime as _dt
 import math as _math
 
+from django.conf import settings as _dj_settings
 import pytz as _pytz
 
 
@@ -28,4 +29,4 @@ def normalize_line_returns(s: str) -> str:
 
 def now() -> _dt.datetime:
     """Return the current UTC time."""
-    return _dt.datetime.now().astimezone(_pytz.UTC)
+    return _dt.datetime.now().astimezone(_pytz.timezone(_dj_settings.TIME_ZONE))

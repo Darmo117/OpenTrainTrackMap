@@ -6,7 +6,7 @@ import math as _math
 import pathlib as _pathlib
 import re as _re
 
-import markdown
+import markdown as _md
 
 
 class UILanguage:
@@ -155,7 +155,7 @@ class UILanguage:
         has_several_paragraphs = '\n\n' in text
         text = text.replace('{license-url}', f'https://creativecommons.org/licenses/by-sa/3.0/deed.{self.code}')
         # Parse Markdown before kwargs substitution to avoid formatting them.
-        text = markdown.markdown(text, output_format='html')
+        text = _md.markdown(text, output_format='html')
         if not has_several_paragraphs:
             text = text[3:-4]  # Remove enclosing <p> tags if there is a single paragraph
         text = text.format(**kwargs)
@@ -202,6 +202,7 @@ INVALID_TITLE_REGEX = _re.compile(
     r'([_#|{}\[\]\x00-\x1f\x7f-\x9f]|^[:/\s]|[:/\s]$|&[A-Za-z0-9]+;|&#[0-9]+;|&#x[0-9A-Fa-f]+;)')
 LANGUAGES: dict[str, UILanguage] = {}
 LOGGER: _logging.Logger
+WIKI_PAGE_CACHE_TTL = 3600  # 1 hour
 
 
 def init(debug: bool):

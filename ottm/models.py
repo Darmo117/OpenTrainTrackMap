@@ -1923,6 +1923,11 @@ class Revision(_dj_models.Model, NonDeletableMixin):
 #########
 
 
+def page_namespace_id_validator(value: int):
+    if value not in _w_ns.NAMESPACE_IDS.keys():
+        raise _dj_exc.ValidationError('invalid namespace ID', code='page_invalid_namespace_id')
+
+
 def page_title_validator(value: str):
     if settings.INVALID_TITLE_REGEX.search(value) or value.startswith(' ') or value.endswith(' '):
         raise _dj_exc.ValidationError('invalid page title', code='page_invalid_title')
@@ -1930,18 +1935,27 @@ def page_title_validator(value: str):
 
 class Page(_dj_models.Model, NonDeletableMixin):
     """Represents a wiki page."""
-    namespace_id = _dj_models.IntegerField()
+    namespace_id = _dj_models.IntegerField(validators=[page_namespace_id_validator])
     title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
     content_type = _dj_models.CharField(max_length=20, choices=tuple((v, v) for v in _w_cons.CONTENT_TYPES.values()),
                                         default=_w_cons.CT_WIKIPAGE)
     deleted = _dj_models.BooleanField(default=False)
     is_category_hidden = _dj_models.BooleanField(null=True, blank=True)
     content_language = _dj_models.ForeignKey(Language, on_delete=_dj_models.PROTECT, default=Language.get_default)
+
+    # Parsed content/cache metadata
+
+    # Page’s parsed content cache or minified CSS/JS/JSON code
+    cached_parsed_content = _dj_models.TextField(null=True, blank=True)
+    cached_parsed_revision_id = _dj_models.IntegerField(null=True, blank=True)
+    parse_time = _dj_models.IntegerField(null=True, blank=True)
+    parse_date = _dj_models.DateTimeField(null=True, blank=True)
+    cache_expiry_date = _dj_models.DateTimeField(null=True, blank=True)
+    size_before_parse = _dj_models.IntegerField(null=True, blank=True)
+    size_after_parse = _dj_models.IntegerField(null=True, blank=True)
     # May redirect to non-existent page
-    redirects_to_namespace_id = _dj_models.IntegerField(null=True, blank=True)
+    redirects_to_namespace_id = _dj_models.IntegerField(validators=[page_namespace_id_validator], null=True, blank=True)
     redirects_to_title = _dj_models.CharField(max_length=200, validators=[page_title_validator], null=True, blank=True)
-    # Cache for CSS/JS/JSON pages
-    minified_content = _dj_models.TextField(null=True, blank=True)
 
     class Meta:
         unique_together = ('namespace_id', 'title')
@@ -2190,14 +2204,14 @@ class PageLink(_dj_models.Model):
     """Defines a link between two pages."""
     page = _dj_models.ForeignKey(Page, on_delete=_dj_models.PROTECT, related_name='embedded_links')
     # No foreign key to Page as pages may link to non-existent pages.
-    page_namespace_id = _dj_models.IntegerField()
+    page_namespace_id = _dj_models.IntegerField(validators=[page_namespace_id_validator])
     page_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
 
 
 class PageProtection(_dj_models.Model):
     """Defines the protection status of a page. Non-existent pages can be protected."""
     # No foreign key to Page as it allows protecting non-existent pages.
-    page_namespace_id = _dj_models.IntegerField()
+    page_namespace_id = _dj_models.IntegerField(validators=[page_namespace_id_validator])
     page_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
     end_date = _dj_models.DateTimeField(null=True, blank=True)
     reason = _dj_models.CharField(max_length=200, null=True, blank=True)
@@ -2216,7 +2230,7 @@ class PageFollowStatus(_dj_models.Model):
     """Defines the follow status of a page. Non-existent pages can be followed."""
     user = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT, related_name='followed_pages')
     # No foreign key to Page as it allows following non-existent pages.
-    page_namespace_id = _dj_models.IntegerField()
+    page_namespace_id = _dj_models.IntegerField(validators=[page_namespace_id_validator])
     page_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
     end_date = _dj_models.DateTimeField(null=True, blank=True)
 

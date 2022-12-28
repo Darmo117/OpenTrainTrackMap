@@ -251,9 +251,15 @@
     {% endif %}
   {% endif %}
   {% wiki_static 'gadgets' %}
-  {% if context.page.namespace != NS_SPECIAL %}
+  {% if context.page_cache_metadata %}
     <!--
-    Page generated in {{ context.page_parse_time }} ms.
+    Parser report:
+    Cached date: {{ context.page_cache_metadata.parse_date.isoformat }}
+    Cache expiry date: {% if context.page_cache_metadata.cache_expiry_date %}{{ context.page_cache_metadata.cache_expiry_date.isoformat }}{% else %}N/A{% endif %}
+    Cached revision ID: {{ context.page_cache_metadata.cached_parsed_revision_id|default_if_none:'N/A' }}
+    Render time: {{ context.page_cache_metadata.parse_duration }} ms
+    Size before expansion: {{ context.page_cache_metadata.size_before }} byte(s)
+    Size after expansion: {{ context.page_cache_metadata.size_after }} byte(s)
     -->
   {% endif %}
 {% endblock %}
