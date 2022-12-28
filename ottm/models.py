@@ -1140,7 +1140,7 @@ class CustomUser(_dj_auth_models.AbstractUser):
 
 class UserBlock(_dj_models.Model):
     """Defines the block status of a user.
-    Users can be prevented from editing pages, post messages and editing their own settings.
+    Users can be prevented from editing the map/wiki pages, posting messages and editing their own settings.
     Blocks expire after a specified date. If no end date is specified, the block will never expire.
     """
     user = _dj_models.OneToOneField(CustomUser, on_delete=_dj_models.PROTECT, related_name='block')
@@ -1156,12 +1156,10 @@ class UserBlock(_dj_models.Model):
 class IPBlock(_dj_models.Model):
     """Defines the block status of an IP address.
     Non-authenticated users under specific IPs can be prevented from editing pages, posting messages
-     and creating new accounts.
+    and creating new accounts.
     Blocks expire after a specified date. If no end date is specified, the block will never expire.
     """
     ip = _dj_models.CharField(max_length=39)
-    performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT, related_name='ip_blocks_given')
-    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
     end_date = _dj_models.DateTimeField(null=True, blank=True)
     allow_messages_on_own_user_page = _dj_models.BooleanField(default=True)
     allow_account_creation = _dj_models.BooleanField(default=True)

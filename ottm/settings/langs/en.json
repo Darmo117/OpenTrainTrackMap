@@ -67,6 +67,7 @@
         "title": "Create a new account",
         "tab_title": "Sign up",
         "already_logged_in": "You are already logged in, please log out to create a new account.",
+        "blocked": "Your IP address has been blocked, you cannot create new accounts.\n\nIf you think this is an error, please contact an administrator on the [wiki]({url}).",
         "form": {
           "sign_up": {
             "username": {

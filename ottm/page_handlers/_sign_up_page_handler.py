@@ -16,7 +16,18 @@ class SignUpPageHandler(_ottm_handler.OTTMHandler):
     """Handler for the sign up page."""
 
     def handle_request(self) -> _dj_response.HttpResponse:
-        if not self._request_params.user.is_authenticated:
+        user = self._request_params.user
+        title, tab_title = self.get_page_titles(page_id='sign_up')
+        if not user.is_authenticated:
+            if user.is_blocked and any(not ipb.allow_account_creation
+                                       for ipb in user.internal_object.ipblocklog_set.all()):
+                return self.render_page('ottm/sign-up.html', SignUpPageContext(
+                    self._request_params,
+                    title,
+                    tab_title,
+                    blocked=True,
+                ), status=403)
+
             if self._request_params.post:
                 form = SignUpForm(post=self._request_params.post)
                 if form.is_valid():
@@ -35,7 +46,6 @@ class SignUpPageHandler(_ottm_handler.OTTMHandler):
                 form = SignUpForm()
         else:
             form = None
-        title, tab_title = self.get_page_titles(page_id='sign_up')
         return self.render_page('ottm/sign-up.html', SignUpPageContext(
             self._request_params,
             title,
@@ -103,6 +113,7 @@ class SignUpPageContext(_core.PageContext):
             tab_title: str,
             title: str,
             form: SignUpForm = None,
+            blocked: bool = False,
     ):
         """Create a page context for the sign up page.
 
@@ -110,6 +121,7 @@ class SignUpPageContext(_core.PageContext):
         :param tab_title: Title of the browser’s tab.
         :param title: Page’s title.
         :param form: The sign up form.
+        :param blocked: Whether to display the error message alerting the user they cannot create new accounts.
         """
         super().__init__(
             request_params,
@@ -117,7 +129,12 @@ class SignUpPageContext(_core.PageContext):
             title=title,
             no_index=False,
         )
+        self._blocked = blocked
         self._form = form
+
+    @property
+    def blocked(self) -> bool:
+        return self._blocked
 
     @property
     def sign_up_form(self) -> SignUpForm | None:
