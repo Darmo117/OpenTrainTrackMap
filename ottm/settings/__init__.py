@@ -22,6 +22,7 @@ class UILanguage:
             month_names: tuple[str, ...],
             abbr_month_names: tuple[str, ...],
             am_pm: tuple[str, str],
+            day_suffixes: dict[str, str],
             decimal_sep: str,
             thousands_sep: str,
             mappings: dict[str, str],
@@ -38,6 +39,7 @@ class UILanguage:
         :param month_names: Names of months.
         :param abbr_month_names: Abbreviated names of months.
         :param am_pm: AM and PM equivalents for the language.
+        :param day_suffixes: Dict that maps regexes to a day suffix.
         :param decimal_sep: Decimal separator.
         :param thousands_sep: Thousands separator.
         :param mappings: Language’s UI translation mappings.
@@ -61,6 +63,7 @@ class UILanguage:
         self._month_names = month_names
         self._abbr_month_names = abbr_month_names
         self._am_pm = am_pm
+        self._day_suffixes: dict[_re.Pattern, str] = {_re.compile(k): v for k, v in day_suffixes.items()}
         self._decimal_sep = decimal_sep
         self._thousands_sep = thousands_sep
         self._mappings = mappings
@@ -164,6 +167,7 @@ class UILanguage:
     def format_datetime(self, dt: _dt.datetime, format_: str) -> str:
         """Format a datetime object according to the given format.
         All format codes from ``datetime.strftime()`` are available except ``%c``, ``%x`` and ``%X``.
+        Custom ``%s`` code is available for day number prefix.
 
         :param dt: The datetime object to format.
         :param format_: The desired format.
@@ -182,6 +186,14 @@ class UILanguage:
             format_ = format_.replace('%B', self._month_names[dt.month - 1])
         if '%p' in format_:
             format_ = format_.replace('%p', self._am_pm[dt.hour >= 12])
+        if '%s' in format_:
+            suffix = ''
+            day = str(dt.day)
+            for regex, suffix_ in self._day_suffixes.items():
+                if regex.search(day):
+                    suffix = suffix_
+                    break
+            format_ = format_.replace('%s', suffix)
         return dt.strftime(format_)
 
     def format_number(self, n: int | float) -> str:
@@ -245,6 +257,7 @@ def init_languages():
                 month_names=tuple(json_obj['month_names']),
                 abbr_month_names=tuple(json_obj['abbr_month_names']),
                 am_pm=tuple(json_obj['am_pm']),
+                day_suffixes=json_obj.get('day_suffixes', {}),
                 decimal_sep=json_obj['number_format']['decimal_sep'],
                 thousands_sep=json_obj['number_format']['thousands_sep'],
                 mappings=mapping,

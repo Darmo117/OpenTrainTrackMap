@@ -9,6 +9,12 @@
   ],
   "abbr_month_names": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
   "am_pm": ["AM", "PM"],
+  "day_suffixes": {
+    "1$": "st",
+    "2$": "nd",
+    "3$": "rd",
+    ".": "th"
+  },
   "number_format": {
     "decimal_sep": ".",
     "thousands_sep": ","
@@ -1456,15 +1462,15 @@
         },
         "flag": {
           "minor": {
-            "label": "m",
+            "label": "M",
             "tooltip": "Minor edit"
           },
           "bot": {
-            "label": "b",
+            "label": "B",
             "tooltip": "Bot edit"
           },
           "creation": {
-            "label": "c",
+            "label": "C",
             "tooltip": "Page creation"
           }
         },

@@ -28,6 +28,10 @@ class Command(dj_mngmt.BaseCommand):
         dtf1.save()
         dtf2 = models.DateTimeFormat(format='%d %B %Y %H:%M:%S')
         dtf2.save()
+        dtf3 = models.DateTimeFormat(format='%B, %d%s %Y %I:%M:%S %p')
+        dtf3.save()
+        dtf4 = models.DateTimeFormat(format='%d%s %B %Y %H:%M:%S')
+        dtf4.save()
         models.Language(
             code='en',
             name='English',
@@ -40,6 +44,13 @@ class Command(dj_mngmt.BaseCommand):
             name='Français',
             writing_direction='ltr',
             default_datetime_format=dtf2,
+            available_for_ui=True,
+        ).save()
+        models.Language(
+            code='eo',
+            name='Esperanto',
+            writing_direction='ltr',
+            default_datetime_format=dtf4,
             available_for_ui=True,
         ).save()
         self.stdout.write('Done.')

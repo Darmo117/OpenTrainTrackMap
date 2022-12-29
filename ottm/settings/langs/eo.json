@@ -1,68 +1,67 @@
 {
   "comma": ", ",
-  "and": " et ",
-  "day_names": ["lundi", "mardi", "mercredi", "jeudi", "vendredi", "samedi", "dimanche"],
-  "abbr_day_names": ["lun.", "mar.", "mer.", "jeu.", "ven.", "sam.", "dim."],
+  "and": " kaj ",
+  "day_names": ["lundo", "mardo", "merkredo", "ĵaŭdo", "vendredo", "sabato", "dimanĉo"],
+  "abbr_day_names": ["lun.", "mar.", "mer.", "ĵaŭ.", "ven.", "sab.", "dim."],
   "month_names": [
-    "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre",
-    "décembre"
+    "januaro", "februaro", "marto", "aprilo", "majo", "junio", "julio", "aŭgusto", "septembro", "oktobro", "novembro",
+    "decembro"
   ],
   "abbr_month_names": [
-    "janv.", "févr.", "mars", "avr.", "mai", "juin", "juill.", "aout", "sept.", "oct.", "nov.", "déc."
+    "jan.", "feb.", "mar.", "apr.", "maj.", "jun.", "jul.", "aŭg.", "sep.", "okt.", "nov.", "dec."
   ],
-  "am_pm": ["a.m.", "p.m."],
+  "am_pm": ["atm.", "ptm."],
   "day_suffixes": {
-    "^1$": "er",
-    ".": ""
+    ".": "a"
   },
   "number_format": {
-    "decimal_sep": ",",
-    "thousands_sep": "\u202f"
+    "decimal_sep": ".",
+    "thousands_sep": ","
   },
   "mappings": {
     "page": {
       "edit": {
-        "tab_title": "Modifier"
+        "tab_title": "Modifii"
       },
       "history": {
-        "tab_title": "Historique"
+        "tab_title": "Historio"
       },
       "copyright": {
-        "title": "Copyright et licence",
-        "tab_title": "Copyright et licence"
+        "title": "Kopirajto kaj permesilo",
+        "tab_title": "Kopirajto kaj permesilo"
       },
       "help": {
-        "title": "Trouver de l’aide",
-        "tab_title": "Aide"
+        "title": "Trovi helpon",
+        "tab_title": "Helpo"
       },
       "about": {
-        "title": "À propos d’OpenTrainTrackMap",
-        "tab_title": "À propos"
+        "title": "Pri OpenTrainTrackMap",
+        "tab_title": "Pri"
       },
       "basics": {
-        "title": "Vocabulaire de base et règles",
-        "tab_title": "Vocabulaire et règles"
+        "title": "Vortaro kaj reguloj",
+        "tab_title": "Vortaro kaj reguloj"
       },
       "log_in": {
-        "title": "Connexion",
-        "tab_title": "Connexion"
+        "title": "Ensaluti",
+        "tab_title": "Ensaluti"
       },
       "sign_up": {
-        "title": "Créer un compte",
-        "tab_title": "Inscription"
+        "title": "Aliĝi",
+        "tab_title": "Aliĝi"
       },
       "user_profile": {
         "title": "{username}",
-        "tab_title": "Profil de {username}",
+        "tab_title": "Profilo de {username}",
         "subtitle": {
-          "notes": "Notes",
-          "contributions": "Contributions",
-          "wiki_contributions": "Contributions au wiki",
-          "settings": "Paramètres"
+          "notes": "Notoj",
+          "contributions": "Kontribuoj",
+          "wiki_contributions": "Vikikontribuoj",
+          "settings": "Agordoj"
         },
         "statistics": {
-          "title": "Statistiques",
-          "admin_label": "Administrateurice",
+          "title": "Statistikoj",
+          "admin_label": "Administranto",
           "account_creation_date_label": "Contributeurice depuis",
           "notes_count_label": "Nombre de notes",
           "edits_count_label": "Nombre de modifications",
