@@ -27,6 +27,9 @@
       "history": {
         "tab_title": "Historique"
       },
+      "contributions": {
+        "tab_title": "Contributions de {username}"
+      },
       "copyright": {
         "title": "Copyright et licence",
         "tab_title": "Copyright et licence"
@@ -45,35 +48,582 @@
       },
       "log_in": {
         "title": "Connexion",
-        "tab_title": "Connexion"
+        "tab_title": "Connexion",
+        "not_logged_in": "Vous devez être connecté·e pour pouvoir modifier la carte.",
+        "password_update": "Vous venez de changer votre mot de passe, veuillez vous reconnecter.",
+        "already_logged_in": {
+          "n": "Vous êtes déjà connecté·e.",
+          "f": "Vous êtes déjà connectée.",
+          "m": "Vous êtes déjà connecté."
+        },
+        "form": {
+          "log_in": {
+            "username": {
+              "label": "Pseudonyme"
+            },
+            "password": {
+              "label": "Mot de passe"
+            },
+            "submit": {
+              "label": "Se connecter"
+            },
+            "error": {
+              "invalid_credentials": "Pseudonyme ou mot de passe invalide."
+            }
+          }
+        }
       },
       "sign_up": {
         "title": "Créer un compte",
-        "tab_title": "Inscription"
+        "tab_title": "Créer un compte",
+        "already_logged_in": {
+          "n": "Vous êtes déjà connecté·e, veuillez vous déconnecter pour créer un nouveau compte.",
+          "f": "Vous êtes déjà connectée, veuillez vous déconnecter pour créer un nouveau compte.",
+          "m": "Vous êtes déjà connecté, veuillez vous déconnecter pour créer un nouveau compte."
+        },
+        "blocked": "Votre adresse IP a été bloquée, vous ne pouvez pas créer de nouveaux comptes.\n\nSi vous pensez qu’il s’agit d’une erreur, veuillez contacter un·e administrateurice sur le [wiki]({url}).",
+        "form": {
+          "sign_up": {
+            "username": {
+              "label": "Pseudonyme",
+              "help": "Choisissez bien, vous ne pourrez peut-être pas le changer dans le futur\u00a0!",
+              "error": {
+                "invalid": "Pseudonyme invalide\u00a0!",
+                "duplicate": "Ce pseudonyme est déjà utilisé\u00a0!"
+              }
+            },
+            "email": {
+              "label": "Adresse mail",
+              "help": "Elle ne sera jamais divulguée publiquement.",
+              "error": {
+                "invalid": "Adresse invalide!"
+              }
+            },
+            "password": {
+              "label": "Mot de passe"
+            },
+            "password_confirm": {
+              "label": "Confirmation du mot de passe",
+              "error": {
+                "passwords_mismatch": "Les mots de passe ne correspondent pas\u00a0!"
+              }
+            },
+            "submit": {
+              "label": "Créer le compte"
+            }
+          }
+        }
       },
       "user_profile": {
         "title": "{username}",
         "tab_title": "Profil de {username}",
+        "picture_tooltip": "Image de profil de {username}",
         "subtitle": {
+          "profile": "Profil",
           "notes": "Notes",
           "contributions": "Contributions",
-          "wiki_contributions": "Contributions au wiki",
+          "wiki_contributions": "Contributions sur le wiki",
+          "wiki_user_page": "Page personnelle sur le wiki",
           "settings": "Paramètres"
+        },
+        "action": {
+          "block": {
+            "label": "Bloquer"
+          },
+          "mask_username": {
+            "label": "Masquer le pseudo"
+          },
+          "edit_groups": {
+            "label": "Modifier les groupes"
+          },
+          "rename": {
+            "label": "Changer le pseudo"
+          }
         },
         "statistics": {
           "title": "Statistiques",
-          "admin_label": "Administrateurice",
-          "account_creation_date_label": "Contributeurice depuis",
+          "groups": "Groupes",
+          "status": "Type de compte",
+          "status_non_existent": "Cet·te utilisateurice n’existe pas",
+          "status_anonymous": "Utilisateurice anonyme",
+          "status_bot": "Robot",
+          "status_user": {
+            "n": "Utilisateurice normal·e",
+            "f": "Utilisatrice normale",
+            "m": "Utilisateur normal"
+          },
+          "account_creation_date_label": "Date de création du compte",
           "notes_count_label": "Nombre de notes",
           "edits_count_label": "Nombre de modifications",
-          "wiki_edits_count_label": "Nombre de modifications sur le wiki"
+          "wiki_edits_count_label": "Nombre de contributions sur le wiki"
+        },
+        "block": {
+          "title": {
+            "n": "Bloquer l’utilisateurice «\u00a0{username}\u00a0»",
+            "f": "Bloquer l’utilisatrice «\u00a0{username}\u00a0»",
+            "m": "Bloquer l’utilisateur «\u00a0{username}\u00a0»"
+          },
+          "tab_title": {
+            "n": "Bloquer l’utilisateurice «\u00a0{username}\u00a0»",
+            "f": "Bloquer l’utilisatrice «\u00a0{username}\u00a0»",
+            "m": "Bloquer l’utilisateur «\u00a0{username}\u00a0»"
+          },
+          "form": {
+            "block": {
+              "title": "Bloquer",
+              "end_date": {
+                "label": "Date d’expiration",
+                "help": "Laisser vide pour une durée infinie.",
+                "error": {
+                  "invalid": "Date invalide\u00a0!"
+                }
+              },
+              "allow_messages_on_own_user_page": {
+                "label": "Permettre de poster des message sur sa propre page"
+              },
+              "allow_editing_own_settings": {
+                "label": "Permettre de modifier les paramètres de son compte"
+              },
+              "reason": {
+                "label": "Raison"
+              },
+              "submit": {
+                "label": {
+                  "n": "Bloquer l’utilisateurice",
+                  "f": "Bloquer l’utilisatrice",
+                  "m": "Bloquer l’utilisateur"
+                }
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission de bloquer des utilisateurices.",
+                "past_date": "La date spécifiée est déjà passée."
+              }
+            },
+            "unblock": {
+              "title": "Débloquer",
+              "reason": {
+                "label": "Raison"
+              },
+              "submit": {
+                "label": {
+                  "n": "Débloquer l’utilisateurice",
+                  "f": "Débloquer l’utilisatrice",
+                  "m": "Débloquer l’utilisateur"
+                }
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission de débloquer des utilisateurices."
+              }
+            }
+          },
+          "log_entries": "Entrées de journaux liées"
+        },
+        "edit_groups": {
+          "title": "Modifier les groupes de «\u00a0{username}\u00a0»",
+          "tab_title": "Modifier les groupes de «\u00a0{username}\u00a0»",
+          "form": {
+            "edit_groups": {
+              "groups": {
+                "label": "Groupes",
+                "error": {
+                  "invalid_choice": "Choix invalide\u00a0!"
+                }
+              },
+              "reason": {
+                "label": "Raison"
+              },
+              "submit": {
+                "label": "Valider"
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission de modifier les groupes des utilisateurices.",
+                "anonymous_user": "Impossible de changer les groupes d’utilisateurices anonymes."
+              }
+            }
+          },
+          "log_entries": "Entrées de journaux liées"
+        },
+        "mask_username": {
+          "title": "Masquer le pseudo de «\u00a0{username}\u00a0»",
+          "tab_title": "Masquer le pseudo de «\u00a0{username}\u00a0»",
+          "form": {
+            "mask_username": {
+              "mask": {
+                "label": "Masquer"
+              },
+              "reason": {
+                "label": "Raison"
+              },
+              "submit": {
+                "label": "Changer la visibilité"
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission de masquer les pseudos.",
+                "anonymous_user": "Impossible de changer la visibiliter des utilisateurices anonymes."
+              }
+            }
+          },
+          "log_entries": "Entrées de journaux liées"
         }
+      },
+      "user_notes": {
+        "title": "Notes de {username}",
+        "tab_title": "Notes de {username}"
       },
       "user_settings": {
         "title": "Paramètres du compte",
         "tab_title": "Paramètres du compte",
-        "subtitle": {
-          "profile": "Retourner au profil"
+        "form": {
+          "user_settings": {
+            "tab": {
+              "personal_info": "Informations personnelles",
+              "appearence": "Apparence",
+              "editing": "Modification du wiki",
+              "revisions": "Versions de pages du wiki",
+              "search": "Recherche sur le wiki",
+              "gadgets": "Gadgets du wiki",
+              "notifications": "Notifications"
+            },
+            "fieldset": {
+              "basic_info": "Informations de base",
+              "localization": "Langue",
+              "email": "Adresse mail",
+              "skins": "Affichage",
+              "date_and_time": "Date et heure",
+              "files": "Fichiers",
+              "diffs": "Différences",
+              "appearence_advanced": "Options avancées",
+              "editor": "Éditeur",
+              "preview": "Prévisualisation",
+              "modify": "Modifier la liste de suivi",
+              "revisions_display": "Options d’affichage",
+              "revisions_displayed_edits": "Modifications affichées",
+              "followed_pages": "Pages suivies",
+              "search_general": "Options générales",
+              "advanced_search": "Recherche avancée",
+              "email_options": "Options de messagerie",
+              "events": "Évènements",
+              "blocked_users": "Utilisateurices bloqué·es",
+              "muted_pages": "Pages ignorées"
+            },
+            "password": {
+              "label": "Nouveau mot de passe",
+              "help": "Laisser vide pour ne pas le changer. Vous devrez vous reconnecter si vous le changez."
+            },
+            "password_confirm": {
+              "label": "Confirmation du nouveau mot de passe",
+              "error": {
+                "passwords_mismatch": "Les mots de passe ne correspondent pas\u00a0!"
+              }
+            },
+            "gender": {
+              "label": "Avec quel genre souhaitez-vous être décrit·e?",
+              "help": "Cette option n’est pas obligatoire, elle est utilisée par le site pour s’adresser à vous ou vous mentionner aux autres utilisateurices en utilisant le bon genre. **Cette information est publique.**",
+              "n": {
+                "label": "Iel contribue. (Le site essayera d’utiliser un langage neutre autant que possible.)"
+              },
+              "f": {
+                "label": "Elle contribue."
+              },
+              "m": {
+                "label": "Il contribue."
+              },
+              "error": {
+                "invalid_choice": "Choix invalide\u00a0!"
+              }
+            },
+            "preferred_language": {
+              "label": "Langue de l’interface",
+              "error": {
+                "invalid_choice": "Choix invalide\u00a0!"
+              }
+            },
+            "email": {
+              "label": "Adresse mail",
+              "help": "Jamais montrée publiquement.",
+              "error": {
+                "invalid": "Adresse mail invalide\u00a0!"
+              }
+            },
+            "users_can_send_emails": {
+              "label": "Autoriser les autres utilisateurices à m’envoyer des mails"
+            },
+            "new_users_can_send_emails": {
+              "label": "Autoriser les nouveaux·elles utilisateurices à m’envoyer des mails"
+            },
+            "send_copy_of_sent_emails": {
+              "label": "M’envoyer une copie des mails que j’envoie"
+            },
+            "email_user_blacklist": {
+              "label": "Empêcher ces utilisateurices de m’envoyer des mails\u00a0:",
+              "help": "Un pseudo par ligne."
+            },
+            "custom_css_js": {
+              "label": "CSS/JavaScript personnalisé à appliquer à toutes les pages du wiki\u00a0:"
+            },
+            "custom_css": {
+              "label": "CSS personnalisé"
+            },
+            "custom_js": {
+              "label": "JavaScript personnalisé"
+            },
+            "custom_light_css_js": {
+              "label": "CSS/JavaScript personnalisé à appliquer à toutes les pages du wiki en mode lumineux\u00a0:"
+            },
+            "custom_light_css": {
+              "label": "CSS personnalisé du mode lumineux"
+            },
+            "custom_light_js": {
+              "label": "JavaScript personnalisé du mode lumineux"
+            },
+            "custom_dark_css_js": {
+              "label": "CSS/JavaScript personnalisé à appliquer à toutes les pages du wiki en mode sombre\u00a0:"
+            },
+            "custom_dark_css": {
+              "label": "CSS personnalisé du mode sombre"
+            },
+            "custom_dark_js": {
+              "label": "JavaScript personnalisé du mode sombre"
+            },
+            "dark_mode": {
+              "label": "Utiliser le mode sombre"
+            },
+            "preferred_datetime_format": {
+              "label": "Format de date et heure",
+              "error": {
+                "invalid_choice": "Choix invalide\u00a0!"
+              }
+            },
+            "server_time": {
+              "label": "Heure du serveur ({tz})\u00a0:"
+            },
+            "timezone_time": {
+              "label": "Heure du fuseau horaire\u00a0:"
+            },
+            "preferred_timezone": {
+              "label": "Fuseau horaire",
+              "error": {
+                "invalid_choice": "Choix invalide\u00a0!"
+              }
+            },
+            "max_file_preview_size": {
+              "label": "Taille maximale des fichiers prévisualisés sur les pages «\u00a0File:\u00a0» du wiki",
+              "error": {
+                "invalid_choice": "Choix invalide\u00a0!"
+              }
+            },
+            "thumbnails_size": {
+              "label": "Taille maximale des miniatures dans les pages du wiki",
+              "help": "Entre 100px et 600px.",
+              "error": {
+                "invalid_thumbnail_size": "Taille invalide\u00a0!"
+              }
+            },
+            "show_page_content_in_diffs": {
+              "label": "Afficher le contenu des pages sous les diffs"
+            },
+            "show_diff_after_revert": {
+              "label": "Afficher le diff après annulation"
+            },
+            "show_hidden_categories": {
+              "label": "Afficher les catégories cachées"
+            },
+            "ask_revert_confirmation": {
+              "label": "Demander confirmation au clic du bouton d’annulation"
+            },
+            "use_editor_syntax_highlighting": {
+              "label": "Activer la coloration syntaxique"
+            },
+            "mark_all_wiki_edits_as_minor": {
+              "label": "Marquer toutes mes modifications comme mineures"
+            },
+            "warn_when_no_wiki_edit_comment": {
+              "label": "M’avertir si je n’ai pas spécifié de résumé de modification"
+            },
+            "warn_when_wiki_edit_not_published": {
+              "label": "M’avertir si je quitte une page que j’édite sans avoir publié mes modifications"
+            },
+            "show_preview_above_edit_form": {
+              "label": "Afficher la prévisualisation au-dessus du formulaire de modification"
+            },
+            "show_preview_without_reload": {
+              "label": "Afficher la prévisualisation sans rechercher la page"
+            },
+            "edit_follow_list": {
+              "label": "Modifier les entrées de votre liste de suivi",
+              "edit_button": "Modifier",
+              "edit_raw_button": "Modifier la liste brute",
+              "clear_button": "Vider"
+            },
+            "default_days_nb_in_wiki_edit_lists": {
+              "label": "Nombre de jours à afficher dans les modifications récentes, journaux et la liste de suivi",
+              "help": "Nombre maximal\u00a0: {nb} jours.",
+              "error": {
+                "invalid": "Valeur invalide\u00a0!",
+                "invalid_revisions_days_nb": "Valeur invalide\u00a0!"
+              }
+            },
+            "default_edits_nb_in_wiki_edit_lists": {
+              "label": "Nombre de modifications à afficher dans les modifications récentes, journaux et la liste de suivi",
+              "help": "Nombre maximal\u00a0: {nb}.",
+              "error": {
+                "invalid": "Valeur invalide\u00a0!",
+                "invalid_revisions_edits_nb": "Valeur invalide\u00a0!"
+              }
+            },
+            "group_edits_per_page": {
+              "label": "Regrouper les modifications par pages dans les modifications récentes et la liste de suivi"
+            },
+            "revisions_displayed_edits": {
+              "text": "Options d’affichage des modifications récentes et de la liste de suivi."
+            },
+            "mask_wiki_minor_edits": {
+              "label": "Masquer les modifications mineures"
+            },
+            "mask_wiki_bot_edits": {
+              "label": "Masquer les modifications des robots"
+            },
+            "mask_wiki_own_edits": {
+              "label": "Masquer mes propres modifications"
+            },
+            "mask_wiki_anonymous_edits": {
+              "label": "Masquer les modifications anonymes"
+            },
+            "mask_wiki_authenticated_edits": {
+              "label": "Masquer les modifications par les utilisateurices connecté·es"
+            },
+            "mask_wiki_categorization_edits": {
+              "label": "Masquer les catégorisations de pages"
+            },
+            "mask_wiki_patrolled_edits": {
+              "label": "Masquer les modifications patrouillées"
+            },
+            "followed_pages": {
+              "text": "Paramètres d’ajouts automatiques à la liste de suivi."
+            },
+            "add_created_pages_to_follow_list": {
+              "label": "Les pages que je crée"
+            },
+            "add_modified_pages_to_follow_list": {
+              "label": "Les pages que je modifie"
+            },
+            "add_renamed_pages_to_follow_list": {
+              "label": "Les pages que je renomme"
+            },
+            "add_deleted_pages_to_follow_list": {
+              "label": "Les pages que je supprime"
+            },
+            "add_reverted_pages_to_follow_list": {
+              "label": "Les pages où j’ai annulé une modification"
+            },
+            "add_created_topics_to_follow_list": {
+              "label": "Les sujets de discussion que je crée"
+            },
+            "add_replied_to_topics_to_follow_list": {
+              "label": "Les sujets de discussion auxquels j’ai répondu"
+            },
+            "search_default_results_nb": {
+              "label": "Nombre de résultats à afficher sur la page de recherche",
+              "help": "Nombre maximal\u00a0: {nb}.",
+              "error": {
+                "invalid": "Valeur invalide\u00a0!",
+                "invalid_search_results_nb": "Valeur invalide\u00a0!"
+              }
+            },
+            "search_mode": {
+              "label": "Définit le comportement de l’algorithme des suggestions de recherche.",
+              "error": {
+                "invalid_choice": "Choix invalide\u00a0!"
+              },
+              "default": {
+                "label": "Par défaut (recommandé)",
+                "help": "Suggère des résultats similaires."
+              },
+              "strict": {
+                "label": "Strict",
+                "help": "Suggère uniquement des résultats correspondant exactement à la requête."
+              },
+              "prefix": {
+                "label": "Préfixe",
+                "help": "Suggère uniquement des résultats dont le début correspond exactement à la requête."
+              }
+            },
+            "email_update_notification_frequency": {
+              "label": "Fréquence des notifications par mail",
+              "error": {
+                "invalid_choice": "Choix invalide\u00a0!"
+              },
+              "none": {
+                "label": "Jamais"
+              },
+              "immediately": {
+                "label": "Immédiatement"
+              },
+              "daily": {
+                "label": "Résumé quotidien"
+              },
+              "weekly": {
+                "label": "Résumé hebdomadaire"
+              }
+            },
+            "html_email_updates": {
+              "label": "Envoyer les mails en HTML"
+            },
+            "events": {
+              "text": "M’avertir des évènements ci-dessous.",
+              "table": {
+                "header": {
+                  "web": "Web",
+                  "email": "Mail",
+                  "notify_user_talk_edits": "Nouveaux messages sur ma page wiki",
+                  "notify_followed_pages_edits": "Modifications sur les pages de ma liste de suivi",
+                  "notify_talk_mentions": {
+                    "n": "Un message m’a mentionné·e",
+                    "f": "Un message m’a mentionnée",
+                    "m": "Un message m’a mentionné"
+                  },
+                  "notify_message_answers": "Quelqu’un a répondu à un de mes messages",
+                  "notify_topic_answers": "Quelqu’un a répondu à un sujet de discussion que j’ai créé",
+                  "notify_thanks": {
+                    "n": "Quelqu’un m’a remercié·e sur une de mes modifications",
+                    "f": "Quelqu’un m’a remerciée sur une de mes modifications",
+                    "m": "Quelqu’un m’a remercié sur une de mes modifications"
+                  },
+                  "notify_failed_connection_attempts": "Une tentative de connexion à mon compte a échoué",
+                  "notify_permissions_edit": "Mes groupes/permissions ont été changées",
+                  "notify_user_email": "Quelqu’un m’a envoyé un mail",
+                  "notify_cancelled_edits": "Une de mes modifications a été annulée",
+                  "notify_edit_count_milestones": "J’ai atteint un certain nombre de modifications"
+                }
+              }
+            },
+            "user_notification_blacklist": {
+              "label": "Ignorer les notifications de ces utilisateurices\u00a0:",
+              "help": "Un pseudo par ligne."
+            },
+            "page_notification_blacklist": {
+              "label": "Ignorer les notifications de ces pages\u00a0:",
+              "help": "Un titre de page par ligne."
+            },
+            "gadgets": {
+              "text": "Ci-dessous se trouve une liste des gadgets activables sur le wiki."
+            },
+            "submit": {
+              "label": "Enregistrer les paramètres"
+            }
+          }
+        }
+      },
+      "error": {
+        "403": {
+          "title": "Accès interdit",
+          "tab_title": "Vous ne pouvez pas accéder à cette page\u00a0!",
+          "message": "Vous n’avez pas la permission d’accéder à cette page pour la raison suivante\u00a0:\n\n{reason}\n\nRetourner à la [page principale]({url})."
+        },
+        "404": {
+          "title": "Page non trouvée",
+          "tab_title": "Page non trouvée\u00a0!",
+          "message": "La page **{path}** n’existe pas.\n\nRetourner à la [page principale]({url})."
         }
       }
     },
@@ -105,115 +655,943 @@
         "label": "Connexion"
       },
       "sign_up": {
-        "label": "Inscription"
+        "label": "Créer un compte"
       },
       "log_out": {
         "label": "Déconnexion"
-      }
-    },
-    "alert": {
-      "log_in": {
-        "already_logged_in": "<p><strong>Vous êtes déjà connecté·e.</strong></p><p>Veuillez vous déconnecter puis vous reconnecter avec un autre compte.</p>"
       },
-      "sign_up": {
-        "already_logged_in": "<p><strong>Vous êtes déjà connecté·e avec un autre compte.</strong></p><p>Veuillez vous déconnecter avant de créer un compte..</p>"
+      "dark_mode": {
+        "label": "Mode sombre"
+      },
+      "profile": {
+        "label": "Profil"
+      },
+      "wiki_user_page": {
+        "label": "Page wiki"
+      },
+      "contributions": {
+        "label": "Contributions"
+      },
+      "wiki_contributions": {
+        "label": "Contributions wiki"
+      },
+      "settings": {
+        "label": "Paramètres"
       }
     },
     "form": {
-      "sign_up": {
-        "username": {
-          "label": "Username",
-          "help": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
-          "error": {
-            "invalid": "Invalid username.",
-            "duplicate": "This username is already taken.",
-            "min_length": "Username is too short.",
-            "max_length": "Username is too long.",
-            "required": "This field is required."
+      "global_error": {
+        "title": "Les erreurs suivantes ont été rencontrées\u00a0:"
+      }
+    },
+    "js": {
+      "map": {
+        "controls": {
+          "layers": {
+            "standard": "Carte",
+            "black_and_white": "Carte (noir et blanc)",
+            "satellite_maptiler": "Satellite (MapTiler)",
+            "satellite_esri": "Satellite (Esri)"
+          },
+          "zoom_in": {
+            "tooltip": "Zoomer"
+          },
+          "zoom_out": {
+            "tooltip": "Dézoomer"
+          },
+          "search": {
+            "tooltip": "Rechercher un lieu",
+            "placeholder": "Rechercher un lieu ou une adresse…"
+          },
+          "google_maps_button": {
+            "tooltip": "Ouvrir l’emplacement actuel sur Google Maps"
+          },
+          "ign_compare_button": {
+            "tooltip": "Ouvrir l’emplacement actuel sur l’outil de comparaison de l’IGN"
+          },
+          "edit": {
+            "new_marker": {
+              "tooltip": "Créer un nouveau marqueur"
+            },
+            "new_line": {
+              "tooltip": "Créer une nouvelle ligne"
+            },
+            "new_polygon": {
+              "tooltip": "Créer un nouveau polygone"
+            }
           }
-        },
-        "email": {
-          "label": "Email",
-          "help": "Required.",
-          "error": {
-            "invalid": "Invalid email address.",
-            "required": "This field is required."
-          }
-        },
-        "password": {
-          "label": "Password",
-          "help": "Required.",
-          "error": {
-            "min_length": "Password is too short.",
-            "max_length": "Password is too long.",
-            "required": "This field is required."
-          }
-        },
-        "password_confirm": {
-          "label": "Confirm password",
-          "help": "Required."
-        },
-        "submit": {
-          "label": "Create account"
         }
       },
-      "log_in": {
-        "username": {
-          "label": "Username",
-          "error": {
-            "not_exists": "No accounts registered with this username.",
-            "required": "This field is required."
-          }
-        },
-        "password": {
-          "label": "Password",
-          "help": "Required.",
-          "error": {
-            "required": "This field is required."
-          }
-        },
-        "submit": {
-          "label": "Log in"
+      "wiki": {
+        "edit": {
+          "no_summary_warning": "Il est fortement recommandé de renseigner un court résumé de vos modifications\n\nPublier malgré tout\u00a0?"
         }
       }
     },
-    "map": {
-      "controls": {
-        "layers": {
-          "standard": "Map",
-          "black_and_white": "Map (black and white)",
-          "satellite_maptiler": "Satellite (MapTiler)",
-          "satellite_esri": "Satellite (Esri)"
+    "wiki": {
+      "name": "Wiki d’OTTM",
+      "main_page_title": "Page principale",
+      "namespace": {
+        "0": {
+          "display_name": "(Principal)"
+        }
+      },
+      "special_page": {
+        "requires_perms": {
+          "tooltip": "Cette page spéciale requiert des permissions particulières"
         },
-        "zoom_in": {
-          "tooltip": "Zoom in"
+        "invalid_title": {
+          "title": "Titre invalide",
+          "message": "**Le titre de la page demandée contient un caractère invalide\u00a0: «\u00a0{char}\u00a0».**\n\nRetourner à la [page principale]({main_page_url})."
         },
-        "zoom_out": {
-          "tooltip": "Zoom out"
+        "empty_title": {
+          "title": "Titre invalide",
+          "message": "**Le titre de la page demandée est vide ou contient seulement un nom d’espace de nom.**\n\nRetourner à la [page principale]({main_page_url})."
         },
-        "search": {
-          "tooltip": "Location search",
-          "placeholder": "Search for places or addresses…"
+        "does_not_exist": {
+          "title": "Page spéciale inexistante",
+          "message": "**Cette page spéciale n’existe pas.**\n\nUne liste de toutes les pages spéciales peut être trouvée [ici]({special_pages_link}).\n\nRetourner à la [page principale]({main_page_url})."
         },
-        "google_maps_button": {
-          "tooltip": "Open current location in Google Maps"
+        "forbidden": {
+          "title": "Accès interdit",
+          "message": "**Vous n’avez pas la permission d’accéder à cette page spéciale.**\n\nRetourner à la [page principale]({main_page_url})."
         },
-        "ign_compare_button": {
-          "label": "IGN",
-          "tooltip": "Open current location in IGN’s comparing tool"
+        "RandomPage": {
+          "title": "Page aléatoire",
+          "menu": {
+            "label": "Page aléatoire",
+            "tooltip": "Aller à une page aléatoire"
+          }
         },
-        "edit": {
-          "new_marker": {
-            "tooltip": "Create a new marker"
+        "RecentChanges": {
+          "title": "Modifications récentes",
+          "menu": {
+            "label": "Modifications récentes",
+            "tooltip": "Afficher les modifications récentes du wiki"
+          }
+        },
+        "UploadFile": {
+          "title": "Téléverser un fichier",
+          "menu": {
+            "label": "Téléverser un ficher",
+            "tooltip": "Mettre en ligne une image ou un fichier multimédia sur le wiki"
+          }
+        },
+        "SpecialPages": {
+          "title": "Pages spéciales",
+          "menu": {
+            "label": "Pages spéciales",
+            "tooltip": "Afficher la liste des pages spéciales du wiki"
           },
-          "new_line": {
-            "tooltip": "Create a new polyline"
+          "section": {
+            "maintenance": "Maintenance",
+            "page_lists": "Listes de pages",
+            "page_operations": "Opérations de pages",
+            "users": "Utilisateurices et permissions",
+            "logs": "Modifications récentes et journaux",
+            "files": "Fichiers et médias",
+            "data_tools": "Données et outils",
+            "redirects": "Pages spéciales de redirection",
+            "most_used_pages": "Pages les plus utilisées",
+            "other": "Autres pages spéciales"
+          }
+        },
+        "DeletePage": {
+          "title": "Supprimer une page",
+          "title_page": "Supprimer «\u00a0{value}\u00a0»",
+          "linked_pages": "Pages liées",
+          "log_entries": "Entrées de journaux liées",
+          "done": "Page supprimée.",
+          "history_warning": {
+            "link_text": "historique de la page",
+            "message": "**Avertissement\u00a0: vous êtes sur le point de supprimer un page avec {nb} modification(s): {link}.**"
           },
-          "new_polygon": {
-            "tooltip": "Create a new polygon"
+          "menu": {
+            "label": "Supprimer",
+            "tooltip": "Supprimer cette page"
+          },
+          "form": {
+            "delete": {
+              "page": {
+                "label": "Page",
+                "error": {
+                  "page_invalid_title": "Titre de page invalide\u00a0!",
+                  "page_does_not_exist": "Cette page n’existe pas.",
+                  "special_page": "Les pages spéciales ne peuvent pas être modifiées.",
+                  "required": "Titre de la page manquant\u00a0!"
+                }
+              },
+              "reason": {
+                "label": "Ruison"
+              },
+              "submit": {
+                "label": "Supprimer la page"
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission de supprimer des pages.",
+                "page_does_not_exist": "Cette page n’existe pas."
+              }
+            }
+          }
+        },
+        "RenamePage": {
+          "title": "Renommer une page",
+          "title_page": "Renommer «\u00a0{value}\u00a0»",
+          "menu": {
+            "label": "Renommer",
+            "tooltip": "Renommer cette page"
+          }
+        },
+        "ProtectPage": {
+          "title": "Protéger une page",
+          "title_page": "Changer le niveau de protection de «\u00a0{value}\u00a0»",
+          "log_entries": "Entrées de journaux liées",
+          "done": "Niveau de protection changé.",
+          "menu": {
+            "label": "Protéger",
+            "tooltip": "Protéger cette page"
+          },
+          "form": {
+            "protect_page": {
+              "page": {
+                "label": "Page à protéger",
+                "error": {
+                  "special_page": "Les pages spéciales ne peuvent pas être protégées."
+                }
+              },
+              "protection_level": {
+                "label": "Niveau de protection",
+                "help": "Seuls les utilisateurs appartenant à ce groupe pourront modifier la page.",
+                "error": {
+                  "invalid_choice": "Choix invalide\u00a0!"
+                }
+              },
+              "end_date": {
+                "label": "Date d’expiration",
+                "help": "Laisser vide pour une durée infinie. Ignorée si le groupe est 'all'.",
+                "error": {
+                  "past_date": "La date spécifiée est déjà passée."
+                }
+              },
+              "protect_talks": {
+                "label": "Protéger les discussions"
+              },
+              "reason": {
+                "label": "Raison"
+              },
+              "submit": {
+                "label": "Valider"
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission d’accéder à cette page."
+              }
+            }
+          }
+        },
+        "Subpages": {
+          "title": "Lister les sous-pages",
+          "title_page": "Sous-pages de «\u00a0{value}\u00a0»",
+          "menu": {
+            "label": "Sous-pages",
+            "tooltip": "Lister les sous-pages de cette page"
+          },
+          "form": {
+            "select_page": {
+              "page": {
+                "label": "Page",
+                "error": {
+                  "page_invalid_title": "Titre de page invalide\u00a0!",
+                  "page_does_not_exist": "Cette page n’existe pas.",
+                  "special_page": "Les pages spéciales n’ont pas de sous-pages.",
+                  "required": "Titre de page manquant\u00a0!"
+                }
+              },
+              "submit": {
+                "label": "Lister les sous-pages"
+              }
+            }
+          },
+          "no_results": "Aucun résultat."
+        },
+        "LinkedPages": {
+          "title": "Pages liées",
+          "title_page": "Pages pointant vers «\u00a0{value}\u00a0»",
+          "menu": {
+            "label": "Pages liées",
+            "tooltip": "Lister les pages qui pointent vers cette page"
+          }
+        },
+        "Logs": {
+          "title": "Journaux",
+          "title_page": "Entrées de journaux pour la page «\u00a0{value}\u00a0»",
+          "title_user": {
+            "n": "Entrées de journaux pour l’utilisateurice «\u00a0{value}\u00a0»",
+            "f": "Entrées de journaux pour l’utilisatrice «\u00a0{value}\u00a0»",
+            "m": "Entrées de journaux pour l’utilisateur «\u00a0{value}\u00a0»"
+          },
+          "menu": {
+            "label": "Journaux de la page",
+            "tooltip": "Afficher les journaux pour cette page"
+          }
+        },
+        "Contributions": {
+          "title": "Contributions wiki",
+          "title_user": {
+            "n": "Contributions wiki de l’utilisateurice «\u00a0{value}\u00a0»",
+            "f": "Contributions wiki de l’utilisatrice «\u00a0{value}\u00a0»",
+            "m": "Contributions wiki de l’utilisateur «\u00a0{value}\u00a0»"
+          },
+          "menu": {
+            "label": "Contributions wiki",
+            "tooltip": {
+              "n": "Afficher les contributions wiki de cet·te utilisateurice",
+              "f": "Afficher les contributions wiki de cette utilisatrice",
+              "m": "Afficher les contributions wiki de cet utilisateur"
+            }
+          },
+          "form_spoiler": {
+            "label": "Filtrer les contributions"
+          },
+          "form": {
+            "filter": {
+              "username": {
+                "label": "Pseudo",
+                "error": {
+                  "invalid": "Pseudo invalide\u00a0!",
+                  "user_does_not_exist": "Cet·te utilisateurice n’existe pas\u00a0!",
+                  "required": "Pseudo manquant\u00a0!"
+                }
+              },
+              "namespace": {
+                "label": "Espace de nom",
+                "all": "Tous",
+                "error": {
+                  "invalid": "Choix invalide\u00a0!",
+                  "required": "Espace de nom manquant\u00a0!"
+                }
+              },
+              "invert_selection": {
+                "label": "Inverser la sélection",
+                "help": "Ignoré si aucun espace de nom n’est sélectionné."
+              },
+              "hidden_revisions_only": {
+                "label": "Afficher seulement les modifications masquées"
+              },
+              "last_revisions_only": {
+                "label": "Afficher uniquement les modifications qui sont les dernières de leur page"
+              },
+              "page_creations_only": {
+                "label": "Afficher seulement les créations de pages"
+              },
+              "mask_minor_edits": {
+                "label": "Masquer les modifications mineures"
+              },
+              "start_date": {
+                "label": "Du",
+                "error": {
+                  "invalid": "Date invalide\u00a0!"
+                }
+              },
+              "end_date": {
+                "label": "Jusqu’au",
+                "error": {
+                  "invalid": "Date invalide\u00a0!"
+                }
+              },
+              "submit": {
+                "label": "Afficher les contributions"
+              },
+              "error": {
+                "invalid_dates": "Dates invalides\u00a0!"
+              }
+            }
+          }
+        },
+        "SendEmail": {
+          "title": "Envoyer un mail à un·e utilisateurice",
+          "title_user": "Envoyer un mail à «\u00a0{value}\u00a0»",
+          "done": "Mail envoyé avec succès.",
+          "copy_sent": "Copie envoyée.",
+          "copy_error": "La copie n’a pas pu être envoyée en raison d’une erreur inattendue.",
+          "info": "L’adresse mail que vous avez indiquée dans les paramètres de votre profil sera affichée dans le champ «\u00a0Répondre à\u00a0» de votre message afin que le/la destinataire puisse y répondre.",
+          "menu": {
+            "label": "Envoyer un mail",
+            "tooltip": {
+              "n": "Envoyer un mail à cet·te utilisateurice",
+              "f": "Envoyer un mail à cette utilisatrice",
+              "m": "Envoyer un mail à cet utilisateur"
+            }
+          },
+          "form": {
+            "send_email": {
+              "username": {
+                "label": "Destinataire",
+                "error": {
+                  "invalid": "Pseudo invalide\u00a0!",
+                  "user_does_not_exist": "Cet·te utilisateurice n’existe pas\u00a0!",
+                  "required": "Pseudo manquant\u00a0!"
+                }
+              },
+              "subject": {
+                "label": "Objet",
+                "error": {
+                  "required": "Objet manquant\u00a0!"
+                }
+              },
+              "content": {
+                "label": "Contenu",
+                "error": {
+                  "required": "Contenu manquant\u00a0!"
+                }
+              },
+              "send_copy": {
+                "label": "M’envoyer une copie"
+              },
+              "submit": {
+                "label": "Envoyer"
+              },
+              "error": {
+                "user_does_not_exist": "Cet·te utilisateurice n’existe pas\u00a0!",
+                "email_error": "Une erreur est survenue. Veuillez réessayer plus tard."
+              }
+            }
+          }
+        },
+        "ChangePageLanguage": {
+          "title": "Change la langue de contenu d’une page",
+          "title_page": "Changer la langue de contenu de la page «\u00a0{value}\u00a0»",
+          "log_entries": "Entrées de journaux liées",
+          "done": "Langue de contenu changée.",
+          "menu": {
+            "label": "Changer la langue de contenu",
+            "tooltip": "Changer la langue de contenu de cette page"
+          },
+          "form": {
+            "set_page_language": {
+              "page": {
+                "label": "Page",
+                "error": {
+                  "page_invalid_title": "Titre de page invalide\u00a0!",
+                  "page_does_not_exist": "Cette page n’existe pas.",
+                  "special_page": "Les pages spéciales ne peuvent pas être modifiées.",
+                  "required": "Titre de page manquant\u00a0!"
+                }
+              },
+              "content_language": {
+                "label": "Langue de contenu",
+                "error": {
+                  "invalid_choice": "Langue invalide\u00a0!"
+                }
+              },
+              "reason": {
+                "label": "Ruison"
+              },
+              "submit": {
+                "label": "Valider"
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission de modifier cette page.",
+                "page_does_not_exist": "Cette page n’existe pas."
+              }
+            }
+          }
+        },
+        "ChangePageContentType": {
+          "title": "Changer le type de contenu",
+          "title_page": "Changer le type de contenu de la page «\u00a0{value}\u00a0»",
+          "log_entries": "Entrées de journaux liées",
+          "done": "Type de contenu changé.",
+          "menu": {
+            "label": "Changer le type de contenu",
+            "tooltip": "Changer le type de contenu de cette page"
+          },
+          "form": {
+            "set_page_content_type": {
+              "page": {
+                "label": "Page",
+                "error": {
+                  "page_invalid_title": "Titre de page invalide\u00a0!",
+                  "page_does_not_exist": "Cette page n’existe pas.",
+                  "special_page": "Les pages spéciales ne peuvent pas être modifiées.",
+                  "required": "Titre de page manquant\u00a0!"
+                }
+              },
+              "content_type": {
+                "label": "Type de contenu",
+                "error": {
+                  "invalid_choice": "Choix invalide\u00a0!"
+                }
+              },
+              "reason": {
+                "label": "Ruison"
+              },
+              "submit": {
+                "label": "Valider"
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission de modifier cette page.",
+                "page_does_not_exist": "Cette page n’existe pas."
+              }
+            }
+          }
+        },
+        "Mute": {
+          "title": "Rendre muet·te un·e utilisateurice",
+          "title_user": {
+            "n": "Rendre muet·te l’utilisateurice «\u00a0{value}\u00a0»",
+            "f": "Rendre muette l’utilisatrice «\u00a0{value}\u00a0»",
+            "m": "Rendre muet l’utilisateur «\u00a0{value}\u00a0»"
+          },
+          "done": "Changements enregistrés.",
+          "menu": {
+            "label": {
+              "n": "Rendre muet·te",
+              "f": "Rendre muette",
+              "m": "Rendre muet"
+            },
+            "tooltip": {
+              "n": "Rendre muets les mails et notifications de cet·te utilisateurice",
+              "f": "Rendre muets les mails et notifications de cette utilisatrice",
+              "m": "Rendre muets les mails et notifications de cet utilisateur"
+            }
+          },
+          "form": {
+            "mute_user": {
+              "username": {
+                "label": {
+                  "n": "Utilisateurice à rendre muet·te",
+                  "f": "Utilisatrice à rendre muette",
+                  "m": "Utilisateur à rendre muet"
+                },
+                "error": {
+                  "required": "Pseudo manquant\u00a0!",
+                  "user_does_not_exist": "Cet·te utilisateurice n’existe pas\u00a0!"
+                }
+              },
+              "mute_emails": {
+                "label": {
+                  "n": "Ignorer les mails de cet·te utilisateurice",
+                  "f": "Ignorer les mails de cette utilisatrice",
+                  "m": "Ignorer les mails de cet utilisateur"
+                }
+              },
+              "mute_notifications": {
+                "label": {
+                  "n": "Ignorer les notifications de cet·te utilisateurice",
+                  "f": "Ignorer les notifications de cette utilisatrice",
+                  "m": "Ignorer les notifications de cet utilisateur"
+                }
+              },
+              "submit": {
+                "label": "Valider"
+              },
+              "error": {
+                "anonymous_user": "Les utilisateurices anonymes ne peuvent pas rendre muet·tes d’autres utilisateurices.",
+                "user_does_not_exist": "Cet·te utilisateurice n’existe pas\u00a0!"
+              }
+            }
+          }
+        },
+        "EditFollowList": {
+          "title": "Modifier votre liste de suivi",
+          "title_clear": "Vider votre liste de suivi",
+          "done": "Votre liste de suivie a été modifiée avec succès.",
+          "menu": {
+            "label": "Modifier votre liste de suivi",
+            "tooltip": "Modifier votre liste de suivi"
+          },
+          "form": {
+            "edit": {
+              "message": "Les pages que vous suivez sont listées ci-dessous, catégorisées par espace de nom. Pour ne plus suivre une page, cochez la case située à côté et cliquez sur le bouton en bas de la page. Vous pouvez aussi la modifier en tant que {edit_raw_url} ou {clear_url}.",
+              "raw_text": "liste brute",
+              "clear_text": "la vider",
+              "pages": {
+                "label": "Pages"
+              },
+              "submit": {
+                "label": "Mettre à jour la liste de suivi"
+              }
+            },
+            "edit_raw": {
+              "message": "Les pages que vous suivez sont listées ci-dessous. Vous pouvez ajouter ou retirer des pages en ajoutant ou retirant leurs titres dans la liste (un par ligne). Vous pouvez aussi utiliser l’{edit_url}.",
+              "normal_text": "éditeur normal",
+              "page_names": {
+                "label": "Titres des pages",
+                "help": "Un titre par ligne."
+              },
+              "submit": {
+                "label": "Mettre à jour la liste"
+              },
+              "error": {
+                "follow_special_page": "Vous ne pouvez pas suivre des pages spéciales."
+              }
+            },
+            "clear": {
+              "message": "Tous les titres seront retirés de votre liste de suivi. Vous pouvez aussi utiliser l’{edit_url} ou la {raw_url}.",
+              "normal_text": "éditeur normal",
+              "raw_text": "liste brute",
+              "submit": {
+                "label": "Vider la liste de suivi (aucun retour en arrière possible\u00a0!)"
+              }
+            }
+          }
+        },
+        "Forum": {
+          "title": "Forum",
+          "menu": {
+            "label": "Forum",
+            "tooltip": "L’endroit pour discuter"
           }
         }
-      }
+      },
+      "navbar": {
+        "search": {
+          "input": {
+            "placeholder": "Rechercher dans le wiki…"
+          },
+          "button": {
+            "label": "Rechercher",
+            "tooltip": "Rechercher une page dans le wiki"
+          }
+        }
+      },
+      "menu": {
+        "side": {
+          "logo": {
+            "tooltip": "Visiter la page principale"
+          },
+          "wiki_tools": {
+            "title": "Outils du wiki"
+          },
+          "page_tools": {
+            "title": "Outils de la page",
+            "item": {
+              "special_page": {
+                "label": "Page spéciale",
+                "tooltip": "Réinitialiser cette page spéciale"
+              },
+              "user_page": {
+                "label": {
+                  "n": "Page de l’utilisateurice",
+                  "f": "Page de l’utilisatrice",
+                  "m": "Page de l’utilisateur"
+                },
+                "tooltip": {
+                  "n": "Aller à la page de cet·te utilisateurice",
+                  "f": "Aller à la page de cette utilisatrice",
+                  "m": "Aller à la page de cet utilisateur"
+                }
+              },
+              "page": {
+                "label": "Page",
+                "tooltip": "Aller à la page"
+              },
+              "user_profile": {
+                "label": {
+                  "n": "Profil de l’utilisateurice",
+                  "f": "Profil de l’utilisatrice",
+                  "m": "Profil de l’utilisateur"
+                },
+                "tooltip": {
+                  "n": "Aller sur le profil de cet·te utilisateurice",
+                  "f": "Aller sur le profil de cette utilisatrice",
+                  "m": "Aller sur le profil de cet utilisateur"
+                }
+              }
+            }
+          },
+          "more": {
+            "title": "Plus",
+            "item": {
+              "permalink": {
+                "label": "Lien permanent",
+                "tooltip": "Récupérer un lien permanent vers cette version de la page"
+              },
+              "page_info": {
+                "label": "Informations sur la page",
+                "tooltip": "Afficher plus d’information sur cette page"
+              }
+            }
+          }
+        },
+        "page": {
+          "read": {
+            "label": "Lire",
+            "tooltip": "Lire la page"
+          },
+          "talk": {
+            "label": "Discuter",
+            "tooltip": "Discuter à propos de cette page"
+          },
+          "source": {
+            "label": "Source",
+            "tooltip": "Consulter le code source de cette page"
+          },
+          "edit": {
+            "label": "Modifier",
+            "tooltip": "Modifier le contenu de cette page"
+          },
+          "create": {
+            "label": "Créer",
+            "tooltip": "Créer cette page"
+          },
+          "history": {
+            "label": "Historique",
+            "tooltip": "Voir l’historique de cette page"
+          }
+        }
+      },
+      "page": {
+        "title": {
+          "talk": "Discussions à propos de «\u00a0{page_title}\u00a0»",
+          "source": "Source de «\u00a0{page_title}\u00a0»",
+          "edit": "Modifier «\u00a0{page_title}\u00a0»",
+          "create": "Créer «\u00a0{page_title}\u00a0»",
+          "history": "Historique des modifications de «\u00a0{page_title}\u00a0»",
+          "info": "Informations sur «\u00a0{page_title}\u00a0»"
+        },
+        "read": {
+          "revision_nav_box": {
+            "label": "Version par {user_link} du {date}",
+            "diff_previous": "Aller à la version précédente",
+            "diff_current": "Aller à la version actuelle",
+            "diff_next": "Aller à la version suivante"
+          }
+        },
+        "talk": {
+          "no_talks": "Cette page ne possède aucune discussion pour le moment."
+        },
+        "edit": {
+          "revision_warning": {
+            "edit": "**Vous êtes en train de modifier une version archivée de cette page publiée le {date}.**\n\nSi vous publiez vos changements, toutes les versions suivantes seront annulées."
+          },
+          "interface_warning": "**Vous êtes en train d’éditer une page qui modifie l’interface du wiki.**\n\nMerci de bien vérifier les changements que vous y apportez car ils vont impacter les autres utilisateurices.",
+          "protection_warning": "**Cette page est protégée.**",
+          "deletion_warning": "**Vous êtes en train de créer une page qui a été précédemment supprimée.** Merci de vous assurer qu’il est bien pertinent de la recréer avant de soumettre vos changements.",
+          "permission_error": "Vous n’avez pas la permission de modifier cette page.",
+          "concurrent_edit_error": "Un·e autre utilisateurice a publié une nouvelle version de cette page pendant que vous la modifiiez. Veuillez comparer votre version à la nouvelle ci-dessous avant de publier.",
+          "log_entry": "Entrée du journal\u00a0:",
+          "form": {
+            "content": {
+              "label": "Contenu de la page"
+            },
+            "comment": {
+              "label": "Résumé de modification",
+              "tooltip": "Entrez un résumé de vos modifications"
+            },
+            "minor_edit": {
+              "label": "Modification mineure",
+              "tooltip": "Marquer comme modification mineure"
+            },
+            "follow_page": {
+              "label": "Suivre cette page",
+              "tooltip": "Ajouter cette page à votre liste de suivi"
+            },
+            "hidden_category": {
+              "label": "Catégorie cachée",
+              "tooltip": "Marquer cette catégorie comme étant cachée"
+            },
+            "submit": {
+              "label": "Publier les changements"
+            },
+            "preview": {
+              "label": "Prévisualiser"
+            },
+            "diff": {
+              "label": "Montrer les différences"
+            },
+            "cancel": {
+              "label": "Annuler"
+            }
+          }
+        },
+        "history": {
+          "no_history": "Cette page ne possède pas d’historique car elle n’existe pas.",
+          "form_spoiler": {
+            "label": "Filtrer les versions"
+          },
+          "form": {
+            "filter": {
+              "hidden_revisions_only": {
+                "label": "Afficher seulement les versions cachées"
+              },
+              "page_creations_only": {
+                "label": "Afficher seulement les créations de la page"
+              },
+              "mask_minor_edits": {
+                "label": "Masquer les modifications mineures"
+              },
+              "start_date": {
+                "label": "Du",
+                "error": {
+                  "invalid": "Date invalide\u00a0!"
+                }
+              },
+              "end_date": {
+                "label": "Jusqu’au",
+                "error": {
+                  "invalid": "Date invalide\u00a0!"
+                }
+              },
+              "submit": {
+                "label": "Afficher les versions"
+              },
+              "error": {
+                "invalid_dates": "Dates invalides\u00a0!"
+              }
+            }
+          }
+        },
+        "info": {
+          "no_info": "Impossible de récupérer les informations sur cette page car elle n’existe pas.",
+          "basic_info": {
+            "title": "Informations de base",
+            "page_title": {
+              "label": "Titre de la page"
+            },
+            "page_id": {
+              "label": "ID de la page"
+            },
+            "namespace_name": {
+              "label": "Nom de l’espace de nom"
+            },
+            "namespace_id": {
+              "label": "ID de l’espace de nom"
+            },
+            "default_sort_key": {
+              "label": "Clé de tri par défaut"
+            },
+            "size": {
+              "label": "Taille en octets"
+            },
+            "content_language": {
+              "label": "Langue de contenu"
+            },
+            "content_type": {
+              "label": "Type de contenu"
+            },
+            "follow_list_nb": {
+              "label": "Nombre d’utilisateurices qui suivent cette page",
+              "link": "liste des utilisateurices"
+            },
+            "redirects_nb": {
+              "label": "Nombre de pages redirigeant vers/transcluent celle-ci",
+              "link": "pages liées"
+            },
+            "subpages_nb": {
+              "label": "Nombre de sous-pages",
+              "link": "liste des sous-pages"
+            }
+          },
+          "protection": {
+            "title": "Statut de protection en modification",
+            "namespace_perms": {
+              "label": "Permissions requise par l’espace de nom"
+            },
+            "user_group": {
+              "label": "Groupe requis"
+            },
+            "see_logs": "Voir le journal des protections de cette page."
+          },
+          "edit_history": {
+            "title": "Historique des modifications",
+            "creator": {
+              "label": "Créateurice de cette page"
+            },
+            "creation_date": {
+              "label": "Date de création de la page"
+            },
+            "last_editor": {
+              "label": "Dernier·ère contributeurice"
+            },
+            "last_edit_date": {
+              "label": "Date de la dernière modification"
+            },
+            "total_edits_nb": {
+              "label": "Nombre total de modifications"
+            },
+            "recent_edits_nb": {
+              "label": "Nombre de modifications récentes (derniers {nb} jours)"
+            },
+            "recent_distinct_editors_nb": {
+              "label": "Nombre de contributeurices récent·es (derniers {nb} jours)"
+            }
+          }
+        }
+      },
+      "link": {
+        "red_link": {
+          "tooltip": "page inexistante"
+        }
+      },
+      "footer": {
+        "last_edit": "Dernière modification le {date}.",
+        "license": "Tout le texte de ce wiki est disponible sous la licence [CC BY-SA 4.0]({license-url}) sauf si indiqué autrement."
+      },
+      "revisions_list": {
+        "mask": {
+          "tooltip": "Masquer/Afficher"
+        },
+        "diff": {
+          "tooltip": "Différences avec la version précédente"
+        },
+        "current": {
+          "tooltip": "Différences avec la version courante"
+        },
+        "cancel": {
+          "tooltip": "Annuler"
+        },
+        "revert": {
+          "tooltip": "Annuler {nb} version(s)"
+        },
+        "size": {
+          "label": "{n} octet(s)"
+        },
+        "flag": {
+          "minor": {
+            "label": "M",
+            "tooltip": "Modification mineure"
+          },
+          "bot": {
+            "label": "B",
+            "tooltip": "Modification de robot"
+          },
+          "creation": {
+            "label": "C",
+            "tooltip": "Création de page"
+          }
+        },
+        "no_results_message": "Aucun résultat"
+      },
+      "log": {
+        "page_creation": "({date}) {user} a créé {page}.",
+        "page_deletion": "({date}) {user} a supprimé {page}. {reason}",
+        "page_protection": "({date}) {user} a changé le niveau de protection de {page} vers le groupe «\u00a0{group}\u00a0» jusqu’au {until}. [protect talks: {talks}] {reason}",
+        "page_protection_infinite": "({date}) {user} a changé le niveau de protection de {page} vers le groupe «\u00a0{group}\u00a0» (infini). [protect talks: {talks}] {reason}",
+        "page_content_language": "({date}) {user} a changé la langue de contenu de {page} vers «\u00a0{language_name}\u00a0» ({language_code}). {reason}",
+        "page_content_type": "({date}) {user} a changé le type de contenu de {page} vers «\u00a0{content_type}\u00a0». {reason}",
+        "user_account_creation": "({date}) Le compte {user} a été créé.",
+        "user_mask_masked": "({date}) {performer} a masqué le pseudonyme de {user}. {reason}",
+        "user_mask_unmasked": "({date}) {performer} a réaffiché le pseudonyme de {user}. {reason}",
+        "user_group_joined": "({date}) {performer} a ajouté {user} au groupe «\u00a0{group}\u00a0». {reason}",
+        "user_group_left": "({date}) {performer} a retiré {user} du groupe «\u00a0{group}\u00a0». {reason}",
+        "user_group_internal_joined": "({date}) {user} a rejoint le groupe «\u00a0{group}\u00a0». {reason}",
+        "user_group_internal_left": "({date}) {user} a quitté le groupe «\u00a0{group}\u00a0». {reason}",
+        "user_block": "({date}) {performer} a bloqué {user} jusqu’au {until}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] {reason}",
+        "user_block_infinite": "({date}) {performer} a bloqué {user} (infini). [edit settings: {edit_settings}, post messages on user page: {post_messages}] {reason}",
+        "user_unblock": "({date}) {performer} a débloqué {user}. {reason}",
+        "ip_block": "({date}) {performer} a bloqué l’adresse IP {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) {reason}"
+      },
+      "pagination": {
+        "page": {
+          "tooltip": "Aller à la page {page}"
+        },
+        "per_page_item": {
+          "tooltip": "Afficher {nb} résultats par page"
+        }
+      },
+      "username_hidden": "Pseudo caché",
+      "comment_hidden": "Commentaire caché"
     }
   }
 }

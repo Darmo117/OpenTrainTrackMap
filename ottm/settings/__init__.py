@@ -7,6 +7,7 @@ import pathlib as _pathlib
 import re as _re
 
 import markdown as _md
+from ..api import data_types as _data_types
 
 
 class UILanguage:
@@ -146,15 +147,20 @@ class UILanguage:
     def js_mappings(self) -> dict[str, str]:
         return self._js_mappings
 
-    def translate(self, key: str, default: str = None, /, **kwargs) -> str:
+    def translate(self, key: str, default: str = None, gender: _data_types.UserGender = None, **kwargs) -> str:
         """Translate the given key.
 
         :param key: Key to translate.
         :param default: The value to return if the key is not defined.
+        :param gender: Gender variant of the requested translation.
         :param kwargs: Translation’s arguments.
         :return: The translated text or the key/default value if it is undefined for the current language.
         """
-        text = self._mappings.get(key, default if default is not None else key)
+        text = ''
+        if gender:
+            text = self._mappings.get(f'{key}.{gender.i18n_label}')
+        if not text:
+            text = self._mappings.get(key, default if default is not None else key)
         has_several_paragraphs = '\n\n' in text
         text = text.replace('{license-url}', f'https://creativecommons.org/licenses/by-sa/3.0/deed.{self.code}')
         # Parse Markdown before kwargs substitution to avoid formatting them.

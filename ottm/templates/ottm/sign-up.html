@@ -15,7 +15,7 @@
         {% include 'ottm/include/form.html' with form=context.sign_up_form prefix='page.sign_up.' %}
       {% else %}
         <div class="alert alert-warning text-center" role="alert">
-          {% ottm_translate 'page.sign_up.already_logged_in' %}
+          {% ottm_translate 'page.sign_up.already_logged_in' gender=context.user.gender %}
         </div>
       {% endif %}
     </div>

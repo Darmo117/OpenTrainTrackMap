@@ -7,23 +7,24 @@ import django.utils.safestring as _dj_safe
 import pytz as _pytz
 
 from .. import page_handlers as _ph, models as _models
-from ..api import auth as _auth
+from ..api import auth as _auth, data_types as _data_types
 
 register = _dj_template.Library()
 TemplateContext = dict[str, _typ.Any]
 
 
 @register.simple_tag(takes_context=True)
-def ottm_translate(context: TemplateContext, key: str, **kwargs) -> str:
+def ottm_translate(context: TemplateContext, key: str, gender: _data_types.UserGender = None, **kwargs) -> str:
     """Translate the given key.
 
     :param context: Page context.
     :param key: Key to translate.
+    :param gender: Translation’s gender.
     :param kwargs: Translation’s arguments.
     :return: The translated text or the key in it is undefined for the current language.
     """
     ottm_context: _ph.PageContext = context['context']
-    return _dj_safe.mark_safe(ottm_context.language.translate(key, **kwargs))
+    return _dj_safe.mark_safe(ottm_context.language.translate(key, gender=gender, **kwargs))
 
 
 @register.simple_tag(takes_context=True)
@@ -104,7 +105,7 @@ def ottm_user_type_icon(context: TemplateContext, username: str) -> str:
     else:
         key = 'page.user_profile.statistics.status_user'
         icon = 'account'
-    tooltip = ottm_context.language.translate(key)
+    tooltip = ottm_context.language.translate(key, gender=user.gender)
     # language=HTML
     return _dj_safe.mark_safe(f'<span class="mdi mdi-{icon}" title="{tooltip}"></span>')
 

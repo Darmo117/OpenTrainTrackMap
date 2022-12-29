@@ -8,7 +8,7 @@ from django.http import response as _dj_response
 
 from . import _ottm_handler, _user_page_context
 from .. import forms as _forms, models as _models, requests as _requests
-from ..api import auth as _auth, errors as _errors, permissions as _perms
+from ..api import auth as _auth, data_types as _data_types, errors as _errors, permissions as _perms
 
 
 class UserProfilePageHandler(_ottm_handler.OTTMHandler):
@@ -40,7 +40,8 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                 return self._handle_view_profile(target_user)
 
     def _handle_view_profile(self, target_user: _models.User) -> _dj_response.HttpResponse:
-        title, tab_title = self.get_page_titles(page_id='user_profile', titles_args={'username': target_user.username})
+        title, tab_title = self.get_page_titles(page_id='user_profile', gender=target_user.gender,
+                                                titles_args={'username': target_user.username})
         return self.render_page('ottm/user-profile/view.html', UserProfilePageContext(
             self._request_params,
             tab_title,
@@ -54,14 +55,14 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
             return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
 
         global_errors = {}
-        form = BlockUserForm(initial={
+        form = BlockUserForm(target_user.gender, initial={
             'allow_messages_on_own_user_page': True,
             'allow_editing_own_settings': True,
         })
-        unblock_form = UnblockUserForm()
+        unblock_form = UnblockUserForm(target_user.gender)
         if self._request_params.post:
             if self._request_params.post.get('form-name') == 'block':
-                form = BlockUserForm(post=self._request_params.post)
+                form = BlockUserForm(target_user.gender, post=self._request_params.post)
                 if form.is_valid():
                     global_errors[form.name] = []
                     try:
@@ -77,7 +78,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                     else:
                         return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
             else:
-                unblock_form = UnblockUserForm(post=self._request_params.post)
+                unblock_form = UnblockUserForm(target_user.gender, post=self._request_params.post)
                 if unblock_form.is_valid():
                     try:
                         _auth.unblock_user(target_user, self._request_params.user, unblock_form.cleaned_data['reason'])
@@ -86,7 +87,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                     else:
                         return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
 
-        title, tab_title = self.get_page_titles(page_id='user_profile.block',
+        title, tab_title = self.get_page_titles(page_id='user_profile.block', gender=target_user.gender,
                                                 titles_args={'username': target_user.username})
         return self.render_page(f'ottm/user-profile/block.html', UserBlockPageContext(
             self._request_params,
@@ -120,7 +121,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                 else:
                     return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
 
-        title, tab_title = self.get_page_titles(page_id='user_profile.mask_username',
+        title, tab_title = self.get_page_titles(page_id='user_profile.mask_username', gender=target_user.gender,
                                                 titles_args={'username': target_user.username})
         return self.render_page(f'ottm/user-profile/action-form.html', UserProfileActionPageContext(
             self._request_params,
@@ -163,7 +164,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                 else:
                     return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
 
-        title, tab_title = self.get_page_titles(page_id='user_profile.edit_groups',
+        title, tab_title = self.get_page_titles(page_id='user_profile.edit_groups', gender=target_user.gender,
                                                 titles_args={'username': target_user.username})
         return self.render_page(f'ottm/user-profile/action-form.html', UserProfileActionPageContext(
             self._request_params,
@@ -359,8 +360,12 @@ class BlockUserForm(_forms.CustomForm):
         strip=True,
     )
 
-    def __init__(self, post=None, initial=None):
-        super().__init__('block', False, danger=True, post=post, initial=initial)
+    def __init__(self, user_gender: _data_types.UserGender, post=None, initial=None):
+        super().__init__('block', False, danger=True, fields_genders={
+            'allow_messages_on_own_user_page': user_gender,
+            'allow_editing_own_settings': user_gender,
+            'submit': user_gender,
+        }, post=post, initial=initial)
 
 
 class UnblockUserForm(_forms.CustomForm):
@@ -373,5 +378,7 @@ class UnblockUserForm(_forms.CustomForm):
         strip=True,
     )
 
-    def __init__(self, post=None, initial=None):
-        super().__init__('unblock', False, post=post, initial=initial)
+    def __init__(self, user_gender: _data_types.UserGender, post=None, initial=None):
+        super().__init__('unblock', False, fields_genders={
+            'submit': user_gender,
+        }, post=post, initial=initial)

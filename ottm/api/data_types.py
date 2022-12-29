@@ -176,8 +176,8 @@ class UserGender:
     i18n_label: str
 
 
-GENDER_N = UserGender(label='neutral', i18n_label='neutral')
-GENDER_F = UserGender(label='female', i18n_label='feminine')
-GENDER_M = UserGender(label='male', i18n_label='masculine')
+GENDER_N = UserGender(label='neutral', i18n_label='n')
+GENDER_F = UserGender(label='female', i18n_label='f')
+GENDER_M = UserGender(label='male', i18n_label='m')
 
 GENDERS: dict[str, UserGender] = {v.label: v for k, v in globals().items() if k.startswith('GENDER_')}

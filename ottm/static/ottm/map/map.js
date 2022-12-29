@@ -182,7 +182,7 @@
         action: map => openMapInTab(map, "https://www.google.com/maps/@{lat},{long},{zoom}z"),
       }).addTo(map);
       L.control.button({
-        label: ottm._translations.get("map.controls.ign_compare_button.label"),
+        label: "IGN",
         tooltip: ottm._translations.get("map.controls.ign_compare_button.tooltip"),
         action: map => openMapInTab(map, "https://remonterletemps.ign.fr/comparer/basic?x={long}&y={lat}&z={zoom}"),
       }).addTo(map);

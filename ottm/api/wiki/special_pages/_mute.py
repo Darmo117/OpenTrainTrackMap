@@ -6,7 +6,7 @@ import django.forms as _dj_forms
 
 from . import _core
 from .. import namespaces as _w_ns
-from ... import auth as _auth
+from ... import auth as _auth, data_types as _data_types
 from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
 
 
@@ -24,10 +24,10 @@ class MuteSpecialPage(_core.SpecialPage):
             -> dict[str, _typ.Any] | _core.Redirect:
         user = _auth.get_user_from_request(params.request)
         target_user = None
-        form = _Form()
+        form = _Form(_data_types.GENDER_N)
         global_errors = {form.name: []}
         if params.post:
-            form = _Form(params.post)
+            form = _Form(_data_types.GENDER_N, post=params.post)
             if form.is_valid():
                 target_user = _auth.get_user_from_name(form.cleaned_data['username'])
                 username = target_user.username
@@ -57,9 +57,9 @@ class MuteSpecialPage(_core.SpecialPage):
             target_user = _auth.get_user_from_name(args[0])
             if not target_user:
                 global_errors[form.name].append('user_does_not_exist')
-                form = _Form(initial={'username': args[0]})
+                form = _Form(_data_types.GENDER_N, initial={'username': args[0]})
             else:
-                form = _Form(initial={
+                form = _Form(target_user.gender, initial={
                     'username': target_user.username,
                     'mute_emails': target_user.username in user.email_user_blacklist,
                     'mute_notifications': target_user.username in user.user_notification_blacklist,
@@ -91,5 +91,9 @@ class _Form(_ph.WikiForm):
         required=False,
     )
 
-    def __init__(self, post=None, initial=None):
-        super().__init__('mute_user', False, post=post, initial=initial)
+    def __init__(self, user_gender: _data_types.UserGender, post=None, initial=None):
+        super().__init__('mute_user', False, fields_genders={
+            'username': user_gender,
+            'mute_emails': user_gender,
+            'mute_notifications': user_gender,
+        }, post=post, initial=initial)

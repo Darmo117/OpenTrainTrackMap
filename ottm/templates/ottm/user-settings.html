@@ -939,7 +939,7 @@
                 <th scope="col">{% ottm_translate trans_prefix|add:'events.table.header.email' %}</th>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_user_talk_edits' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_user_talk_edits' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     <input id="user-settings-form-web-notify-user-talk-edits" class="custom-control-input" disabled
@@ -956,7 +956,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_followed_pages_edits' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_followed_pages_edits' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_followed_pages_edits }}
@@ -973,7 +973,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_talk_mentions' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_talk_mentions' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_talk_mentions }}
@@ -989,7 +989,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_message_answers' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_message_answers' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_message_answers }}
@@ -1006,7 +1006,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_topic_answers' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_topic_answers' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_topic_answers }}
@@ -1022,7 +1022,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_thanks' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_thanks' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_thanks }}
@@ -1037,7 +1037,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_failed_connection_attempts' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_failed_connection_attempts' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_failed_connection_attempts }}
@@ -1054,7 +1054,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_permissions_edit' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_permissions_edit' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_permissions_edit }}
@@ -1071,7 +1071,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_user_email' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_user_email' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_user_email }}
@@ -1087,7 +1087,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_cancelled_edits' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_cancelled_edits' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_cancelled_edits }}
@@ -1104,7 +1104,7 @@
                 </td>
               </tr>
               <tr>
-                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_edit_count_milestones' %}</th>
+                <th scope="row">{% ottm_translate trans_prefix|add:'events.table.header.notify_edit_count_milestones' gender=context.user.gender %}</th>
                 <td>
                   <div class="custom-control custom-checkbox">
                     {{ form.web_notify_edit_count_milestones }}

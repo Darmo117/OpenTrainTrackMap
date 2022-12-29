@@ -91,6 +91,8 @@ class SpecialPage(_abc.ABC):
         data = self._process_request(params, title.split('/')[1:])
         if isinstance(data, Redirect):
             return data
+        if 'target_user' in data and data['target_user']:
+            data['title_key'] = f'{data["title_key"]}.{data["target_user"].gender.i18n_label}'
         return {
             'has_custom_css': self.has_custom_css,
             'has_custom_js': self.has_custom_js,

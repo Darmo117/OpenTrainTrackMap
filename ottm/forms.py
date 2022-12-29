@@ -4,6 +4,8 @@ import typing as _typ
 import django.core.exceptions as _dj_exc
 import django.forms as _dj_forms
 
+from .api import data_types as _data_types
+
 
 def non_special_page_validator(value: str):
     from .api.wiki import namespaces as _w_ns, pages as _w_pages
@@ -34,10 +36,13 @@ class CustomForm(_dj_forms.Form):
     """Base class for all forms. Applies custom CSS styles to widgets."""
 
     def __init__(self, name: str, warn_unsaved_changes: bool, danger: bool = False,
+                 fields_genders: dict[str, _data_types.UserGender] = None,
                  sections: dict[str, dict[str, list[str]]] = None, post=None, initial=None):
         super().__init__(post, initial=initial)
         self._name = name
         self._warn_unsaved_changes = warn_unsaved_changes
+        self._danger = danger
+        self._fields_genders = fields_genders or {}
         if not sections:
             self._sections = {'': {'': self}}
         else:
@@ -55,7 +60,6 @@ class CustomForm(_dj_forms.Form):
                 visible.field.widget.attrs['class'] = 'custom-control-input'
             else:
                 visible.field.widget.attrs['class'] = 'form-control'
-        self._danger = danger
 
     @property
     def name(self) -> str:
@@ -72,6 +76,10 @@ class CustomForm(_dj_forms.Form):
     @property
     def sections(self) -> dict[str, dict[str, _typ.Iterable[_dj_forms.Field]]]:
         return self._sections
+
+    @property
+    def fields_genders(self) -> dict[str, _data_types.UserGender]:
+        return self._fields_genders
 
 
 class ConfirmPasswordFormMixin:
