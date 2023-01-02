@@ -35,7 +35,7 @@
         "tab_title": "Copyright and license"
       },
       "help": {
-        "title": "Getting help",
+        "title": "Help",
         "tab_title": "Help"
       },
       "about": {
@@ -152,7 +152,7 @@
             "block": {
               "title": "Block",
               "end_date": {
-                "label": "End date",
+                "label": "Until",
                 "help": "Leave empty for infinite duration.",
                 "error": {
                   "invalid": "Invalid date!"
@@ -257,7 +257,7 @@
           "user_settings": {
             "tab": {
               "personal_info": "Personal information",
-              "appearence": "Appearence",
+              "appearance": "Appearance",
               "editing": "Wiki editing",
               "revisions": "Wiki page revisions",
               "search": "Wiki search",
@@ -272,7 +272,7 @@
               "date_and_time": "Date and time",
               "files": "Files",
               "diffs": "Differences",
-              "appearence_advanced": "Advanced options",
+              "appearance_advanced": "Advanced options",
               "editor": "Editor",
               "preview": "Preview",
               "modify": "Modify the follow list",
@@ -339,7 +339,7 @@
               "help": "One username per line."
             },
             "custom_css_js": {
-              "label": "Custom CSS/JavaScript wiki pages to apply to all wiki pages:"
+              "label": "Custom CSS/JavaScript to apply to all wiki pages:"
             },
             "custom_css": {
               "label": "Custom CSS"
@@ -348,7 +348,7 @@
               "label": "Custom JavaScript"
             },
             "custom_light_css_js": {
-              "label": "Custom CSS/JavaScript wiki pages to apply to all wiki pages when using light mode:"
+              "label": "Custom CSS/JavaScript to apply to all wiki pages when using light mode:"
             },
             "custom_light_css": {
               "label": "Custom light-mode CSS"
@@ -357,7 +357,7 @@
               "label": "Custom light-mode JavaScript"
             },
             "custom_dark_css_js": {
-              "label": "Custom CSS/JavaScript wiki pages to apply to all wiki pages when using dark mode:"
+              "label": "Custom CSS/JavaScript to apply to all wiki pages when using dark mode:"
             },
             "custom_dark_css": {
               "label": "Custom dark-mode CSS"
@@ -1281,9 +1281,9 @@
           "revision_warning": {
             "edit": "**You are editing an archived version of this page published on {date}.**\n\nIf you publish your changes, all subsequent revisions will be reverted."
           },
-          "interface_warning": "**You are editing a page that modifies the wiki’s interface.**\n\nPlease be very carefull of the changes you make as they will impact other users.",
+          "interface_warning": "**You are editing a page that modifies the wiki’s interface.**\n\nPlease be very careful of the changes you make as they will impact other users.",
           "protection_warning": "**This page is protected.**",
-          "deletion_warning": "**You are creating a page that has been deleted previously.** Please ensure that it is relevent to recreate it before submitting your changes.",
+          "deletion_warning": "**You are creating a page that has been deleted previously.** Please ensure that it is relevant to recreate it before submitting your changes.",
           "permission_error": "You do not have the permissions required to edit this page.",
           "concurrent_edit_error": "Another user published a new version of this page while you were editing it. Please compare your version with the new one below before publishing.",
           "log_entry": "Log entry:",
@@ -1430,7 +1430,7 @@
               "label": "Number of recent edits (last {nb} days)"
             },
             "recent_distinct_editors_nb": {
-              "label": "Number of recent editors (last {nb} days)"
+              "label": "Number of recent unique editors (last {nb} days)"
             }
           }
         }

@@ -35,7 +35,7 @@
         "tab_title": "Copyright et licence"
       },
       "help": {
-        "title": "Trouver de l’aide",
+        "title": "Aide",
         "tab_title": "Aide"
       },
       "about": {
@@ -146,7 +146,7 @@
           "status": "Type de compte",
           "status_non_existent": "Cet·te utilisateurice n’existe pas",
           "status_anonymous": "Utilisateurice anonyme",
-          "status_bot": "Robot",
+          "status_bot": "Bot",
           "status_user": {
             "n": "Utilisateurice normal·e",
             "f": "Utilisatrice normale",
@@ -277,7 +277,7 @@
           "user_settings": {
             "tab": {
               "personal_info": "Informations personnelles",
-              "appearence": "Apparence",
+              "appearance": "Apparence",
               "editing": "Modification du wiki",
               "revisions": "Versions de pages du wiki",
               "search": "Recherche sur le wiki",
@@ -292,7 +292,7 @@
               "date_and_time": "Date et heure",
               "files": "Fichiers",
               "diffs": "Différences",
-              "appearence_advanced": "Options avancées",
+              "appearance_advanced": "Options avancées",
               "editor": "Éditeur",
               "preview": "Prévisualisation",
               "modify": "Modifier la liste de suivi",
@@ -481,7 +481,7 @@
               "label": "Masquer les modifications mineures"
             },
             "mask_wiki_bot_edits": {
-              "label": "Masquer les modifications des robots"
+              "label": "Masquer les modifications des bots"
             },
             "mask_wiki_own_edits": {
               "label": "Masquer mes propres modifications"
@@ -1514,7 +1514,7 @@
               "label": "Nombre de modifications récentes (derniers {nb} jours)"
             },
             "recent_distinct_editors_nb": {
-              "label": "Nombre de contributeurices récent·es (derniers {nb} jours)"
+              "label": "Nombre de contributeurices uniques récent·es (derniers {nb} jours)"
             }
           }
         }
@@ -1554,7 +1554,7 @@
           },
           "bot": {
             "label": "B",
-            "tooltip": "Modification de robot"
+            "tooltip": "Modification de bot"
           },
           "creation": {
             "label": "C",

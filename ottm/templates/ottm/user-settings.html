@@ -25,10 +25,10 @@
         </button>
       </li>
       <li class="nav-item" role="presentation">
-        <button id="form-tab-appearence" class="nav-link" data-toggle="tab"
-                data-target="#form-panel-appearence" type="button" role="tab"
-                aria-controls="form-panel-appearence" aria-selected="false">
-          {% ottm_translate trans_prefix|add:'tab.appearence' %}
+        <button id="form-tab-appearance" class="nav-link" data-toggle="tab"
+                data-target="#form-panel-appearance" type="button" role="tab"
+                aria-controls="form-panel-appearance" aria-selected="false">
+          {% ottm_translate trans_prefix|add:'tab.appearance' %}
         </button>
       </li>
       <li class="nav-item" role="presentation">
@@ -226,7 +226,7 @@
           {% endwith %}
         </fieldset>
       </div>
-      <div id="form-panel-appearence" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-appearence">
+      <div id="form-panel-appearance" class="tab-pane" role="tabpanel" aria-labelledby="form-tab-appearance">
         <fieldset>
           <legend>{% ottm_translate trans_prefix|add:'fieldset.skins' %}</legend>
           {% with trans_field_prefix=trans_prefix|add:form.dark_mode.label|add:'.' %}
@@ -380,7 +380,7 @@
           {% endwith %}
         </fieldset>
         <fieldset>
-          <legend>{% ottm_translate trans_prefix|add:'fieldset.appearence_advanced' %}</legend>
+          <legend>{% ottm_translate trans_prefix|add:'fieldset.appearance_advanced' %}</legend>
           {% with trans_field_prefix=trans_prefix|add:form.show_hidden_categories.label|add:'.' %}
             <div class="form-group">
               <div class="custom-control custom-checkbox">

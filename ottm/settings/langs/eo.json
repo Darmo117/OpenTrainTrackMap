@@ -21,17 +21,20 @@
   "mappings": {
     "page": {
       "edit": {
-        "tab_title": "Modifii"
+        "tab_title": "Modifi"
       },
       "history": {
         "tab_title": "Historio"
       },
+      "contributions": {
+        "tab_title": "Kontribuoj de {username}"
+      },
       "copyright": {
-        "title": "Kopirajto kaj permesilo",
-        "tab_title": "Kopirajto kaj permesilo"
+        "title": "Kopirajto kaj licenco",
+        "tab_title": "Kopirajto kaj licenco"
       },
       "help": {
-        "title": "Trovi helpon",
+        "title": "Helpo",
         "tab_title": "Helpo"
       },
       "about": {
@@ -39,180 +42,1479 @@
         "tab_title": "Pri"
       },
       "basics": {
-        "title": "Vortaro kaj reguloj",
-        "tab_title": "Vortaro kaj reguloj"
+        "title": "Vortprovizo kaj reguloj",
+        "tab_title": "Vortprovizo kaj reguloj"
       },
       "log_in": {
         "title": "Ensaluti",
-        "tab_title": "Ensaluti"
+        "tab_title": "Ensaluti",
+        "not_logged_in": "Vi devas ensaluti por modifi la mapon.",
+        "password_update": "Vi ĵus ŝangi vian pasvorton, bonvolu reensaluti.",
+        "already_logged_in": "Vi jam estas ensalutata.",
+        "form": {
+          "log_in": {
+            "username": {
+              "label": "Uzantonomo"
+            },
+            "password": {
+              "label": "Pasvorto"
+            },
+            "submit": {
+              "label": "Ensaluti"
+            },
+            "error": {
+              "invalid_credentials": "Nevalida uzantonomo aŭ pasvorto."
+            }
+          }
+        }
       },
       "sign_up": {
-        "title": "Aliĝi",
-        "tab_title": "Aliĝi"
+        "title": "Krei novan konton",
+        "tab_title": "Registriĝi",
+        "already_logged_in": "Vi jam estas ensalutata, bonvolu elsaluti por krei novan konton.",
+        "blocked": "Via IP-adreso estas forbarita, vi ne povas krei novajn kontojn.\n\nSe vi pensas, ke estas eroron, bonvolu kontakti administranton en la [vikio]({url}).",
+        "form": {
+          "sign_up": {
+            "username": {
+              "label": "Uzantonomo",
+              "help": "Saĝe elektu ĉar vi ne eble povos ŝanĝi ĝin poste!",
+              "error": {
+                "invalid": "Nevalida uzantonomo!",
+                "duplicate": "Tiu uzantonomo ne estas havebla!"
+              }
+            },
+            "email": {
+              "label": "Retadreso",
+              "help": "Neniam publike videbla.",
+              "error": {
+                "invalid": "Nevalida retadreso!"
+              }
+            },
+            "password": {
+              "label": "Pasvorto"
+            },
+            "password_confirm": {
+              "label": "Konfirmi la pasvorton",
+              "error": {
+                "passwords_mismatch": "La pasvortoj ne kongruas!"
+              }
+            },
+            "submit": {
+              "label": "Krei konton"
+            }
+          }
+        }
       },
       "user_profile": {
         "title": "{username}",
         "tab_title": "Profilo de {username}",
+        "picture_tooltip": "Profilbildo de {username}",
         "subtitle": {
+          "profile": "Profilo",
           "notes": "Notoj",
           "contributions": "Kontribuoj",
           "wiki_contributions": "Vikikontribuoj",
+          "wiki_user_page": "Vikia uzantopaĝo",
           "settings": "Agordoj"
+        },
+        "action": {
+          "block": {
+            "label": "Forbari"
+          },
+          "mask_username": {
+            "label": "Kaŝi la uzantonomon"
+          },
+          "edit_groups": {
+            "label": "Modifi la grupojn"
+          },
+          "rename": {
+            "label": "Renomi"
+          }
         },
         "statistics": {
           "title": "Statistikoj",
-          "admin_label": "Administranto",
-          "account_creation_date_label": "Contributeurice depuis",
-          "notes_count_label": "Nombre de notes",
-          "edits_count_label": "Nombre de modifications",
-          "wiki_edits_count_label": "Nombre de modifications sur le wiki"
+          "groups": "Grupoj",
+          "status": "Kontotipo",
+          "status_non_existent": "La uzanto neekzistas",
+          "status_anonymous": "Sennoma uzanto",
+          "status_bot": "Roboto",
+          "status_user": "Normala uzanto",
+          "account_creation_date_label": "Kreodato de la konto",
+          "notes_count_label": "Nombro da notoj",
+          "edits_count_label": "Nombro da mapomodifoj",
+          "wiki_edits_count_label": "Nombro da vikiredaktoj"
+        },
+        "block": {
+          "title": "Forbari “{username}”",
+          "tab_title": "Forbari “{username}”",
+          "form": {
+            "block": {
+              "title": "Forbari",
+              "end_date": {
+                "label": "Ĝis dato",
+                "help": "Lasu malplenan por nefinita daŭro.",
+                "error": {
+                  "invalid": "Nevalida dato!"
+                }
+              },
+              "allow_messages_on_own_user_page": {
+                "label": {
+                  "n": "Permesi afiŝi mesaĝojn en ria vikia uzantopaĝo",
+                  "f": "Permesi afiŝi mesaĝojn en ŝia vikia uzantopaĝo",
+                  "m": "Permesi afiŝi mesaĝojn en lia vikia uzantopaĝo"
+                }
+              },
+              "allow_editing_own_settings": {
+                "label": {
+                  "n": "Permesi modifi riajn agordojn",
+                  "f": "Permesi modifi ŝiajn agordojn",
+                  "m": "Permesi modifi liajn agordojn"
+                }
+              },
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": {
+                  "n": "Forbari la uzanton",
+                  "f": "Forbari la uzantinon",
+                  "m": "Forbari la uzantiĉon"
+                }
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por forbari uzantojn.",
+                "past_date": "La dato estas pasita."
+              }
+            },
+            "unblock": {
+              "title": "Malforbari",
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": {
+                  "n": "Malforbari la uzanton",
+                  "f": "Malforbari la uzantinon",
+                  "m": "Malforbari la uzantiĉon"
+                }
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por forbari uzantojn."
+              }
+            }
+          },
+          "log_entries": "Rilataj protokoleroj"
+        },
+        "edit_groups": {
+          "title": "Modifi la grupojn de “{username}”",
+          "tab_title": "Modifi la grupojn de “{username}”",
+          "form": {
+            "edit_groups": {
+              "groups": {
+                "label": "Grupoj",
+                "error": {
+                  "invalid_choice": "Nevalida elektaĵo!"
+                }
+              },
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": "Sendi"
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por modifi uzantogrupojn.",
+                "anonymous_user": "Ne povas modifi grupojn de sennomaj uzantoj."
+              }
+            }
+          },
+          "log_entries": "Rilataj protokoleroj"
+        },
+        "mask_username": {
+          "title": "Kaŝi la uzantonomon de “{username}”",
+          "tab_title": "Kaŝi la uzantonomon de “{username}”",
+          "form": {
+            "mask_username": {
+              "mask": {
+                "label": "Kaŝi"
+              },
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": "Ŝanĝi videblecon"
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por ŝanĝi la videblecon de uzantonomojn.",
+                "anonymous_user": "Vi ne povas ŝanĝi la videblecon de la uzantonomojn de sennomaj uzantoj."
+              }
+            }
+          },
+          "log_entries": "Rilataj protokoleroj"
         }
       },
+      "user_notes": {
+        "title": "Notoj de {username}",
+        "tab_title": "Notoj de {username}"
+      },
       "user_settings": {
-        "title": "Paramètres du compte",
-        "tab_title": "Paramètres du compte",
-        "subtitle": {
-          "profile": "Retourner au profil"
+        "title": "Agordoj de la konto",
+        "tab_title": "Agordoj de la konto",
+        "form": {
+          "user_settings": {
+            "tab": {
+              "personal_info": "Personaj informoj",
+              "appearance": "Aspekto",
+              "editing": "Vikia redaktado",
+              "revisions": "Vikiaj paĝoversioj",
+              "search": "Vikia serĉo",
+              "gadgets": "Vikiaj aldonaĵoj",
+              "notifications": "Sciigoj"
+            },
+            "fieldset": {
+              "basic_info": "Bazaj informoj",
+              "localization": "Traduko",
+              "email": "Retadreso",
+              "skins": "Etoso",
+              "date_and_time": "Dato kaj tempo",
+              "files": "Dosieroj",
+              "diffs": "Diferencoj",
+              "appearance_advanced": "Altnivelaj agordoj",
+              "editor": "Redaktilo",
+              "preview": "Antaŭrigardo",
+              "modify": "Modifi la atentaron",
+              "revisions_display": "Agordoj de montrado",
+              "revisions_displayed_edits": "Montritaj redkatoj",
+              "followed_pages": "Atentataj paĝoj",
+              "search_general": "Ĝeneralaj agordoj",
+              "advanced_search": "Altnivelaj agordoj",
+              "email_options": "Retadresaj agordoj",
+              "events": "Okazaĵoj",
+              "blocked_users": "Silentigitaj uzantoj",
+              "muted_pages": "Silentigitaj paĝoj"
+            },
+            "password": {
+              "label": "Nova pasvorto",
+              "help": "Lasu malplenan por konservi la nunan pasvorton. Vi devos reensaluti se vi ŝanĝas ĝin."
+            },
+            "password_confirm": {
+              "label": "Konfirmi la novan pasvorton",
+              "error": {
+                "passwords_mismatch": "La pasvortoj ne kongruas!"
+              }
+            },
+            "gender": {
+              "label": "Kiel vi volas esti deskribita?",
+              "help": "Ĉi-tiu opcio ne esta deviga, ĝi estas uzata per la retejo por alparoli vin aŭ priparoli vin al aliaj uzantoj. **Ĉi-tiu informo estas publika.**",
+              "n": {
+                "label": "Ri kontribuas. (La retejo uzos neŭtralajn frazojn.)"
+              },
+              "f": {
+                "label": "Ŝi kontribuas."
+              },
+              "m": {
+                "label": "Li kontribuas."
+              },
+              "error": {
+                "invalid_choice": "Nevalida elektaĵo!"
+              }
+            },
+            "preferred_language": {
+              "label": "Preferita lingvo",
+              "error": {
+                "invalid_choice": "Nevalida elektaĵo!"
+              }
+            },
+            "email": {
+              "label": "Retadreso",
+              "help": "Neniam publike videbla.",
+              "error": {
+                "invalid": "Nevalida retadreso!"
+              }
+            },
+            "users_can_send_emails": {
+              "label": "Permesi la uzantojn sendi min retmesaĝojn"
+            },
+            "new_users_can_send_emails": {
+              "label": "Permesi la novajn uzantojn sendi min retmesaĝojn"
+            },
+            "send_copy_of_sent_emails": {
+              "label": "Sendi min kopion de la retmesaĝoj, ke mi sendas"
+            },
+            "email_user_blacklist": {
+              "label": "Bari ĉi-tiun uzantojn je sendi min retmesaĝojn:",
+              "help": "Unu uzantonomo per linio."
+            },
+            "custom_css_js": {
+              "label": "Propra CSS/JavaScript aplikita en ĉiuj vikipaĝoj:"
+            },
+            "custom_css": {
+              "label": "Propra CSS"
+            },
+            "custom_js": {
+              "label": "Propra JavaScript"
+            },
+            "custom_light_css_js": {
+              "label": "Propra CSS/JavaScript aplikita en ĉiuj vikipaĝoj kiam la hela etoso estas aktiva:"
+            },
+            "custom_light_css": {
+              "label": "Propra CSS de la hela etoso"
+            },
+            "custom_light_js": {
+              "label": "Propra JavaScript de la hela etoso"
+            },
+            "custom_dark_css_js": {
+              "label": "Propra CSS/JavaScript aplikita en ĉiuj vikipaĝoj kiam la malhela etoso estas aktiva:"
+            },
+            "custom_dark_css": {
+              "label": "Propra CSS de la malhela etoso"
+            },
+            "custom_dark_js": {
+              "label": "Propra JavaScript de la malhela etoso"
+            },
+            "dark_mode": {
+              "label": "Uzi la malhelan etoson"
+            },
+            "preferred_datetime_format": {
+              "label": "Preferita dato kaj tempo prezento",
+              "error": {
+                "invalid_choice": "Nevalida elektaĵo!"
+              }
+            },
+            "server_time": {
+              "label": "Tempo de la servilo ({tz}):"
+            },
+            "timezone_time": {
+              "label": "Tempo de la elektita horzono:"
+            },
+            "preferred_timezone": {
+              "label": "Preferita horzono",
+              "error": {
+                "invalid_choice": "Nevalida elektaĵo!"
+              }
+            },
+            "max_file_preview_size": {
+              "label": "Maksimuma grando de dosiera antaŭrigardo en “File:” vikipaĝoj",
+              "error": {
+                "invalid_choice": "Nevalida elektaĵo!"
+              }
+            },
+            "thumbnails_size": {
+              "label": "Maksimuma grando de bildetoj en vikipaĝoj",
+              "help": "De 100px je 600px.",
+              "error": {
+                "invalid_thumbnail_size": "Nevalida grando!"
+              }
+            },
+            "show_page_content_in_diffs": {
+              "label": "Montri paĝotekstojn sub diferencoj"
+            },
+            "show_diff_after_revert": {
+              "label": "Montri diferencojn post malfari ŝangojn"
+            },
+            "show_hidden_categories": {
+              "label": "Montri kaŝitajn kategoriojn"
+            },
+            "ask_revert_confirmation": {
+              "label": "Peti konfirmon kiam mi alklakas malfari-butonon"
+            },
+            "use_editor_syntax_highlighting": {
+              "label": "Aktivi sintaksan koloradon"
+            },
+            "mark_all_wiki_edits_as_minor": {
+              "label": "Marki ĉiujn ŝangojn kiel eta"
+            },
+            "warn_when_no_wiki_edit_comment": {
+              "label": "Averti min kiam mi ne indikas resumon de redakto"
+            },
+            "warn_when_wiki_edit_not_published": {
+              "label": "Averti min kiam mi forlasas paĝon, ke mi redaktas, sed mi ne publikigis la ŝangojn"
+            },
+            "show_preview_above_edit_form": {
+              "label": "Montri antaŭrigardojn super la redakta formularo"
+            },
+            "show_preview_without_reload": {
+              "label": "Montri antaŭrigardojn sen reŝarĝi la paĝon"
+            },
+            "edit_follow_list": {
+              "label": "Ŝanĝi erojn de via atentaro",
+              "edit_button": "Ŝanĝi",
+              "edit_raw_button": "Ŝanĝi la krudan liston",
+              "clear_button": "Malplenigi"
+            },
+            "default_days_nb_in_wiki_edit_lists": {
+              "label": "Nombro de tagoj montritaj en la lastaj ŝanĝoj, protokoloj kaj atentaro",
+              "help": "Maksimuma nombro: {nb} tagoj.",
+              "error": {
+                "invalid": "Nevalida voloro!",
+                "invalid_revisions_days_nb": "Nevalida voloro!"
+              }
+            },
+            "default_edits_nb_in_wiki_edit_lists": {
+              "label": "Nombro de ŝanĝoj montritaj en la lastaj ŝanĝoj, protokoloj kaj atentaro",
+              "help": "Maksimuma nombro: {nb}.",
+              "error": {
+                "invalid": "Nevalida voloro!",
+                "invalid_revisions_edits_nb": "Nevalida voloro!"
+              }
+            },
+            "group_edits_per_page": {
+              "label": "Grupi ŝanĝojn per paĝo en la lastaj ŝanĝoj kaj atentaro"
+            },
+            "revisions_displayed_edits": {
+              "text": "Montraj agordoj por la lastaj ŝanĝoj kaj atentaro."
+            },
+            "mask_wiki_minor_edits": {
+              "label": "Kaŝi redaktetojn"
+            },
+            "mask_wiki_bot_edits": {
+              "label": "Kaŝi robotajn redaktojn"
+            },
+            "mask_wiki_own_edits": {
+              "label": "Kaŝi miajn redaktojn"
+            },
+            "mask_wiki_anonymous_edits": {
+              "label": "Kaŝi redaktojn de sennomaj uzantoj"
+            },
+            "mask_wiki_authenticated_edits": {
+              "label": "Kaŝi redaktojn de normalaj uzantoj"
+            },
+            "mask_wiki_categorization_edits": {
+              "label": "Kaŝi enkategoriigon de paĝoj"
+            },
+            "mask_wiki_patrolled_edits": {
+              "label": "Kaŝi patrolitajn ŝanĝojn"
+            },
+            "followed_pages": {
+              "text": "Agordoj pri kiam paĝoj/diskutoj devas esti aldonitajn en mia atentaro."
+            },
+            "add_created_pages_to_follow_list": {
+              "label": "Paĝoj, ke mi kreas"
+            },
+            "add_modified_pages_to_follow_list": {
+              "label": "Paĝoj, ke mi redaktas"
+            },
+            "add_renamed_pages_to_follow_list": {
+              "label": "Paĝoj, ke mi renomas"
+            },
+            "add_deleted_pages_to_follow_list": {
+              "label": "Paĝoj, ke mi forigas"
+            },
+            "add_reverted_pages_to_follow_list": {
+              "label": "Paĝoj kie mi malfaras ŝanĝon"
+            },
+            "add_created_topics_to_follow_list": {
+              "label": "Diskutoj, ke mi kreas"
+            },
+            "add_replied_to_topics_to_follow_list": {
+              "label": "Diskutoj kie mi publikas mesaĝon"
+            },
+            "search_default_results_nb": {
+              "label": "Defaŭlta nombro da montritaj rezultoj en la serĉpago",
+              "help": "Maksimuma nombro: {nb}.",
+              "error": {
+                "invalid": "Nevalida voloro!",
+                "invalid_search_results_nb": "Nevalida voloro!"
+              }
+            },
+            "search_mode": {
+              "label": "Difinas la konduton de la algoritmo de serĉproponojn.",
+              "error": {
+                "invalid_choice": "Nevalida elektaĵo!"
+              },
+              "default": {
+                "label": "Defaŭlta (rekomendita)",
+                "help": "Proponas similajn rezultojn."
+              },
+              "strict": {
+                "label": "Strikta",
+                "help": "Nur proponas rezultojn, ke ekzakte kongruas kun la serĉmendo."
+              },
+              "prefix": {
+                "label": "Prefikso",
+                "help": "Nur proponas rezultojn kies komenciĝo ekzakte kongruas kun la serĉmendo."
+              }
+            },
+            "email_update_notification_frequency": {
+              "label": "Ofteco de sciigaj retmesaĝoj",
+              "error": {
+                "invalid_choice": "Nevalida elektaĵo!"
+              },
+              "none": {
+                "label": "Neniam"
+              },
+              "immediately": {
+                "label": "Tuje"
+              },
+              "daily": {
+                "label": "Ĉiutage"
+              },
+              "weekly": {
+                "label": "Ĉiusemajne"
+              }
+            },
+            "html_email_updates": {
+              "label": "HTML-aj retmesaĝoj"
+            },
+            "events": {
+              "text": "Averti min de la subaj okazaĵoj.",
+              "table": {
+                "header": {
+                  "web": "Rete",
+                  "email": "Retmesaĝe",
+                  "notify_user_talk_edits": "Novaj mesaĝoj en mia uzanta diskutopaĝo",
+                  "notify_followed_pages_edits": "Ŝangoj en paĝoj de mia atentaro",
+                  "notify_talk_mentions": "Mi estas menciita en mesaĝo",
+                  "notify_message_answers": "Iu respondis al unu el miaj mesaĝoj",
+                  "notify_topic_answers": "Iu publikigis mesaĝon en diskuto, ke mi kreis",
+                  "notify_thanks": "Iu dankis min en redakto, ke mi faris",
+                  "notify_failed_connection_attempts": "Ensalut-provo je mia konto malsukcesis",
+                  "notify_permissions_edit": "Unu el mia uzantogrupo/permisio ŝanĝis",
+                  "notify_user_email": "Alia uzanto sendis min retmesaĝo",
+                  "notify_cancelled_edits": "Unu el miaj redaktoj estis malfarita",
+                  "notify_edit_count_milestones": "Mi atingis specifan nombron de redaktoj"
+                }
+              }
+            },
+            "user_notification_blacklist": {
+              "label": "Ignori sciigojn el ĉi-subaj uzantoj:",
+              "help": "Unu uzantonomo per linio."
+            },
+            "page_notification_blacklist": {
+              "label": "Ignori sciigojn el ĉi-subaj paĝoj:",
+              "help": "Unu paĝotitolo per linio."
+            },
+            "gadgets": {
+              "text": "Ĉi-sube estas listo de aldonoj, ke vi povas ebligi en la vikio."
+            },
+            "submit": {
+              "label": "Konservi ŝanĝojn"
+            }
+          }
+        }
+      },
+      "error": {
+        "403": {
+          "title": "Malpermesa atingo",
+          "tab_title": "Vi ne povas atingi ĉi-tiun paĝon!",
+          "message": "Vi ne havas bezonatajn permesojn por atingi ĉi-tiun paĝon pro la sekva kialo:\n\n{reason}\n\nIri al la [ĉefpaĝo]({url})."
+        },
+        "404": {
+          "title": "Netrovita paĝo",
+          "tab_title": "Netrovita paĝo!",
+          "message": "La paĝo **{path}** ne ekzistas.\n\nIri al la [ĉefpaĝo]({url})."
         }
       }
     },
     "navbar": {
       "edit": {
-        "label": "Modifier",
-        "signup_title": "Connectez-vous pour modifier"
+        "label": "Modifi",
+        "signup_title": "Ensalutu por modifi"
       },
       "history": {
-        "label": "Historique"
+        "label": "Historio"
       },
       "wiki": {
-        "label": "Wiki"
+        "label": "Vikio"
       },
       "copyright": {
-        "label": "Copyright"
+        "label": "Kopirajto"
       },
       "help": {
-        "label": "Aide"
+        "label": "Helpo"
       },
       "about": {
-        "label": "À propos"
+        "label": "Pri"
       },
       "language_select": {
-        "label": "Langue",
-        "tooltip": "Langue du site"
+        "label": "Lingvo",
+        "tooltip": "Reteja lingvo"
       },
       "log_in": {
-        "label": "Connexion"
+        "label": "Ensaluti"
       },
       "sign_up": {
-        "label": "Inscription"
+        "label": "Registriĝi"
       },
       "log_out": {
-        "label": "Déconnexion"
-      }
-    },
-    "alert": {
-      "log_in": {
-        "already_logged_in": "<p><strong>Vous êtes déjà connecté·e.</strong></p><p>Veuillez vous déconnecter puis vous reconnecter avec un autre compte.</p>"
+        "label": "Elsaluti"
       },
-      "sign_up": {
-        "already_logged_in": "<p><strong>Vous êtes déjà connecté·e avec un autre compte.</strong></p><p>Veuillez vous déconnecter avant de créer un compte..</p>"
+      "dark_mode": {
+        "label": "Malhela etoso"
+      },
+      "profile": {
+        "label": "Profilo"
+      },
+      "wiki_user_page": {
+        "label": "Vikia uzantopaĝo"
+      },
+      "contributions": {
+        "label": "Kontribuoj"
+      },
+      "wiki_contributions": {
+        "label": "Vikikontribuoj"
+      },
+      "settings": {
+        "label": "Agordoj"
       }
     },
     "form": {
-      "sign_up": {
-        "username": {
-          "label": "Username",
-          "help": "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.",
-          "error": {
-            "invalid": "Invalid username.",
-            "duplicate": "This username is already taken.",
-            "min_length": "Username is too short.",
-            "max_length": "Username is too long.",
-            "required": "This field is required."
+      "global_error": {
+        "title": "La ĉi-subaj eroroj aperis:"
+      }
+    },
+    "js": {
+      "map": {
+        "controls": {
+          "layers": {
+            "standard": "Mapo",
+            "black_and_white": "Mapo (nigra-blanka)",
+            "satellite_maptiler": "Satelita (MapTiler)",
+            "satellite_esri": "Satelita (Esri)"
+          },
+          "zoom_in": {
+            "tooltip": "Zomi"
+          },
+          "zoom_out": {
+            "tooltip": "Malzomi"
+          },
+          "search": {
+            "tooltip": "Serĉi lokon",
+            "placeholder": "Serĉi lokojn aŭ adresojn…"
+          },
+          "google_maps_button": {
+            "tooltip": "Montri la nunan lokon en Google Maps"
+          },
+          "ign_compare_button": {
+            "tooltip": "Montri la nunan lokon en la komparilo de la IGN"
+          },
+          "edit": {
+            "new_marker": {
+              "tooltip": "Krei novan markon"
+            },
+            "new_line": {
+              "tooltip": "Krei novan plurlinion"
+            },
+            "new_polygon": {
+              "tooltip": "Krei novan plurangulon"
+            }
           }
-        },
-        "email": {
-          "label": "Email",
-          "help": "Required.",
-          "error": {
-            "invalid": "Invalid email address.",
-            "required": "This field is required."
-          }
-        },
-        "password": {
-          "label": "Password",
-          "help": "Required.",
-          "error": {
-            "min_length": "Password is too short.",
-            "max_length": "Password is too long.",
-            "required": "This field is required."
-          }
-        },
-        "password_confirm": {
-          "label": "Confirm password",
-          "help": "Required."
-        },
-        "submit": {
-          "label": "Create account"
         }
       },
-      "log_in": {
-        "username": {
-          "label": "Username",
-          "error": {
-            "not_exists": "No accounts registered with this username.",
-            "required": "This field is required."
-          }
-        },
-        "password": {
-          "label": "Password",
-          "help": "Required.",
-          "error": {
-            "required": "This field is required."
-          }
-        },
-        "submit": {
-          "label": "Log in"
+      "wiki": {
+        "edit": {
+          "no_summary_warning": "Estas forte rekomendita, ke vi skribas mallongan resumon de tio, kio vi ŝanĝis.\nPublikigi ĉiuokaze?"
         }
       }
     },
-    "map": {
-      "controls": {
-        "layers": {
-          "standard": "Map",
-          "black_and_white": "Map (black and white)",
-          "satellite_maptiler": "Satellite (MapTiler)",
-          "satellite_esri": "Satellite (Esri)"
+    "wiki": {
+      "name": "Vikio de OTTM",
+      "main_page_title": "Ĉefpaĝo",
+      "namespace": {
+        "0": {
+          "display_name": "(Ĉefa)"
+        }
+      },
+      "special_page": {
+        "requires_perms": {
+          "tooltip": "Ĉi-tiu speciala paĝo bezonatas specialajn permesiojn"
         },
-        "zoom_in": {
-          "tooltip": "Zoom in"
+        "invalid_title": {
+          "title": "Nevalida paĝotitolo",
+          "message": "**La titolo de la demanda paĝo enhavas nevalidajn signojn: “{char}”.**\n\nIri al la [ĉefpaĝo]({main_page_url})."
         },
-        "zoom_out": {
-          "tooltip": "Zoom out"
+        "empty_title": {
+          "title": "Nevalida paĝotitolo",
+          "message": "**La titolo de la demanda paĝo estas neplena aŭ nur enhavas nomon de nomspaco.**\n\nIri al la [ĉefpaĝo]({main_page_url})."
         },
-        "search": {
-          "tooltip": "Location search",
-          "placeholder": "Search for places or addresses…"
+        "does_not_exist": {
+          "title": "Neekzistanta speciala paĝo",
+          "message": "**This special page does not exist.**\n\nA list of all special pages can be found [here]({special_pages_link}).\n\nIri al la [ĉefpaĝo]({main_page_url})."
         },
-        "google_maps_button": {
-          "tooltip": "Open current location in Google Maps"
+        "forbidden": {
+          "title": "Malpermesa atingo",
+          "message": "**Vi ne havas la bezonatajn permesojn por atingi ĉi-tiun specialan paĝon.**\n\nIri al la [ĉefpaĝo]({main_page_url})."
         },
-        "ign_compare_button": {
-          "label": "IGN",
-          "tooltip": "Open current location in IGN’s comparing tool"
+        "RandomPage": {
+          "title": "Hazarda paĝo",
+          "menu": {
+            "label": "Hazarda paĝo",
+            "tooltip": "Iri al hazarda paĝo"
+          }
         },
-        "edit": {
-          "new_marker": {
-            "tooltip": "Create a new marker"
+        "RecentChanges": {
+          "title": "Lastaj ŝanĝoj",
+          "menu": {
+            "label": "Lastaj ŝanĝoj",
+            "tooltip": "Montri la lastajn ŝanĝojn en la vikio"
+          }
+        },
+        "UploadFile": {
+          "title": "Aŝulti dosieron",
+          "menu": {
+            "label": "Aŝulti dosieron",
+            "tooltip": "Aŝulti dosieron al la vikio"
+          }
+        },
+        "SpecialPages": {
+          "title": "Specialaj paĝoj",
+          "menu": {
+            "label": "Specialaj paĝoj",
+            "tooltip": "Montri liston de ĉiuj specialaj paĝoj"
           },
-          "new_line": {
-            "tooltip": "Create a new polyline"
+          "section": {
+            "maintenance": "Funkcitenado",
+            "page_lists": "Listoj de paĝoj",
+            "page_operations": "Paĝaj operacioj",
+            "users": "Uzantoj kaj permesoj",
+            "logs": "Lastaj ŝanĝoj kaj protokoloj",
+            "files": "Dosieroj kaj aŭdivaĵoj",
+            "data_tools": "Datumoj kaj iloj",
+            "redirects": "Specialaj paĝoj de alidirektado",
+            "most_used_pages": "Plej uzitaj paĝoj",
+            "other": "Aliaj specialaj paĝoj"
+          }
+        },
+        "DeletePage": {
+          "title": "Forigi paĝon",
+          "title_page": "Forigi “{value}”",
+          "linked_pages": "Alligantaj paĝoj",
+          "log_entries": "Rilataj protokoleroj",
+          "done": "La paĝo sukcese estis forigita.",
+          "history_warning": {
+            "link_text": "paĝa historio",
+            "message": "**Averto: la forigota paĝo havas historion kun {nb} revizio(j): {link}.**"
           },
-          "new_polygon": {
-            "tooltip": "Create a new polygon"
+          "menu": {
+            "label": "Forigi",
+            "tooltip": "Forigi paĝon"
+          },
+          "form": {
+            "delete": {
+              "page": {
+                "label": "Paĝo",
+                "error": {
+                  "page_invalid_title": "Nevalida paĝotitolo!",
+                  "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas.",
+                  "special_page": "Specialaj paĝoj ne povas esti redktataj.",
+                  "required": "Mankanta paĝotitolo!"
+                }
+              },
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": "Forigu la paĝon"
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por forigi paĝojn.",
+                "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas."
+              }
+            }
+          }
+        },
+        "RenamePage": {
+          "title": "Renomi paĝon",
+          "title_page": "Renomi “{value}”",
+          "menu": {
+            "label": "Renomi",
+            "tooltip": "Renomi ĉi-tiun paĝon"
+          }
+        },
+        "ProtectPage": {
+          "title": "Protekti paĝon",
+          "title_page": "Ŝanĝi la protektonivelon de “{value}”",
+          "log_entries": "Rilataj protokoleroj",
+          "done": "La protektonivelo sukcese estis ŝanĝita.",
+          "menu": {
+            "label": "Protekti",
+            "tooltip": "Protekti ĉi-tiun paĝon"
+          },
+          "form": {
+            "protect_page": {
+              "page": {
+                "label": "Protektota paĝo",
+                "error": {
+                  "special_page": "Specialaj paĝoj ne povas esti protektitaj."
+                }
+              },
+              "protection_level": {
+                "label": "Protektonivelo",
+                "help": "Nur la membranoj de la elektita grupo povos redakti la paĝon.",
+                "error": {
+                  "invalid_choice": "Nevalida elektaĵo!"
+                }
+              },
+              "end_date": {
+                "label": "Ĝis dato",
+                "help": "Lasu malplenan por nefinita daŭro. Ignorita se la elektita grupo estas 'all'.",
+                "error": {
+                  "past_date": "La dato estas pasita."
+                }
+              },
+              "protect_talks": {
+                "label": "Protekti la diskutejon"
+              },
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": "Ek"
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti la paĝon."
+              }
+            }
+          }
+        },
+        "Subpages": {
+          "title": "Listi subpaĝoj",
+          "title_page": "Subpaĝoj de “{value}”",
+          "menu": {
+            "label": "Subpaĝoj",
+            "tooltip": "Listi la subpaĝojn de ĉi-tiu paĝo"
+          },
+          "form": {
+            "select_page": {
+              "page": {
+                "label": "Paĝo",
+                "error": {
+                  "page_invalid_title": "Nevalida paĝotitolo!",
+                  "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas.",
+                  "special_page": "Specialaj paĝoj ne havas subpaĝoj.",
+                  "required": "Mankanta paĝotitolo!"
+                }
+              },
+              "submit": {
+                "label": "Listu subpaĝojn"
+              }
+            }
+          },
+          "no_results": "Neniom da rezultoj."
+        },
+        "LinkedPages": {
+          "title": "Ligantaj paĝoj",
+          "title_page": "Ligantaj paĝoj al “{value}”",
+          "menu": {
+            "label": "Ligiloj ĉi tien",
+            "tooltip": "Listi ĉiujn paĝojn kiuj ligas ĉi tien"
+          }
+        },
+        "Logs": {
+          "title": "Protokoloj",
+          "title_page": "Protokoleroj por la paĝo “{value}”",
+          "title_user": "Protokoleroj por la uzanto “{value}”",
+          "menu": {
+            "label": "Paĝaj protokoloj",
+            "tooltip": "Montri la protokolojn de ĉi-tiu paĝo"
+          }
+        },
+        "Contributions": {
+          "title": "Vikikontribuoj",
+          "title_user": "Vikikontribuoj de “{value}”",
+          "menu": {
+            "label": "Vikikontribuoj",
+            "tooltip": "Montri la vikikontribuoj de ci-tiu uzanto"
+          },
+          "form_spoiler": {
+            "label": "Filtri la kontribuoj"
+          },
+          "form": {
+            "filter": {
+              "username": {
+                "label": "Uzantonomo",
+                "error": {
+                  "invalid": "Nevalida uzantonomo!",
+                  "user_does_not_exist": "Ĉi-tiu uzanto ne ekzistas!",
+                  "required": "Mankanta uzantonomo!"
+                }
+              },
+              "namespace": {
+                "label": "nomspaco",
+                "all": "Ĉiuj",
+                "error": {
+                  "invalid": "Nevalida elektaĵo!",
+                  "required": "Mankanta nomspaco!"
+                }
+              },
+              "invert_selection": {
+                "label": "Inversigi la elektaĵon",
+                "help": "Ignorita se neniu nomspaco estas elektita."
+              },
+              "hidden_revisions_only": {
+                "label": "Nur montri kaŝitajn redaktojn"
+              },
+              "last_revisions_only": {
+                "label": "Nur montri redaktojn kiuj estas la lastaj ŝangoj"
+              },
+              "page_creations_only": {
+                "label": "Nur montri redaktojn, kuij kreis paĝon"
+              },
+              "mask_minor_edits": {
+                "label": "Kaŝi redaktetojn"
+              },
+              "start_date": {
+                "label": "De dato",
+                "error": {
+                  "invalid": "Nevalida dato!"
+                }
+              },
+              "end_date": {
+                "label": "Ĝis dato",
+                "error": {
+                  "invalid": "Nevalida dato!"
+                }
+              },
+              "submit": {
+                "label": "Montru kontribuojn"
+              },
+              "error": {
+                "invalid_dates": "Nevalida datos!"
+              }
+            }
+          }
+        },
+        "SendEmail": {
+          "title": "Sendi retmesaĝon al uzanto",
+          "title_user": "Sendi retmesaĝon al “{value}”",
+          "done": "La retmesaĝo sukcese estis sendita.",
+          "copy_sent": "La kopio sukcese estis sendita.",
+          "copy_error": "La kopio ne povis esti sendita pro nekonata eraro.",
+          "info": "La retadreso, ke vi indikis en via profilo, estos montrita en la kampo “Respondi al” de via mesaĝo por permesi la ricevonton respondi al ĝi.",
+          "menu": {
+            "label": "Sendi retmesaĝon",
+            "tooltip": "Sendi retmesaĝon al ĉi-tiu uzanto"
+          },
+          "form": {
+            "send_email": {
+              "username": {
+                "label": "Ricevonto",
+                "error": {
+                  "invalid": "Nevalida uzantonomo!",
+                  "user_does_not_exist": "Ĉi-tiu uzanto ne ekzistass!",
+                  "required": "Mankas la uzantonomo de la recivonto!"
+                }
+              },
+              "subject": {
+                "label": "Temo",
+                "error": {
+                  "required": "Mankanta temo!"
+                }
+              },
+              "content": {
+                "label": "Mesaĝo",
+                "error": {
+                  "required": "Mankanta mesaĝo!"
+                }
+              },
+              "send_copy": {
+                "label": "Sendi kopion al min"
+              },
+              "submit": {
+                "label": "Sendu"
+              },
+              "error": {
+                "user_does_not_exist": "La uzanto ne ekzistas!",
+                "email_error": "Neatendita eraro okazis. Reprovu poste."
+              }
+            }
+          }
+        },
+        "ChangePageLanguage": {
+          "title": "Ŝanĝi la enhavolingvon de paĝo",
+          "title_page": "Ŝanĝi la enhavolingvon de la paĝo “{value}”",
+          "log_entries": "Rilataj protokoleroj",
+          "done": "La enhavolingvo sukcese estis ŝanĝita.",
+          "menu": {
+            "label": "Ŝanĝi la enhavolingvon",
+            "tooltip": "Ŝanĝi la enhavolingvon de ĉi-tiu paĝo"
+          },
+          "form": {
+            "set_page_language": {
+              "page": {
+                "label": "Paĝo",
+                "error": {
+                  "page_invalid_title": "Nevalida paĝotitolo!",
+                  "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas.",
+                  "special_page": "Specialaj paĝoj ne povas esti redaktitaj.",
+                  "required": "Mankanta paĝotitolo!"
+                }
+              },
+              "content_language": {
+                "label": "Enhavolingvo",
+                "error": {
+                  "invalid_choice": "Nevalida lingvo!"
+                }
+              },
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": "Ek"
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti ĉi-tiun paĝon.",
+                "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas."
+              }
+            }
+          }
+        },
+        "ChangePageContentType": {
+          "title": "Ŝanĝi la enhavotipon de paĝo",
+          "title_page": "Ŝanĝi la enhavotipon de la paĝo “{value}”",
+          "log_entries": "Rilataj protokoleroj",
+          "done": "La enhavotipo sukcese estis ŝanĝita.",
+          "menu": {
+            "label": "Ŝanĝi la enhavotipon",
+            "tooltip": "Ŝanĝi la enhavotipo de ĉi-tiu paĝo"
+          },
+          "form": {
+            "set_page_content_type": {
+              "page": {
+                "label": "Paĝo",
+                "error": {
+                  "page_invalid_title": "Nevalida paĝotitolo!",
+                  "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas.",
+                  "special_page": "Specialaj paĝoj ne povas esti redaktitaj.",
+                  "required": "Mankanta paĝotitolo!"
+                }
+              },
+              "content_type": {
+                "label": "Enhavotipo",
+                "error": {
+                  "invalid_choice": "Nevalida enhavotipo!"
+                }
+              },
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": "Ek"
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti ĉi-tiun paĝon.",
+                "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas."
+              }
+            }
+          }
+        },
+        "Mute": {
+            "title": "Silentigi uzanton",
+          "title_user": "Silentigi “{value}”",
+          "done": "Ŝanĝoj konservitaj.",
+          "menu": {
+            "label": "Silentigi",
+            "tooltip": "Silentigi retmesaĝojn kaj/aŭ sciigojn el ĉi-tiu uzanto"
+          },
+          "form": {
+            "mute_user": {
+              "username": {
+                "label": "Silentigota uzanto",
+                "error": {
+                  "required": "Mankanta uzantonomo!",
+                  "user_does_not_exist": "Ĉi-tiu uzanto ne ekzistas!"
+                }
+              },
+              "mute_emails": {
+                "label": "Silentigi retmesaĝojn el tiu uzanto"
+              },
+              "mute_notifications": {
+                "label": "Silentigi sciigojn el tiu uzanto"
+              },
+              "submit": {
+                "label": "Ek"
+              },
+              "error": {
+                "anonymous_user": "Sennomaj uzantoj ne povas silentigi aliajn uzantojn.",
+                "user_does_not_exist": "Ĉi-tiu uzanto ne ekzistas!"
+              }
+            }
+          }
+        },
+        "EditFollowList": {
+          "title": "Modifi vian atentaron",
+          "title_clear": "Malplenigi vian atentaron",
+          "done": "Via atentaro sukcese estis ĝisdatigita.",
+          "menu": {
+            "label": "Modifi vian atentaron",
+            "tooltip": "Modifi vian atentaron"
+          },
+          "form": {
+            "edit": {
+              "message": "Paĝoj, ke vi atentas, estas listata ĉi-sube je kategorio. Por malatentigi paĝon, elektu la butonon apud sia titolo kaj poste alklaku la butonon al la malsupro de ĉi-tiu paĝo. Vi ankaŭ povas modifi vian atentaron kiel {edit_raw_url} aŭ {clear_url}.",
+              "raw_text": "kruda listo",
+              "clear_text": "malplenigi ĝin",
+              "pages": {
+                "label": "Paĝoj"
+              },
+              "submit": {
+                "label": "Ĝisdatigu la atentaron"
+              }
+            },
+            "edit_raw": {
+              "message": "Paĝoj, ke vi atentas, estas listiata ĉi-sube. Vi povas atenti aŭ malatenti paĝojn per aldoni aŭ forigi sian titolo en la listo ĉi-sube (unu per linio). Vi ankaŭ povas modifi ĝin per la {edit_url}.",
+              "normal_text": "normala formularo",
+              "page_names": {
+                "label": "Paĝotitoloj",
+                "help": "Unu per linio."
+              },
+              "submit": {
+                "label": "Ĝisdatigu la atentaro"
+              },
+              "error": {
+                "follow_special_page": "Vi ne povas atenti specialajn paĝojn."
+              }
+            },
+            "clear": {
+              "message": "Ĉiuj paĝotitoloj estos forigitaj el vian atentaro. Vi ankaŭ povas modifi ĝin per la {edit_url} aŭ la {raw_url}.",
+              "normal_text": "normala formularo",
+              "raw_text": "kruda listo",
+              "submit": {
+                "label": "Malplenigu la atentaron (ne malfarebla!)"
+              }
+            }
+          }
+        },
+        "Forum": {
+          "title": "Diskutejo",
+          "menu": {
+            "label": "Diskutejo",
+            "tooltip": "La ejo por diskuti"
           }
         }
-      }
+      },
+      "navbar": {
+        "search": {
+          "input": {
+            "placeholder": "Serĉi en la vikio…"
+          },
+          "button": {
+            "label": "Serĉi",
+            "tooltip": "Serĉi paĝon en la vikio"
+          }
+        }
+      },
+      "menu": {
+        "side": {
+          "logo": {
+            "tooltip": "Iri al la ĉefpaĝo"
+          },
+          "wiki_tools": {
+            "title": "Vikiaj iloj"
+          },
+          "page_tools": {
+            "title": "Paĝaj iloj",
+            "item": {
+              "special_page": {
+                "label": "Specialaj paĝoj",
+                "tooltip": "Reŝargi ĉi-tiun specialan paĝon"
+              },
+              "user_page": {
+                "label": "Paĝo de uzanto",
+                "tooltip": "Iri al la paĝo de la uzanto"
+              },
+              "page": {
+                "label": "Paĝo",
+                "tooltip": "Iri al la paĝo"
+              },
+              "user_profile": {
+                "label": "Profilo de uzanto",
+                "tooltip": "Iri al la profilo de tiu uzanto"
+              }
+            }
+          },
+          "more": {
+            "title": "Pli",
+            "item": {
+              "permalink": {
+                "label": "Konstanta ligilo",
+                "tooltip": "Havigi konstantan ligilon de la nuna versio de tiu paĝo"
+              },
+              "page_info": {
+                "label": "Informoj pri la paĝo",
+                "tooltip": "Montri pli da informoj pri tiu paĝo"
+              }
+            }
+          }
+        },
+        "page": {
+          "read": {
+            "label": "Legi",
+            "tooltip": "Legi tiun paĝon"
+          },
+          "talk": {
+            "label": "Diskuti",
+            "tooltip": "Diskuti pri tiu paĝo"
+          },
+          "source": {
+            "label": "Fonto",
+            "tooltip": "Montri la fonton de tiu paĝo"
+          },
+          "edit": {
+            "label": "Redakti",
+            "tooltip": "Redakti la enhavon de tiu paĝo"
+          },
+          "create": {
+            "label": "Krei",
+            "tooltip": "Krei tiun paĝon"
+          },
+          "history": {
+            "label": "Historio",
+            "tooltip": "Montri la historion de tiu paĝo"
+          }
+        }
+      },
+      "page": {
+        "title": {
+          "talk": "Diskuti pri “{page_title}”",
+          "source": "Fonto de “{page_title}”",
+          "edit": "Redakti “{page_title}”",
+          "create": "Krei “{page_title}”",
+          "history": "Versia historio de “{page_title}”",
+          "info": "Informoj pri “{page_title}”"
+        },
+        "read": {
+          "revision_nav_box": {
+            "label": "Versio de {user_link} je {date}",
+            "diff_previous": "Iri al la antaŭa versio",
+            "diff_current": "Iri al la sekva versio",
+            "diff_next": "Iri al la nuna versio"
+          }
+        },
+        "talk": {
+          "no_talks": "Tiu paĝo ne jam havas diskutojn."
+        },
+        "edit": {
+          "revision_warning": {
+            "edit": "**Vi nune redaktas arĥivitan version de tiu paĝo, publikigita je {date}.**\n\nSe vi publikas viajn ŝanĝojn, ĉiuj sekvaj vesioj estos forigitaj."
+          },
+          "interface_warning": "**Vi nune redaktas paĝon, kiu modifas la interfacon de la vikio.**\n\nBonvolu esti tre singarda ĉar viaj ŝanĝoj influos ĉiujn uzantojn.",
+          "protection_warning": "**Tiu paĝo estas protektita.**",
+          "deletion_warning": "**Vi nune kreas paĝon, ke estis forigita.** Bonvolu kontroli, ke vi havas motivitan kialon por rekrei ĝin antaŭ publikigi viajn ŝanĝojn.",
+          "permission_error": "Vi ne havas la bezonatajn permesojn por redakti ĉi-tiun paĝon.",
+          "concurrent_edit_error": "Alia uzanto publikigis novan version de tiu paĝo dum vi estis redaktanta ĝin. Bonvolu kompari vian version kun la nuna ĉi-sube antaŭ publikigi.",
+          "log_entry": "Protokolero:",
+          "form": {
+            "content": {
+              "label": "Enhavo"
+            },
+            "comment": {
+              "label": "Resumo de la ŝanĝoj",
+              "tooltip": "Skribi mallongan resumon de viaj ŝanĝoj"
+            },
+            "minor_edit": {
+              "label": "Redakteto",
+              "tooltip": "Marki kiel redakteto"
+            },
+            "follow_page": {
+              "label": "Atenti ĉi-tiun paĝon",
+              "tooltip": "Aldoni ĉi paĝon al via atentaro"
+            },
+            "hidden_category": {
+              "label": "Kaŝita kategorio",
+              "tooltip": "Marki ĉi kategorio kiel kaŝita"
+            },
+            "submit": {
+              "label": "Publikigu la ŝanĝojn"
+            },
+            "preview": {
+              "label": "Antaŭrigardu"
+            },
+            "diff": {
+              "label": "Montru la ŝanĝojn"
+            },
+            "cancel": {
+              "label": "Nuligi"
+            }
+          }
+        },
+        "history": {
+          "no_history": "Tiu paĝo ne havas neniun historion ĉar ĝi ne ekzistas.",
+          "form_spoiler": {
+            "label": "Filtri versiojn"
+          },
+          "form": {
+            "filter": {
+              "hidden_revisions_only": {
+                "label": "Nur montri kaŝitajn versiojn"
+              },
+              "page_creations_only": {
+                "label": "Nur montri paĝajn kreadojn"
+              },
+              "mask_minor_edits": {
+                "label": "Kaŝi redaktetoj"
+              },
+              "start_date": {
+                "label": "Je dato",
+                "error": {
+                  "invalid": "Nevalida dato!"
+                }
+              },
+              "end_date": {
+                "label": "Ĝis dato",
+                "error": {
+                  "invalid": "Nevalida dato!"
+                }
+              },
+              "submit": {
+                "label": "Montri versiojn"
+              },
+              "error": {
+                "invalid_dates": "Nevalida datos!"
+              }
+            }
+          }
+        },
+        "info": {
+          "no_info": "Ne povas ŝargi informoj pri tiu paĝo ĉar ĝi ne ekzistas.",
+          "basic_info": {
+            "title": "Bazaj informoj",
+            "page_title": {
+              "label": "Paĝotitolo"
+            },
+            "page_id": {
+              "label": "ID de paĝo"
+            },
+            "namespace_name": {
+              "label": "Nomo de nomspaco"
+            },
+            "namespace_id": {
+              "label": "ID de nomspaco"
+            },
+            "default_sort_key": {
+              "label": "Pravaloro de ordiga ŝlosilo"
+            },
+            "size": {
+              "label": "Grandeco en bajtoj"
+            },
+            "content_language": {
+              "label": "Enhavolingvo"
+            },
+            "content_type": {
+              "label": "Enhavotipo"
+            },
+            "follow_list_nb": {
+              "label": "Nombro da paĝatentantoj",
+              "link": "listo de la uzantoj"
+            },
+            "redirects_nb": {
+              "label": "Nombro da alidirektiloj al ĉi-tiu paĝo",
+              "link": "alidirektantaj paĝoj"
+            },
+            "subpages_nb": {
+              "label": "Nombro da subpaĝoj",
+              "link": "listo de la subpaĝoj"
+            }
+          },
+          "protection": {
+            "title": "Protektado de la paĝo",
+            "namespace_perms": {
+              "label": "Permesoj el la nomspaco"
+            },
+            "user_group": {
+              "label": "Bezonata uzantogrupo"
+            },
+            "see_logs": "Vidi la protektadan protokolon de ĉi-tiu paĝo."
+          },
+          "edit_history": {
+            "title": "Historio de redaktoj",
+            "creator": {
+              "label": "Kreinto de la paĝo"
+            },
+            "creation_date": {
+              "label": "Dato de paĝkreado"
+            },
+            "last_editor": {
+              "label": "Lasta redaktinto"
+            },
+            "last_edit_date": {
+              "label": "Dato de lasta redakto"
+            },
+            "total_edits_nb": {
+              "label": "Suma nombro de redaktoj"
+            },
+            "recent_edits_nb": {
+              "label": "Nombro da lastaj redaktoj (ene de lastaj {nb} tagoj)"
+            },
+            "recent_distinct_editors_nb": {
+              "label": "Nombro da lastaj malsamaj redaktintoj (ene de lastaj {nb} tagoj)"
+            }
+          }
+        }
+      },
+      "link": {
+        "red_link": {
+          "tooltip": "paĝo ne ekzistas"
+        }
+      },
+      "footer": {
+        "last_edit": "Paĝo lastfoje redaktita je {date}.",
+        "license": "Ĉiu teksto en ĉi vikio disponeblas laŭ la permesilo [CC BY-SA 4.0]({license-url}); eble aldonaj kondiĉoj aplikeblas."
+      },
+      "revisions_list": {
+        "mask": {
+          "tooltip": "Kaŝi/Malkaŝi"
+        },
+        "diff": {
+          "tooltip": "Diferenco kun la antaŭa versio"
+        },
+        "current": {
+          "tooltip": "Diferenco kun la nuna versio"
+        },
+        "cancel": {
+          "tooltip": "Malfari"
+        },
+        "revert": {
+          "tooltip": "Nuligi {nb} versio(j)n"
+        },
+        "size": {
+          "label": "{n} bajto(j)"
+        },
+        "flag": {
+          "minor": {
+            "label": "E",
+            "tooltip": "Redakteto"
+          },
+          "bot": {
+            "label": "R",
+            "tooltip": "Robota redakto"
+          },
+          "creation": {
+            "label": "K",
+            "tooltip": "Paĝkreado"
+          }
+        },
+        "no_results_message": "Neniom da rezultoj"
+      },
+      "log": {
+        "page_creation": "({date}) {user} kreis {page}.",
+        "page_deletion": "({date}) {user} forigis {page}. {reason}",
+        "page_protection": "({date}) {user} ŝanĝis la protektonivelon de {page} al grupo “{group}” ĝis {until}. [protect talks: {talks}] {reason}",
+        "page_protection_infinite": "({date}) {user} ŝanĝis la protektonivelon de {page} al grupo “{group}” (senfina). [protect talks: {talks}] {reason}",
+        "page_content_language": "({date}) {user} ŝanĝis la enhavolingvon de {page} al “{language_name}” ({language_code}). {reason}",
+        "page_content_type": "({date}) {user} ŝanĝis la enhavotipon de {page} al “{content_type}”. {reason}",
+        "user_account_creation": "({date}) Uzanta konto {user} estis kreita.",
+        "user_mask_masked": "({date}) {performer} kaŝis la uzantonomon de {user}. {reason}",
+        "user_mask_unmasked": "({date}) {performer} malkaŝis la uzantonomon de {user}. {reason}",
+        "user_group_joined": "({date}) {performer} aldonis {user} en la grupo “{group}”. {reason}",
+        "user_group_left": "({date}) {performer} eldonis {user} el la grupo “{group}”. {reason}",
+        "user_group_internal_joined": "({date}) {user} membriĝis la grupon “{group}”. {reason}",
+        "user_group_internal_left": "({date}) {user} foriĝis el la grupon “{group}”. {reason}",
+        "user_block": "({date}) {performer} forbaris la uzanton {user} ĝis {until}. [edit settings: {edit_settings}, post messages on user page: {post_messages}] {reason}",
+        "user_block_infinite": "({date}) {performer} forbaris la uzanton {user} (senfina). [edit settings: {edit_settings}, post messages on user page: {post_messages}] {reason}",
+        "user_unblock": "({date}) {performer} malbaris la uzanton {user}. {reason}",
+        "ip_block": "({date}) {performer} forbaris la IP-adreson {ip}. [create accounts: {create_accounts}, post messages on user page: {post_messages}] ({until}) {reason}"
+      },
+      "pagination": {
+        "page": {
+          "tooltip": "Iri al la paĝo {page}"
+        },
+        "per_page_item": {
+          "tooltip": "Montri {nb} rezultojn po paĝo"
+        }
+      },
+      "username_hidden": "Kaŝita uzantonomo",
+      "comment_hidden": "Kaŝita ŝanĝoresumo"
     }
   }
 }
