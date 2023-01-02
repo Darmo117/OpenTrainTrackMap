@@ -31,7 +31,7 @@
   editor.getSession().on("change", () => $textarea.val(editor.getSession().getValue()).trigger("change"));
   $("#wiki-edit-form").on("submit", e => {
     if (!$("#wiki-edit-form-comment").val().trim() && ottm.user.get("warnWhenNoWikiEditComment")) {
-      const message = ottm._translations.get("wiki.edit.no_summary_warning");
+      const message = ottm.translations.get("wiki.edit.no_summary_warning");
       if (!confirm(message)) {
         e.preventDefault();
       }

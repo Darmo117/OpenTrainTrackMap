@@ -53,7 +53,7 @@
       const link = L.DomUtil.create("a", "", container);
 
       link.href = "#";
-      link.title = ottm._translations.get(`map.controls.edit.${this.options.kind}.tooltip`);
+      link.title = ottm.translations.get(`map.controls.edit.${this.options.kind}.tooltip`);
       link.innerHTML = this.options.html;
       L.DomEvent.on(link, "click", L.DomEvent.stop)
         .on(link, "click", () => {
@@ -132,8 +132,8 @@
       window.onhashchange = () => this.centerViewFromUrl();
 
       this.#zoomControl = L.control.zoom({
-        zoomInTitle: ottm._translations.get("map.controls.zoom_in.tooltip"),
-        zoomOutTitle: ottm._translations.get("map.controls.zoom_out.tooltip"),
+        zoomInTitle: ottm.translations.get("map.controls.zoom_in.tooltip"),
+        zoomOutTitle: ottm.translations.get("map.controls.zoom_out.tooltip"),
         position: "topright",
       }).addTo(map);
 
@@ -156,10 +156,10 @@
       });
 
       this.#layers = {
-        [ottm._translations.get("map.controls.layers.standard")]: osmTiles,
-        [ottm._translations.get("map.controls.layers.black_and_white")]: mapnikBWTiles,
-        [ottm._translations.get("map.controls.layers.satellite_maptiler")]: maptilerSatelliteTiles,
-        [ottm._translations.get("map.controls.layers.satellite_esri")]: esriSatelliteTiles,
+        [ottm.translations.get("map.controls.layers.standard")]: osmTiles,
+        [ottm.translations.get("map.controls.layers.black_and_white")]: mapnikBWTiles,
+        [ottm.translations.get("map.controls.layers.satellite_maptiler")]: maptilerSatelliteTiles,
+        [ottm.translations.get("map.controls.layers.satellite_esri")]: esriSatelliteTiles,
       };
       L.control.layers(this.#layers).addTo(map);
 
@@ -177,21 +177,21 @@
       }
 
       L.control.button({
-        tooltip: ottm._translations.get("map.controls.google_maps_button.tooltip"),
+        tooltip: ottm.translations.get("map.controls.google_maps_button.tooltip"),
         icon: `${ottm.config.get("staticPath")}ottm/images/Google_Maps_icon.svg.png`,
         action: map => openMapInTab(map, "https://www.google.com/maps/@{lat},{long},{zoom}z"),
       }).addTo(map);
       L.control.button({
         label: "IGN",
-        tooltip: ottm._translations.get("map.controls.ign_compare_button.tooltip"),
+        tooltip: ottm.translations.get("map.controls.ign_compare_button.tooltip"),
         action: map => openMapInTab(map, "https://remonterletemps.ign.fr/comparer/basic?x={long}&y={lat}&z={zoom}"),
       }).addTo(map);
 
       this.#scaleControl = L.control.scale().addTo(map);
 
       L.esri.Geocoding.geosearch({
-        title: ottm._translations.get("map.controls.search.tooltip"),
-        placeholder: ottm._translations.get("map.controls.search.placeholder"),
+        title: ottm.translations.get("map.controls.search.tooltip"),
+        placeholder: ottm.translations.get("map.controls.search.placeholder"),
         expanded: true,
         collapseAfterResult: false,
         providers: [

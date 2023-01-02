@@ -234,12 +234,19 @@
     /** Current user’s data. */
     user: new Mapping(window.OTTM_CONFIG.user),
     /** UI translations. */
-    _translations: new Mapping(window.OTTM_CONFIG.translations),
-    /** @type {Language[]} List of all available UI languages. */
-    languages: [],
+    translations: new Mapping(window.OTTM_CONFIG.translations),
+    /** @type {Object<string, Language>} List of all available UI languages. */
+    languages: {},
     // Expose classes
     Mapping: Mapping,
     Language: Language,
+
+    /**
+     * @return {Language} The language object of the current page.
+     */
+    getPageLanguage: function () {
+      return this.languages[this.page.get("language")];
+    },
 
     /**
      * Convert a date to the given timezone.
@@ -344,7 +351,7 @@
 
   for (const langData of window.OTTM_CONFIG.languages) {
     // noinspection JSUnresolvedVariable
-    ottm.languages.push(new Language(
+    ottm.languages[langData.code] = new Language(
       langData.code,
       langData.name,
       langData.writingDirection,
@@ -357,7 +364,7 @@
       langData.ampm,
       langData.decimalSep,
       langData.thousandsSep,
-    ));
+    );
   }
   delete window.OTTM_CONFIG;
   $("#ottm-config-script").remove();
