@@ -305,7 +305,7 @@
             },
             "gender": {
               "label": "Kiel vi volas esti deskribita?",
-              "help": "Ĉi-tiu opcio ne esta deviga, ĝi estas uzata per la retejo por alparoli vin aŭ priparoli vin al aliaj uzantoj. **Ĉi-tiu informo estas publika.**",
+              "help": "Ĉi tiu opcio ne esta deviga, ĝi estas uzata per la retejo por alparoli vin aŭ priparoli vin al aliaj uzantoj. **Ĉi tiu informo estas publika.**",
               "n": {
                 "label": "Ri kontribuas. (La retejo uzos neŭtralajn frazojn.)"
               },
@@ -342,7 +342,7 @@
               "label": "Sendi min kopion de la retmesaĝoj, ke mi sendas"
             },
             "email_user_blacklist": {
-              "label": "Bari ĉi-tiun uzantojn je sendi min retmesaĝojn:",
+              "label": "Bari ĉi tiun uzantojn je sendi min retmesaĝojn:",
               "help": "Unu uzantonomo per linio."
             },
             "custom_css_js": {
@@ -596,8 +596,8 @@
       "error": {
         "403": {
           "title": "Malpermesa atingo",
-          "tab_title": "Vi ne povas atingi ĉi-tiun paĝon!",
-          "message": "Vi ne havas bezonatajn permesojn por atingi ĉi-tiun paĝon pro la sekva kialo:\n\n{reason}\n\nIri al la [ĉefpaĝo]({url})."
+          "tab_title": "Vi ne povas atingi ĉi tiun paĝon!",
+          "message": "Vi ne havas bezonatajn permesojn por atingi ĉi tiun paĝon pro la sekva kialo:\n\n{reason}\n\nIri al la [ĉefpaĝo]({url})."
         },
         "404": {
           "title": "Netrovita paĝo",
@@ -717,7 +717,7 @@
       },
       "special_page": {
         "requires_perms": {
-          "tooltip": "Ĉi-tiu speciala paĝo bezonatas specialajn permesiojn"
+          "tooltip": "Ĉi tiu speciala paĝo bezonatas specialajn permesiojn"
         },
         "invalid_title": {
           "title": "Nevalida paĝotitolo",
@@ -733,7 +733,7 @@
         },
         "forbidden": {
           "title": "Malpermesa atingo",
-          "message": "**Vi ne havas la bezonatajn permesojn por atingi ĉi-tiun specialan paĝon.**\n\nIri al la [ĉefpaĝo]({main_page_url})."
+          "message": "**Vi ne havas la bezonatajn permesojn por atingi ĉi tiun specialan paĝon.**\n\nIri al la [ĉefpaĝo]({main_page_url})."
         },
         "RandomPage": {
           "title": "Hazarda paĝo",
@@ -795,7 +795,7 @@
                 "label": "Paĝo",
                 "error": {
                   "page_invalid_title": "Nevalida paĝotitolo!",
-                  "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas.",
+                  "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas.",
                   "special_page": "Specialaj paĝoj ne povas esti redktataj.",
                   "required": "Mankanta paĝotitolo!"
                 }
@@ -808,7 +808,7 @@
               },
               "error": {
                 "missing_permission": "Vi ne havas la bezonatajn permesojn por forigi paĝojn.",
-                "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas."
+                "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas."
               }
             }
           }
@@ -818,7 +818,7 @@
           "title_page": "Renomi “{value}”",
           "menu": {
             "label": "Renomi",
-            "tooltip": "Renomi ĉi-tiun paĝon"
+            "tooltip": "Renomi ĉi tiun paĝon"
           }
         },
         "ProtectPage": {
@@ -828,7 +828,7 @@
           "done": "La protektonivelo sukcese estis ŝanĝita.",
           "menu": {
             "label": "Protekti",
-            "tooltip": "Protekti ĉi-tiun paĝon"
+            "tooltip": "Protekti ĉi tiun paĝon"
           },
           "form": {
             "protect_page": {
@@ -872,7 +872,7 @@
           "title_page": "Subpaĝoj de “{value}”",
           "menu": {
             "label": "Subpaĝoj",
-            "tooltip": "Listi la subpaĝojn de ĉi-tiu paĝo"
+            "tooltip": "Listi la subpaĝojn de ĉi tiu paĝo"
           },
           "form": {
             "select_page": {
@@ -880,7 +880,7 @@
                 "label": "Paĝo",
                 "error": {
                   "page_invalid_title": "Nevalida paĝotitolo!",
-                  "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas.",
+                  "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas.",
                   "special_page": "Specialaj paĝoj ne havas subpaĝoj.",
                   "required": "Mankanta paĝotitolo!"
                 }
@@ -906,7 +906,7 @@
           "title_user": "Protokoleroj por la uzanto “{value}”",
           "menu": {
             "label": "Paĝaj protokoloj",
-            "tooltip": "Montri la protokolojn de ĉi-tiu paĝo"
+            "tooltip": "Montri la protokolojn de ĉi tiu paĝo"
           }
         },
         "Contributions": {
@@ -925,7 +925,7 @@
                 "label": "Uzantonomo",
                 "error": {
                   "invalid": "Nevalida uzantonomo!",
-                  "user_does_not_exist": "Ĉi-tiu uzanto ne ekzistas!",
+                  "user_does_not_exist": "Ĉi tiu uzanto ne ekzistas!",
                   "required": "Mankanta uzantonomo!"
                 }
               },
@@ -983,7 +983,7 @@
           "info": "La retadreso, ke vi indikis en via profilo, estos montrita en la kampo “Respondi al” de via mesaĝo por permesi la ricevonton respondi al ĝi.",
           "menu": {
             "label": "Sendi retmesaĝon",
-            "tooltip": "Sendi retmesaĝon al ĉi-tiu uzanto"
+            "tooltip": "Sendi retmesaĝon al ĉi tiu uzanto"
           },
           "form": {
             "send_email": {
@@ -991,7 +991,7 @@
                 "label": "Ricevonto",
                 "error": {
                   "invalid": "Nevalida uzantonomo!",
-                  "user_does_not_exist": "Ĉi-tiu uzanto ne ekzistass!",
+                  "user_does_not_exist": "Ĉi tiu uzanto ne ekzistass!",
                   "required": "Mankas la uzantonomo de la recivonto!"
                 }
               },
@@ -1027,7 +1027,7 @@
           "done": "La enhavolingvo sukcese estis ŝanĝita.",
           "menu": {
             "label": "Ŝanĝi la enhavolingvon",
-            "tooltip": "Ŝanĝi la enhavolingvon de ĉi-tiu paĝo"
+            "tooltip": "Ŝanĝi la enhavolingvon de ĉi tiu paĝo"
           },
           "form": {
             "set_page_language": {
@@ -1035,7 +1035,7 @@
                 "label": "Paĝo",
                 "error": {
                   "page_invalid_title": "Nevalida paĝotitolo!",
-                  "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas.",
+                  "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas.",
                   "special_page": "Specialaj paĝoj ne povas esti redaktitaj.",
                   "required": "Mankanta paĝotitolo!"
                 }
@@ -1053,8 +1053,8 @@
                 "label": "Ek"
               },
               "error": {
-                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti ĉi-tiun paĝon.",
-                "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas."
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon.",
+                "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas."
               }
             }
           }
@@ -1066,7 +1066,7 @@
           "done": "La enhavotipo sukcese estis ŝanĝita.",
           "menu": {
             "label": "Ŝanĝi la enhavotipon",
-            "tooltip": "Ŝanĝi la enhavotipo de ĉi-tiu paĝo"
+            "tooltip": "Ŝanĝi la enhavotipo de ĉi tiu paĝo"
           },
           "form": {
             "set_page_content_type": {
@@ -1074,7 +1074,7 @@
                 "label": "Paĝo",
                 "error": {
                   "page_invalid_title": "Nevalida paĝotitolo!",
-                  "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas.",
+                  "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas.",
                   "special_page": "Specialaj paĝoj ne povas esti redaktitaj.",
                   "required": "Mankanta paĝotitolo!"
                 }
@@ -1092,8 +1092,8 @@
                 "label": "Ek"
               },
               "error": {
-                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti ĉi-tiun paĝon.",
-                "page_does_not_exist": "Ĉi-tiu paĝo ne ekzistas."
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon.",
+                "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas."
               }
             }
           }
@@ -1104,7 +1104,7 @@
           "done": "Ŝanĝoj konservitaj.",
           "menu": {
             "label": "Silentigi",
-            "tooltip": "Silentigi retmesaĝojn kaj/aŭ sciigojn el ĉi-tiu uzanto"
+            "tooltip": "Silentigi retmesaĝojn kaj/aŭ sciigojn el ĉi tiu uzanto"
           },
           "form": {
             "mute_user": {
@@ -1112,7 +1112,7 @@
                 "label": "Silentigota uzanto",
                 "error": {
                   "required": "Mankanta uzantonomo!",
-                  "user_does_not_exist": "Ĉi-tiu uzanto ne ekzistas!"
+                  "user_does_not_exist": "Ĉi tiu uzanto ne ekzistas!"
                 }
               },
               "mute_emails": {
@@ -1126,7 +1126,7 @@
               },
               "error": {
                 "anonymous_user": "Sennomaj uzantoj ne povas silentigi aliajn uzantojn.",
-                "user_does_not_exist": "Ĉi-tiu uzanto ne ekzistas!"
+                "user_does_not_exist": "Ĉi tiu uzanto ne ekzistas!"
               }
             }
           }
@@ -1141,7 +1141,7 @@
           },
           "form": {
             "edit": {
-              "message": "Paĝoj, ke vi atentas, estas listata ĉi-sube je kategorio. Por malatentigi paĝon, elektu la butonon apud sia titolo kaj poste alklaku la butonon al la malsupro de ĉi-tiu paĝo. Vi ankaŭ povas modifi vian atentaron kiel {edit_raw_url} aŭ {clear_url}.",
+              "message": "Paĝoj, ke vi atentas, estas listata ĉi-sube je kategorio. Por malatentigi paĝon, elektu la butonon apud sia titolo kaj poste alklaku la butonon al la malsupro de ĉi tiu paĝo. Vi ankaŭ povas modifi vian atentaron kiel {edit_raw_url} aŭ {clear_url}.",
               "raw_text": "kruda listo",
               "clear_text": "malplenigi ĝin",
               "pages": {
@@ -1152,7 +1152,7 @@
               }
             },
             "edit_raw": {
-              "message": "Paĝoj, ke vi atentas, estas listiata ĉi-sube. Vi povas atenti aŭ malatenti paĝojn per aldoni aŭ forigi sian titolo en la listo ĉi-sube (unu per linio). Vi ankaŭ povas modifi ĝin per la {edit_url}.",
+              "message": "Paĝoj, ke vi atentas, estas listiata ĉi-sube. Vi povas atenti aŭ malatenti paĝojn per aldoni aŭ forigi sian titolo en la listo ĉi sube (unu per linio). Vi ankaŭ povas modifi ĝin per la {edit_url}.",
               "normal_text": "normala formularo",
               "page_names": {
                 "label": "Paĝotitoloj",
@@ -1207,7 +1207,7 @@
             "item": {
               "special_page": {
                 "label": "Specialaj paĝoj",
-                "tooltip": "Reŝargi ĉi-tiun specialan paĝon"
+                "tooltip": "Reŝargi ĉi tiun specialan paĝon"
               },
               "user_page": {
                 "label": "Paĝo de uzanto",
@@ -1291,7 +1291,7 @@
           "interface_warning": "**Vi nune redaktas paĝon, kiu modifas la interfacon de la vikio.**\n\nBonvolu esti tre singarda ĉar viaj ŝanĝoj influos ĉiujn uzantojn.",
           "protection_warning": "**Tiu paĝo estas protektita.**",
           "deletion_warning": "**Vi nune kreas paĝon, ke estis forigita.** Bonvolu kontroli, ke vi havas motivitan kialon por rekrei ĝin antaŭ publikigi viajn ŝanĝojn.",
-          "permission_error": "Vi ne havas la bezonatajn permesojn por redakti ĉi-tiun paĝon.",
+          "permission_error": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon.",
           "concurrent_edit_error": "Alia uzanto publikigis novan version de tiu paĝo dum vi estis redaktanta ĝin. Bonvolu kompari vian version kun la nuna ĉi-sube antaŭ publikigi.",
           "log_entry": "Protokolero:",
           "form": {
@@ -1307,7 +1307,7 @@
               "tooltip": "Marki kiel redakteto"
             },
             "follow_page": {
-              "label": "Atenti ĉi-tiun paĝon",
+              "label": "Atenti ĉi tiun paĝon",
               "tooltip": "Aldoni ĉi paĝon al via atentaro"
             },
             "hidden_category": {
@@ -1398,7 +1398,7 @@
               "link": "listo de la uzantoj"
             },
             "redirects_nb": {
-              "label": "Nombro da alidirektiloj al ĉi-tiu paĝo",
+              "label": "Nombro da alidirektiloj al ĉi tiu paĝo",
               "link": "alidirektantaj paĝoj"
             },
             "subpages_nb": {
@@ -1414,7 +1414,7 @@
             "user_group": {
               "label": "Bezonata uzantogrupo"
             },
-            "see_logs": "Vidi la protektadan protokolon de ĉi-tiu paĝo."
+            "see_logs": "Vidi la protektadan protokolon de ĉi tiu paĝo."
           },
           "edit_history": {
             "title": "Historio de redaktoj",
