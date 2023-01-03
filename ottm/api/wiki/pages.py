@@ -359,14 +359,14 @@ def set_page_content_language(performer: _models.User, page: _models.Page, langu
     :return: True if the action succeeded, false otherwise.
     :raise PageDoesNotExistError: If the page does not exist.
     :raise EditSpecialPageError: If the page is in the "Special" namespace.
-    :raise MissingPermissionError: If the user cannot edit the page.
+    :raise CannotEditPageError: If the user cannot edit the page.
     """
     if not page.exists:
         raise _errors.PageDoesNotExistError(page.full_title)
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.EditSpecialPageError()
     if not page.can_user_edit(performer):
-        raise _errors.MissingPermissionError(_perms.PERM_WIKI_EDIT)
+        raise _errors.CannotEditPageError()
     if not performer.exists:
         performer.internal_object.save()
     if language.internal_language == page.content_language:
@@ -393,14 +393,14 @@ def set_page_content_type(performer: _models.User, page: _models.Page, content_t
     :return: True if the action succeeded, false otherwise.
     :raise PageDoesNotExistError: If the page does not exist.
     :raise EditSpecialPageError: If the page is in the "Special" namespace.
-    :raise MissingPermissionError: If the user cannot edit the page.
+    :raise CannotEditPageError: If the user cannot edit the page.
     """
     if not page.exists:
         raise _errors.PageDoesNotExistError(page.full_title)
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.EditSpecialPageError()
     if not page.can_user_edit(performer):
-        raise _errors.MissingPermissionError(_perms.PERM_WIKI_EDIT)
+        raise _errors.CannotEditPageError()
     if not performer.exists:
         performer.internal_object.save()
     if content_type == page.content_type:
@@ -511,6 +511,7 @@ def protect_page(performer: _models.User, page: _models.Page, protection_level: 
     :param until: The date until which the page will be protected. If None, the protection will never end.
     :return: True if the operation succeeded, false otherwise.
     :raise MissingPermissionError: If the user does not have the {_perms.PERM_WIKI_PROTECT} permission.
+    :raise CannotEditPageError: If the user cannot edit the page.
     :raise ProtectSpecialPageError: If the page is in the "Special" namespace.
     :raise PastDateError: If the date is in the past.
     """
@@ -518,6 +519,8 @@ def protect_page(performer: _models.User, page: _models.Page, protection_level: 
         raise _errors.MissingPermissionError(_perms.PERM_WIKI_PROTECT)
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.ProtectSpecialPageError()
+    if not page.can_user_edit(performer):
+        raise _errors.CannotEditPageError()
     if until and until <= _utils.now().date():
         raise _errors.PastDateError()
     if not performer.exists:
@@ -568,6 +571,8 @@ def delete_page(performer: _models.User, page: _models.Page, reason: str = None)
         raise _errors.MissingPermissionError(_perms.PERM_WIKI_DELETE)
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.DeleteSpecialPageError()
+    if not page.can_user_edit(performer):
+        raise _errors.CannotEditPageError()
     if not performer.exists:
         performer.internal_object.save()
     page.deleted = True

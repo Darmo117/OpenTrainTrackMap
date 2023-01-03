@@ -808,6 +808,7 @@
               },
               "error": {
                 "missing_permission": "Vi ne havas la bezonatajn permesojn por forigi paĝojn.",
+                "cannot_edit_page": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon.",
                 "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas."
               }
             }
@@ -862,7 +863,8 @@
                 "label": "Ek"
               },
               "error": {
-                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti la paĝon."
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por protekti paĝojn.",
+                "cannot_edit_page": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon."
               }
             }
           }
@@ -1053,7 +1055,7 @@
                 "label": "Ek"
               },
               "error": {
-                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon.",
+                "cannot_edit_page": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon.",
                 "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas."
               }
             }
@@ -1092,7 +1094,7 @@
                 "label": "Ek"
               },
               "error": {
-                "missing_permission": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon.",
+                "cannot_edit_page": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon.",
                 "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas."
               }
             }

@@ -829,6 +829,7 @@
               },
               "error": {
                 "missing_permission": "Vous n’avez pas la permission de supprimer des pages.",
+                "cannot_edit_page": "Vous n’avez pas la permission de modifier cette page.",
                 "page_does_not_exist": "Cette page n’existe pas."
               }
             }
@@ -883,7 +884,8 @@
                 "label": "Valider"
               },
               "error": {
-                "missing_permission": "Vous n’avez pas la permission d’accéder à cette page."
+                "missing_permission": "Vous n’avez pas la permission de protéger des pages.",
+                "cannot_edit_page": "Vous n’avez pas la permission de modifier cette page."
               }
             }
           }
@@ -1090,7 +1092,7 @@
                 "label": "Valider"
               },
               "error": {
-                "missing_permission": "Vous n’avez pas la permission de modifier cette page.",
+                "cannot_edit_page": "Vous n’avez pas la permission de modifier cette page.",
                 "page_does_not_exist": "Cette page n’existe pas."
               }
             }
@@ -1129,7 +1131,7 @@
                 "label": "Valider"
               },
               "error": {
-                "missing_permission": "Vous n’avez pas la permission de modifier cette page.",
+                "cannot_edit_page": "Vous n’avez pas la permission de modifier cette page.",
                 "page_does_not_exist": "Cette page n’existe pas."
               }
             }

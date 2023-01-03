@@ -35,8 +35,8 @@ class ChangePageLanguageSpecialPage(_core.SpecialPage):
                                                               form.cleaned_data['reason'])
                 except _errors.PageDoesNotExistError:  # Keep as the page may have been deleted right before submit
                     global_errors[form.name].append('page_does_not_exist')
-                except _errors.MissingPermissionError:
-                    global_errors[form.name].append('missing_permission')
+                except _errors.CannotEditPageError:
+                    global_errors[form.name].append('cannot_edit_page')
                 else:
                     if done:
                         return _core.Redirect(

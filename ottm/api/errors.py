@@ -77,3 +77,7 @@ class EditGroupsError(RuntimeError):
 
 class PastDateError(RuntimeError):
     pass
+
+
+class CannotEditPageError(RuntimeError):
+    pass

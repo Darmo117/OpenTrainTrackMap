@@ -801,6 +801,7 @@
               },
               "error": {
                 "missing_permission": "You do not have the permissions required to delete pages.",
+                "cannot_edit_page": "You do not have the permissions required to edit this page.",
                 "page_does_not_exist": "This page does not exist."
               }
             }
@@ -855,7 +856,8 @@
                 "label": "Submit"
               },
               "error": {
-                "missing_permission": "You do not have the permissions required to edit this page."
+                "missing_permission": "You do not have the permissions required to protect pages.",
+                "cannot_edit_page": "You do not have the permissions required to edit this page."
               }
             }
           }
@@ -1047,6 +1049,7 @@
               },
               "error": {
                 "missing_permission": "You do not have the permissions required to edit this page.",
+                "cannot_edit_page": "You do not have the permissions required to edit this page.",
                 "page_does_not_exist": "This page does not exist."
               }
             }
@@ -1086,6 +1089,7 @@
               },
               "error": {
                 "missing_permission": "You do not have the permissions required to edit this page.",
+                "cannot_edit_page": "You do not have the permissions required to edit this page.",
                 "page_does_not_exist": "This page does not exist."
               }
             }

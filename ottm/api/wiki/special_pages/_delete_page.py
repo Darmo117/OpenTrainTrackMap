@@ -18,7 +18,7 @@ class DeletePageSpecialPage(_core.SpecialPage):
     """
 
     def __init__(self):
-        super().__init__('DeletePage', _perms.PERM_WIKI_DELETE, category=_core.Section.PAGE_OPERATIONS)
+        super().__init__('DeletePage', _perms.PERM_WIKI_DELETE, accesskey='d', category=_core.Section.PAGE_OPERATIONS)
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:
@@ -35,6 +35,8 @@ class DeletePageSpecialPage(_core.SpecialPage):
                     global_errors[form.name].append('page_does_not_exist')
                 except _errors.MissingPermissionError:
                     global_errors[form.name].append('missing_permission')
+                except _errors.CannotEditPageError:
+                    global_errors[form.name].append('cannot_edit_page')
                 else:
                     return _core.Redirect(
                         f'{_w_ns.NS_SPECIAL.get_full_page_title(self.name)}/{target_page.full_title}',

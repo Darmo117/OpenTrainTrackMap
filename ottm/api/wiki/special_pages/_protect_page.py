@@ -37,6 +37,8 @@ class ProtectPageSpecialPage(_core.SpecialPage):
                                                  form.cleaned_data['end_date'])
                 except _errors.MissingPermissionError:
                     global_errors[form.name].append('missing_permission')
+                except _errors.CannotEditPageError:
+                    global_errors[form.name].append('cannot_edit_page')
                 else:
                     if done:
                         return _core.Redirect(
