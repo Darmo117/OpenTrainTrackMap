@@ -2385,6 +2385,18 @@ class PageProtectionLog(Log):
         ordering = ('date',)
 
 
+class PageRenameLog(PageLog):
+    """New entries are added each time a page is renamed."""
+    old_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
+    new_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+    leave_redirect = _dj_models.BooleanField()
+
+    class Meta:
+        get_latest_by = 'date'
+        ordering = ('date',)
+
+
 class PageContentLanguageLog(PageLog):
     """New entries are added each time the content language of a page is modified."""
     language = _dj_models.ForeignKey(Language, on_delete=_dj_models.PROTECT)

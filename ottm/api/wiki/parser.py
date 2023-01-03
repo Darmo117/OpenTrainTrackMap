@@ -183,3 +183,12 @@ class Parser:
         link = f'<a {attrs}>{text}</a>'
 
         return link
+
+    @staticmethod
+    def get_redirect_link(page_title: str) -> str:
+        """Generate the wikicode for a redirect link for the given page title.
+
+        :param page_title: Page title to redirect to.
+        :return: The redirect link wikicode.
+        """
+        return f'#REDIRECT[[{page_title}]]'

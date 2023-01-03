@@ -470,6 +470,27 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 talks=str(protect_talks).lower(),
                 reason=_format_comment(context, reason, False),
             )
+        case models.PageRenameLog(performer=performer, old_title=old_title, new_title=new_title, reason=reason,
+                                  leave_redirect=leave_redirect):
+            if not leave_redirect:
+                return _ottm.ottm_translate(
+                    context,
+                    'wiki.log.page_rename_no_redirect',
+                    date=formatted_date,
+                    user=_format_username(context, performer),
+                    old_title=wiki_inner_link(context, old_title),
+                    new_title=wiki_inner_link(context, new_title),
+                    reason=_format_comment(context, reason, False),
+                )
+            return _ottm.ottm_translate(
+                context,
+                'wiki.log.page_rename',
+                date=formatted_date,
+                user=_format_username(context, performer),
+                old_title=wiki_inner_link(context, old_title),
+                new_title=wiki_inner_link(context, new_title),
+                reason=_format_comment(context, reason, False),
+            )
         case models.PageContentLanguageLog(performer=performer, page=page, language=language, reason=reason):
             return _ottm.ottm_translate(
                 context,

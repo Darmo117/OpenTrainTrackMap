@@ -822,7 +822,7 @@
                 }
               },
               "reason": {
-                "label": "Ruison"
+                "label": "Raison"
               },
               "submit": {
                 "label": "Supprimer la page"
@@ -838,9 +838,48 @@
         "RenamePage": {
           "title": "Renommer une page",
           "title_page": "Renommer «\u00a0{value}\u00a0»",
+          "log_entries": "Entrées de journaux liées",
+          "done": "Page renommée.",
           "menu": {
             "label": "Renommer",
             "tooltip": "Renommer cette page"
+          },
+          "form": {
+            "rename_page": {
+              "page": {
+                "label": "Page à renommer",
+                "error": {
+                  "page_invalid_title": "Titre de page invalide\u00a0!",
+                  "page_does_not_exist": "Cette page n’existe pas.",
+                  "special_page": "Les pages spéciales ne peuvent pas être renommées.",
+                  "required": "Titre de la page manquant\u00a0!"
+                }
+              },
+              "new_title": {
+                "label": "Nouveau titre",
+                "error": {
+                  "page_invalid_title": "Titre de page invalide\u00a0!",
+                  "page_already_exists": "Le nouveau titre existe déjà.",
+                  "required": "Titre de la page manquant\u00a0!"
+                }
+              },
+              "leave_redirect": {
+                "label": "Laisser une redirection"
+              },
+              "reason": {
+                "label": "Raison"
+              },
+              "submit": {
+                "label": "Renommer la page"
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission de renommer des pages.",
+                "cannot_edit_page": "Vous n’avez pas la permission de modifier cette page.",
+                "page_already_exists": "Le nouveau titre existe déjà.",
+                "cannot_edit_target_page": "Vous n’avez pas la permission de modifier le nouveau titre.",
+                "page_does_not_exist": "Cette page n’existe pas."
+              }
+            }
           }
         },
         "ProtectPage": {
@@ -1573,6 +1612,8 @@
         "page_protection_infinite": "({date}) {user} a changé le niveau de protection de {page} vers le groupe «\u00a0{group}\u00a0» (infini). [protect talks: {talks}] {reason}",
         "page_content_language": "({date}) {user} a changé la langue de contenu de {page} vers «\u00a0{language_name}\u00a0» ({language_code}). {reason}",
         "page_content_type": "({date}) {user} a changé le type de contenu de {page} vers «\u00a0{content_type}\u00a0». {reason}",
+        "page_rename": "({date}) {user} a renommé la page “{old_title}” vers “{new_title}”. {reason}",
+        "page_rename_no_redirect": "({date}) {user} a renommé la page “{old_title}” vers “{new_title}” sans laisser de redirection. {reason}",
         "user_account_creation": "({date}) Le compte {user} a été créé.",
         "user_mask_masked": "({date}) {performer} a masqué le pseudonyme de {user}. {reason}",
         "user_mask_unmasked": "({date}) {performer} a réaffiché le pseudonyme de {user}. {reason}",

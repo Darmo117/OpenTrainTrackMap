@@ -817,9 +817,48 @@
         "RenamePage": {
           "title": "Renomi paĝon",
           "title_page": "Renomi “{value}”",
+          "log_entries": "Rilataj protokoleroj",
+          "done": "La paĝo sukcese estis renomita.",
           "menu": {
             "label": "Renomi",
             "tooltip": "Renomi ĉi tiun paĝon"
+          },
+          "form": {
+            "rename_page": {
+              "page": {
+                "label": "Renomota paĝo",
+                "error": {
+                  "page_invalid_title": "Nevalida paĝotitolo!",
+                  "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas.",
+                  "special_page": "Specialaj paĝoj ne povas esti renomitaj.",
+                  "required": "Mankanta paĝotitolo!"
+                }
+              },
+              "new_title": {
+                "label": "New title",
+                "error": {
+                  "page_invalid_title": "Nevalida paĝotitolo!",
+                  "page_already_exists": "La nova titolo jam ekzistas.",
+                  "required": "Mankanta paĝotitolo!"
+                }
+              },
+              "leave_redirect": {
+                "label": "Leave redirect"
+              },
+              "reason": {
+                "label": "Reason"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por renomi paĝojn.",
+                "cannot_edit_page": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon.",
+                "page_already_exists": "La nova titolo jam ekzistas.",
+                "cannot_edit_target_page": "Vi ne havas la bezonatajn permesojn por redakti la novan titolon.",
+                "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas."
+              }
+            }
           }
         },
         "ProtectPage": {
@@ -1496,6 +1535,8 @@
         "page_protection_infinite": "({date}) {user} ŝanĝis la protektonivelon de {page} al grupo “{group}” (senfina). [protect talks: {talks}] {reason}",
         "page_content_language": "({date}) {user} ŝanĝis la enhavolingvon de {page} al “{language_name}” ({language_code}). {reason}",
         "page_content_type": "({date}) {user} ŝanĝis la enhavotipon de {page} al “{content_type}”. {reason}",
+        "page_rename": "({date}) {user} renomis la paĝon “{old_title}” al “{new_title}”. {reason}",
+        "page_rename_no_redirect": "({date}) {user} renomis la paĝon “{old_title}” al “{new_title}” sen lasi alidirektilon. {reason}",
         "user_account_creation": "({date}) Uzanta konto {user} estis kreita.",
         "user_mask_masked": "({date}) {performer} kaŝis la uzantonomon de {user}. {reason}",
         "user_mask_unmasked": "({date}) {performer} malkaŝis la uzantonomon de {user}. {reason}",

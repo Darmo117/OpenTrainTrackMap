@@ -810,9 +810,48 @@
         "RenamePage": {
           "title": "Rename a page",
           "title_page": "Rename “{value}”",
+          "log_entries": "Related log entries",
+          "done": "Page successfully renamed.",
           "menu": {
             "label": "Rename",
             "tooltip": "Rename this page"
+          },
+          "form": {
+            "rename_page": {
+              "page": {
+                "label": "Page to rename",
+                "error": {
+                  "page_invalid_title": "Invalid page name!",
+                  "page_does_not_exist": "This page does not exist.",
+                  "special_page": "Special pages cannot be renamed.",
+                  "required": "Missing page name!"
+                }
+              },
+              "new_title": {
+                "label": "New title",
+                "error": {
+                  "page_invalid_title": "Invalid page name!",
+                  "page_already_exists": "The new title already exists.",
+                  "required": "Missing page name!"
+                }
+              },
+              "leave_redirect": {
+                "label": "Leave redirect"
+              },
+              "reason": {
+                "label": "Reason"
+              },
+              "submit": {
+                "label": "Submit"
+              },
+              "error": {
+                "missing_permission": "You do not have the permissions required to rename pages.",
+                "cannot_edit_page": "You do not have the permissions required to edit this page.",
+                "page_already_exists": "The new title already exists.",
+                "cannot_edit_target_page": "You do not have the permissions required to edit the new title.",
+                "page_does_not_exist": "This page does not exist."
+              }
+            }
           }
         },
         "ProtectPage": {
@@ -1491,6 +1530,8 @@
         "page_protection_infinite": "({date}) {user} has changed the protection status of {page} to group “{group}” (infinite). [protect talks: {talks}] {reason}",
         "page_content_language": "({date}) {user} changed content language of {page} to “{language_name}” ({language_code}). {reason}",
         "page_content_type": "({date}) {user} changed content type of {page} to “{content_type}”. {reason}",
+        "page_rename": "({date}) {user} renamed page “{old_title}” to “{new_title}”. {reason}",
+        "page_rename_no_redirect": "({date}) {user} renamed page “{old_title}” to “{new_title}” without leaving a redirect. {reason}",
         "user_account_creation": "({date}) User account {user} has been created.",
         "user_mask_masked": "({date}) {performer} masked {user}’s username. {reason}",
         "user_mask_unmasked": "({date}) {performer} unmasked {user}’s username. {reason}",

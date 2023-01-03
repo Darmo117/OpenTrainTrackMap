@@ -361,7 +361,7 @@ def set_page_content_language(performer: _models.User, page: _models.Page, langu
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.EditSpecialPageError()
     if not page.can_user_edit(performer):
-        raise _errors.CannotEditPageError()
+        raise _errors.CannotEditPageError(page.full_title)
     if not performer.exists:
         performer.internal_object.save()
     if language.internal_language == page.content_language:
@@ -395,7 +395,7 @@ def set_page_content_type(performer: _models.User, page: _models.Page, content_t
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.EditSpecialPageError()
     if not page.can_user_edit(performer):
-        raise _errors.CannotEditPageError()
+        raise _errors.CannotEditPageError(page.full_title)
     if not performer.exists:
         performer.internal_object.save()
     if content_type == page.content_type:
@@ -515,7 +515,7 @@ def protect_page(performer: _models.User, page: _models.Page, protection_level: 
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.ProtectSpecialPageError()
     if not page.can_user_edit(performer):
-        raise _errors.CannotEditPageError()
+        raise _errors.CannotEditPageError(page.full_title)
     if until and until <= _utils.now().date():
         raise _errors.PastDateError()
     if not performer.exists:
@@ -560,15 +560,19 @@ def delete_page(performer: _models.User, page: _models.Page, reason: str = None)
     :param performer: The user performing the action.
     :param page: The page to delete.
     :param reason: The deletion reason.
+    :raise PageDoesNotExistError: If the page does not exist.
     :raise MissingPermissionError: If the user does not have the {_perms.PERM_WIKI_DELETE} permission.
+    :raise CannotEditPageError: If the user cannot edit the page.
     :raise DeleteSpecialPageError: If the page is in the "Special" namespace.
     """
+    if not page.exists:
+        raise _errors.PageDoesNotExistError(page.full_title)
     if not performer.has_permission(_perms.PERM_WIKI_DELETE):
         raise _errors.MissingPermissionError(_perms.PERM_WIKI_DELETE)
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.DeleteSpecialPageError()
     if not page.can_user_edit(performer):
-        raise _errors.CannotEditPageError()
+        raise _errors.CannotEditPageError(page.full_title)
     if not performer.exists:
         performer.internal_object.save()
     page.deleted = True
@@ -576,6 +580,56 @@ def delete_page(performer: _models.User, page: _models.Page, reason: str = None)
     _models.PageDeletionLog(
         page=page,
         performer=performer.internal_object,
+        reason=reason,
+    ).save()
+
+
+@_dj_db_trans.atomic
+def rename_page(performer: _models.User, page: _models.Page, new_title: str, leave_redirect: bool, reason: str = None):
+    f"""Rename a page.
+
+    :param performer: The user performing the action.
+    :param page: The page to rename.
+    :param new_title: Page’s new title.
+    :param leave_redirect: Whether to leave a redirect to the new title.
+    :param reason: The reason for renaming.
+    :raise PageDoesNotExistError: If the page does not exist.
+    :raise PageAlreadyExistsError: If the target title already exists.
+    :raise MissingPermissionError: If the user does not have the {_perms.PERM_WIKI_RENAME} permission.
+    :raise CannotEditPageError: If the user cannot edit the page.
+    :raise RenameSpecialPageError: If the page is in the "Special" namespace.
+    """
+    if not page.exists:
+        raise _errors.PageDoesNotExistError(page.full_title)
+    new_page = get_page(*split_title(new_title))
+    if new_page.exists:
+        raise _errors.TitleAlreadyExistsError(page.full_title)
+    if not performer.has_permission(_perms.PERM_WIKI_DELETE):
+        raise _errors.MissingPermissionError(_perms.PERM_WIKI_DELETE)
+    if page.namespace == _w_ns.NS_SPECIAL:
+        raise _errors.RenameSpecialPageError()
+    if not page.can_user_edit(performer):
+        raise _errors.CannotEditPageError(page.full_title)
+    if not new_page.can_user_edit(performer):
+        raise _errors.CannotEditPageError(new_page.full_title)
+    if not performer.exists:
+        performer.internal_object.save()
+    old_name = page.full_title
+    old_ns_id = page.namespace_id
+    old_title = page.title
+    page.namespace_id = new_page.namespace_id
+    page.title = new_page.title
+    page.save()
+    if leave_redirect or not performer.has_permission(_perms.PERM_WIKI_DELETE):
+        edit_page(performer, get_page(_w_ns.NAMESPACE_IDS[old_ns_id], old_title),
+                  _parser.Parser.get_redirect_link(old_name),
+                  comment=reason, follow=page.is_user_following(performer))
+    _models.PageRenameLog(
+        page=page,
+        performer=performer.internal_object,
+        old_title=old_name,
+        new_title=new_title,
+        leave_redirect=leave_redirect,
         reason=reason,
     ).save()
 

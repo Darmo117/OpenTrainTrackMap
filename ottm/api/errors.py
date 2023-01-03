@@ -21,6 +21,10 @@ class PageDoesNotExistError(RuntimeError):
     pass
 
 
+class TitleAlreadyExistsError(RuntimeError):
+    pass
+
+
 class MissingPermissionError(RuntimeError):
     def __init__(self, *missing_perms: str):
         """Create a permission error.
@@ -48,6 +52,10 @@ class ProtectSpecialPageError(RuntimeError):
 
 
 class DeleteSpecialPageError(RuntimeError):
+    pass
+
+
+class RenameSpecialPageError(RuntimeError):
     pass
 
 
