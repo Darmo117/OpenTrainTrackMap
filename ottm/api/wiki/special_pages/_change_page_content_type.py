@@ -22,7 +22,10 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:
-        target_page = None
+        if args:
+            target_page = _w_pages.get_page(*_w_pages.split_title('/'.join(args)))
+        else:
+            target_page = None
         form = _Form()
         global_errors = {form.name: []}
         if params.post:
@@ -44,8 +47,6 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
                             args={'done': True}
                         )
         else:
-            if args:
-                target_page = _w_pages.get_page(*_w_pages.split_title('/'.join(args)))
             if target_page:
                 if not target_page.exists:
                     global_errors[form.name].append('page_does_not_exist')

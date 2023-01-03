@@ -92,7 +92,7 @@ class SpecialPage(_abc.ABC):
         if isinstance(data, Redirect):
             return data
         if 'target_user' in data and data['target_user']:
-            data['title_key'] = f'{data["title_key"]}.{data["target_user"].gender.i18n_label}'
+            data['title_gender'] = data['target_user'].gender
         return {
             'has_custom_css': self.has_custom_css,
             'has_custom_js': self.has_custom_js,

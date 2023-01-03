@@ -443,15 +443,17 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
                 reason=_format_comment(context, reason, False),
             )
-        case models.PageProtectionLog(performer=performer, title=title, reason=reason, end_date=end_date,
-                                      protection_level=protection_level, protect_talks=protect_talks):
+        case models.PageProtectionLog(performer=performer, page_namespace_id=ns_id, page_title=title, reason=reason,
+                                      end_date=end_date, protection_level=protection_level,
+                                      protect_talks=protect_talks):
+            page_title = _w_ns.NAMESPACE_IDS[ns_id].get_full_page_title(title)
             if end_date:
                 return _ottm.ottm_translate(
                     context,
                     'wiki.log.page_protection',
                     date=formatted_date,
                     user=_format_username(context, performer),
-                    page=wiki_inner_link(context, title, ignore_current_title=True),
+                    page=wiki_inner_link(context, page_title, ignore_current_title=True),
                     group=protection_level.label,
                     until=(_ottm.ottm_format_date(context, end_date)
                            if end_date else _ottm.ottm_translate(context, 'wiki.log.infinite')),
@@ -463,7 +465,7 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 'wiki.log.page_protection_infinite',
                 date=formatted_date,
                 user=_format_username(context, performer),
-                page=wiki_inner_link(context, title, ignore_current_title=True),
+                page=wiki_inner_link(context, page_title, ignore_current_title=True),
                 group=protection_level.label,
                 talks=str(protect_talks).lower(),
                 reason=_format_comment(context, reason, False),

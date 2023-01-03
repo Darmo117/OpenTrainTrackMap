@@ -82,7 +82,7 @@
               {% if context.forbidden %}
                 {% ottm_translate 'wiki.special_page.forbidden.title' %}
               {% else %}
-                {% ottm_translate 'wiki.special_page.'|add:context.page.base_name|add:'.'|add:context.title_key value=context.title_value %}
+                {% ottm_translate 'wiki.special_page.'|add:context.page.base_name|add:'.'|add:context.title_key value=context.title_value gender=context.title_gender %}
               {% endif %}
             {% else %}
               {% ottm_translate 'wiki.special_page.does_not_exist.title' %}

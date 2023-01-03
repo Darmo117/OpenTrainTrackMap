@@ -26,7 +26,10 @@ class ContributionsSpecialPage(_core.SpecialPage):
             -> dict[str, _typ.Any] | _core.Redirect:
         user = _auth.get_user_from_request(params.request)
         language = params.ui_language
-        target_user = None
+        if args:
+            target_user = _auth.get_user_from_name(args[0])
+        else:
+            target_user = None
         contributions = _dj_auth_models.EmptyManager(_models.PageRevision)
         form = _Form(language)
         global_errors = {form.name: []}
@@ -51,7 +54,6 @@ class ContributionsSpecialPage(_core.SpecialPage):
                 global_errors[form.name].append('invalid_dates')
         elif args:
             kwargs = {k: v for k, v in params.get.items()}
-            target_user = _auth.get_user_from_name(args[0])
             if not target_user:
                 kwargs['username'] = args[0]
             else:

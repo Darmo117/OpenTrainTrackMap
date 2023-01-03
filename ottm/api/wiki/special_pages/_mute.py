@@ -23,7 +23,10 @@ class MuteSpecialPage(_core.SpecialPage):
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:
         user = _auth.get_user_from_request(params.request)
-        target_user = None
+        if args:
+            target_user = _auth.get_user_from_name(args[0])
+        else:
+            target_user = None
         form = _Form(_data_types.GENDER_N)
         global_errors = {form.name: []}
         if params.post:
@@ -54,7 +57,6 @@ class MuteSpecialPage(_core.SpecialPage):
                 else:
                     global_errors[form.name].append('anonymous_user')
         elif args:
-            target_user = _auth.get_user_from_name(args[0])
             if not target_user:
                 global_errors[form.name].append('user_does_not_exist')
                 form = _Form(_data_types.GENDER_N, initial={'username': args[0]})

@@ -22,7 +22,10 @@ class ProtectPageSpecialPage(_core.SpecialPage):
 
     def _process_request(self, params: _requests.RequestParams, args: list[str]) \
             -> dict[str, _typ.Any] | _core.Redirect:
-        target_page = None
+        if args:
+            target_page = _w_pages.get_page(*_w_pages.split_title('/'.join(args)))
+        else:
+            target_page = None
         form = _Form()
         global_errors = {form.name: []}
         if params.post:
@@ -46,8 +49,6 @@ class ProtectPageSpecialPage(_core.SpecialPage):
                             args={'done': True}
                         )
         else:
-            if args:
-                target_page = _w_pages.get_page(*_w_pages.split_title('/'.join(args)))
             if target_page:
                 block = target_page.get_edit_protection()
                 form = _Form(initial={
@@ -57,7 +58,8 @@ class ProtectPageSpecialPage(_core.SpecialPage):
                     'protect_talks': block and block.protect_talks,
                 })
         if target_page and target_page.exists:
-            log_entries = target_page.pageprotectionlog_set.reverse()
+            log_entries = _models.PageProtectionLog.objects.filter(page_namespace_id=target_page.namespace_id,
+                                                                   page_title=target_page.title).reverse()
         else:
             log_entries = _dj_auth_models.EmptyManager(_models.PageProtectionLog)
         return {
