@@ -353,7 +353,10 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             except _models.PageRevision.DoesNotExist:
                 revision = page.revisions.latest()
             else:
-                archived = True
+                if revision.hidden and not self._request_params.user.has_permission(_permissions.PERM_MASK):
+                    revision = page.revisions.latest()
+                else:
+                    archived = True
             content, parse_metadata = _w_pages.render_wikicode(revision.content, page)
             cache_metadata = CacheMetadata(
                 parse_duration=parse_metadata.parse_duration,

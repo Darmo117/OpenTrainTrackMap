@@ -3,7 +3,7 @@
 
 {% if context.archived %}
   <div id="wiki-revision-navbox" class="alert alert-info text-center" role="alert">
-    <div id="wiki-revision-navbox-message">
+    <div id="wiki-revision-navbox-message" {% if context.revision.hidden %}class="masked" {% endif %}>
       {% ottm_format_date context.revision.date as revision_date %}
       {% wiki_revision_author context.revision as user_link %}
       {% ottm_translate 'wiki.page.read.revision_nav_box.label' user_link=user_link date=revision_date %}
