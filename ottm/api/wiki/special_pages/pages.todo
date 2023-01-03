@@ -15,7 +15,7 @@ V- ChangePageContentType
 V- EditFollowList
 V- EditFollowList/raw
 V- EditFollowList/clear
-~- MaskRevision
+~- MaskRevisions
 V- Mute
 X- Forum
 X- Search

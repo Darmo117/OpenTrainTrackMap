@@ -286,7 +286,8 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
     ignore_hidden = not user.has_permission(_perms.PERM_MASK)
     Line = _coll.namedtuple(
         'Line',
-        ('actions', 'date', 'page_link', 'flags', 'size', 'size_text', 'variation', 'variation_text', 'comment')
+        ('actions', 'date', 'page_link', 'flags', 'size', 'size_text', 'variation', 'variation_text', 'comment',
+         'hidden')
     )
     lines = []
     for revision in revisions.get_page(wiki_context.page_index):
@@ -294,80 +295,90 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
         page = revision.page
         can_edit_page = page.can_user_edit(user)
 
-        if can_edit_page and user.has_permission(_perms.PERM_MASK):
-            actions.append(wiki_inner_link(
-                context,
-                f'Special:MaskRevision/{page.full_title}',
-                text='',
-                tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.mask.tooltip'),
-                css_classes='mdi mdi-eye-outline wiki-revision-action',
-                ignore_current_title=True,
-            ))
+        if mode != 'mask':
+            if can_edit_page and user.has_permission(_perms.PERM_MASK):
+                if revision.get_next(ignore_hidden=True):
+                    actions.append(wiki_inner_link(
+                        context,
+                        f'Special:MaskRevisions/{revision.id}',
+                        text='',
+                        tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.mask.tooltip'),
+                        css_classes='mdi mdi-eye-outline wiki-revision-action',
+                        ignore_current_title=True,
+                    ))
+                else:
+                    # language=HTML
+                    actions.append(_dj_safe.mark_safe(
+                        '<span class="mdi mdi-eye-outline wiki-revision-action"></span>'))
 
-        if not revision.is_latest(ignore_hidden):
-            actions.append(wiki_inner_link(
-                context,
-                page.full_title,
-                text='',
-                tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.current.tooltip'),
-                css_classes='mdi mdi-file-arrow-up-down-outline wiki-revision-action',
-                url_params=f'oldid={revision.id}&newid={page.get_latest_revision().id}',
-                ignore_current_title=True,
-            ))
-        else:
-            # language=HTML
-            actions.append(_dj_safe.mark_safe(
-                '<span class="mdi mdi-file-arrow-up-down-outline wiki-revision-action"></span>'))
-
-        if previous := revision.get_previous(ignore_hidden):
-            actions.append(wiki_inner_link(
-                context,
-                page.full_title,
-                text='',
-                tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.diff.tooltip'),
-                css_classes='mdi mdi-file-arrow-left-right-outline wiki-revision-action',
-                url_params=f'oldid={previous.id}&newid={revision.id}',
-                ignore_current_title=True,
-            ))
-        else:
-            # language=HTML
-            actions.append(_dj_safe.mark_safe(
-                '<span class="mdi mdi-file-arrow-left-right-outline wiki-revision-action"></span>'))
-
-        is_first = revision.is_first(ignore_hidden)
-        if can_edit_page:
-            if not is_first:
-                actions.append(wiki_inner_link(  # TODO URL params
+            if not revision.is_latest(ignore_hidden):
+                actions.append(wiki_inner_link(
                     context,
                     page.full_title,
                     text='',
-                    tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.cancel.tooltip'),
-                    css_classes='mdi mdi-undo wiki-revision-action',
+                    tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.current.tooltip'),
+                    css_classes='mdi mdi-file-arrow-up-down-outline wiki-revision-action',
+                    url_params=f'oldid={revision.id}&newid={page.get_latest_revision().id}',
                     ignore_current_title=True,
                 ))
             else:
                 # language=HTML
-                actions.append(_dj_safe.mark_safe('<span class="mdi mdi-undo wiki-revision-action"></span>'))
+                actions.append(_dj_safe.mark_safe(
+                    '<span class="mdi mdi-file-arrow-up-down-outline wiki-revision-action"></span>'))
 
-            if not is_first and user.has_permission(_perms.PERM_WIKI_REVERT):
-                actions.append(wiki_inner_link(  # TODO URL params
+            if previous := revision.get_previous(ignore_hidden):
+                actions.append(wiki_inner_link(
                     context,
                     page.full_title,
                     text='',
-                    # TODO number of revisions
-                    tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.revert.tooltip', nb=0),
-                    css_classes='mdi mdi-undo-variant wiki-revision-action',
+                    tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.diff.tooltip'),
+                    css_classes='mdi mdi-file-arrow-left-right-outline wiki-revision-action',
+                    url_params=f'oldid={previous.id}&newid={revision.id}',
                     ignore_current_title=True,
                 ))
             else:
                 # language=HTML
-                actions.append(_dj_safe.mark_safe('<span class="mdi mdi-undo-variant wiki-revision-action"></span>'))
+                actions.append(_dj_safe.mark_safe(
+                    '<span class="mdi mdi-file-arrow-left-right-outline wiki-revision-action"></span>'))
+
+            is_first = revision.is_first(ignore_hidden)
+            if can_edit_page:
+                if not is_first:
+                    actions.append(wiki_inner_link(  # TODO URL params
+                        context,
+                        page.full_title,
+                        text='',
+                        tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.cancel.tooltip'),
+                        css_classes='mdi mdi-undo wiki-revision-action',
+                        ignore_current_title=True,
+                    ))
+                else:
+                    # language=HTML
+                    actions.append(_dj_safe.mark_safe('<span class="mdi mdi-undo wiki-revision-action"></span>'))
+
+                if not is_first and user.has_permission(_perms.PERM_WIKI_REVERT):
+                    actions.append(wiki_inner_link(  # TODO URL params
+                        context,
+                        page.full_title,
+                        text='',
+                        # TODO number of revisions
+                        tooltip=_ottm.ottm_translate(context, 'wiki.revisions_list.revert.tooltip', nb=0),
+                        css_classes='mdi mdi-undo-variant wiki-revision-action',
+                        ignore_current_title=True,
+                    ))
+                else:
+                    # language=HTML
+                    actions.append(
+                        _dj_safe.mark_safe('<span class="mdi mdi-undo-variant wiki-revision-action"></span>'))
 
         match mode:
             case 'history':
                 page_link = _format_username(context, revision.author)
             case 'contributions':
                 page_link = wiki_inner_link(context, page.full_title, ignore_current_title=True)
+            case 'mask':
+                page_link = (_format_username(context, revision.author) + ' · '
+                             + wiki_inner_link(context, page.full_title, ignore_current_title=True))
             case _:
                 raise ValueError(f'invalid revision list mode {mode!r}')
 
@@ -397,7 +408,8 @@ def wiki_revisions_list(context: _ottm.TemplateContext, revisions: _dj_paginator
         variation_text = ('+' if variation > 0 else '') + _ottm.ottm_format_number(context, variation, value_only=True)
         comment = _format_comment(context, revision.comment, revision.comment_hidden)
 
-        lines.append(Line(actions, date, page_link, flags, size, size_text, variation, variation_text, comment))
+        lines.append(
+            Line(actions, date, page_link, flags, size, size_text, variation, variation_text, comment, revision.hidden))
     return {
         'lines': lines,
         'pagination': wiki_pagination(context, revisions),
@@ -513,6 +525,17 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
                 content_type=content_type,
+                reason=_format_comment(context, reason, False),
+            )
+        case models.PageRevisionMaskLog(performer=performer, revision=revision, action=action, reason=reason):
+            return _ottm.ottm_translate(
+                context,
+                'wiki.log.revision_' + action,
+                date=formatted_date,
+                user=_format_username(context, performer),
+                nb=wiki_inner_link(context, revision.page.full_title, text=str(revision.id),
+                                   url_params=f'revid={revision.id}'),
+                page=wiki_inner_link(context, revision.page.full_title),
                 reason=_format_comment(context, reason, False),
             )
         case models.UserAccountCreationLog(user=user):

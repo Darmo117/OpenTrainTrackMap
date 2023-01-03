@@ -239,7 +239,8 @@
           "form": {
             "mask_username": {
               "mask": {
-                "label": "Kaŝi"
+                "label": "Kaŝi",
+                "help": "Malelektu por malkaŝi."
               },
               "reason": {
                 "label": "Kialo"
@@ -1249,6 +1250,49 @@
             }
           }
         },
+        "MaskRevisions": {
+          "title": "Ŝanĝi la videblecon de paĝoversioj",
+          "done": "La videbleco de la elektitaj versioj sukcese esti ŝanĝita.",
+          "log_entries": "Rilataj protokoleroj",
+          "form": {
+            "change_visibility": {
+              "action": {
+                "label": "Ago aplikota al ĉiuj elektitaj versioj:",
+                "mask_fully": {
+                  "label": "Tute kaŝi"
+                },
+                "mask_comments_only": {
+                  "label": "Nur kaŝi la resumojn"
+                },
+                "unmask_all": {
+                  "label": "Malkaŝi ĉiujn"
+                },
+                "unmask_all_but_comments": {
+                  "label": "Malkaŝi ĉiujn krom la resumoj"
+                },
+                "error": {
+                  "invalid_choice": "Nevalida elektaĵo!"
+                }
+              },
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": "Ŝanĝi la videblecon"
+              },
+              "error": {
+                "no_revisions": "Neniu elektita paĝoversio.",
+                "cannot_mask_last_revision": "La lasta videbla ŝanĝo de paĝo ne povas esti kaŝita.",
+                "revision_does_not_exist": "Unu el la elektitaj versioj ne ekzistas.",
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por ŝanĝi la videblecon de paĝoversioj.",
+                "cannot_edit_page": "Vi ne havas la bezonatajn permesojn por redakti ĉi tiun paĝon."
+              }
+            }
+          },
+          "error": {
+            "no_revisions": "Neniu elektita paĝoversio."
+          }
+        },
         "Forum": {
           "title": "Diskutejo",
           "menu": {
@@ -1569,6 +1613,10 @@
         "page_content_type": "({date}) {user} ŝanĝis la enhavotipon de {page} al “{content_type}”. {reason}",
         "page_rename": "({date}) {user} renomis la paĝon “{old_title}” al “{new_title}”. {reason}",
         "page_rename_no_redirect": "({date}) {user} renomis la paĝon “{old_title}” al “{new_title}” sen lasi alidirektilon. {reason}",
+        "revision_mask_fully": "({date}) {user} kaŝis la version n-ron {nb} de la paĝo “{page}”. {reason}",
+        "revision_mask_comments_only": "({date}) {user} kaŝis la resumon de la versio n-ro {nb} de la paĝo “{page}”. {reason}",
+        "revision_unmask_all": "({date}) {user} malkaŝis la version n-ron {nb} de la paĝo “{page}”. {reason}",
+        "revision_unmask_all_but_comments": "({date}) {user} malkaŝis la version n-ron {nb} de la paĝo “{page}” (krom sia resumo). {reason}",
         "user_account_creation": "({date}) Uzanta konto {user} estis kreita.",
         "user_rename": "({date}) {performer} renomis la uzanton “{old_name}” kiel “{new_name}”. {reason}",
         "user_mask_masked": "({date}) {performer} kaŝis la uzantonomon de {user}. {reason}",

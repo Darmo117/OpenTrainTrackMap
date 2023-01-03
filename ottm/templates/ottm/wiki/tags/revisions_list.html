@@ -6,8 +6,8 @@
   {{ pagination }}
   <ul class="wiki-page-revisions">
     {% for line in lines %}
-      <li class="wiki-page-revision">
-        ({{ line.actions|join:' | ' }})
+      <li class="wiki-page-revision {% if line.hidden %}masked{% endif %}">
+        {% if line.actions %}({{ line.actions|join:' | ' }}){% endif %}
         {{ line.date }} ·
         {{ line.page_link|safe }} ·
         {% if line.flags %}

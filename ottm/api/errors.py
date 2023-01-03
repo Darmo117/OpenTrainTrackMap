@@ -93,3 +93,15 @@ class PastDateError(RuntimeError):
 
 class CannotEditPageError(RuntimeError):
     pass
+
+
+class PageRevisionDoesNotExistError(RuntimeError):
+    pass
+
+
+class CannotMaskLastRevisionError(RuntimeError):
+    pass
+
+
+class NoRevisionsError(RuntimeError):
+    pass

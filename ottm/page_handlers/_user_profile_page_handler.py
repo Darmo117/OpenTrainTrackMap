@@ -105,14 +105,14 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
             return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
 
         form = MaskUsernameForm(initial={
-            'mask': not target_user.hide_username,
+            'action': not target_user.hide_username,
         })
         global_errors = {form.name: []}
         if self._request_params.post:
             form = MaskUsernameForm(post=self._request_params.post)
             if form.is_valid():
                 try:
-                    _auth.mask_username(target_user, self._request_params.user, mask=form.cleaned_data['mask'],
+                    _auth.mask_username(target_user, self._request_params.user, mask=form.cleaned_data['action'],
                                         reason=form.cleaned_data['reason'])
                 except _errors.MissingPermissionError:
                     global_errors[form.name].append('missing_permission')
@@ -379,6 +379,7 @@ class MaskUsernameForm(_forms.CustomForm):
     mask = _dj_forms.BooleanField(
         label='mask',
         required=False,
+        help_text=True,
     )
     reason = _dj_forms.CharField(
         label='reason',

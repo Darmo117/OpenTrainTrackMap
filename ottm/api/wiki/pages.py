@@ -634,6 +634,60 @@ def rename_page(performer: _models.User, page: _models.Page, new_title: str, lea
     ).save()
 
 
+@_dj_db_trans.atomic
+def change_revisions_visibility(performer: _models.User, revision_ids: list[int], action: str, reason: str = None):
+    f"""Change the visibility of a list of page revisions.
+
+    :param performer: User performing the action.
+    :param revision_ids: List of revision IDs to change the visibility of.
+    :param action: Action to perform on all revision IDs.
+    :param reason: Reason for the visibility change.
+    :raise MissingPermissionError: If the user does not have the {_perms.PERM_MASK} permission.
+    :raise CannotEditPageError: If the user cannot edit one of the revisions’ page.
+    :raise PageRevisionDoesNotExistError: If one of the revision IDs does not exist.
+    :raise CannotMaskLastRevisionError: If one of the revision IDs is the last visible of its page.
+    :raise NoRevisionsError: If no revision ID is provided.
+    """
+    if not performer.has_permission(_perms.PERM_WIKI_RENAME):
+        raise _errors.MissingPermissionError(_perms.PERM_WIKI_RENAME)
+    if not revision_ids:
+        raise _errors.NoRevisionsError()
+    if not performer.exists:
+        performer.internal_object.save()
+
+    for revid in revision_ids:
+        try:
+            revision = _models.PageRevision.objects.get(id=revid)
+        except _models.PageRevision.DoesNotExist:
+            raise _errors.PageRevisionDoesNotExistError(revid)
+        page = revision.page
+        if not page.can_user_edit(performer):
+            raise _errors.CannotEditPageError(page.full_title)
+        if not revision.get_next(ignore_hidden=True):
+            raise _errors.CannotMaskLastRevisionError(revid)
+
+        match action:
+            case _models.PageRevisionMaskLog.MASK_FULLY:
+                revision.hidden = True
+                revision.comment_hidden = True
+            case _models.PageRevisionMaskLog.MASK_COMMENTS_ONLY:
+                revision.comment_hidden = True
+            case _models.PageRevisionMaskLog.UNMASK_ALL:
+                revision.hidden = False
+                revision.comment_hidden = False
+            case _models.PageRevisionMaskLog.UNMASK_ALL_BUT_COMMENTS:
+                revision.hidden = False
+            case _:
+                raise ValueError(f'invalid action {action!r}')
+        revision.save()
+        _models.PageRevisionMaskLog(
+            performer=performer.internal_object,
+            revision=revision,
+            action=action,
+            reason=reason,
+        ).save()
+
+
 def get_page_protection_log_entry(page: _models.Page) -> _models.PageProtectionLog | None:
     """Return the latest page protection log entry for the given page.
 

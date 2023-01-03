@@ -252,7 +252,8 @@
           "form": {
             "mask_username": {
               "mask": {
-                "label": "Masquer"
+                "label": "Masquer",
+                "help": "Décocher pour démasquer."
               },
               "reason": {
                 "label": "Raison"
@@ -1310,6 +1311,49 @@
             }
           }
         },
+        "MaskRevisions": {
+          "title": "Changer le visibilité de versions de pages",
+          "done": "La visibilité des versions sélectionnées a bien été changée.",
+          "log_entries": "Entrées de journaux liées",
+          "form": {
+            "change_visibility": {
+              "action": {
+                "label": "Action à appliquer aux versions sélectionnées\u00a0:",
+                "mask_fully": {
+                  "label": "Masquer entièrement"
+                },
+                "mask_comments_only": {
+                  "label": "Masquer seulement les commentaires"
+                },
+                "unmask_all": {
+                  "label": "Tout démasquer"
+                },
+                "unmask_all_but_comments": {
+                  "label": "Tout démasquer sauf les commentaires"
+                },
+                "error": {
+                  "invalid_choice": "Choix invalide\u00a0!"
+                }
+              },
+              "reason": {
+                "label": "Raison"
+              },
+              "submit": {
+                "label": "Changer la visibilité"
+              },
+              "error": {
+                "no_revisions": "Aucune version sélectionnée.",
+                "cannot_mask_last_revision": "La dernière version d’une page ne peut pas être masquée.",
+                "revision_does_not_exist": "Une des versions sélectionnées n’existe pas.",
+                "missing_permission": "Vous n’avez pas la permission de changer la visibilité de versions de pages.",
+                "cannot_edit_page": "Vous n’avez pas la permission de modifier cette page."
+              }
+            }
+          },
+          "error": {
+            "no_revisions": "Aucune version sélectionnée."
+          }
+        },
         "Forum": {
           "title": "Forum",
           "menu": {
@@ -1646,6 +1690,10 @@
         "page_content_type": "({date}) {user} a changé le type de contenu de {page} vers «\u00a0{content_type}\u00a0». {reason}",
         "page_rename": "({date}) {user} a renommé la page “{old_title}” vers “{new_title}”. {reason}",
         "page_rename_no_redirect": "({date}) {user} a renommé la page “{old_title}” vers “{new_title}” sans laisser de redirection. {reason}",
+        "revision_mask_fully": "({date}) {user} a masqué la version n°{nb} de la page “{page}”. {reason}",
+        "revision_mask_comments_only": "({date}) {user} a masqué le commentaire de la version n°{nb} de la page “{page}”. {reason}",
+        "revision_unmask_all": "({date}) {user} a démasqué la version n°{nb} de la page “{page}”. {reason}",
+        "revision_unmask_all_but_comments": "({date}) {user} a démasqué la version n°{nb} de la page “{page}” (excepté son commentaire). {reason}",
         "user_account_creation": "({date}) Le compte {user} a été créé.",
         "user_rename": "({date}) {performer} a renommé l’utilisateurice “{old_name}” en “{new_name}”. {reason}",
         "user_mask_masked": "({date}) {performer} a masqué le pseudonyme de {user}. {reason}",

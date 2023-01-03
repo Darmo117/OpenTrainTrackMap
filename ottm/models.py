@@ -2417,6 +2417,28 @@ class PageContentTypeLog(PageLog):
         ordering = ('date',)
 
 
+class PageRevisionMaskLog(Log):
+    """New entries are added each time a page revision is masked or unmasked."""
+    MASK_FULLY = 'mask_fully'
+    MASK_COMMENTS_ONLY = 'mask_comments_only'
+    UNMASK_ALL = 'unmask_all'
+    UNMASK_ALL_BUT_COMMENTS = 'unmask_all_but_comments'
+
+    performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT)
+    revision = _dj_models.ForeignKey(PageRevision, on_delete=_dj_models.PROTECT)
+    action = _dj_models.CharField(max_length=30, choices=(
+        (MASK_FULLY, MASK_FULLY),
+        (MASK_COMMENTS_ONLY, MASK_COMMENTS_ONLY),
+        (UNMASK_ALL, UNMASK_ALL),
+        (UNMASK_ALL_BUT_COMMENTS, UNMASK_ALL_BUT_COMMENTS),
+    ))
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+
+    class Meta:
+        get_latest_by = 'date'
+        ordering = ('date',)
+
+
 class UserLog(Log):
     """Base class for user-related operations."""
     user = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT)
