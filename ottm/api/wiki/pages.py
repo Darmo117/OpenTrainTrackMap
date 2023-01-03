@@ -543,7 +543,7 @@ def protect_page(performer: _models.User, page: _models.Page, protection_level: 
         ).save()
     _models.PageProtectionLog(
         performer=performer.internal_object,
-        page=page,
+        title=page.full_title,
         end_date=end_date,
         reason=reason,
         protect_talks=protect_talks,

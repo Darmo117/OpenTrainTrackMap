@@ -817,7 +817,7 @@
                 "error": {
                   "page_invalid_title": "Titre de page invalide\u00a0!",
                   "page_does_not_exist": "Cette page n’existe pas.",
-                  "special_page": "Les pages spéciales ne peuvent pas être modifiées.",
+                  "special_page": "Les pages spéciales ne peuvent pas être supprimées.",
                   "required": "Titre de la page manquant\u00a0!"
                 }
               },
@@ -857,7 +857,8 @@
               "page": {
                 "label": "Page à protéger",
                 "error": {
-                  "special_page": "Les pages spéciales ne peuvent pas être protégées."
+                  "special_page": "Les pages spéciales ne peuvent pas être protégées.",
+                  "required": "Titre de la page manquant\u00a0!"
                 }
               },
               "protection_level": {

@@ -796,7 +796,7 @@
                 "error": {
                   "page_invalid_title": "Nevalida paĝotitolo!",
                   "page_does_not_exist": "Ĉi tiu paĝo ne ekzistas.",
-                  "special_page": "Specialaj paĝoj ne povas esti redktataj.",
+                  "special_page": "Specialaj paĝoj ne povas esti forigitaj.",
                   "required": "Mankanta paĝotitolo!"
                 }
               },
@@ -836,7 +836,8 @@
               "page": {
                 "label": "Protektota paĝo",
                 "error": {
-                  "special_page": "Specialaj paĝoj ne povas esti protektitaj."
+                  "special_page": "Specialaj paĝoj ne povas esti protektitaj.",
+                  "required": "Mankanta paĝotitolo!"
                 }
               },
               "protection_level": {

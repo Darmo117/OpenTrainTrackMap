@@ -789,7 +789,7 @@
                 "error": {
                   "page_invalid_title": "Invalid page name!",
                   "page_does_not_exist": "This page does not exist.",
-                  "special_page": "Special pages cannot be modified.",
+                  "special_page": "Special pages cannot be deleted.",
                   "required": "Missing page name!"
                 }
               },
@@ -829,7 +829,8 @@
               "page": {
                 "label": "Page to protect",
                 "error": {
-                  "special_page": "Special pages cannot be protected."
+                  "special_page": "Special pages cannot be protected.",
+                  "required": "Missing page name!"
                 }
               },
               "protection_level": {
