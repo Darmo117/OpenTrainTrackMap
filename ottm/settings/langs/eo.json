@@ -1281,7 +1281,7 @@
                 "label": "Ŝanĝi la videblecon"
               },
               "error": {
-                "no_revisions": "Neniu elektita paĝoversio.",
+                "no_revisions": "Neniu elektita valida paĝoversio.",
                 "cannot_mask_last_revision": "La lasta videbla ŝanĝo de paĝo ne povas esti kaŝita.",
                 "revision_does_not_exist": "Unu el la elektitaj versioj ne ekzistas.",
                 "missing_permission": "Vi ne havas la bezonatajn permesojn por ŝanĝi la videblecon de paĝoversioj.",
@@ -1290,7 +1290,7 @@
             }
           },
           "error": {
-            "no_revisions": "Neniu elektita paĝoversio."
+            "no_revisions": "Neniu elektita valida paĝoversio."
           }
         },
         "Forum": {

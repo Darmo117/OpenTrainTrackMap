@@ -1342,7 +1342,7 @@
                 "label": "Changer la visibilité"
               },
               "error": {
-                "no_revisions": "Aucune version sélectionnée.",
+                "no_revisions": "Aucune version valide sélectionnée.",
                 "cannot_mask_last_revision": "La dernière version d’une page ne peut pas être masquée.",
                 "revision_does_not_exist": "Une des versions sélectionnées n’existe pas.",
                 "missing_permission": "Vous n’avez pas la permission de changer la visibilité de versions de pages.",
@@ -1351,7 +1351,7 @@
             }
           },
           "error": {
-            "no_revisions": "Aucune version sélectionnée."
+            "no_revisions": "Aucune version valide sélectionnée."
           }
         },
         "Forum": {

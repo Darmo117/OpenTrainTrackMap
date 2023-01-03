@@ -1276,7 +1276,7 @@
                 "label": "Change visibility"
               },
               "error": {
-                "no_revisions": "No revisions selected.",
+                "no_revisions": "No valid revision selected.",
                 "cannot_mask_last_revision": "The latest visible revision of a page cannot be masked.",
                 "revision_does_not_exist": "One of the selected revisions does not exist.",
                 "missing_permission": "You do not have the permissions required to mask page revisions.",
@@ -1285,7 +1285,7 @@
             }
           },
           "error": {
-            "no_revisions": "No revisions selected."
+            "no_revisions": "No valid revision selected."
           }
         },
         "Forum": {
