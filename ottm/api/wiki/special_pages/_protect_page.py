@@ -101,7 +101,7 @@ class _Form(_ph.WikiForm):
     )
     reason = _dj_forms.CharField(
         label='reason',
-        max_length=_models.UserGroupLog._meta.get_field('reason').max_length,
+        max_length=_models.PageProtectionLog._meta.get_field('reason').max_length,
         required=False,
         strip=True,
     )

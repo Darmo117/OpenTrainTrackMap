@@ -77,7 +77,7 @@ class _Form(_ph.WikiForm):
     )
     reason = _dj_forms.CharField(
         label='reason',
-        max_length=_models.PageContentTypeLog._meta.get_field('reason').max_length,
+        max_length=_models.PageDeletionLog._meta.get_field('reason').max_length,
         strip=True,
         required=False
     )
