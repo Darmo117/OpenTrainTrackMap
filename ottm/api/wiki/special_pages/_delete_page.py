@@ -46,6 +46,8 @@ class DeletePageSpecialPage(_core.SpecialPage):
             if args:
                 target_page = _w_pages.get_page(*_w_pages.split_title('/'.join(args)))
             if target_page:
+                if not target_page.exists:
+                    global_errors[form.name].append('page_does_not_exist')
                 form = _Form(initial={'page_name': target_page.full_title})
         if target_page and target_page.exists:
             log_entries = target_page.pagedeletionlog_set.reverse()
