@@ -594,9 +594,9 @@ def rename_page(performer: _models.User, page: _models.Page, new_title: str, lea
     :param leave_redirect: Whether to leave a redirect to the new title.
     :param reason: The reason for renaming.
     :raise PageDoesNotExistError: If the page does not exist.
-    :raise PageAlreadyExistsError: If the target title already exists.
+    :raise TitleAlreadyExistsError: If the target title already exists.
     :raise MissingPermissionError: If the user does not have the {_perms.PERM_WIKI_RENAME} permission.
-    :raise CannotEditPageError: If the user cannot edit the page.
+    :raise CannotEditPageError: If the user cannot edit the old page or the new page.
     :raise RenameSpecialPageError: If the page is in the "Special" namespace.
     """
     if not page.exists:
@@ -604,8 +604,8 @@ def rename_page(performer: _models.User, page: _models.Page, new_title: str, lea
     new_page = get_page(*split_title(new_title))
     if new_page.exists:
         raise _errors.TitleAlreadyExistsError(page.full_title)
-    if not performer.has_permission(_perms.PERM_WIKI_DELETE):
-        raise _errors.MissingPermissionError(_perms.PERM_WIKI_DELETE)
+    if not performer.has_permission(_perms.PERM_WIKI_RENAME):
+        raise _errors.MissingPermissionError(_perms.PERM_WIKI_RENAME)
     if page.namespace == _w_ns.NS_SPECIAL:
         raise _errors.RenameSpecialPageError()
     if not page.can_user_edit(performer):
@@ -622,7 +622,7 @@ def rename_page(performer: _models.User, page: _models.Page, new_title: str, lea
     page.save()
     if leave_redirect or not performer.has_permission(_perms.PERM_WIKI_DELETE):
         edit_page(performer, get_page(_w_ns.NAMESPACE_IDS[old_ns_id], old_title),
-                  _parser.Parser.get_redirect_link(old_name),
+                  _parser.Parser.get_redirect_link(new_title),
                   comment=reason, follow=page.is_user_following(performer))
     _models.PageRenameLog(
         page=page,

@@ -101,6 +101,9 @@
             },
             "submit": {
               "label": "Krei konton"
+            },
+            "error": {
+              "duplicate_username": "Tiu uzantonomo ne haveblas."
             }
           }
         }
@@ -246,7 +249,36 @@
               },
               "error": {
                 "missing_permission": "Vi ne havas la bezonatajn permesojn por ŝanĝi la videblecon de uzantonomojn.",
-                "anonymous_user": "Vi ne povas ŝanĝi la videblecon de la uzantonomojn de sennomaj uzantoj."
+                "anonymous_user": "Ne povas ŝanĝi la videblecon de la uzantonomojn de sennomaj uzantoj."
+              }
+            }
+          },
+          "log_entries": "Rilataj protokoleroj"
+        },
+        "rename": {
+          "title": "Renomi “{username}”",
+          "tab_title": "Renomi “{username}”",
+          "form": {
+            "rename": {
+              "new_username": {
+                "label": "Nova uzantonomo",
+                "error": {
+                  "invalid": "Nevalida uzantonomo!",
+                  "duplicate": "Tiu uzantonomo ne haveblas.",
+                  "required": "Mankanta uzantonomo!"
+                }
+              },
+              "reason": {
+                "label": "Kialo"
+              },
+              "submit": {
+                "label": "Renomi"
+              },
+              "error": {
+                "missing_permission": "Vi ne havas la bezonatajn permesojn por renomi uzantojn.",
+                "duplicate_username": "La uzantonomo ne haveblas.",
+                "new_page_already_exists": "La nova vikia uzantopaĝo jam ekzistas. Forigu ĝin antaŭ renomi ĉi tiun uzanton.",
+                "anonymous_user": "Sennomaj uzantoj ne estas renomeblaj."
               }
             }
           },
@@ -1141,7 +1173,7 @@
           }
         },
         "Mute": {
-            "title": "Silentigi uzanton",
+          "title": "Silentigi uzanton",
           "title_user": "Silentigi “{value}”",
           "done": "Ŝanĝoj konservitaj.",
           "menu": {

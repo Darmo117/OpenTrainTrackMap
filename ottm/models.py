@@ -2445,6 +2445,19 @@ class UserMaskLog(UserLog):
         ordering = ('date',)
 
 
+class UserRenameLog(UserLog):
+    """New entries are added each time a user is renamed."""
+    performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT,
+                                      related_name='userrenamelog_performer_set')
+    old_username = _dj_models.CharField(max_length=150, validators=[username_validator])
+    new_username = _dj_models.CharField(max_length=150, validators=[username_validator])
+    reason = _dj_models.CharField(max_length=200, null=True, blank=True)
+
+    class Meta:
+        get_latest_by = 'date'
+        ordering = ('date',)
+
+
 class UserGroupLog(UserLog):
     """New entries are added each time a user account is created."""
     performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT,

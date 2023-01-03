@@ -110,6 +110,9 @@
             },
             "submit": {
               "label": "Créer le compte"
+            },
+            "error": {
+              "duplicate_username": "Ce pseudo n’est pas disponible."
             }
           }
         }
@@ -260,6 +263,35 @@
               "error": {
                 "missing_permission": "Vous n’avez pas la permission de masquer les pseudos.",
                 "anonymous_user": "Impossible de changer la visibiliter des utilisateurices anonymes."
+              }
+            }
+          },
+          "log_entries": "Entrées de journaux liées"
+        },
+        "rename": {
+          "title": "Renommer “{username}”",
+          "tab_title": "Renommer “{username}”",
+          "form": {
+            "rename": {
+              "new_username": {
+                "label": "Nouveau pseudo",
+                "error": {
+                  "invalid": "Pseudo invalide\u00a0!",
+                  "duplicate": "Ce pseudo n’est pas disponible.",
+                  "required": "Pseudo manquant\u00a0!"
+                }
+              },
+              "reason": {
+                "label": "Raison"
+              },
+              "submit": {
+                "label": "Renommer"
+              },
+              "error": {
+                "missing_permission": "Vous n’avez pas la permission de renommer les utilisateurs.",
+                "duplicate_username": "Ce pseudo n’est pas disponible.",
+                "new_page_already_exists": "La nouvelle page wiki de cet·te utilisateurice existe déjà. Supprimez-la avant de renommer l’utilisateurice.",
+                "anonymous_user": "Impossible de renommer les utilisateurices anonymes."
               }
             }
           },

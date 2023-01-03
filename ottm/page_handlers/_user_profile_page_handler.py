@@ -6,7 +6,7 @@ import django.db.models as _dj_models
 import django.forms as _dj_forms
 from django.http import response as _dj_response
 
-from . import _ottm_handler, _user_page_context
+from . import _ottm_handler, _user_page_context, _sign_up_page_handler
 from .. import forms as _forms, models as _models, requests as _requests
 from ..api import auth as _auth, data_types as _data_types, errors as _errors, permissions as _perms
 
@@ -134,7 +134,41 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
         ))
 
     def _handle_rename(self, target_user: _models.User) -> _dj_response.HttpResponse:
-        pass  # TODO
+        if (not self._request_params.user.has_permission(_perms.PERM_RENAME_USERS)
+                or not target_user.is_authenticated):
+            return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
+
+        form = RenameUserForm()
+        global_errors = {form.name: []}
+        if self._request_params.post:
+            form = RenameUserForm(post=self._request_params.post)
+            if form.is_valid():
+                new_name = form.cleaned_data['new_username']
+                try:
+                    _auth.rename_user(target_user, performer=self._request_params.user, new_name=new_name,
+                                      reason=form.cleaned_data['reason'])
+                except _errors.MissingPermissionError:
+                    global_errors[form.name].append('missing_permission')
+                except _errors.AnonymousRenameError:
+                    global_errors[form.name].append('anonymous_user')
+                except _errors.DuplicateUsernameError:
+                    global_errors[form.name].append('duplicate_username')
+                except _errors.TitleAlreadyExistsError:
+                    global_errors[form.name].append('new_page_already_exists')
+                else:
+                    return self.redirect('ottm:user_profile', reverse=True, username=new_name)
+
+        title, tab_title = self.get_page_titles(page_id='user_profile.rename', gender=target_user.gender,
+                                                titles_args={'username': target_user.username})
+        return self.render_page(f'ottm/user-profile/action-form.html', UserProfileActionPageContext(
+            self._request_params,
+            tab_title,
+            title,
+            target_user=target_user,
+            form=form,
+            global_errors=global_errors,
+            log_entries=_models.UserRenameLog.objects.filter(user=target_user.internal_object).reverse(),
+        ))
 
     def _handle_edit_groups(self, target_user: _models.User) -> _dj_response.HttpResponse:
         if (not self._request_params.user.has_permission(_perms.PERM_EDIT_USER_GROUPS)
@@ -294,6 +328,27 @@ class UserBlockPageContext(UserProfileActionPageContext):
     @property
     def unblock_form(self) -> _forms.CustomForm:
         return self._unblock_form
+
+
+class RenameUserForm(_forms.CustomForm):
+    """Rename user form."""
+
+    new_username = _dj_forms.CharField(
+        label='new_username',
+        max_length=_models.CustomUser._meta.get_field('username').max_length,
+        validators=[_sign_up_page_handler.SignUpForm.username_validator],
+        required=True,
+        strip=True,
+    )
+    reason = _dj_forms.CharField(
+        label='reason',
+        max_length=_models.UserGroupLog._meta.get_field('reason').max_length,
+        required=False,
+        strip=True,
+    )
+
+    def __init__(self, post=None, initial=None):
+        super().__init__('rename', False, post=post, initial=initial)
 
 
 class EditUserGroupsForm(_forms.CustomForm):

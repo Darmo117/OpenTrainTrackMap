@@ -9,6 +9,7 @@ import django.db.transaction as _dj_db_trans
 
 from .. import models as _models
 from ..api import errors as _errors, groups as _groups, permissions as _perms, utils as _utils
+from ..api.wiki import namespaces as _w_ns, pages as _w_pages
 
 
 def log_in(request: _dj_wsgi.WSGIRequest, username: str, password: str) -> bool:
@@ -135,6 +136,45 @@ def create_user(username: str, email: str = None, password: str = None, ignore_e
     _models.UserAccountCreationLog(user=dj_user).save()
 
     return _models.User(dj_user)
+
+
+@_dj_db_trans.atomic
+def rename_user(user: _models.User, performer: _models.User, new_name: str, reason: str = None):
+    """Rename a user.
+
+    :param user: User to rename.
+    :param performer: User performing the action.
+    :param new_name: User’s new username.
+    :param reason: Reason for the renaming.
+    :raise MissingPermissionError: If the performer does not have the "rename_user" permission.
+    :raise AnonymousRenameError: If the user is anonymous.
+    :raise DuplicateUsernameError: If the new username is already taken.
+    :raise TitleAlreadyExistsError: If the new wiki user page already exists.
+    """
+    if not performer.has_permission(_perms.PERM_MASK):
+        raise _errors.MissingPermissionError(_perms.PERM_MASK)
+    if not user.is_authenticated:
+        raise _errors.AnonymousRenameError()
+    if get_user_from_name(new_name):
+        raise _errors.DuplicateUsernameError(new_name)
+    old_name = user.username
+    user.username = new_name
+    user.internal_object.save()
+    # Rename wiki user page
+    old_user_page = _w_pages.get_page(_w_ns.NS_USER, old_name)
+    if old_user_page.exists:
+        try:
+            _w_pages.rename_page(performer, old_user_page,
+                                 _w_ns.NS_USER.get_full_page_title(new_name), leave_redirect=True, reason=reason)
+        except _errors.CannotEditPageError:
+            pass
+    _models.UserRenameLog(
+        user=user.internal_object,
+        performer=performer.internal_object,
+        old_username=old_name,
+        new_username=new_name,
+        reason=reason,
+    ).save()
 
 
 @_dj_db_trans.atomic

@@ -26,6 +26,12 @@ def user_exists_validator(value: str):
         raise _dj_exc.ValidationError('user does not exist', code='user_does_not_exist')
 
 
+def user_does_not_exist_validator(value: str):
+    from .api import auth as _auth
+    if _auth.get_user_from_name(value):
+        raise _dj_exc.ValidationError('user exists', code='user_exists')
+
+
 def user_not_anonymous_validator(value: str):
     from .api import auth as _auth
     if (user := _auth.get_user_from_name(value)) and not user.is_authenticated:

@@ -80,7 +80,7 @@ def _get_builtin_menu(page_context: _ph.WikiPageContext, menu_id: str) -> Menu:
 
         case 'page_tools':
             if page.namespace != _w_ns.NS_SPECIAL:
-                if page.exists:
+                if page.exists and page.can_user_edit(user):
                     if user.has_permission(_perms.PERM_WIKI_DELETE):
                         items.append({'title': 'Special:DeletePage', 'subpage': page.full_title})
                     if user.has_permission(_perms.PERM_WIKI_RENAME):

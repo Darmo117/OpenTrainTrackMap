@@ -75,6 +75,10 @@ class AnonymousEditGroupsError(RuntimeError):
     pass
 
 
+class AnonymousRenameError(RuntimeError):
+    pass
+
+
 class AnonymousMaskUsernameError(RuntimeError):
     pass
 

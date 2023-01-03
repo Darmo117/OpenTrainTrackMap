@@ -105,7 +105,7 @@ def ottm_user_type_icon(context: TemplateContext, username: str) -> str:
     else:
         key = 'page.user_profile.statistics.status_user'
         icon = 'account'
-    tooltip = ottm_context.language.translate(key, gender=user.gender)
+    tooltip = ottm_context.language.translate(key, gender=user.gender if user else None)
     # language=HTML
     return _dj_safe.mark_safe(f'<span class="mdi mdi-{icon}" title="{tooltip}"></span>')
 

@@ -7,7 +7,7 @@ V- SubPages
 X- LinkedPages
 X- Logs
 V- DeletePage
-~- RenamePage
+V- RenamePage
 V- ProtectPage
 V- SendEmail
 V- ChangePageLanguage

@@ -102,6 +102,9 @@
             },
             "submit": {
               "label": "Create account"
+            },
+            "error": {
+              "duplicate_username": "This username is already taken."
             }
           }
         }
@@ -240,6 +243,35 @@
               "error": {
                 "missing_permission": "You do not have the permission to change the visibility of usernames.",
                 "anonymous_user": "Cannot change the visibility of anonymous users’ usernames."
+              }
+            }
+          },
+          "log_entries": "Related log entries"
+        },
+        "rename": {
+          "title": "Rename user “{username}”",
+          "tab_title": "Rename user “{username}”",
+          "form": {
+            "rename": {
+              "new_username": {
+                "label": "New username",
+                "error": {
+                  "invalid": "Invalid username!",
+                  "duplicate": "This username is already taken!",
+                  "required": "Missing username!"
+                }
+              },
+              "reason": {
+                "label": "Reason"
+              },
+              "submit": {
+                "label": "Rename"
+              },
+              "error": {
+                "missing_permission": "You do not have the permission to rename users.",
+                "duplicate_username": "This username is already taken.",
+                "new_page_already_exists": "The new wiki user page already exists. Delete it before renaming this user.",
+                "anonymous_user": "Cannot rename anonymous users."
               }
             }
           },
