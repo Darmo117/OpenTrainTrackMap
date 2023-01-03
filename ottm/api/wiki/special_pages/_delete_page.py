@@ -28,8 +28,8 @@ class DeletePageSpecialPage(_core.SpecialPage):
             target_page = None
         form = _Form()
         global_errors = {form.name: []}
-        if params.post:
-            form = _Form(post=params.post)
+        if params.POST:
+            form = _Form(post=params.POST)
             if form.is_valid():
                 target_page = _w_pages.get_page(*_w_pages.split_title(form.cleaned_data['page_name']))
                 try:
@@ -63,7 +63,7 @@ class DeletePageSpecialPage(_core.SpecialPage):
             'log_entries': log_entries,
             'revisions_nb': target_page.revisions.count() if target_page and target_page.exists else 0,
             'linked_pages': target_page.get_linked_pages() if target_page else None,
-            'done': params.get.get('done'),
+            'done': params.GET.get('done'),
         }
 
 

@@ -1,5 +1,6 @@
 """This modules defines the RequestParams class, which is a wrapper around a WSGIRequest object."""
 import django.core.handlers.wsgi as _dj_wsgi
+import django.utils.datastructures as _dj_ds
 
 from . import models as _models, settings as _settings
 from .api import auth as _auth, utils as _utils
@@ -24,9 +25,6 @@ class RequestParams:
             self._wiki_action = _w_cons.ACTION_READ
         self._results_per_page = self._get_results_per_page(get_params)
         self._page_index = self._get_page_index(get_params)
-        self._get_params = get_params
-        self._post_params = request.POST
-        self._cookies = request.COOKIES
 
     @property
     def request(self) -> _dj_wsgi.WSGIRequest:
@@ -60,17 +58,30 @@ class RequestParams:
     def page_index(self) -> int:
         return self._page_index
 
+    # noinspection PyPep8Naming
     @property
-    def get(self) -> _dj_wsgi.QueryDict:
-        return self._get_params
+    def GET(self) -> _dj_wsgi.QueryDict:
+        return self._request.GET
 
+    # noinspection PyPep8Naming
     @property
-    def post(self) -> _dj_wsgi.QueryDict:
-        return self._post_params
+    def POST(self) -> _dj_wsgi.QueryDict:
+        return self._request.POST
 
+    # noinspection PyPep8Naming
     @property
-    def cookies(self) -> dict[str, str]:
-        return self._cookies
+    def FILES(self) -> _dj_ds.MultiValueDict:
+        return self._request.FILES
+
+    # noinspection PyPep8Naming
+    @property
+    def COOKIES(self) -> dict[str, str]:
+        return self._request.COOKIES
+
+    # noinspection PyPep8Naming
+    @property
+    def META(self) -> dict[str, str]:
+        return self._request.META
 
     @staticmethod
     def _get_page_language(request: _dj_wsgi.WSGIRequest, user: _models.User) -> _settings.UILanguage:

@@ -30,8 +30,8 @@ class RenamePageSpecialPage(_core.SpecialPage):
         user = params.user
         form = _Form(user)
         global_errors = {form.name: []}
-        if params.post:
-            form = _Form(user, post=params.post)
+        if params.POST:
+            form = _Form(user, post=params.POST)
             if form.is_valid():
                 target_page = _w_pages.get_page(*_w_pages.split_title(form.cleaned_data['page_name']))
                 new_title = form.cleaned_data['new_title']
@@ -72,7 +72,7 @@ class RenamePageSpecialPage(_core.SpecialPage):
             'form': form,
             'global_errors': global_errors,
             'log_entries': log_entries,
-            'done': params.get.get('done'),
+            'done': params.GET.get('done'),
         }
 
 

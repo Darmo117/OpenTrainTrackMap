@@ -11,7 +11,7 @@ class WikiAPIHandler(_core.PageHandler):
     """Handler for the wiki API."""
 
     def handle_request(self) -> _dj_response.HttpResponse:
-        match self._request_params.get.get('action'):
+        match self._request_params.GET.get('action'):
             case 'query':
                 return self._query_action()
             case action:
@@ -19,7 +19,7 @@ class WikiAPIHandler(_core.PageHandler):
 
     def _query_action(self) -> _dj_response.HttpResponse:
         """``action=query``"""
-        match self._request_params.get.get('query'):
+        match self._request_params.GET.get('query'):
             case ('static' | 'gadget') as resource_type:
                 return self._query_static_resource(resource_type)
             case action:
@@ -27,7 +27,7 @@ class WikiAPIHandler(_core.PageHandler):
 
     def _query_static_resource(self, resource_type: str) -> _dj_response.HttpResponse:
         """``action=query&query=(static|gadget)``"""
-        page_title = self._request_params.get.get('title')
+        page_title = self._request_params.GET.get('title')
         if not page_title:
             return self._bad_request('missing "title" parameter')
         page = _pages.get_page(*_pages.split_title(page_title))

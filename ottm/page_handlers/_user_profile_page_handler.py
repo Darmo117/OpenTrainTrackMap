@@ -27,7 +27,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
         target_user = _auth.get_user_from_name(self._username)
         if not target_user:
             raise _dj_response.Http404()
-        match self._request_params.get.get('action'):
+        match self._request_params.GET.get('action'):
             case 'block':
                 return self._handle_block(target_user)
             case 'mask_username':
@@ -60,9 +60,9 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
             'allow_editing_own_settings': True,
         })
         unblock_form = UnblockUserForm(target_user.gender)
-        if self._request_params.post:
-            if self._request_params.post.get('form-name') == 'block':
-                form = BlockUserForm(target_user.gender, post=self._request_params.post)
+        if self._request_params.POST:
+            if self._request_params.POST.get('form-name') == 'block':
+                form = BlockUserForm(target_user.gender, post=self._request_params.POST)
                 if form.is_valid():
                     global_errors[form.name] = []
                     try:
@@ -78,7 +78,7 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
                     else:
                         return self.redirect('ottm:user_profile', reverse=True, username=target_user.username)
             else:
-                unblock_form = UnblockUserForm(target_user.gender, post=self._request_params.post)
+                unblock_form = UnblockUserForm(target_user.gender, post=self._request_params.POST)
                 if unblock_form.is_valid():
                     try:
                         _auth.unblock_user(target_user, self._request_params.user, unblock_form.cleaned_data['reason'])
@@ -108,8 +108,8 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
             'action': not target_user.hide_username,
         })
         global_errors = {form.name: []}
-        if self._request_params.post:
-            form = MaskUsernameForm(post=self._request_params.post)
+        if self._request_params.POST:
+            form = MaskUsernameForm(post=self._request_params.POST)
             if form.is_valid():
                 try:
                     _auth.mask_username(target_user, self._request_params.user, mask=form.cleaned_data['action'],
@@ -140,8 +140,8 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
 
         form = RenameUserForm()
         global_errors = {form.name: []}
-        if self._request_params.post:
-            form = RenameUserForm(post=self._request_params.post)
+        if self._request_params.POST:
+            form = RenameUserForm(post=self._request_params.POST)
             if form.is_valid():
                 new_name = form.cleaned_data['new_username']
                 try:
@@ -179,8 +179,8 @@ class UserProfilePageHandler(_ottm_handler.OTTMHandler):
             'groups': [g.label for g in target_user.get_groups()],
         })
         global_errors = {form.name: []}
-        if self._request_params.post:
-            form = EditUserGroupsForm(post=self._request_params.post)
+        if self._request_params.POST:
+            form = EditUserGroupsForm(post=self._request_params.POST)
             if form.is_valid():
                 all_groups = {group.label for group in _models.UserGroup.get_assignable_groups()}
                 groups = set(form.cleaned_data['groups'])

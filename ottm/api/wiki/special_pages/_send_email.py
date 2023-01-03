@@ -29,8 +29,8 @@ class SendEmailSpecialPage(_core.SpecialPage):
             target_user = None
         form = _Form(user)
         global_errors = {form.name: []}
-        if params.post:
-            form = _Form(user, post=params.post)
+        if params.POST:
+            form = _Form(user, post=params.POST)
             if form.is_valid():
                 target_user = _auth.get_user_from_name(form.cleaned_data['username'])
                 sent = _emails.user_send_email(target_user, form.cleaned_data['subject'],
@@ -61,8 +61,8 @@ class SendEmailSpecialPage(_core.SpecialPage):
             'target_user': target_user,
             'form': form,
             'global_errors': global_errors,
-            'done': params.get.get('done'),
-            'copy_sent': params.get.get('copy-sent'),
+            'done': params.GET.get('done'),
+            'copy_sent': params.GET.get('copy-sent'),
         }
 
 

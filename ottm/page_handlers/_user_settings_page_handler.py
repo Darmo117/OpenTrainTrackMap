@@ -32,8 +32,8 @@ class UserSettingsPageHandler(_ottm_handler.OTTMHandler):
 
         changed_password = False
         user = self._request_params.user
-        if self._request_params.post:
-            form = UserSettingsForm(post=self._request_params.post, user=user)
+        if self._request_params.POST:
+            form = UserSettingsForm(post=self._request_params.POST, user=user)
             if form.is_valid():
                 if form.cleaned_data['password']:
                     user.password = form.cleaned_data['password']

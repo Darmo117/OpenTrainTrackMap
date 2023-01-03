@@ -22,8 +22,8 @@ class MaskRevisionsSpecialPage(_core.SpecialPage):
         revisions = _models.PageRevision.objects.filter(id__in=revision_ids)
         form = _Form(initial={'action': _models.PageRevisionMaskLog.MASK_FULLY})
         global_errors = {form.name: []}
-        if params.post:
-            form = _Form(post=params.post)
+        if params.POST:
+            form = _Form(post=params.POST)
             if form.is_valid():
                 try:
                     _w_pages.change_revisions_visibility(
@@ -54,7 +54,7 @@ class MaskRevisionsSpecialPage(_core.SpecialPage):
             'global_errors': global_errors,
             'revisions': _dj_paginator.Paginator(revisions, params.results_per_page),
             'log_entries': _models.PageRevisionMaskLog.objects.filter(revision_id__in=revision_ids).reverse(),
-            'done': params.get.get('done'),
+            'done': params.GET.get('done'),
         }
 
 

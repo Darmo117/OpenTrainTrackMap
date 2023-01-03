@@ -29,8 +29,8 @@ class MuteSpecialPage(_core.SpecialPage):
             target_user = None
         form = _Form(_data_types.GENDER_N)
         global_errors = {form.name: []}
-        if params.post:
-            form = _Form(_data_types.GENDER_N, post=params.post)
+        if params.POST:
+            form = _Form(_data_types.GENDER_N, post=params.POST)
             if form.is_valid():
                 target_user = _auth.get_user_from_name(form.cleaned_data['username'])
                 username = target_user.username
@@ -72,7 +72,7 @@ class MuteSpecialPage(_core.SpecialPage):
             'target_user': target_user,
             'form': form,
             'global_errors': global_errors,
-            'done': params.get.get('done'),
+            'done': params.GET.get('done'),
         }
 
 

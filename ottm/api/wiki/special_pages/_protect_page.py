@@ -28,8 +28,8 @@ class ProtectPageSpecialPage(_core.SpecialPage):
             target_page = None
         form = _Form()
         global_errors = {form.name: []}
-        if params.post:
-            form = _Form(post=params.post)
+        if params.POST:
+            form = _Form(post=params.POST)
             if form.is_valid():
                 target_page = _w_pages.get_page(*_w_pages.split_title(form.cleaned_data['page_name']))
                 protection_level = _models.UserGroup.objects.get(label=form.cleaned_data['protection_level'])
@@ -69,7 +69,7 @@ class ProtectPageSpecialPage(_core.SpecialPage):
             'form': form,
             'global_errors': global_errors,
             'log_entries': log_entries,
-            'done': params.get.get('done'),
+            'done': params.GET.get('done'),
         }
 
 

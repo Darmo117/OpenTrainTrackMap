@@ -33,8 +33,8 @@ class ContributionsSpecialPage(_core.SpecialPage):
         contributions = _dj_auth_models.EmptyManager(_models.PageRevision)
         form = _Form(language)
         global_errors = {form.name: []}
-        if params.post:
-            form = _Form(language, post=params.post)
+        if params.POST:
+            form = _Form(language, post=params.POST)
             if form.is_valid():
                 if (not form.cleaned_data['start_date'] or not form.cleaned_data['end_date']
                         or form.cleaned_data['start_date'] <= form.cleaned_data['end_date']):
@@ -53,7 +53,7 @@ class ContributionsSpecialPage(_core.SpecialPage):
                     )
                 global_errors[form.name].append('invalid_dates')
         elif args:
-            kwargs = {k: v for k, v in params.get.items()}
+            kwargs = {k: v for k, v in params.GET.items()}
             if not target_user:
                 kwargs['username'] = args[0]
             else:

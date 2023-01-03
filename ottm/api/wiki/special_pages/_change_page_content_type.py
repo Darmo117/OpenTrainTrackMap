@@ -28,8 +28,8 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
             target_page = None
         form = _Form()
         global_errors = {form.name: []}
-        if params.post:
-            form = _Form(post=params.post)
+        if params.POST:
+            form = _Form(post=params.POST)
             if form.is_valid():
                 target_page = _w_pages.get_page(*_w_pages.split_title(form.cleaned_data['page_name']))
                 content_type = form.cleaned_data['content_type']
@@ -65,7 +65,7 @@ class ChangePageContentTypeSpecialPage(_core.SpecialPage):
             'form': form,
             'global_errors': global_errors,
             'log_entries': log_entries,
-            'done': params.get.get('done'),
+            'done': params.GET.get('done'),
         }
 
 

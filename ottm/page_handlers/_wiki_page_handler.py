@@ -43,7 +43,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             return self.redirect(
                 'ottm:wiki_page',
                 reverse=True,
-                get_params=self._request_params.get,
+                get_params=self._request_params.GET,
                 raw_page_title=_w_pages.url_encode_page_title(_w_pages.MAIN_PAGE_TITLE),
             )
 
@@ -52,7 +52,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             return self.redirect(
                 'ottm:wiki_page',
                 reverse=True,
-                get_params=self._request_params.get,
+                get_params=self._request_params.GET,
                 raw_page_title=self._raw_page_title[:-len(match.group(0))],
             )
 
@@ -90,7 +90,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             return self.redirect(
                 'ottm:wiki_page',
                 reverse=True,
-                get_params=self._request_params.get,
+                get_params=self._request_params.GET,
                 raw_page_title=t,
             )
 
@@ -147,7 +147,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         else:
             data = special_page.process_request(self._request_params, page.title)
             if isinstance(data, _w_sp.Redirect):
-                args = {k: v for k, v in self._request_params.get.items()}
+                args = {k: v for k, v in self._request_params.GET.items()}
                 # Replace False and None values by an empty strings
                 args.update({k: '' if v is False or v is None else v for k, v in data.args.items()})
                 return self.redirect(
@@ -175,7 +175,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         :param page: A Page object.
         :return: A tuple containing a PageContext object and a status code, or a HttpResponseRedirect object.
         """
-        revid: str | None = self._request_params.get.get('revid')
+        revid: str | None = self._request_params.GET.get('revid')
         if revid and revid.isascii() and revid.isnumeric():
             revision_id = int(revid)
         else:
@@ -256,8 +256,8 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         form = WikiHistoryFilterForm()
         global_errors = {form.name: []}
         revisions = _dj_auth_models.EmptyManager(_models.PageRevision).all()
-        if self._request_params.post:
-            form = WikiHistoryFilterForm(post=self._request_params.post)
+        if self._request_params.POST:
+            form = WikiHistoryFilterForm(post=self._request_params.POST)
             if form.is_valid():
                 if (not form.cleaned_data['start_date'] or not form.cleaned_data['end_date']
                         or form.cleaned_data['start_date'] <= form.cleaned_data['end_date']):
@@ -276,7 +276,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                     )
                 global_errors[form.name].append('invalid_dates')
         else:
-            form = WikiHistoryFilterForm(post=self._request_params.get)
+            form = WikiHistoryFilterForm(post=self._request_params.GET)
             if page.exists:
                 query_set = page.revisions
                 if self._request_params.user.has_permission(_permissions.PERM_MASK):

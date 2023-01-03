@@ -16,8 +16,8 @@ class LoginPageHandler(_ottm_handler.OTTMHandler):
         form = LoginForm()
         global_errors = {form.name: []}
         if not self._request_params.user.is_authenticated:
-            if self._request_params.post:
-                form = LoginForm(post=self._request_params.post)
+            if self._request_params.POST:
+                form = LoginForm(post=self._request_params.POST)
                 if form.is_valid():
                     # All errors should have been handled by the form already
                     if _auth.log_in(self._request_params.request,
@@ -32,8 +32,8 @@ class LoginPageHandler(_ottm_handler.OTTMHandler):
             self._request_params,
             title,
             tab_title,
-            edit_warning=bool(self._request_params.get.get('edit_warning')),
-            password_update_info=bool(self._request_params.get.get('password_update')),
+            edit_warning=bool(self._request_params.GET.get('edit_warning')),
+            password_update_info=bool(self._request_params.GET.get('password_update')),
             form=form,
             global_errors=global_errors,
         ))

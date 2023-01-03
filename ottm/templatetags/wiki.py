@@ -120,8 +120,8 @@ def wiki_page_menu_item(context: _ottm.TemplateContext, action: str) -> str:
         params = {}
     else:
         params = {'action': action}
-    if action in (_w_cons.ACTION_EDIT, _w_cons.ACTION_READ) and wiki_context.request_params.get.get('revid'):
-        params['revid'] = wiki_context.request_params.get.get('revid')
+    if action in (_w_cons.ACTION_EDIT, _w_cons.ACTION_READ) and wiki_context.request_params.GET.get('revid'):
+        params['revid'] = wiki_context.request_params.GET.get('revid')
     link = _parser.Parser.format_internal_link(
         page_title,
         wiki_context.language,

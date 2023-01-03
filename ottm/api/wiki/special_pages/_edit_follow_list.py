@@ -36,9 +36,9 @@ class EditFollowListSpecialPage(_core.SpecialPage):
                 action = 'edit'
         global_errors = {}
         if action != 'clear':
-            if params.post:
+            if params.POST:
                 if action == 'edit_raw':
-                    form = _RawEditForm(post=params.post)
+                    form = _RawEditForm(post=params.POST)
                     global_errors[form.name] = []
                     if form.is_valid():
                         pages = [_w_pages.get_page(*_w_pages.split_title(t))
@@ -53,7 +53,7 @@ class EditFollowListSpecialPage(_core.SpecialPage):
                                 args={'done': True}
                             )
                 else:
-                    form = _EditForm(params.user, params.ui_language, post=params.post)
+                    form = _EditForm(params.user, params.ui_language, post=params.POST)
                     if form.is_valid():
                         for t in form.cleaned_data['page_names']:
                             _w_pages.unfollow_page(params.user, _w_pages.get_page(*_w_pages.split_title(t)))
@@ -69,7 +69,7 @@ class EditFollowListSpecialPage(_core.SpecialPage):
                 else:
                     form = _EditForm(params.user, params.ui_language, initial={'pages': pages})
         else:
-            if params.post:
+            if params.POST:
                 _w_pages.clear_follow_list(params.user)
                 return _core.Redirect(_w_ns.NS_SPECIAL.get_full_page_title(self.name), args={'done': True})
             else:
@@ -78,7 +78,7 @@ class EditFollowListSpecialPage(_core.SpecialPage):
             'title_key': 'title_clear' if action == 'clear' else 'title',
             'form': form,
             'global_errors': global_errors,
-            'done': params.get.get('done'),
+            'done': params.GET.get('done'),
         }
 
 

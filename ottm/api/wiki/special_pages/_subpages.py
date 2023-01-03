@@ -28,8 +28,8 @@ class SubpagesSpecialPage(_core.SpecialPage):
         if title := '/'.join(args):
             target_page = _w_pages.get_page(*_w_pages.split_title(title))
             subpages = target_page.get_subpages()
-        if params.post:
-            form = _Form(params.post)
+        if params.POST:
+            form = _Form(params.POST)
             if form.is_valid():
                 return _core.Redirect(
                     f'{_w_ns.NS_SPECIAL.get_full_page_title(self.name)}/{form.cleaned_data["page_name"]}')

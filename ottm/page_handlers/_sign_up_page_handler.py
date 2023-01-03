@@ -28,8 +28,8 @@ class SignUpPageHandler(_ottm_handler.OTTMHandler):
                     blocked=True,
                 ), status=403)
 
-            if self._request_params.post:
-                form = SignUpForm(post=self._request_params.post)
+            if self._request_params.POST:
+                form = SignUpForm(post=self._request_params.POST)
                 if form.is_valid():
                     # All errors should have been handled by the form already
                     user = _auth.create_user(
