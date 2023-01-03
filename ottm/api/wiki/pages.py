@@ -647,6 +647,7 @@ def get_page_protection_log_entry(page: _models.Page) -> _models.PageProtectionL
     if not pp.is_active:
         return None
     try:
-        return _models.PageProtectionLog.objects.filter(page=page).latest()
+        return _models.PageProtectionLog.objects.filter(page_namespace_id=page.namespace_id,
+                                                        page_title=page.title).latest()
     except _models.PageProtectionLog.DoesNotExist:
         return None
