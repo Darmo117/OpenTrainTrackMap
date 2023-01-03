@@ -29,7 +29,7 @@ class DeletePageSpecialPage(_core.SpecialPage):
         form = _Form()
         global_errors = {form.name: []}
         if params.post:
-            form = _Form(params.post)
+            form = _Form(post=params.post)
             if form.is_valid():
                 target_page = _w_pages.get_page(*_w_pages.split_title(form.cleaned_data['page_name']))
                 try:
