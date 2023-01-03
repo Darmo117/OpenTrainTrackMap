@@ -224,7 +224,6 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
             return self._page_edit_context(page, revision_id, js_config, form=form)
         try:
             _w_pages.edit_page(
-                self._request_params.request,
                 self._request_params.user,
                 page,
                 form.cleaned_data['content'],

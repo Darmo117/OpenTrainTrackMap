@@ -4,7 +4,6 @@ import typing as _typ
 import urllib.parse as _url_parse
 
 import cssmin as _cssmin
-import django.core.handlers.wsgi as _dj_wsgi
 import django.db.transaction as _dj_db_trans
 import django.shortcuts as _dj_scut
 import rjsmin as _rjsmin
@@ -226,14 +225,13 @@ def _get_interface_page(title: str, language: _settings.UILanguage = None) -> _m
         return None
 
 
+# noinspection PyUnreachableCode
 @_dj_db_trans.atomic
-def edit_page(request: _dj_wsgi.WSGIRequest | None, author: _models.User, page: _models.Page, content: str,
-              comment: str = None, minor_edit: bool = False, follow: bool = False, hidden_category: bool = False,
-              section_id: str = None):
+def edit_page(author: _models.User, page: _models.Page, content: str, comment: str = None, minor_edit: bool = False,
+              follow: bool = False, hidden_category: bool = False, section_id: str = None):
     """Submit a new revision for the given page.
     If the page does not exist, it is created.
 
-    :param request: Client request. May be None for internal calls.
     :param author: Edit’s author.
     :param page: Page to edit.
     :param content: New content of the page.
@@ -257,10 +255,7 @@ def edit_page(request: _dj_wsgi.WSGIRequest | None, author: _models.User, page: 
     if False:  # TODO check if another edit was made while editing
         raise _errors.ConcurrentWikiEditError()
     if not author.exists:
-        if request:
-            author.internal_object.save()
-        else:
-            raise ValueError('missing request')
+        author.internal_object.save()
     if not page.exists or page.get_content() != content:
         creation = not page.exists
         if creation:

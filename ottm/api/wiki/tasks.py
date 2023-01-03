@@ -12,7 +12,7 @@ def refresh_page_caches():
     now = _utils.now()
     nb = 0
     for page in _models.Page.objects.filter(deleted=False, cache_expiry_date__lte=now):
-        _pages.edit_page(None, wiki_user, page, page.get_latest_revision().content)
+        _pages.edit_page(wiki_user, page, page.get_latest_revision().content)
         nb += 1
     _settings.LOGGER.info(f'Refreshed {nb} page(s).')
 

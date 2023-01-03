@@ -130,11 +130,11 @@ class Command(dj_mngmt.BaseCommand):
         edit_comment = 'Wiki setup.'
 
         content = 'This user is a bot used to setup the wiki.'
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_USER, wiki_user.username), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_USER, wiki_user.username), content, edit_comment)
 
         ns, title = pages.split_title(pages.MAIN_PAGE_TITLE)
         content = f'Welcome to {settings.SITE_NAME}’s wiki!'
-        pages.edit_page(None, wiki_user, pages.get_page(ns, title), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(ns, title), content, edit_comment)
         pages.protect_page(wiki_user, pages.get_page(ns, title),
                            models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS),
                            protect_talks=False,
@@ -145,29 +145,28 @@ class Command(dj_mngmt.BaseCommand):
  * Put the wiki’s global JavaScript here. It will be loaded on every wiki page, regardless of device.
  */
 """.strip()
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Common.js'), content,
-                        edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Common.js'), content, edit_comment)
         # language=CSS
         content = """
 /*
  * Put the wiki’s global CSS here. It will be loaded on every wiki page, regardless of device.
  */
 """.strip()
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Common.css'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Common.css'), content, edit_comment)
         # language=JS
         content = """
 /*
  * Put the wiki’s mobile JavaScript here. It will be loaded on every wiki page on mobile devices only.
  */
 """.strip()
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Mobile.js'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Mobile.js'), content, edit_comment)
         # language=CSS
         content = """
 /*
  * Put the wiki’s mobile CSS here. It will be loaded on every wiki page on mobile devices only.
  */
 """.strip()
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Mobile.css'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'Mobile.css'), content, edit_comment)
         content = """
 * Navigation
 ** MainPage-url|MainPage-name
@@ -181,29 +180,25 @@ class Command(dj_mngmt.BaseCommand):
 ** Help:Conventions|Conventions-name
 ** Help:Download|DownloadData-name
 """.strip()
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'SideMenu'), content, edit_comment)
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuNavigation/en'), 'Navigation',
-                        edit_comment)
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuNavigation/fr'), 'Navigation',
-                        edit_comment)
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuContribute/en'), 'Contribute',
-                        edit_comment)
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuContribute/fr'), 'Contribuer',
-                        edit_comment)
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuHelp/en'), 'Help', edit_comment)
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuHelp/fr'), 'Aide', edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'SideMenu'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuNavigation/en'), 'Navigation', edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuNavigation/fr'), 'Navigation', edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuContribute/en'), 'Contribute', edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuContribute/fr'), 'Contribuer', edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuHelp/en'), 'Help', edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'MenuHelp/fr'), 'Aide', edit_comment)
         content = 'You are editing the page.'
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'EditNotice/en'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'EditNotice/en'), content, edit_comment)
         content = 'Vous êtes en train de modifier la page.'
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'EditNotice/fr'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'EditNotice/fr'), content, edit_comment)
         content = 'You are creating a new page.'
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NewPageNotice/en'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NewPageNotice/en'), content, edit_comment)
         content = 'Vous êtes en train de créer une nouvelle page.'
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NewPageNotice/fr'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NewPageNotice/fr'), content, edit_comment)
         content = 'This page does not exist.'
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NoPageNotice/en'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NoPageNotice/en'), content, edit_comment)
         content = 'Cette page n’existe page.'
-        pages.edit_page(None, wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NoPageNotice/fr'), content, edit_comment)
+        pages.edit_page(wiki_user, pages.get_page(w_ns.NS_INTERFACE, 'NoPageNotice/fr'), content, edit_comment)
         # TODO
 
         self.stdout.write('Done.')
