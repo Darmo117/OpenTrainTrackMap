@@ -519,6 +519,18 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 date=formatted_date,
                 user=_format_username(context, user),
             )
+        case models.UserRenameLog(performer=performer, old_username=old_name, new_username=new_name, reason=reason):
+            return _ottm.ottm_translate(
+                context,
+                'wiki.log.user_rename',
+                date=formatted_date,
+                performer=_format_username(context, performer),
+                old_name=wiki_inner_link(context, _w_ns.NS_USER.get_full_page_title(old_name), text=old_name,
+                                         ignore_current_title=True),
+                new_name=wiki_inner_link(context, _w_ns.NS_USER.get_full_page_title(new_name), text=new_name,
+                                         ignore_current_title=True),
+                reason=_format_comment(context, reason, False),
+            )
         case models.UserMaskLog(user=user, performer=performer, reason=reason, masked=masked):
             action = 'masked' if masked else 'unmasked'
             return _ottm.ottm_translate(
@@ -682,6 +694,7 @@ def _format_username(context: _ottm.TemplateContext, user: models.CustomUser) ->
 
 
 def _format_comment(context: _ottm.TemplateContext, comment: str, hide: bool) -> str:
+    # TODO parse comment
     wiki_context: _ph.WikiPageContext = context.get('context')
     can_view = wiki_context.user.has_permission(_perms.PERM_MASK)
     css_classes = ''

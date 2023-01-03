@@ -1565,6 +1565,7 @@
         "page_rename": "({date}) {user} renamed page “{old_title}” to “{new_title}”. {reason}",
         "page_rename_no_redirect": "({date}) {user} renamed page “{old_title}” to “{new_title}” without leaving a redirect. {reason}",
         "user_account_creation": "({date}) User account {user} has been created.",
+        "user_rename": "({date}) {performer} renamed user “{old_name}” to “{new_name}”. {reason}",
         "user_mask_masked": "({date}) {performer} masked {user}’s username. {reason}",
         "user_mask_unmasked": "({date}) {performer} unmasked {user}’s username. {reason}",
         "user_group_joined": "({date}) {performer} added {user} to group “{group}”. {reason}",

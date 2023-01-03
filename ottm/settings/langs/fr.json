@@ -1647,6 +1647,7 @@
         "page_rename": "({date}) {user} a renommé la page “{old_title}” vers “{new_title}”. {reason}",
         "page_rename_no_redirect": "({date}) {user} a renommé la page “{old_title}” vers “{new_title}” sans laisser de redirection. {reason}",
         "user_account_creation": "({date}) Le compte {user} a été créé.",
+        "user_rename": "({date}) {performer} a renommé l’utilisateurice “{old_name}” en “{new_name}”. {reason}",
         "user_mask_masked": "({date}) {performer} a masqué le pseudonyme de {user}. {reason}",
         "user_mask_unmasked": "({date}) {performer} a réaffiché le pseudonyme de {user}. {reason}",
         "user_group_joined": "({date}) {performer} a ajouté {user} au groupe «\u00a0{group}\u00a0». {reason}",
