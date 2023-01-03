@@ -2373,7 +2373,8 @@ class PageDeletionLog(PageLog):
 class PageProtectionLog(Log):
     """New entries are added each time a page’s protection status changes."""
     performer = _dj_models.ForeignKey(CustomUser, on_delete=_dj_models.PROTECT)
-    title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
+    page_namespace_id = _dj_models.IntegerField(validators=[page_namespace_id_validator])
+    page_title = _dj_models.CharField(max_length=200, validators=[page_title_validator])
     end_date = _dj_models.DateTimeField(null=True, blank=True)
     reason = _dj_models.CharField(max_length=200, null=True, blank=True)
     protection_level = _dj_models.ForeignKey(UserGroup, on_delete=_dj_models.PROTECT)
