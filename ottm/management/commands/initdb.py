@@ -69,12 +69,12 @@ class Command(dj_mngmt.BaseCommand):
         ).save()
         models.UserGroup(
             label=GROUP_ADMINISTRATORS,
-            permissions=(PERM_BLOCK_USERS, PERM_RENAME_USERS, PERM_MASK),
+            permissions=(PERM_BLOCK_USERS, PERM_RENAME_USERS, PERM_MASK,),
         ).save()
         models.UserGroup(
             label=GROUP_WIKI_ADMINISTRATORS,
-            permissions=(PERM_WIKI_DELETE, PERM_WIKI_RENAME, PERM_WIKI_EDIT_FILTERS,
-                         PERM_WIKI_EDIT_USER_PAGES, PERM_WIKI_PROTECT, PERM_WIKI_EDIT_INTERFACE),
+            permissions=(PERM_WIKI_DELETE, PERM_WIKI_EDIT_FILTERS, PERM_WIKI_EDIT_USER_PAGES, PERM_WIKI_PROTECT,
+                         PERM_WIKI_EDIT_INTERFACE,),
         ).save()
         models.UserGroup(
             label=GROUP_PATROLLERS,
@@ -95,7 +95,7 @@ class Command(dj_mngmt.BaseCommand):
         models.UserGroup(
             label=GROUP_USERS,
             assignable_by_users=False,
-            permissions=(PERM_EDIT_OBJECTS,),
+            permissions=(PERM_EDIT_OBJECTS, PERM_WIKI_RENAME,),
         ).save()
         models.UserGroup(
             label=GROUP_ALL,
