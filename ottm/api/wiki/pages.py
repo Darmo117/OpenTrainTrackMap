@@ -140,7 +140,7 @@ def get_js_config(request_params: _requests.RequestParams, page: _models.Page,
 
 
 def render_wikicode(code: str, page: _models.Page) \
-        -> tuple[str, _parser.ParserMetadata]:
+        -> tuple[str, _parser.ParsingMetadata]:
     """Render the given wikicode.
 
     :param code: The wikicode to render.

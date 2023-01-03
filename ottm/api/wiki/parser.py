@@ -13,7 +13,7 @@ from ... import models as _models, settings as _settings
 
 
 @_dataclasses.dataclass(frozen=True)
-class ParserMetadata:
+class ParsingMetadata:
     """Wrapper for metadata of a parsed page."""
     links: list[tuple[int, str]]
     categories: list[tuple[str, str | None]]
@@ -34,7 +34,7 @@ class Parser:
         self._metadata = None
 
     @property
-    def output_metadata(self) -> ParserMetadata | None:
+    def output_metadata(self) -> ParsingMetadata | None:
         """Metadata for the parsed page."""
         return self._metadata
 
@@ -51,7 +51,7 @@ class Parser:
         for placeholder, text in self._nowiki.items():
             parsed = parsed.replace(placeholder, text)
 
-        self._metadata = ParserMetadata(
+        self._metadata = ParsingMetadata(
             links=links,
             categories=categories,
             parse_duration=round((_time.time() * 1000) - start_time),
