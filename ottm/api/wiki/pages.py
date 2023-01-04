@@ -277,7 +277,7 @@ def edit_page(author: _models.User, page: _models.Page, content: str, comment: s
     else:
         revision = page.get_latest_revision()
     # All pages are parsed to at least detect categories and linked pages
-    # Actual parsed content is only used for pages other than JS, JSON and CSS.
+    # Actual parsed content is only used for pages other than JS, JSON, CSS and modules.
     parsed_content, parse_metadata = render_wikicode(content, page)
     if page.content_type == _w_cons.CT_JS:
         page.cached_parsed_content = minify_js(content)

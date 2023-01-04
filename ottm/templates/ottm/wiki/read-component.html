@@ -29,9 +29,9 @@
 
 {% if context.page_content %}
   {% if context.page.content_type == CT_WIKIPAGE %}
-    {{ context.page_content }}
+    {{ context.page_content|safe }}
   {% else %}
-    <pre class="hljs language-{{ context.page_language }}">{{ context.page_content }}</pre>
+    <pre class="hljs language-{{ context.page_language }}">{{ context.page_content|safe }}</pre>
   {% endif %}
 {% endif %}
 

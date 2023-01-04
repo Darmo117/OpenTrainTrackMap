@@ -25,9 +25,9 @@ SECRET_KEY = 'ld_%p4gpg+%=5zblnx+u9q-@7(&%8xoknpa=y+l%3cakvvr0%l'
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    'ottm.local',
     '127.0.0.1',
     'localhost',
-    'ottm.local',
 ]
 
 # Application definition

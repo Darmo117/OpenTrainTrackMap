@@ -23,18 +23,14 @@ transclusion params:
 ${var_name}
 ${var_name|default_value}
 
-magic values:
-%{name}
-%{name|args…}
-
 files:
 {{File:file_name}}
 {{File:file_name|legend}}
 {{File:file_name|legend|position}}
 {{File:file_name|alt=value}}
 
-functions:
-{{#name:arg1|args…}}
+parser functions:
+{{#name|arg1|args…}}
 
 redirects:
 #REDIRECT[[page_title]]
@@ -58,29 +54,30 @@ formats:
 __underlined__
 ~~strikethrough~~
 
-Custom HTML tags:
+Special tags:
 <nowiki>nowiki</nowiki>
 <includeonly></includeonly>
 <noinclude></noinclude>
 <onlyinclude></onlyinclude>
+
+Custom tags:
+<gallery></gallery>
 <ref name="ref_name"></ref>
 <ref name="ref_name" group="group_name"></ref>
-<references/>
-<references group="group_name"/>
+<references>
+<references group="group_name">
 
 Allowed HTML tags:
 <a></a>
 <abbr></abbr>
 <address></address>
 <area>
-<article></article>
 <aside></aside>
 <b></b>
 <bdi></bdi>
 <bdo></bdo>
 <blockquote></blockquote>
 <br>
-<button></button>
 <caption></caption>
 <cite></cite>
 <code></code>
@@ -106,7 +103,6 @@ Allowed HTML tags:
 <meter></meter>
 <nav></nav>
 <ol></ol>
-<output></output>
 <p></p>
 <pre></pre>
 <progress></progress>

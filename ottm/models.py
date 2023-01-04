@@ -1139,6 +1139,9 @@ class CustomUser(_dj_auth_models.AbstractUser):
         if self.groups.count() == 0:  # Add default group when saving anonymous user for the first time
             self.groups.add(UserGroup.objects.get(label=_groups.GROUP_ALL))
 
+    def __str__(self):
+        return self.username
+
 
 class UserBlock(_dj_models.Model):
     """Defines the block status of a user.
@@ -1989,6 +1992,14 @@ class Page(_dj_models.Model, NonDeletableMixin):
         """Page’s base name. If the namespace allows subpages or is "Special", it is the value before the first '/'."""
         if '/' in self.title and (self.namespace.allows_subpages or self.namespace == _w_ns.NS_SPECIAL):
             return self.title.split('/')[0]
+        return self.title
+
+    @property
+    def parent_title(self) -> str:
+        """Parent page’s title.
+        If the namespace allows subpages or is "Special", it is the value before the last '/'."""
+        if '/' in self.title and (self.namespace.allows_subpages or self.namespace == _w_ns.NS_SPECIAL):
+            return '/'.join(self.title.split('/')[:-1])
         return self.title
 
     @property
