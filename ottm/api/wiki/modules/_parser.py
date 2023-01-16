@@ -165,6 +165,44 @@ class WikiScriptParser(_lark.Transformer):
     def continue_stmt(self, _) -> _st.ContinueStatement:
         return _st.ContinueStatement(-1, -1)
 
+    def def_function_vararg(self, items) -> tuple[str, str]:
+        return 'vararg', str(items[0])
+
+    def function_kwarg(self, items) -> tuple[str, str, _st.Expression]:
+        return 'kwarg', str(items[0]), items[1]
+
+    def def_function_params(self, items) -> tuple[list[str], bool, dict[str, _st.Expression]]:
+        args = []
+        vararg = False
+        kwargs = {}
+        for item in items:
+            match item:
+                case ['vararg', name]:
+                    if name in args:
+                        raise SyntaxError(f'duplicate argument "{name}"')
+                    args.append(name)
+                    vararg = True
+                case ['kwarg', name, default]:
+                    if name in args or name in kwargs:
+                        raise SyntaxError(f'duplicate argument "{name}"')
+                    kwargs[name] = default
+                case name:
+                    args.append(str(name))
+        return args, vararg, kwargs
+
+    def def_function_stmt(self, items):
+        line, column = items[0].line, items[0].column
+        name = str(items[0])
+        args, vararg, kwargs = [], False, {}
+        statements = []
+        if items[1:]:
+            if isinstance(items[1], tuple):
+                args, vararg, kwargs = items[1]
+                statements = items[2:]
+            else:
+                statements = items[1:]
+        return _st.DefineFunctionStatement(line, column, name, args, vararg, kwargs, statements)
+
     def return_stmt(self, items) -> _st.ReturnStatement:
         return _st.ReturnStatement(items[0].line if items else -1, items[0].column if items else -1,
                                    items[0] if items else None)
@@ -196,7 +234,7 @@ class WikiScriptParser(_lark.Transformer):
     def get_item(self, items) -> _st.GetItemExpression:
         return _st.GetItemExpression(items[0].line, items[0].column, target=items[0], key=items[1])
 
-    def function_call_kwarg(self, items) -> tuple[str, _st.Expression]:
+    def function_kwarg(self, items) -> tuple[str, _st.Expression]:
         return str(items[0]), items[1]
 
     def function_call(self, items) -> _st.FunctionCallExpression:

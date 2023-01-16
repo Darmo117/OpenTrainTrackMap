@@ -1,8 +1,7 @@
-%import common.WS
-%ignore WS
+%ignore /#[^\n]*/     // Comment
+%ignore /[ \t\n]+/
 
 IDENT: /[a-zA-Z_]\w*/
-VARARG: "..."
 
 NEG: "-"
 INV: "~"
@@ -49,11 +48,11 @@ RSHIFTA: ">>="
 
 module: statement+
 
-// TODO comments
+// TODO """multiline strings"""
 
 // Statements
 
-?statement: def_named_function_stmt
+?statement: def_function_stmt
   | loop_stmt
   | if_stmt
   | try_stmt
@@ -80,17 +79,15 @@ set_property_stmt: value "." IDENT (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA |
 
 set_item_stmt: value "[" (expr | slice) "]" (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
 
-// TODO function’s closure is the scope stack it is defined in
-def_named_function_stmt: "function" IDENT "(" [def_function_params] ")" "is" statement* "end"
-// TODO
-def_function_params: (IDENT ("," IDENT)* (["," def_function_vararg] | ("," def_function_kwarg)*)
-  | def_function_vararg [","]
-  | def_function_kwarg ("," def_function_kwarg)*) [","]
-def_function_vararg: IDENT VARARG
-// TODO
-def_function_kwarg: IDENT "=" expr
+def_function_stmt: "function" IDENT "(" [def_function_params] ")" "is" statement* "end"
 
-// TODO global and non_local keywords
+def_function_params: (IDENT ("," IDENT)* ( | "," def_function_vararg | ("," function_kwarg)*)
+  | def_function_vararg
+  | function_kwarg ("," function_kwarg)*) [","]
+
+def_function_vararg: IDENT "..."
+
+function_kwarg: IDENT "=" expr
 
 loop_stmt: "for" (IDENT | unpack_values) "in" expr "do" statement* "end" -> for_loop_stmt
   | "while" expr "do" statement* "end" -> while_loop_stmt
@@ -158,8 +155,7 @@ get_item: value "[" (expr | slice) "]"
 
 get_property: value "." IDENT
 
-function_call: value "(" [expr ("," expr)* ("," function_call_kwarg)* [","]] ")"
-function_call_kwarg: IDENT "=" expr
+function_call: value "(" [expr ("," expr)* ("," function_kwarg)* [","]] ")"
 
 // TODO lambda’s closure is a copy of the scope it is defined in
 def_def_lambda: "lambda" "(" def_function_params ")" "is" expr "end"

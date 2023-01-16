@@ -91,6 +91,8 @@ class ScriptFunction:
         :param statements: This function’s statements.
         :type statements: ottm.api.wiki.modules._syntax_tree.Statement
         """
+        if vararg and default_arg_names:
+            raise TypeError('vararg functions cannot have default arguments')
         self._name = name
         self._args = arg_names
         self._default_arg_names = default_arg_names
@@ -105,12 +107,13 @@ class ScriptFunction:
     def __call__(self, call_stack: _scope.CallStack, *args, **kwargs) -> _typ.Any:
         args_len = len(self._args)
         actual_args_len = len(args)
+        # TODO use kwargs and self._default_arg_names
         if not self._vararg and args_len != actual_args_len:
             raise TypeError(f'function {self.name}() takes exactly {args_len} argument(s) ({actual_args_len} given)')
         if args_len < actual_args_len:
             raise TypeError(f'function {self.name}() takes at least {args_len} argument(s) ({actual_args_len} given)')
 
-        scope = _scope.Scope()
+        scope = _scope.Scope(self._closure)
         for i, arg_name in enumerate(self._args):
             if self._vararg and i == args_len - 1:
                 scope.set_variable(name=arg_name, value=args[i:])

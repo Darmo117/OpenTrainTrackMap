@@ -4,6 +4,9 @@ import typing as _typ
 from . import _scope, _types, _exceptions as _ex
 
 
+# TODO wrap all exceptions in WikiScriptException
+
+
 class Statement(_abc.ABC):
     def __init__(self, line: int, column: int):
         self._line = line
@@ -86,34 +89,42 @@ class SetVariableStatement(Statement):
         self._expr = expr
 
     def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
-        v = self._expr.evaluate(scope, call_stack)
+        new_value = self._expr.evaluate(scope, call_stack)
+        if self._op == '=':
+            scope.set_variable(self._name, new_value)
+            return
+
+        try:
+            value = scope.get_variable(self._name, current_only=True).value
+        except NameError as e:
+            raise _ex.WikiScriptException(str(e), self.line, self.column) from None
+
         match self._op:
-            case '=':
-                scope.set_variable(self._name, v)
             case '**=':
-                scope.get_variable(self._name).value **= v
+                value **= new_value
             case '*=':
-                scope.get_variable(self._name).value *= v
+                value *= new_value
             case '/=':
-                scope.get_variable(self._name).value /= v
+                value /= new_value
             case '//=':
-                scope.get_variable(self._name).value //= v
+                value //= new_value
             case '%=':
-                scope.get_variable(self._name).value %= v
+                value %= new_value
             case '+=':
-                scope.get_variable(self._name).value += v
+                value += new_value
             case '-=':
-                scope.get_variable(self._name).value -= v
+                value -= new_value
             case '&=':
-                scope.get_variable(self._name).value &= v
+                value &= new_value
             case '|=':
-                scope.get_variable(self._name).value |= v
+                value |= new_value
             case '^=':
-                scope.get_variable(self._name).value ^= v
+                value ^= new_value
             case '<<=':
-                scope.get_variable(self._name).value <<= v
+                value <<= new_value
             case '>>=':
-                scope.get_variable(self._name).value >>= v
+                value >>= new_value
+        scope.set_variable(self._name, value)
 
     def __repr__(self):
         return f'SetVariable[name={self._name!r},op={self._op!r},expr={self._expr!r}]'
@@ -400,6 +411,29 @@ class ContinueStatement(Statement):
         return f'Continue'
 
 
+class DefineFunctionStatement(Statement):
+    def __init__(self, line: int, column: int, name: str, args: list[str], vararg: bool, kwargs: dict[str, Expression],
+                 statements: list[Statement]):
+        super().__init__(line, column)
+        if vararg and kwargs:
+            raise TypeError('vararg functions cannot have default arguments')
+        self._name = name
+        self._args = args
+        self._vararg = vararg
+        self._kwargs = kwargs
+        self._statements = statements
+
+    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
+        # The function’s closure
+        scope.set_variable(self._name, _types.ScriptFunction(
+            self._name, self._args, self._kwargs, self._vararg, scope, *self._statements
+        ))
+
+    def __repr__(self):
+        return f'DefineFunction[name={self._name},args={self._args},vararg={self._vararg},kwargs={self._kwargs},' \
+               f'statements={self._statements}]'
+
+
 class ReturnStatement(Statement):
     def __init__(self, line: int, column: int, expr: Expression = None):
         super().__init__(line, column)
@@ -485,7 +519,10 @@ class GetVariableExpression(Expression):
         self._variable_name = variable_name
 
     def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
-        return scope.get_variable(self._variable_name).value
+        try:
+            return scope.get_variable(self._variable_name).value
+        except NameError as e:
+            raise _ex.WikiScriptException(str(e), self.line, self.column) from None
 
     def __repr__(self):
         return f'GetVariable[name={self._variable_name!r}]'
