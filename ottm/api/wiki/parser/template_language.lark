@@ -1,0 +1,24 @@
+%import common.WS
+%ignore WS
+
+?expr: value | function_call | operation
+
+?value: "(" expr ")" | variable | string | number
+
+argument_list: value*
+
+function_call: /\$[a-zA-Z_][a-zA-Z0-9_]*/ argument_list -> function_call
+
+operation: expr "^" expr                -> operator
+         | expr ("*" | "/" | "//") expr -> operator
+         | expr /[+-]/ expr             -> operator
+         | expr "round" expr            -> operator
+         | expr ("=" | "!=" | "<" | ">" | "<=" | ">=") expr -> operator
+         | expr "and" expr -> operator
+         | expr "or" expr  -> operator
+
+variable: /_*[a-zA-Z]\w*/ -> variable
+
+string: /"(\\["\\]|[^"\n\r])*?"/ -> string
+
+number: /[+-]?\d+(\.\d+)?/ -> number

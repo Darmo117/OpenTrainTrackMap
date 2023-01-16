@@ -1,134 +1,146 @@
-internal links:
-[[page_title]]
-[[page_title|]]
-[[page_title|text]]
+template language (matching braces don’t need to be on the same line):
+  comment:
+    {# text #} -> Ignored by the parser
 
-external links:
-[url]
-[url text]
+  value insertion:
+    {= <expr:expr> =} -> Evaluate an expression and insert its value in place of the tag
 
-categories:
-@[[category_name]]
-@[[category_name|sort_key]]
+  tags:
+    {% set <name:variable> <value:expr> %} -> Set a variable’s value
+    {% if <cond:expr> %} -> Condition
+    {% elif <cond:expr> %} -> Chained condition
+    {% else %} -> Default condition case
+    {% end_if %} -> Condition end
+    {% module <module_name:expr> (<arg:expr>)* %} -> Invoke a module and insert its returned value in-place
+    {% hidden_cat %} -> If the page is a category, mark it as hidden; ignored otherwise
+    {% no_toc %} -> Disable table of contents
+    {% no_wiki %} -> Start a no-wiki section
+    {% end_no_wiki %} -> End the current no-wiki section
+    {% include_only %} -> Start an include-only section
+    {% end_include_only %} -> End the current include-only section
+    {% no_include %} -> Start a no-include section
+    {% end_no_include %} -> End the current no-include section
 
-transclusions:
-{{template_name}}
-{{template_name|args…}}
-{{template_name|arg_name=value}}
-{{page_title}}
-{{page_title|args…}}
-{{page_title|arg_name=value}}
+  expression patterns:
+    cf. Lark grammar file
 
-transclusion params:
-${var_name}
-${var_name|default_value}
+redirect (if only non-whitespace characters in page):
+  @REDIRECT[[page_title]]
+  @REDIRECT[[page_title#anchor]]
 
-files:
-{{File:file_name}}
-{{File:file_name|legend}}
-{{File:file_name|legend|position}}
-{{File:file_name|alt=value}}
+internal link:
+  [[page_title]] -> Link to the page <page_title>
+  [[page_title|]] -> Link to the page <page_title> but remove the namespace name in the link’s text
+  [[page_title|text]] -> Link to the page <page_title> but use the specified <text> as the link’s text
+  [[page_title#anchor]] -> Link to the page <page_title> at the anchor <anchor>; <text> argument is still allowed after the anchor
 
-parser functions:
-{{#name|arg1|args…}}
+external link:
+  [url]
+  [url text]
 
-redirects:
-#REDIRECT[[page_title]]
+category:
+  [[#category_name]] -> Add the page to the category "Category:<category_name>"
+  [[#category_name|sort_key]] -> Add the page to the category "Category:<category_name>" with the given sort key
 
-titles:
-= title =
-== title ==
-=== title ===
-==== title ====
-===== title =====
+file inclusion:
+  [[@file_name]] -> Include the file "File:<file_name>" here
+  [[@file_name|position]] -> Include the file "File:<file_name>" here at the given position
+  [[@file_name|position|legend]] -> Include the file "File:<file_name>" here at the given position and with the specified legend
+  [[@file_name||legend]] -> Include the file "File:<file_name>" here with the specified legend
 
-lists:
-* unordered list (ul/li)
-# ordered list (ol/li)
-: description list definition item (dl/dt)
-; description list description item (dl/dd)
+template:
+  {{template_name}}
+  {{template_name|arg1|arg2|…}}
+  {{template_name|name=value|…}}
 
-formats:
-**bold**
-//italic//
-__underlined__
-~~strikethrough~~
+titles (if '=' character is at line start):
+  = title =
+  == title ==
+  === title ===
+  ==== title ====
+  ===== title =====
 
-Special tags:
-<nowiki>nowiki</nowiki>
-<includeonly></includeonly>
-<noinclude></noinclude>
-<onlyinclude></onlyinclude>
+lists (if bullet character is at line start):
+  * unordered list (ul/li)
+  # ordered list (ol/li)
+  : description list definition item (dl/dt)
+  ; description list description item (dl/dd)
+
+formatting (if enclosing characters are on the same line):
+  **bold**
+  //italic//
+  __underlined__
+  ~~strikethrough~~
 
 Custom tags:
-<gallery></gallery>
-<ref name="ref_name"></ref>
-<ref name="ref_name" group="group_name"></ref>
-<references>
-<references group="group_name">
+  <gallery></gallery>
+  <ref name="ref_name"></ref>
+  <ref name="ref_name" group="group_name"></ref>
+  <references>
+  <references group="group_name">
 
 Allowed HTML tags:
-<a></a>
-<abbr></abbr>
-<address></address>
-<area>
-<aside></aside>
-<b></b>
-<bdi></bdi>
-<bdo></bdo>
-<blockquote></blockquote>
-<br>
-<caption></caption>
-<cite></cite>
-<code></code>
-<col>
-<colgroup></colgroup>
-<data></data>
-<dd></dd>
-<del></del>
-<details></details>
-<dfn></dfn>
-<div></div>
-<dl></dl>
-<dt></dt>
-<em></em>
-<hr>
-<i></i>
-<ins></ins>
-<kbd></kbd>
-<label></label>
-<li></li>
-<map></map>
-<mark></mark>
-<meter></meter>
-<nav></nav>
-<ol></ol>
-<p></p>
-<pre></pre>
-<progress></progress>
-<q></q>
-<rp></rp>
-<rt></rt>
-<ruby></ruby>
-<s></s>
-<samp></samp>
-<section></section>
-<small></small>
-<span></span>
-<strong></strong>
-<sub></sub>
-<summary></summary>
-<sup></sup>
-<table></table>
-<tbody></tbody>
-<td></td>
-<template></template>
-<tfoot></tfoot>
-<th></th>
-<thead></thead>
-<time></time>
-<tr></tr>
-<u></u>
-<ul></ul>
-<var></var>
-<wbr>
+  <a></a>
+  <abbr></abbr>
+  <address></address>
+  <area>
+  <aside></aside>
+  <b></b>
+  <bdi></bdi>
+  <bdo></bdo>
+  <blockquote></blockquote>
+  <br>
+  <caption></caption>
+  <cite></cite>
+  <code></code>
+  <col>
+  <colgroup></colgroup>
+  <data></data>
+  <dd></dd>
+  <del></del>
+  <details></details>
+  <dfn></dfn>
+  <div></div>
+  <dl></dl>
+  <dt></dt>
+  <em></em>
+  <hr>
+  <i></i>
+  <ins></ins>
+  <kbd></kbd>
+  <label></label>
+  <li></li>
+  <map></map>
+  <mark></mark>
+  <meter></meter>
+  <nav></nav>
+  <ol></ol>
+  <p></p>
+  <pre></pre>
+  <progress></progress>
+  <q></q>
+  <rp></rp>
+  <rt></rt>
+  <ruby></ruby>
+  <s></s>
+  <samp></samp>
+  <section></section>
+  <small></small>
+  <span></span>
+  <strong></strong>
+  <sub></sub>
+  <summary></summary>
+  <sup></sup>
+  <table></table>
+  <tbody></tbody>
+  <td></td>
+  <template></template>
+  <tfoot></tfoot>
+  <th></th>
+  <thead></thead>
+  <time></time>
+  <tr></tr>
+  <u></u>
+  <ul></ul>
+  <var></var>
+  <wbr>

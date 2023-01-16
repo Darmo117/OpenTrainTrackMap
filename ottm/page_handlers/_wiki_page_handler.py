@@ -357,7 +357,7 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
                     revision = page.revisions.latest()
                 else:
                     archived = True
-            content, parse_metadata = _w_pages.render_wikicode(revision.content, page)
+            content, parse_metadata = _w_pages.render_wikicode(revision.content, page, revision)
             cache_metadata = CacheMetadata(
                 parse_duration=parse_metadata.parse_duration,
                 parse_date=parse_metadata.parse_date,

@@ -139,15 +139,16 @@ def get_js_config(request_params: _requests.RequestParams, page: _models.Page,
     }
 
 
-def render_wikicode(code: str, page: _models.Page) \
+def render_wikicode(code: str, page: _models.Page, revision: _models.PageRevision) \
         -> tuple[str, _parser.ParsingMetadata]:
     """Render the given wikicode.
 
     :param code: The wikicode to render.
     :param page: The current page.
+    :param revision: The page revision to render.
     :return: The rendered wikicode and the associated parser metadata.
     """
-    parser = _parser.Parser(page)
+    parser = _parser.Parser(page, revision)
     parsed = parser.parse(code)
     return parsed, parser.output_metadata
 
@@ -278,7 +279,7 @@ def edit_page(author: _models.User, page: _models.Page, content: str, comment: s
         revision = page.get_latest_revision()
     # All pages are parsed to at least detect categories and linked pages
     # Actual parsed content is only used for pages other than JS, JSON, CSS and modules.
-    parsed_content, parse_metadata = render_wikicode(content, page)
+    parsed_content, parse_metadata = render_wikicode(content, page, revision)
     if page.content_type == _w_cons.CT_JS:
         page.cached_parsed_content = minify_js(content)
     elif page.content_type == _w_cons.CT_CSS:
