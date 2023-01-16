@@ -1,0 +1,190 @@
+%import common.WS
+%ignore WS
+
+IDENT: /[a-zA-Z_]\w*/
+VARARG: "..."
+
+NEG: "-"
+INV: "~"
+NOT: "not"
+
+POW: "**"
+MUL: "*"
+DIV: "/"
+FDIV: "//"
+MOD: "%"
+ADD: "+"
+SUB: "-"
+AND: "&"
+OR: "|"
+XOR: "^"
+LSHIFT: "<<"
+RSHIFT: ">>"
+IS: "is"
+ISNOT: "is_not"
+IN: "in"
+NOTIN: "not_in"
+EQ: "=="
+NE: "!="
+GT: ">"
+GE: ">="
+LT: "<"
+LE: "<="
+BAND: "and"
+BOR: "or"
+
+ASSIGN: "="
+POWA: "**="
+MULA: "*="
+DIVA: "/="
+FDIVA: "//="
+MODA: "%="
+ADDA: "+="
+SUBA: "-="
+ANDA: "&="
+ORA: "|="
+XORA: "^="
+LSHIFTA: "<<="
+RSHIFTA: ">>="
+
+module: statement+
+
+// TODO comments
+
+// Statements
+
+?statement: def_named_function_stmt
+  | loop_stmt
+  | if_stmt
+  | try_stmt
+  | terminated_stmt
+?terminated_stmt: (expr_stmt
+  | set_variable_stmt
+  | unpack_variables_stmt
+  | set_property_stmt
+  | set_item_stmt
+  | raise_stmt
+  | loop_flow_stmt
+  | delete_stmt
+  | return_stmt) ";"
+
+expr_stmt: expr
+
+set_variable_stmt: IDENT (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
+
+unpack_variables_stmt: unpack_values ASSIGN expr
+
+unpack_values: IDENT "," IDENT ("," IDENT)* [","] | IDENT ","
+
+set_property_stmt: value "." IDENT (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
+
+set_item_stmt: value "[" (expr | slice) "]" (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
+
+// TODO
+def_named_function_stmt: "function" IDENT "(" [def_function_params] ")" "is" statement* "end"
+// TODO
+def_function_params: (IDENT ("," IDENT)* (["," def_function_vararg] | ("," def_function_kwarg)*)
+  | def_function_vararg [","]
+  | def_function_kwarg ("," def_function_kwarg)*) [","]
+def_function_vararg: IDENT VARARG
+// TODO
+def_function_kwarg: IDENT "=" expr
+
+loop_stmt: "for" (IDENT | unpack_values) "in" expr "do" statement* "end" -> for_loop_stmt
+  | "while" expr "do" statement* "end" -> while_loop_stmt
+
+loop_flow_stmt: "break" -> break_stmt
+  | "continue" -> continue_stmt
+
+if_stmt: if_stmt_if_part if_stmt_elif_part* [if_stmt_else_part] "end"
+if_stmt_if_part: "if" expr "then" statement*
+if_stmt_elif_part: "elif" expr "then" statement*
+if_stmt_else_part: "else" statement*
+
+try_stmt: try_stmt_try_part try_stmt_except_part+ "end"
+try_stmt_try_part: "try" statement*
+try_stmt_except_part: "except" try_stmt_except_errors_part "then" statement*
+try_stmt_except_errors_part: get_variable ("|" get_variable)* ["as" IDENT]
+
+raise_stmt: "raise" expr
+
+delete_stmt: "del" IDENT -> delete_var
+  | "del" value "[" expr | slice "]" -> delete_item
+
+return_stmt: "return" [expr]
+
+// Expressions
+
+?expr: b_or
+  | expr "if" expr "else" b_or -> ternary_op
+
+?b_or: b_and
+  | b_or BOR b_and -> binary_op
+
+?b_and: comp
+  | b_and BAND comp -> binary_op
+
+?comp: shift
+  | comp (IS | ISNOT | IN | NOTIN | EQ | NE | GT | GE | LT | LE) shift -> binary_op
+
+?shift: or
+  | shift (LSHIFT | RSHIFT) or -> binary_op
+
+?or: and
+  | or (OR | XOR) and -> binary_op
+
+?and: add
+  | and AND add -> binary_op
+
+?add: mul
+  | add (ADD | SUB) mul -> binary_op
+
+?mul: pow
+  | mul (MUL | DIV | FDIV | MOD) pow -> binary_op
+
+?pow: unary
+  | pow POW unary -> binary_op
+
+?unary: value
+  | (NEG | INV | NOT) unary -> unary_op
+
+?value: literal | get_variable | get_item | get_property | function_call | def_def_lambda | "(" expr ")"
+
+get_variable: IDENT
+
+get_item: value "[" (expr | slice) "]"
+
+get_property: value "." IDENT
+
+function_call: value "(" [expr ("," expr)* ("," function_call_kwarg)* [","]] ")"
+function_call_kwarg: IDENT "=" expr
+
+// TODO
+def_def_lambda: "(" def_function_params ")" "->" expr
+
+?literal: string | number | boolean | list | tuple | dict | set | null
+
+// Ignore displayed errors with backslash in PyCharm
+string: /"(\\([\\nt"]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^"\n\r\\])*?"/
+
+number: /0x[\da-fA-F](_?[\da-fA-F])*|0o[0-7](_?[0-7])*|0b[01](_?[01])*|\d(_?\d)*/ -> int
+  | /(\d(_?\d)*(\.(\d(_?\d)*)?)?|\.\d(_?\d)*)([eE]-?\d(_?\d)*)?/ -> float
+
+boolean: "True" -> boolean_true
+  | "False" -> boolean_false
+
+null: "None" -> null
+
+list: "[" [expr ("," expr)* [","]] "]" -> list
+
+tuple: "(" (expr "," expr ("," expr)* [","] | expr ",") ")" -> tuple
+
+set: "{" expr ("," expr)* [","] "}" -> set
+
+dict.1: "{" [dict_entry ("," dict_entry)* [","]] "}" -> dict
+dict_entry: expr ":" expr -> dict_entry
+
+slice: expr ":" expr [":" [expr]] -> slice_both
+  | ":" expr [":" [expr]] -> slice_end
+  | expr ":" [":" [expr]] -> slice_start
+  | ":" [":" [expr]] -> slice_none
