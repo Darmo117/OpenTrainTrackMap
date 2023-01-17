@@ -48,8 +48,6 @@ RSHIFTA: ">>="
 
 module: statement+
 
-// TODO """multiline strings"""
-
 // Statements
 
 ?statement: def_function_stmt
@@ -159,10 +157,12 @@ function_call: value "(" [expr ("," expr)* ("," function_kwarg)* [","]] ")"
 
 def_anon_function: "fun" "(" def_function_params ")" "is" statement* "end"
 
-?literal: string | number | boolean | list | tuple | dict | set | null
+?literal: multiline_string | string | number | boolean | list | tuple | dict | set | null
 
 // Ignore displayed errors with backslash in PyCharm
-string: /"(\\([\\nt"]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^"\n\r\\])*?"/
+string: /"(\\([\\nt"]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^"\n\\])*?"/
+
+multiline_string: /"""(\\([\\nt"\n]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\\])*?"""/
 
 number: /0x[\da-fA-F](_?[\da-fA-F])*|0o[0-7](_?[0-7])*|0b[01](_?[01])*|\d(_?\d)*/ -> int
   | /(\d(_?\d)*(\.(\d(_?\d)*)?)?|\.\d(_?\d)*)([eE]-?\d(_?\d)*)?/ -> float

@@ -249,16 +249,35 @@ class WikiScriptParser(_lark.Transformer):
         return _st.FunctionCallExpression(items[0].line, items[0].column, target=items[0], args=args, kwargs=kwargs)
 
     def string(self, items) -> _st.SimpleLiteralExpression:
-        s: str = items[0]
         return _st.SimpleLiteralExpression(
             items[0].line, items[0].column,
-            _re.sub(r'\\u([\da-fA-F]{4})', lambda m: chr(int(m.group(1), 16)),
-                    _re.sub(r'\\U([\da-fA-F]{8})', lambda m: chr(int(m.group(1), 16)),
-                            s[1:-1].replace(r'\n', '\n')
-                            .replace(r'\t', '\t')
-                            .replace(r'\"', '"')
-                            .replace(r'\\', '\\')))
+            self._parse_string(str(items[0])[1:-1])
         )
+
+    def multiline_string(self, items) -> _st.SimpleLiteralExpression:
+        return _st.SimpleLiteralExpression(
+            items[0].line, items[0].column,
+            self._parse_string(str(items[0])[3:-3], multiline=True)
+        )
+
+    def _parse_string(self, s: str, multiline: bool = False) -> str:
+        def repl(m: _re.Match) -> str:
+            match m.groups():
+                case [str(v), None, None]:  # \n, \t, \" and \\
+                    return {
+                        'n': '\n',
+                        't': '\t',
+                        '"': '"',
+                        '\\': '\\',
+                    }[v]
+                case [None, str(v), None] | [None, None, str(v)]:  # \uXXXX and \uXXXXXXXX
+                    return chr(int(v, 16))
+                case [None, None, None]:  # \ at the end of a line
+                    return ''
+
+        if multiline:
+            return _re.sub(r'\\(?:([nt"\\])|u([\da-fA-F]{4})|U([\da-fA-F]{8})|\n[ \t]*)', repl, s)
+        return _re.sub(r'\\(?:([nt"\\])|u([\da-fA-F]{4})|U([\da-fA-F]{8}))', repl, s)
 
     def int(self, items) -> _st.SimpleLiteralExpression:
         n = str(items[0])
