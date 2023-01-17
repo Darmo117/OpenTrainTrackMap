@@ -157,7 +157,7 @@ get_property: value "." IDENT
 
 function_call: value "(" [expr ("," expr)* ("," function_kwarg)* [","]] ")"
 
-// TODO lambda’s closure is a copy of the scope it is defined in
+// TODO
 def_def_lambda: "lambda" "(" def_function_params ")" "is" expr "end"
 
 ?literal: string | number | boolean | list | tuple | dict | set | null

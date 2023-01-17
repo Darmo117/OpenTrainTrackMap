@@ -58,7 +58,7 @@ class Scope:
         :param value: Variable’s new value.
         """
         if name not in self._variables:
-            self._variables[name] = Variable(value, public=name[0] != '_')
+            self._variables[name] = Variable(value, public=name[0] != '_' and not self._parent)
         else:
             self._variables[name].value = value
 

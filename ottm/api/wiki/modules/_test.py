@@ -10,6 +10,7 @@ function f(n) is
     return n * f(n - 1);
 end
 print(f(5));
+print(attrs(f));
 """.strip())
 print(parsed_tree)
 module = p.transform(parsed_tree)

@@ -140,6 +140,8 @@ class SetPropertyStatement(Statement):
 
     def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
         t = self._target.evaluate(scope, call_stack)
+        if not GetPropertyExpression.is_attribute_allowed(self._property_name):
+            raise GetPropertyExpression.get_error(t, self._property_name)
         v = self._expr.evaluate(scope, call_stack)
         if self._op == '=':
             setattr(t, self._property_name, v)
@@ -541,16 +543,43 @@ class GetPropertyExpression(Expression):
 
     def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
         target = self._target.evaluate(scope, call_stack)
-        # Prevent accessing private attributes
-        if self._property_name.startswith('_') and self._property_name not in self.ALLOWED_PRIVATE:
-            raise self._get_error(target)
-        try:
-            return getattr(target, self._property_name)
-        except AttributeError:
-            raise self._get_error(target) from None  # Cut stack trace
+        return self.get_attr(target, self._property_name)
 
-    def _get_error(self, target):
-        return AttributeError(f'{type(target).__qualname__!r} object has no attribute {self._property_name!r}')
+    @classmethod
+    def is_attribute_allowed(cls, name: str) -> bool:
+        """Check whether the given attribute name is allowed.
+
+        :param name: Attribute name to check.
+        :return: True if the name is allowed, False otherwise.
+        """
+        # Prevent accessing private attributes
+        return not name.startswith('_') or name in cls.ALLOWED_PRIVATE
+
+    @classmethod
+    def get_attr(cls, o, attr_name: str) -> _typ.Any:
+        """Return the value of the specified attribute in object `o`.
+
+        :param o: Object to query.
+        :param attr_name: Name of the attribute to get the value of.
+        :return: Attribute’s value.
+        :raise AttributeError: If the attribute is not allowed or does not exist.
+        """
+        if not cls.is_attribute_allowed(attr_name):
+            raise cls.get_error(o, attr_name)
+        try:
+            return getattr(o, attr_name)
+        except AttributeError:
+            raise cls.get_error(o, attr_name) from None  # Cut stack trace
+
+    @staticmethod
+    def get_error(target, attr_name: str) -> AttributeError:
+        """Return the AttributeError object for the given object and attribute name.
+
+        :param target: Target object.
+        :param attr_name: Attribute name.
+        :return: A AttributeError object.
+        """
+        return AttributeError(f'{type(target).__qualname__!r} object has no attribute {attr_name!r}')
 
     def __repr__(self):
         return f'GetProperty[target={self._target!r},property={self._property_name!r}]'

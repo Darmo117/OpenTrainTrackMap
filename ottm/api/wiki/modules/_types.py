@@ -23,26 +23,44 @@ class Module:
     @classmethod
     def _load_builtins(cls):
         if not cls._builtins_cache:
+            from . import _syntax_tree as _st
+
             def attrs(o):
                 """Return a list of the names of all public attributes of the given object."""
-                return [v for v in dir(o) if v[0] != '_']
+                return [v for v in dir(o) if _st.GetPropertyExpression.is_attribute_allowed(v)]
 
-            attrs.__qualname__ = 'attrs'  # Hide actual qualified name
+            def has_attr(o, name: str) -> bool:
+                return _st.GetPropertyExpression.is_attribute_allowed(name) and hasattr(o, name)
 
-            # TODO redefine print() function to print in the debug console of Module: pages
+            def get_attr(o, name: str) -> _typ.Any:
+                return _st.GetPropertyExpression.get_attr(o, name)
+
+            def set_attr(o, name: str, value):
+                if not _st.GetPropertyExpression.is_attribute_allowed(name):
+                    raise _st.GetPropertyExpression.get_error(o, name)
+                setattr(o, name, value)
+
+            # TODO import function
+
+            # Override default qualified names to not expose the current module name
+            attrs.__qualname__ = attrs.__name__
+            has_attr.__qualname__ = has_attr.__name__
+            get_attr.__qualname__ = get_attr.__name__
+            set_attr.__qualname__ = set_attr.__name__
+
+            # TODO redefine print() function to print in the debug console of "Module:" pages instead of stdout
             functions = [
                 # functions and types
-                abs, all, any, ascii, attrs, bin, callable, format, hash, hex, id, isinstance, issubclass, iter,
-                len, max, min, next, oct, ord, pow, print, repr, round, sorted, sum, object, int, bool, bytearray,
-                bytes, dict, enumerate, filter, float, frozenset, list, map, range, reversed, set, slice, str, tuple,
-                type, zip,
+                abs, all, any, ascii, attrs, bin, callable, format, get_attr, has_attr, hash, hex, id, isinstance,
+                issubclass, iter, len, max, min, next, oct, ord, pow, print, repr, round, set_attr, sorted, sum, object,
+                int, bool, bytearray, bytes, dict, enumerate, filter, float, frozenset, list, map, range, reversed, set,
+                slice, str, tuple, type, zip,
                 # Errors and exceptions
                 AssertionError, AttributeError, ImportError, LookupError, IndexError, KeyError, NameError,
                 NotImplementedError, TypeError, ValueError, UnicodeError, UnicodeDecodeError, UnicodeEncodeError,
                 UnicodeTranslateError, ZeroDivisionError,
             ]
             cls._builtins_cache = {f.__name__: f for f in functions}
-            # TODO add delattr, getattr, hasattr and setattr
 
     @property
     def name(self) -> str:
