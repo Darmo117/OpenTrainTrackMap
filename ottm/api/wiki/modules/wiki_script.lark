@@ -3,6 +3,23 @@
 
 IDENT: /[a-zA-Z_]\w*/
 
+TRUE: "True"
+FALSE: "False"
+NONE: "None"
+LPAR: "("
+LBRAC: "["
+LCURL: "{"
+FUN: "fun"
+FOR: "for"
+WHILE: "while"
+BREAK: "break"
+CONTINUE: "continue"
+IF: "if"
+TRY: "try"
+RAISE: "raise"
+DEL: "del"
+COLON: ":"
+
 NEG: "-"
 INV: "~"
 NOT: "not"
@@ -77,7 +94,7 @@ set_property_stmt: value "." IDENT (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA |
 
 set_item_stmt: value "[" (expr | slice) "]" (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
 
-def_function_stmt: "fun" IDENT "(" [def_function_params] ")" "is" statement* "end"
+def_function_stmt: FUN IDENT "(" [def_function_params] ")" "is" statement* "end"
 
 def_function_params: (IDENT ("," IDENT)* ( | "," def_function_vararg | ("," function_kwarg)*)
   | def_function_vararg
@@ -87,28 +104,28 @@ def_function_vararg: IDENT "..."
 
 function_kwarg: IDENT "=" expr
 
-loop_stmt: "for" (IDENT | unpack_values) "in" expr "do" statement* "end" -> for_loop_stmt
-  | "while" expr "do" statement* "end" -> while_loop_stmt
+loop_stmt: FOR (IDENT | unpack_values) "in" expr "do" statement* "end" -> for_loop_stmt
+  | WHILE expr "do" statement* "end" -> while_loop_stmt
 
-loop_flow_stmt: "break" -> break_stmt
-  | "continue" -> continue_stmt
+loop_flow_stmt: BREAK -> break_stmt
+  | CONTINUE -> continue_stmt
 
 if_stmt: if_stmt_if_part if_stmt_elif_part* [if_stmt_else_part] "end"
-if_stmt_if_part: "if" expr "then" statement*
+if_stmt_if_part: IF expr "then" statement*
 if_stmt_elif_part: "elif" expr "then" statement*
 if_stmt_else_part: "else" statement*
 
-try_stmt: try_stmt_try_part try_stmt_except_part+ "end"
-try_stmt_try_part: "try" statement*
+try_stmt: TRY try_stmt_try_part try_stmt_except_part+ "end"
+try_stmt_try_part: statement*
 try_stmt_except_part: "except" try_stmt_except_errors_part "then" statement*
 try_stmt_except_errors_part: get_variable ("|" get_variable)* ["as" IDENT]
 
-raise_stmt: "raise" expr
+raise_stmt: RAISE expr
 
-delete_stmt: "del" IDENT -> delete_var
-  | "del" value "[" expr | slice "]" -> delete_item
+delete_stmt: DEL IDENT -> delete_var
+  | DEL value "[" expr | slice "]" -> delete_item
 
-return_stmt: "return" [expr]
+return_stmt: RETURN [expr]
 
 // Expressions
 
@@ -155,7 +172,7 @@ get_property: value "." IDENT
 
 function_call: value "(" [expr ("," expr)* ("," function_kwarg)* | function_kwarg ("," function_kwarg)* [","]] ")"
 
-def_anon_function: "fun" "(" def_function_params ")" "is" statement* "end"
+def_anon_function: FUN "(" [def_function_params] ")" "is" statement* "end"
 
 ?literal: multiline_string | string | number | boolean | list | tuple | dict | set | null
 
@@ -167,21 +184,21 @@ multiline_string: /"""(\\([\\nt"\n]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\\])*?"""/
 number: /0x[\da-fA-F](_?[\da-fA-F])*|0o[0-7](_?[0-7])*|0b[01](_?[01])*|\d(_?\d)*/ -> int
   | /(\d(_?\d)*(\.(\d(_?\d)*)?)?|\.\d(_?\d)*)([eE]-?\d(_?\d)*)?/ -> float
 
-boolean: "True" -> boolean_true
-  | "False" -> boolean_false
+boolean: TRUE -> boolean_true
+  | FALSE -> boolean_false
 
-null: "None" -> null
+null: NONE -> null
 
-list: "[" [expr ("," expr)* [","]] "]" -> list
+list: LBRAC [expr ("," expr)* [","]] "]" -> list
 
-tuple: "(" (expr "," expr ("," expr)* [","] | expr ",") ")" -> tuple
+tuple: LPAR (expr "," expr ("," expr)* [","] | expr ",") ")" -> tuple
 
-set: "{" expr ("," expr)* [","] "}" -> set
+set: LCURL expr ("," expr)* [","] "}" -> set
 
-dict.1: "{" [dict_entry ("," dict_entry)* [","]] "}" -> dict
+dict.1: LCURL [dict_entry ("," dict_entry)* [","]] "}" -> dict
 dict_entry: expr ":" expr -> dict_entry
 
 slice: expr ":" expr [":" [expr]] -> slice_both
-  | ":" expr [":" [expr]] -> slice_end
+  | COLON expr [":" [expr]] -> slice_end
   | expr ":" [":" [expr]] -> slice_start
-  | ":" [":" [expr]] -> slice_none
+  | COLON [":" [expr]] -> slice_none

@@ -104,16 +104,14 @@ class WikiScriptParser(_lark.Transformer):
                                     operator=str(items[2]), expr=items[3])
 
     def delete_var_stmt(self, items) -> _st.DeleteVariableStatement:
-        return _st.DeleteVariableStatement(items[0].line, items[0].column, name=str(items[0]))
+        return _st.DeleteVariableStatement(items[0].line, items[0].column, name=str(items[1]))
 
     def delete_item_stmt(self, items) -> _st.DeleteItemStatement:
-        return _st.DeleteItemStatement(items[0].line, items[0].column, target=items[0], key=items[1])
+        return _st.DeleteItemStatement(items[0].line, items[0].column, target=items[1], key=items[2])
 
     def try_stmt(self, items):
-        try_statements, *except_parts = items
-        return _st.TryStatement(try_statements[0].line if try_statements else -1,
-                                try_statements[0].column if try_statements else -1,
-                                try_statements, except_parts)
+        keyword, try_statements, *except_parts = items
+        return _st.TryStatement(keyword.line, keyword.column, try_statements, except_parts)
 
     def try_stmt_try_part(self, items) -> list[_st.Statement]:
         return items
@@ -127,18 +125,19 @@ class WikiScriptParser(_lark.Transformer):
         return items, None
 
     def raise_stmt(self, items) -> _st.RaiseStatement:
-        return _st.RaiseStatement(items[0].line, items[0].column, items[0])
+        return _st.RaiseStatement(items[0].line, items[0].column, items[1])
 
     def if_stmt(self, items):
-        if_cond, if_stmts = items[0]
+        keyword = items[0]
+        if_cond, if_stmts = items[1]
         elifs = []
         else_part = []
-        for item in items[1:]:
+        for item in items[2:]:
             if item[0] == 'elif':
                 elifs.append(item[1:])
             else:
                 else_part = item[1]
-        return _st.IfStatement(if_cond.line, if_cond.column, if_cond, if_stmts, elifs, else_part)
+        return _st.IfStatement(keyword.line, keyword.column, if_cond, if_stmts, elifs, else_part)
 
     def if_stmt_if_part(self, items) -> tuple[_st.Expression, tuple[_st.Expression, ...]]:
         return items[0], items[1:]
@@ -150,20 +149,22 @@ class WikiScriptParser(_lark.Transformer):
         return 'else', items
 
     def for_loop_stmt(self, items):
-        if isinstance(items[0], tuple):
-            var_names, line, column = items[0]
+        keyword = items[0]
+        if isinstance(items[1], tuple):
+            var_names = items[1]
         else:
-            var_names, line, column = str(items[0]), items[0].line, items[0].column
-        return _st.ForLoopStatement(line, column, variables_names=var_names, iterator=items[1], statements=items[2:])
+            var_names = str(items[1])
+        return _st.ForLoopStatement(keyword.line, keyword.column, variables_names=var_names, iterator=items[2],
+                                    statements=items[3:])
 
     def while_loop_stmt(self, items) -> _st.WhileLoopStatement:
-        return _st.WhileLoopStatement(items[0].line, items[0].column, cond=items[0], statements=items[1:])
+        return _st.WhileLoopStatement(items[0].line, items[0].column, cond=items[1], statements=items[2:])
 
-    def break_stmt(self, _) -> _st.BreakStatement:
-        return _st.BreakStatement(-1, -1)
+    def break_stmt(self, items) -> _st.BreakStatement:
+        return _st.BreakStatement(items[0].line, items[0].column)
 
-    def continue_stmt(self, _) -> _st.ContinueStatement:
-        return _st.ContinueStatement(-1, -1)
+    def continue_stmt(self, items) -> _st.ContinueStatement:
+        return _st.ContinueStatement(items[0].line, items[0].column)
 
     def def_function_vararg(self, items) -> tuple[str, str]:
         return 'vararg', str(items[0])
@@ -191,21 +192,19 @@ class WikiScriptParser(_lark.Transformer):
         return args, vararg, kwargs
 
     def def_function_stmt(self, items) -> _st.DefineFunctionStatement:
-        line, column = items[0].line, items[0].column
-        name = str(items[0])
+        fun, name = items[:2]
         args, vararg, kwargs = [], False, {}
         statements = []
-        if items[1:]:
-            if isinstance(items[1], tuple):
-                args, vararg, kwargs = items[1]
-                statements = items[2:]
+        if items[2:]:
+            if isinstance(items[2], tuple):
+                args, vararg, kwargs = items[2]
+                statements = items[3:]
             else:
-                statements = items[1:]
-        return _st.DefineFunctionStatement(line, column, name, args, vararg, kwargs, statements)
+                statements = items[2:]
+        return _st.DefineFunctionStatement(fun.line, fun.column, str(name), args, vararg, kwargs, statements)
 
     def return_stmt(self, items) -> _st.ReturnStatement:
-        return _st.ReturnStatement(items[0].line if items else -1, items[0].column if items else -1,
-                                   items[0] if items else None)
+        return _st.ReturnStatement(items[0].line, items[0].column, items[1] if len(items) == 2 else None)
 
     # Expressions
 
@@ -216,7 +215,7 @@ class WikiScriptParser(_lark.Transformer):
 
     def binary_op(self, items) -> _st.BinaryOperatorExpression:
         expr1, op, expr2 = items
-        return _st.BinaryOperatorExpression(expr1.line, expr1.column, symbol=str(op), operator=self.BINARY_OPS[str(op)],
+        return _st.BinaryOperatorExpression(op.line, op.column, symbol=str(op), operator=self.BINARY_OPS[str(op)],
                                             expr1=expr1, expr2=expr2)
 
     def ternary_op(self, items) -> _st.TernaryOperatorExpression:
@@ -235,8 +234,16 @@ class WikiScriptParser(_lark.Transformer):
         return _st.GetItemExpression(items[0].line, items[0].column, target=items[0], key=items[1])
 
     def def_anon_function(self, items) -> _st.DefineAnonymousFunctionExpression:
-        args, *statements = items
-        return _st.DefineAnonymousFunctionExpression(-1, -1, args[0], args[1], args[2], statements)
+        fun = items[0]
+        args, vararg, kwargs = [], False, {}
+        statements = []
+        if items[1:]:
+            if isinstance(items[1], tuple):
+                args, vararg, kwargs = items[1]
+                statements = items[2:]
+            else:
+                statements = items[1:]
+        return _st.DefineAnonymousFunctionExpression(fun.line, fun.column, args[0], args[1], args[2], statements)
 
     def function_call(self, items) -> _st.FunctionCallExpression:
         args = []
@@ -294,46 +301,48 @@ class WikiScriptParser(_lark.Transformer):
     def float(self, items) -> _st.SimpleLiteralExpression:
         return _st.SimpleLiteralExpression(items[0].line, items[0].column, float(items[0]))
 
-    def boolean_true(self, _) -> _st.SimpleLiteralExpression:
-        return _st.SimpleLiteralExpression(-1, -1, True)
+    def boolean_true(self, items) -> _st.SimpleLiteralExpression:
+        return _st.SimpleLiteralExpression(items[0].line, items[0].column, True)
 
-    def boolean_false(self, _) -> _st.SimpleLiteralExpression:
-        return _st.SimpleLiteralExpression(-1, -1, False)
+    def boolean_false(self, items) -> _st.SimpleLiteralExpression:
+        return _st.SimpleLiteralExpression(items[0].line, items[0].column, False)
 
-    def null(self, _) -> _st.SimpleLiteralExpression:
-        return _st.SimpleLiteralExpression(-1, -1, None)
+    def null(self, items) -> _st.SimpleLiteralExpression:
+        return _st.SimpleLiteralExpression(items[0].line, items[0].column, None)
 
     def dict(self, items) -> _st.DictLiteralExpression:
-        return _st.DictLiteralExpression(items[0][0].line if items else -1, items[0][0].column if items else -1,
-                                         *[(k, v) for k, v in items])
+        lcurl, *entries = items[0]
+        return _st.DictLiteralExpression(lcurl.line, lcurl.column, *[(k, v) for k, v in entries])
 
     def dict_entry(self, items) -> tuple[_st.Expression, _st.Expression]:
         return items[0], items[1]
 
     def list(self, items) -> _st.ListLiteralExpression:
-        return _st.ListLiteralExpression(items[0].line if items else -1, items[0].column if items else -1, *items)
+        lbrac, *values = items[0]
+        return _st.ListLiteralExpression(lbrac.line, lbrac.column, *values)
 
     def tuple(self, items) -> _st.TupleLiteralExpression:
-        return _st.TupleLiteralExpression(items[0].line if items else -1, items[0].column if items else -1, *items)
+        lpar, *values = items[0]
+        return _st.TupleLiteralExpression(lpar.line, lpar.column, *values)
 
     def set(self, items) -> _st.SetLiteralExpression:
-        return _st.SetLiteralExpression(items[0].line if items else -1, items[0].column if items else -1, *items)
+        lcurl, *values = items[0]
+        return _st.SetLiteralExpression(lcurl.line, lcurl.column, *values)
 
     def slice_both(self, items) -> _st.SliceLiteralExpression:
-        return _st.SliceLiteralExpression(items[0].line if items else -1, items[0].column if items else -1,
-                                          start=items[0], end=items[1], step=items[2] if len(items) == 3 else None)
+        return _st.SliceLiteralExpression(
+            items[0].line, items[0].column, start=items[0], end=items[1], step=items[2] if len(items) == 3 else None)
 
     def slice_end(self, items) -> _st.SliceLiteralExpression:
-        return _st.SliceLiteralExpression(items[0].line if items else -1, items[0].column if items else -1,
-                                          end=items[0], step=items[1] if len(items) == 2 else None)
+        return _st.SliceLiteralExpression(items[0].line, items[0].column,
+                                          end=items[1], step=items[2] if len(items) == 3 else None)
 
     def slice_start(self, items) -> _st.SliceLiteralExpression:
-        return _st.SliceLiteralExpression(items[0].line if items else -1, items[0].column if items else -1,
+        return _st.SliceLiteralExpression(items[0].line, items[0].column,
                                           start=items[0], step=items[1] if len(items) == 2 else None)
 
     def slice_none(self, items) -> _st.SliceLiteralExpression:
-        return _st.SliceLiteralExpression(items[0].line if items else -1, items[0].column if items else -1,
-                                          step=items[0] if items else None)
+        return _st.SliceLiteralExpression(items[0].line, items[0].column, step=items[1] if len(items) == 2 else None)
 
 
 _GRAMMAR = ''

@@ -3,10 +3,10 @@ from ottm.api.wiki.modules import _parser, _exceptions as _ex
 
 p = _parser.WikiScriptParser('<module>')
 parsed_tree = p.parse(r'''
-fun f(a, a...) is
+fun f(a, b...) is
     return a;
 end
-print(f());
+print(None + 1);
 '''.strip())
 print(parsed_tree)
 module = p.transform(parsed_tree)
