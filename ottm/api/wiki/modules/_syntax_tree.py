@@ -428,7 +428,8 @@ class DefineFunctionStatement(Statement):
     def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
         # The function’s closure
         scope.set_variable(self._name, _types.ScriptFunction(
-            self._name, self._args, self._kwargs, self._vararg, scope, *self._statements
+            self._name, self._args, {k: v.evaluate(scope, call_stack) for k, v in self._kwargs.items()}, self._vararg,
+            scope, *self._statements
         ))
 
     def __repr__(self):

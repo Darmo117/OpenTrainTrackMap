@@ -96,15 +96,16 @@ class Module:
 
 
 class ScriptFunction:
-    def __init__(self, name: str | None, arg_names: list[str], default_arg_names, vararg: bool, closure: _scope.Scope,
-                 *statements):
+    _NO_DEFAULT = object()
+
+    def __init__(self, name: str | None, arg_names: list[str], default_arg_names: dict[str, _typ.Any], vararg: bool,
+                 closure: _scope.Scope, *statements):
         """Create a WikiScript function.
 
         :param name: Function’s name. May be prefixed by the module’s name if in global scope. May be None if lambda.
         :param arg_names: Names of this function’s arguments.
         :param vararg: Whether the last argument is a vararg.
         :param default_arg_names: Dict object containing the names of arguments and their default values.
-        :type default_arg_names: dict[str, ottm.api.wiki.modules._syntax_tree.Expression]
         :param closure: This function’s closure.
         :param statements: This function’s statements.
         :type statements: ottm.api.wiki.modules._syntax_tree.Statement
@@ -112,31 +113,49 @@ class ScriptFunction:
         if vararg and default_arg_names:
             raise TypeError('vararg functions cannot have default arguments')
         self._name = name
-        self._args = arg_names
-        self._default_arg_names = default_arg_names
+        self._args = {name: self._NO_DEFAULT for name in arg_names}
+        for k, v in default_arg_names.items():
+            if k in arg_names:
+                raise TypeError(f'duplicate argument "{arg_names}" for function {self.name}')
+            self._args[k] = v
         self._vararg = vararg
         self._closure = closure
         self._statements = statements
 
     @property
-    def name(self) -> str | None:
-        return self._name
+    def name(self) -> str:
+        return self._name or '<anonymous>'
 
     def __call__(self, call_stack: _scope.CallStack, *args, **kwargs) -> _typ.Any:
-        args_len = len(self._args)
-        actual_args_len = len(args)
-        # TODO use kwargs and self._default_arg_names
-        if not self._vararg and args_len != actual_args_len:
-            raise TypeError(f'function {self.name}() takes exactly {args_len} argument(s) ({actual_args_len} given)')
-        if args_len < actual_args_len:
-            raise TypeError(f'function {self.name}() takes at least {args_len} argument(s) ({actual_args_len} given)')
+        expected_args_len = len(self._args)
+        actual_pos_args_len = len(args)
 
+        filled_args = []
         scope = _scope.Scope(self._closure)
         for i, arg_name in enumerate(self._args):
-            if self._vararg and i == args_len - 1:
+            if self._vararg and i == expected_args_len - 1:
                 scope.set_variable(name=arg_name, value=args[i:])
+                filled_args.append(arg_name)
+            elif i >= actual_pos_args_len:
+                if arg_name in kwargs:
+                    if arg_name in filled_args:
+                        raise TypeError(f'duplicate argument "{arg_name}" passed to function {self.name}()')
+                    scope.set_variable(name=arg_name, value=kwargs[arg_name])
+                    filled_args.append(arg_name)
+                    del kwargs[arg_name]
             else:
                 scope.set_variable(name=arg_name, value=args[i])
+                filled_args.append(arg_name)
+        if kwargs:
+            raise TypeError(f'undefined argument "{next(iter(kwargs))}" for function {self.name}()')
+        for k, v in self._args.items():
+            if k not in filled_args:
+                if v is not self._NO_DEFAULT:
+                    filled_args.append(k)
+                    scope.set_variable(name=k, value=v)
+                else:
+                    raise TypeError(f'missing required argument "{k}" for function {self.name}()')
+
         call_stack = call_stack.push(_scope.CallStack(self.name))
 
         # Execute statements

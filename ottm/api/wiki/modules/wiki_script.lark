@@ -153,7 +153,7 @@ get_item: value "[" (expr | slice) "]"
 
 get_property: value "." IDENT
 
-function_call: value "(" [expr ("," expr)* ("," function_kwarg)* [","]] ")"
+function_call: value "(" [expr ("," expr)* ("," function_kwarg)* | function_kwarg ("," function_kwarg)* [","]] ")"
 
 def_anon_function: "fun" "(" def_function_params ")" "is" statement* "end"
 
