@@ -44,6 +44,7 @@ class CustomTagDefinition(HTMLTagDefinition):
     attributes: list[CustomTagAttribute] = ()
 
 
+# TODO run on dedicated thread with timeout
 class Parser:
     """The wikicode parser."""
 
