@@ -79,7 +79,7 @@ set_property_stmt: value "." IDENT (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA |
 
 set_item_stmt: value "[" (expr | slice) "]" (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
 
-def_function_stmt: "function" IDENT "(" [def_function_params] ")" "is" statement* "end"
+def_function_stmt: "fun" IDENT "(" [def_function_params] ")" "is" statement* "end"
 
 def_function_params: (IDENT ("," IDENT)* ( | "," def_function_vararg | ("," function_kwarg)*)
   | def_function_vararg
@@ -147,7 +147,7 @@ return_stmt: "return" [expr]
 ?unary: value
   | (NEG | INV | NOT) unary -> unary_op
 
-?value: literal | get_variable | get_item | get_property | function_call | def_def_lambda | "(" expr ")"
+?value: literal | get_variable | get_item | get_property | function_call | def_anon_function | "(" expr ")"
 
 get_variable: IDENT
 
@@ -157,8 +157,7 @@ get_property: value "." IDENT
 
 function_call: value "(" [expr ("," expr)* ("," function_kwarg)* [","]] ")"
 
-// TODO
-def_def_lambda: "lambda" "(" def_function_params ")" "is" expr "end"
+def_anon_function: "fun" "(" def_function_params ")" "is" statement* "end"
 
 ?literal: string | number | boolean | list | tuple | dict | set | null
 

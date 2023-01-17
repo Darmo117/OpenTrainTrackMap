@@ -3,14 +3,19 @@ from ottm.api.wiki.modules import _parser, _exceptions as _ex
 
 p = _parser.WikiScriptParser('<module>')
 parsed_tree = p.parse(r"""
-function f(n) is
-    if n == 0 or n == 1 then
-        return 1;
-    end
-    return n * f(n - 1);
+fun op(a, b, f) is
+    return f(a, b);
 end
-print(f(5));
-print(attrs(f));
+l = [];
+for i in range(4) do
+    fun f(a, b) is
+        return i + a * b;
+    end
+    l.append((fun (a, b) is return i + a * b; end, f));
+end
+for f1, f2 in l do
+    print(op(3, 2, f1), op(3, 2, f2));
+end
 """.strip())
 print(parsed_tree)
 module = p.transform(parsed_tree)

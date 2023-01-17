@@ -150,4 +150,4 @@ class ScriptFunction:
                     raise SyntaxError(f'unexpected statement "{result[0]}"')
 
     def __repr__(self):
-        return f'<function "{self.name}">' if self.name else f'<lambda@{id(self)}>'
+        return f'<function "{self.name}" @ {id(self)}>' if self.name else f'<anonymous function @ {id(self)}>'

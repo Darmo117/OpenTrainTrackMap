@@ -598,6 +598,25 @@ class GetItemExpression(Expression):
         return f'GetItem[target={self._target!r},key={self._key!r}]'
 
 
+class DefineAnonymousFunctionExpression(Expression):
+    def __init__(self, line: int, column: int, args: list[str], vararg: bool, kwargs: dict[str, Expression],
+                 statements: list[Statement]):
+        super().__init__(line, column)
+        if vararg and kwargs:
+            raise TypeError('vararg functions cannot have default arguments')
+        self._args = args
+        self._vararg = vararg
+        self._kwargs = kwargs
+        self._statements = statements
+
+    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
+        return _types.ScriptFunction(None, self._args, self._kwargs, self._vararg, scope.copy(), *self._statements)
+
+    def __repr__(self):
+        return f'DefineAnonymousFunction[args={self._args},vararg={self._vararg},kwargs={self._kwargs},' \
+               f'statements={self._statements}]'
+
+
 class FunctionCallExpression(Expression):
     def __init__(self, line: int, column: int, target: Expression,
                  args: list[Expression], kwargs: dict[str, Expression]):

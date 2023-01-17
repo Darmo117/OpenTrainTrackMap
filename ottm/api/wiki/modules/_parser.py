@@ -190,7 +190,7 @@ class WikiScriptParser(_lark.Transformer):
                     args.append(str(name))
         return args, vararg, kwargs
 
-    def def_function_stmt(self, items):
+    def def_function_stmt(self, items) -> _st.DefineFunctionStatement:
         line, column = items[0].line, items[0].column
         name = str(items[0])
         args, vararg, kwargs = [], False, {}
@@ -234,15 +234,16 @@ class WikiScriptParser(_lark.Transformer):
     def get_item(self, items) -> _st.GetItemExpression:
         return _st.GetItemExpression(items[0].line, items[0].column, target=items[0], key=items[1])
 
-    def function_kwarg(self, items) -> tuple[str, _st.Expression]:
-        return str(items[0]), items[1]
+    def def_anon_function(self, items) -> _st.DefineAnonymousFunctionExpression:
+        args, *statements = items
+        return _st.DefineAnonymousFunctionExpression(-1, -1, args[0], args[1], args[2], statements)
 
     def function_call(self, items) -> _st.FunctionCallExpression:
         args = []
         kwargs = {}
         for item in items[1:]:
             if isinstance(item, tuple):
-                kwargs[item[0]] = item[1]
+                kwargs[item[1]] = item[2]
             else:
                 args.append(item)
         return _st.FunctionCallExpression(items[0].line, items[0].column, target=items[0], args=args, kwargs=kwargs)
