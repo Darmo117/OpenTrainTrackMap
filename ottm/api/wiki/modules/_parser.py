@@ -85,6 +85,15 @@ class WikiScriptParser(_lark.Transformer):
     def expr_stmt(self, items) -> _st.ExpressionStatement:
         return _st.ExpressionStatement(items[0].line, items[0].column, items[0])
 
+    def import_builtin_stmt(self, items) -> _st.ImportStatement:
+        keyword, *names = items
+        return _st.ImportStatement(keyword.line, keyword.column, names[0], alias=names[1] if len(names) == 2 else None,
+                                   builtin=True)
+
+    def import_wiki_module_stmt(self, items) -> _st.ImportStatement:
+        keyword, *names = items
+        return _st.ImportStatement(keyword.line, keyword.column, names[0], alias=names[1], builtin=False)
+
     def unpack_variables_stmt(self, items) -> _st.UnpackVariablesStatement:
         names, line, column = items[0]
         return _st.UnpackVariablesStatement(line, column, names=names, expr=items[2])
@@ -243,7 +252,7 @@ class WikiScriptParser(_lark.Transformer):
                 statements = items[2:]
             else:
                 statements = items[1:]
-        return _st.DefineAnonymousFunctionExpression(fun.line, fun.column, args[0], args[1], args[2], statements)
+        return _st.DefineAnonymousFunctionExpression(fun.line, fun.column, args, vararg, kwargs, statements)
 
     def function_call(self, items) -> _st.FunctionCallExpression:
         args = []
@@ -318,15 +327,15 @@ class WikiScriptParser(_lark.Transformer):
         return items[0], items[1]
 
     def list(self, items) -> _st.ListLiteralExpression:
-        lbrac, *values = items[0]
+        lbrac, *values = items
         return _st.ListLiteralExpression(lbrac.line, lbrac.column, *values)
 
     def tuple(self, items) -> _st.TupleLiteralExpression:
-        lpar, *values = items[0]
+        lpar, *values = items
         return _st.TupleLiteralExpression(lpar.line, lpar.column, *values)
 
     def set(self, items) -> _st.SetLiteralExpression:
-        lcurl, *values = items[0]
+        lcurl, *values = items
         return _st.SetLiteralExpression(lcurl.line, lcurl.column, *values)
 
     def slice_both(self, items) -> _st.SliceLiteralExpression:

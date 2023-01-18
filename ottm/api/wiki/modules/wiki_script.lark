@@ -18,7 +18,9 @@ IF: "if"
 TRY: "try"
 RAISE: "raise"
 DEL: "del"
+RETURN: "return"
 COLON: ":"
+IMPORT: "import"
 
 NEG: "-"
 INV: "~"
@@ -73,6 +75,7 @@ module: statement+
   | try_stmt
   | terminated_stmt
 ?terminated_stmt: (expr_stmt
+  | import_stmt
   | set_variable_stmt
   | unpack_variables_stmt
   | set_property_stmt
@@ -83,6 +86,9 @@ module: statement+
   | return_stmt) ";"
 
 expr_stmt: expr
+
+import_stmt: IMPORT IDENT ["as" IDENT] -> import_builtin_stmt
+  | IMPORT string "as" IDENT -> import_wiki_module_stmt
 
 set_variable_stmt: IDENT (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
 
@@ -174,15 +180,16 @@ function_call: value "(" [expr ("," expr)* ("," function_kwarg)* | function_kwar
 
 def_anon_function: FUN "(" [def_function_params] ")" "is" statement* "end"
 
-?literal: multiline_string | string | number | boolean | list | tuple | dict | set | null
+?literal: multiline_string | string | int | float | boolean | list | tuple | dict | set | null
 
 // Ignore displayed errors with backslash in PyCharm
 string: /"(\\([\\nt"]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^"\n\\])*?"/
 
 multiline_string: /"""(\\([\\nt"\n]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\\])*?"""/
 
-number: /0x[\da-fA-F](_?[\da-fA-F])*|0o[0-7](_?[0-7])*|0b[01](_?[01])*|\d(_?\d)*/ -> int
-  | /(\d(_?\d)*(\.(\d(_?\d)*)?)?|\.\d(_?\d)*)([eE]-?\d(_?\d)*)?/ -> float
+float.2: /(\d(_?\d)*\.(\d(_?\d)*)?|\.\d(_?\d)*)([eE]-?\d(_?\d)*)?|\d(_?\d)*[eE]-?\d(_?\d)*/
+
+int.1: /0x[\da-fA-F](_?[\da-fA-F])*|0o[0-7](_?[0-7])*|0b[01](_?[01])*|\d(_?\d)*/
 
 boolean: TRUE -> boolean_true
   | FALSE -> boolean_false

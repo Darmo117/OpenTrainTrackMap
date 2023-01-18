@@ -1,7 +1,7 @@
 import abc as _abc
 import typing as _typ
 
-from . import _scope, _types, _exceptions as _ex
+from . import _scope, _types, _exceptions as _ex, _builtin_modules as _bm
 
 
 # TODO wrap all exceptions in WikiScriptException
@@ -58,6 +58,23 @@ class ExpressionStatement(Statement):
 
     def __repr__(self):
         return f'Expression[expr={self._expr!r}]'
+
+
+class ImportStatement(Statement):
+    def __init__(self, line: int, column: int, module_name: str, alias: str | None, builtin: bool):
+        super().__init__(line, column)
+        self._module_name = module_name
+        self._alias = alias
+        self._builtin = builtin
+
+    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
+        if self._builtin:
+            scope.set_variable(self._alias or self._module_name, _bm.get_module(self._module_name))
+        else:
+            raise NotImplementedError('load wiki module')  # TODO load wiki module
+
+    def __repr__(self):
+        return f'Import[module_name={self._module_name!r},alias={self._alias!r},built-in={self._builtin!r}]'
 
 
 class UnpackVariablesStatement(Statement):
@@ -532,11 +549,6 @@ class GetVariableExpression(Expression):
 
 
 class GetPropertyExpression(Expression):
-    ALLOWED_PRIVATE = (
-        '__name__',
-        '__qualname__',
-    )
-
     def __init__(self, line: int, column: int, target: Expression, property_name: str):
         super().__init__(line, column)
         self._target = target
@@ -553,8 +565,8 @@ class GetPropertyExpression(Expression):
         :param name: Attribute name to check.
         :return: True if the name is allowed, False otherwise.
         """
-        # Prevent accessing private attributes
-        return not name.startswith('_') or name in cls.ALLOWED_PRIVATE
+        # Prevent accessing dunder and private attributes
+        return not name.startswith('_')
 
     @classmethod
     def get_attr(cls, o, attr_name: str) -> _typ.Any:

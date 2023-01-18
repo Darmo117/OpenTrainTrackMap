@@ -1,16 +1,16 @@
 import sys
-from ottm.api.wiki.modules import _parser, _exceptions as _ex
 
-p = _parser.WikiScriptParser('<module>')
+from ottm.api.wiki.modules import _exceptions as _ex, _parser
+
+p = _parser.WikiScriptParser('main')
 parsed_tree = p.parse(r'''
-fun f(a, b...) is
-    return a;
-end
-print(None + 1);
+import "yo" as yo;
+print(yo);
+print(attrs(yo));
 '''.strip())
 print(parsed_tree)
 module = p.transform(parsed_tree)
-print(module)
+print(repr(module))
 try:
     module.execute()
 except _ex.WikiScriptException as e:

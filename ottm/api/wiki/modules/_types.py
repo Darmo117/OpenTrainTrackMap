@@ -2,10 +2,10 @@ import typing as _typ
 
 from . import _scope
 
+_BUILTINS_CACHE = {}
+
 
 class Module:
-    _builtins_cache = None
-
     def __init__(self, name: str, statements):
         """Create a module.
 
@@ -13,29 +13,41 @@ class Module:
         :param statements: Module’s statements.
         :type statements: list[ottm.api.wiki.modules._syntax_tree.Statement]
         """
-        self._load_builtins()
         self._name = name
+        self.__name__ = name
+        self.__qualname__ = name
         self._statements = statements
         self._scope = _scope.Scope()
-        for k, v in self._builtins_cache.items():
+        for k, v in self._load_builtins().items():
             self._scope.set_variable(k, v)
 
     @classmethod
-    def _load_builtins(cls):
-        if not cls._builtins_cache:
+    def _load_builtins(cls) -> dict[str, _typ.Any]:
+        global _BUILTINS_CACHE
+        if not _BUILTINS_CACHE:
             from . import _syntax_tree as _st
 
             def attrs(o):
                 """Return a list of the names of all public attributes of the given object."""
-                return [v for v in dir(o) if _st.GetPropertyExpression.is_attribute_allowed(v)]
+                return [attr for attr in dir(o) if _st.GetPropertyExpression.is_attribute_allowed(attr)]
+
+            def doc(o) -> str:
+                """Return the documentation of the given object.
+                This function is meant to be used from the interactive console."""
+                return o.__doc__ or 'No documentation available.'
 
             def has_attr(o, name: str) -> bool:
+                """Return whether an object has an attribute with the given name."""
                 return _st.GetPropertyExpression.is_attribute_allowed(name) and hasattr(o, name)
 
             def get_attr(o, name: str) -> _typ.Any:
+                """Get a named attribute from an object; get_attr(x, 'y') is equivalent to x.y.
+                When the attribute doesn’t exist, an exception is raised."""
                 return _st.GetPropertyExpression.get_attr(o, name)
 
             def set_attr(o, name: str, value):
+                """Sets the named attribute on the given object to the specified value.
+                set_attr(x, 'y', v) is equivalent to x.y = v"""
                 if not _st.GetPropertyExpression.is_attribute_allowed(name):
                     raise _st.GetPropertyExpression.get_error(o, name)
                 setattr(o, name, value)
@@ -44,14 +56,15 @@ class Module:
 
             # Override default qualified names to not expose the current module name
             attrs.__qualname__ = attrs.__name__
+            doc.__qualname__ = doc.__name__
             has_attr.__qualname__ = has_attr.__name__
             get_attr.__qualname__ = get_attr.__name__
             set_attr.__qualname__ = set_attr.__name__
 
             # TODO redefine print() function to print in the debug console of "Module:" pages instead of stdout
-            functions = [
+            properties = [
                 # functions and types
-                abs, all, any, ascii, attrs, bin, callable, format, get_attr, has_attr, hash, hex, id, isinstance,
+                abs, all, any, ascii, attrs, bin, callable, doc, format, get_attr, has_attr, hash, hex, id, isinstance,
                 issubclass, iter, len, max, min, next, oct, ord, pow, print, repr, round, set_attr, sorted, sum, object,
                 int, bool, bytearray, bytes, dict, enumerate, filter, float, frozenset, list, map, range, reversed, set,
                 slice, str, tuple, type, zip,
@@ -60,11 +73,11 @@ class Module:
                 NotImplementedError, TypeError, ValueError, UnicodeError, UnicodeDecodeError, UnicodeEncodeError,
                 UnicodeTranslateError, ZeroDivisionError,
             ]
-            cls._builtins_cache = {f.__name__: f for f in functions}
+            _BUILTINS_CACHE = {f.__name__: f for f in properties}
+        return _BUILTINS_CACHE
 
-    @property
-    def name(self) -> str:
-        return self._name
+    def __dir__(self) -> _typ.Iterable[str]:
+        return self._properties.keys()
 
     def __getattr__(self, name: str) -> _typ.Any:
         variable = self._scope.get_variable(name)
@@ -91,8 +104,11 @@ class Module:
             if (result := statement.execute(self._scope, call_stack)) is not None:
                 raise SyntaxError(f'unexpected statement "{result[0]}"')
 
+    def __str__(self):
+        return f'<module "{self._name}">'
+
     def __repr__(self):
-        return f'Module[name={self.name!r},statements={self._statements}]'
+        return f'Module[name={self._name!r},statements={self._statements}]'
 
 
 class ScriptFunction:
@@ -169,4 +185,4 @@ class ScriptFunction:
                     raise SyntaxError(f'unexpected statement "{result[0]}"')
 
     def __repr__(self):
-        return f'<function "{self.name}" @{id(self)}>' if self._name else f'<anonymous function @{id(self)}>'
+        return f'<function "{self.name}" at {id(self):#x}>' if self._name else f'<anonymous function at {id(self):#x}>'
