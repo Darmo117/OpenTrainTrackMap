@@ -65,7 +65,7 @@ XORA: "^="
 LSHIFTA: "<<="
 RSHIFTA: ">>="
 
-module: statement+
+module: statement*
 
 // Statements
 

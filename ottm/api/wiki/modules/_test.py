@@ -4,7 +4,7 @@ from ottm.api.wiki.modules import _exceptions as _ex, _parser
 
 p = _parser.WikiScriptParser('Test')
 parsed_tree = p.parse(r'''
-print(isinstance(1, int | float));
+print(int("a", base=16));
 '''.strip())
 print(parsed_tree)
 try:

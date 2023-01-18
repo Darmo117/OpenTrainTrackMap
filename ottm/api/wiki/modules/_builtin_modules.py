@@ -89,5 +89,5 @@ _load_module(_s)
 _load_module(_tw)
 _load_module(_t)
 _load_module(_ud, blacklist=['UCD'])
-# TODO module to manipulate pages and get wiki stats
-# TODO module for i18n
+# TODO module to expand templates and wikicode template tags
+# TODO module to manipulate pages
