@@ -3,13 +3,27 @@ import pathlib as _pl
 import re as _re
 import operator as _op
 
+import lark
 import lark as _lark
 
-from . import _syntax_tree as _st, _types
+from . import _syntax_tree as _st, _types, _exceptions as _ex
 
 
 # noinspection PyMethodMayBeStatic
 class WikiScriptParser(_lark.Transformer):
+    KEYWORDS = (
+        'True', 'False', 'None',
+        'not', 'and', 'or', 'is', 'is_not', 'in', 'not_in',
+        'import', 'as',
+        'fun', 'is',
+        'for', 'while', 'break', 'continue',
+        'if', 'then', 'elif', 'else',
+        'try', 'except',
+        'end',
+        'raise',
+        'del',
+        'return',
+    )
     UNARY_OPS: dict[str, _typ.Callable[[_typ.Any], _typ.Any]] = {
         '-': _op.neg,
         '~': _op.inv,
@@ -80,32 +94,33 @@ class WikiScriptParser(_lark.Transformer):
     # Statements
 
     def unpack_values(self, items) -> tuple[list[str], int, int]:
-        return list(map(str, items)), items[0].line, items[0].column
+        return list(map(self._ident, items)), items[0].line, items[0].column
 
     def expr_stmt(self, items) -> _st.ExpressionStatement:
         return _st.ExpressionStatement(items[0].line, items[0].column, items[0])
 
     def import_builtin_stmt(self, items) -> _st.ImportStatement:
         keyword, *names = items
-        return _st.ImportStatement(keyword.line, keyword.column, names[0], alias=names[1] if len(names) == 2 else None,
+        return _st.ImportStatement(keyword.line, keyword.column, self._ident(names[0]),
+                                   alias=self._ident(names[1]) if len(names) == 2 else None,
                                    builtin=True)
 
     def import_wiki_module_stmt(self, items) -> _st.ImportStatement:
         keyword, *names = items
-        return _st.ImportStatement(keyword.line, keyword.column, names[0], alias=names[1], builtin=False)
+        return _st.ImportStatement(keyword.line, keyword.column, names[0], alias=self._ident(names[1]), builtin=False)
 
     def unpack_variables_stmt(self, items) -> _st.UnpackVariablesStatement:
         names, line, column = items[0]
         return _st.UnpackVariablesStatement(line, column, names=names, expr=items[2])
 
     def set_variable_stmt(self, items) -> _st.SetVariableStatement:
-        return _st.SetVariableStatement(items[0].line, items[0].column, name=str(items[0]), operator=str(items[1]),
-                                        expr=items[2])
+        return _st.SetVariableStatement(items[0].line, items[0].column, name=self._ident(items[0]),
+                                        operator=str(items[1]), expr=items[2])
 
     def set_property_stmt(self, items) -> _st.SetPropertyStatement:
         return _st.SetPropertyStatement(
             items[0].line, items[0].column,
-            target=items[0], property_name=str(items[1]), operator=str(items[2]), expr=items[3]
+            target=items[0], property_name=self._ident(items[1]), operator=str(items[2]), expr=items[3]
         )
 
     def set_item_stmt(self, items) -> _st.SetItemStatement:
@@ -113,7 +128,7 @@ class WikiScriptParser(_lark.Transformer):
                                     operator=str(items[2]), expr=items[3])
 
     def delete_var_stmt(self, items) -> _st.DeleteVariableStatement:
-        return _st.DeleteVariableStatement(items[0].line, items[0].column, name=str(items[1]))
+        return _st.DeleteVariableStatement(items[0].line, items[0].column, name=self._ident(items[1]))
 
     def delete_item_stmt(self, items) -> _st.DeleteItemStatement:
         return _st.DeleteItemStatement(items[0].line, items[0].column, target=items[1], key=items[2])
@@ -130,7 +145,7 @@ class WikiScriptParser(_lark.Transformer):
 
     def try_stmt_except_errors_part(self, items) -> tuple[list[_st.Expression], str | None]:
         if isinstance(items[-1], _lark.Token):
-            return items[:-1], str(items[-1])
+            return items[:-1], self._ident(items[-1])
         return items, None
 
     def raise_stmt(self, items) -> _st.RaiseStatement:
@@ -162,7 +177,7 @@ class WikiScriptParser(_lark.Transformer):
         if isinstance(items[1], tuple):
             var_names = items[1]
         else:
-            var_names = str(items[1])
+            var_names = self._ident(items[1])
         return _st.ForLoopStatement(keyword.line, keyword.column, variables_names=var_names, iterator=items[2],
                                     statements=items[3:])
 
@@ -176,10 +191,10 @@ class WikiScriptParser(_lark.Transformer):
         return _st.ContinueStatement(items[0].line, items[0].column)
 
     def def_function_vararg(self, items) -> tuple[str, str]:
-        return 'vararg', str(items[0])
+        return 'vararg', self._ident(items[0])
 
     def function_kwarg(self, items) -> tuple[str, str, _st.Expression]:
-        return 'kwarg', str(items[0]), items[1]
+        return 'kwarg', self._ident(items[0]), items[1]
 
     def def_function_params(self, items) -> tuple[list[str], bool, dict[str, _st.Expression]]:
         args = []
@@ -197,7 +212,7 @@ class WikiScriptParser(_lark.Transformer):
                         raise SyntaxError(f'duplicate argument "{name}"')
                     kwargs[name] = default
                 case name:
-                    args.append(str(name))
+                    args.append(self._ident(name))
         return args, vararg, kwargs
 
     def def_function_stmt(self, items) -> _st.DefineFunctionStatement:
@@ -210,7 +225,7 @@ class WikiScriptParser(_lark.Transformer):
                 statements = items[3:]
             else:
                 statements = items[2:]
-        return _st.DefineFunctionStatement(fun.line, fun.column, str(name), args, vararg, kwargs, statements)
+        return _st.DefineFunctionStatement(fun.line, fun.column, self._ident(name), args, vararg, kwargs, statements)
 
     def return_stmt(self, items) -> _st.ReturnStatement:
         return _st.ReturnStatement(items[0].line, items[0].column, items[1] if len(items) == 2 else None)
@@ -234,10 +249,11 @@ class WikiScriptParser(_lark.Transformer):
                                              expr1=expr1, expr2=expr2, expr3=expr3)
 
     def get_variable(self, items) -> _st.GetVariableExpression:
-        return _st.GetVariableExpression(items[0].line, items[0].column, str(items[0]))
+        return _st.GetVariableExpression(items[0].line, items[0].column, self._ident(items[0]))
 
     def get_property(self, items) -> _st.GetPropertyExpression:
-        return _st.GetPropertyExpression(items[0].line, items[0].column, target=items[0], property_name=str(items[1]))
+        return _st.GetPropertyExpression(items[0].line, items[0].column, target=items[0],
+                                         property_name=self._ident(items[1]))
 
     def get_item(self, items) -> _st.GetItemExpression:
         return _st.GetItemExpression(items[0].line, items[0].column, target=items[0], key=items[1])
@@ -352,6 +368,12 @@ class WikiScriptParser(_lark.Transformer):
 
     def slice_none(self, items) -> _st.SliceLiteralExpression:
         return _st.SliceLiteralExpression(items[0].line, items[0].column, step=items[1] if len(items) == 2 else None)
+
+    def _ident(self, token: lark.Token) -> str:
+        name = str(token)
+        if name in self.KEYWORDS:
+            raise _ex.WikiScriptException(f'invalid identifier: {name!r}', token.line, token.column)
+        return name
 
 
 _GRAMMAR = ''
