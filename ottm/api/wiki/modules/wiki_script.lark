@@ -187,9 +187,9 @@ string: /"(\\([\\nt"]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^"\n\\])*?"/
 
 multiline_string: /"""(\\([\\nt"\n]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\\])*?"""/
 
-float.2: /(\d(_?\d)*\.(\d(_?\d)*)?|\.\d(_?\d)*)([eE]-?\d(_?\d)*)?|\d(_?\d)*[eE]-?\d(_?\d)*/
+float.2: /((\d(_?\d)*\.(\d(_?\d)*)?|\.\d(_?\d)*)([eE]-?\d(_?\d)*)?|\d(_?\d)*[eE]-?\d(_?\d)*)j?/
 
-int.1: /0x[\da-fA-F](_?[\da-fA-F])*|0o[0-7](_?[0-7])*|0b[01](_?[01])*|\d(_?\d)*/
+int.1: /0x[\da-fA-F](_?[\da-fA-F])*|0o[0-7](_?[0-7])*|0b[01](_?[01])*|\d(_?\d)*j?/
 
 boolean: TRUE -> boolean_true
   | FALSE -> boolean_false

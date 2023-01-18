@@ -79,7 +79,7 @@ _load_module(_html, submodules={
 })
 _load_module(_it)
 _load_module(_json, blacklist=['dump', 'load'])
-_load_module(_n, blacklist=['Complex'])
+_load_module(_n)
 _load_module(_m)
 _load_module(_pytz)
 _load_module(_r)

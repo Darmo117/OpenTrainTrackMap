@@ -320,11 +320,12 @@ class WikiScriptParser(_lark.Transformer):
         elif n.startswith('0b'):
             nb = int(n, 2)
         else:
-            nb = int(n)
+            nb = complex(n) if n[-1] == 'j' else int(n)
         return _st.SimpleLiteralExpression(items[0].line, items[0].column, nb)
 
     def float(self, items) -> _st.SimpleLiteralExpression:
-        return _st.SimpleLiteralExpression(items[0].line, items[0].column, float(items[0]))
+        n = str(items[0])
+        return _st.SimpleLiteralExpression(items[0].line, items[0].column, complex(n) if n[-1] == 'j' else float(n))
 
     def boolean_true(self, items) -> _st.SimpleLiteralExpression:
         return _st.SimpleLiteralExpression(items[0].line, items[0].column, True)

@@ -64,10 +64,10 @@ class Module:
             # TODO redefine print() function to print in the debug console of "Module:" pages instead of stdout
             properties = [
                 # functions and types
-                abs, all, any, ascii, attrs, bin, callable, doc, format, get_attr, has_attr, hash, hex, id, isinstance,
-                issubclass, iter, len, max, min, next, oct, ord, pow, print, repr, round, set_attr, sorted, sum, object,
-                int, bool, bytearray, bytes, dict, enumerate, filter, float, frozenset, list, map, range, reversed, set,
-                slice, str, tuple, type, zip,
+                abs, all, any, ascii, attrs, bin, callable, complex, doc, format, get_attr, has_attr, hash, hex, id,
+                isinstance, issubclass, iter, len, max, min, next, oct, ord, pow, print, repr, round, set_attr, sorted,
+                sum, object, int, bool, bytearray, bytes, dict, enumerate, filter, float, frozenset, list, map, range,
+                reversed, set, slice, str, tuple, type, zip,
                 # Errors and exceptions
                 AssertionError, AttributeError, ImportError, LookupError, IndexError, KeyError, NameError,
                 NotImplementedError, TypeError, ValueError, UnicodeError, UnicodeDecodeError, UnicodeEncodeError,
