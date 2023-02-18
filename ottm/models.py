@@ -19,6 +19,9 @@ from .api import permissions as _perms
 from .api.wiki import constants as _w_cons, namespaces as _w_ns, notifications as _notif, search_engine as _se
 
 
+# region I18n
+
+
 class DateTimeFormat(_dj_models.Model):
     format = _dj_models.CharField(max_length=50)
 
@@ -42,9 +45,8 @@ class Language(_dj_models.Model):
         super().delete(using=using, keep_parents=keep_parents)
 
 
-#########
-# Users #
-#########
+# endregion
+# region Users
 
 
 def user_group_label_validator(value: str):
@@ -1174,9 +1176,8 @@ class IPBlock(_dj_models.Model):
         return self.end_date and self.end_date > _utils.now()
 
 
-###################
-# Meta-meta-model #
-###################
+# endregion
+# region Meta-meta-model
 
 
 class UnitType(_dj_models.Model):
@@ -1411,9 +1412,8 @@ class Property(Structure):
         return f'{self.host_type.label}.{self.label}'
 
 
-##############
-# Meta-model #
-##############
+# endregion
+# region Meta-model
 
 
 class Object(_dj_models.Model):
@@ -1713,9 +1713,8 @@ class Relation(_dj_models.Model):
             )
 
 
-###############
-# Edit System #
-###############
+# endregion
+# region Edit System
 
 
 class EditGroup(_dj_models.Model):
@@ -1773,9 +1772,8 @@ class RelationEdit(Edit):
             )
 
 
-################
-# Translations #
-################
+# endregion
+# region Translations
 
 
 class Translation(_dj_models.Model):
@@ -1836,9 +1834,8 @@ class UnitTranslation(Translation):
         return 'unit'
 
 
-########
-# Wiki #
-########
+# endregion
+# region Wiki
 
 
 def future_date_validator(value: _dt.date | _dt.datetime):
@@ -1921,9 +1918,7 @@ class Revision(_dj_models.Model, NonDeletableMixin):
         raise NotImplementedError()
 
 
-#########
-# Pages #
-#########
+# region Pages
 
 
 def page_namespace_id_validator(value: int):
@@ -2270,9 +2265,8 @@ class Tag(_dj_models.Model):
     label = _dj_models.CharField(max_length=20, validators=[tag_label_validator])
 
 
-###############
-# Discussions #
-###############
+# endregion
+# region Discussions
 
 
 class Topic(_dj_models.Model, NonDeletableMixin):
@@ -2300,9 +2294,8 @@ class Message(_dj_models.Model, NonDeletableMixin):
         return revision.text if (revision := self.revisions.latest()) else ''
 
 
-#############
-# Revisions #
-#############
+# endregion
+# region Revisions
 
 
 class PageRevision(Revision):
@@ -2342,9 +2335,8 @@ class MessageRevision(Revision):
         return 'text', self.text
 
 
-########
-# Logs #
-########
+# endregion
+# region Logs
 
 
 class Log(_dj_models.Model, NonDeletableMixin):
@@ -2532,3 +2524,6 @@ class IPBlockLog(Log):
     class Meta:
         get_latest_by = 'date'
         ordering = ('date',)
+
+# endregion
+# endregion
