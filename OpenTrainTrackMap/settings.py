@@ -19,7 +19,7 @@ import ottm.settings as ottm_settings
 BASE_DIR = pathlib.Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'ld_%p4gpg+%=5zblnx+u9q-@7(&%8xoknpa=y+l%3cakvvr0%l'
+SECRET_KEY = os.getenv('SECRET_KEY', 'ld_%p4gpg+%=5zblnx+u9q-@7(&%8xoknpa=y+l%3cakvvr0%l')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
