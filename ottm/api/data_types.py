@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import dataclasses as _dc
 import datetime as _dt
+import re
 
 from . import utils as _utils
 
 
-class DateInterval:
+class DateInterval:  # TODO test
     """TimeInterval objects represent time intervals whose bounds may be fuzzy.
     Instances are hashable and orderable.
 
@@ -32,12 +33,15 @@ class DateInterval:
         :param approx_end: Whether the end date is approximate or exact.
         :param is_current: In the case no end date is specified, whether the interval is still ongoing currently.
         """
-        self._start_date = None
+        self._start_date = self._end_date = None
         if start_date:
             self.start_date = start_date.replace(tzinfo=None)
-        self._end_date = None
+        else:
+            self.start_date = None
         if end_date:
             self.end_date = end_date.replace(tzinfo=None)
+        else:
+            self.end_date = None
         self.fuzzy_start_date = approx_start
         self.fuzzy_end_date = approx_end
         # Whether this time interval still exists to this day when no end date is specified.
@@ -50,7 +54,7 @@ class DateInterval:
 
     @fuzzy_start_date.setter
     def fuzzy_start_date(self, fuzzy: bool):
-        if self.start_date is None:
+        if fuzzy and self._start_date is None:
             raise ValueError('"fuzzy_start_date" attribute cannot be true while a start date is undefined')
         self._fuzzy_start_date = fuzzy
 
@@ -61,7 +65,7 @@ class DateInterval:
 
     @fuzzy_end_date.setter
     def fuzzy_end_date(self, fuzzy: bool):
-        if self.end_date is None:
+        if fuzzy and self._end_date is None:
             raise ValueError('"fuzzy_end_date" attribute cannot be true while an end date is undefined')
         self._fuzzy_end_date = fuzzy
 
@@ -72,8 +76,10 @@ class DateInterval:
 
     @start_date.setter
     def start_date(self, start_date: _dt.datetime | None):
-        if start_date and self.end_date and self.end_date < start_date:
+        if start_date and self._end_date and self._end_date < start_date:
             raise ValueError('start date after end date')
+        if start_date is None and self._end_date is None:
+            raise ValueError('start and end date cannot both be None')
         self._start_date = start_date
         if self._start_date:
             self._start_date = self._start_date.replace(tzinfo=None)
@@ -85,12 +91,14 @@ class DateInterval:
 
     @end_date.setter
     def end_date(self, end_date: _dt.datetime | None):
-        if end_date and self.start_date and end_date < self.start_date:
+        if end_date and self._start_date and end_date < self._start_date:
             raise ValueError('end date before start date')
+        if self._start_date is None and end_date is None:
+            raise ValueError('start and end date cannot both be None')
         self._end_date = end_date
         if self._end_date:
             self._end_date = self._end_date.replace(tzinfo=None)
-            self.is_current = False
+            self._is_current = False
 
     @property
     def is_current(self) -> bool:
@@ -100,7 +108,7 @@ class DateInterval:
     @is_current.setter
     def is_current(self, is_current: bool):
         if is_current:
-            if self.end_date:
+            if self._end_date:
                 raise ValueError('"is_current" attribute cannot be true while an end date is defined')
         self._is_current = is_current
 
@@ -129,14 +137,22 @@ class DateInterval:
         )
 
     def __lt__(self, other: DateInterval) -> bool:
+        return self.end_date is not None and other.start_date is not None and self.end_date < other.start_date
+
+    def __le__(self, other: DateInterval) -> bool:
         return self.end_date is not None and other.start_date is not None and self.end_date <= other.start_date
 
     precedes = __lt__
+    precedes_and_meets = __le__
 
     def __gt__(self, other: DateInterval) -> bool:
+        return self.start_date is not None and other.end_date is not None and self.start_date > other.end_date
+
+    def __ge__(self, other: DateInterval) -> bool:
         return self.start_date is not None and other.end_date is not None and self.start_date >= other.end_date
 
     follows = __gt__
+    follows_and_meets = __ge__
 
     def __eq__(self, other: DateInterval):
         return (self.fuzzy_start_date == other.fuzzy_start_date
@@ -156,7 +172,7 @@ class DateInterval:
         end = _utils.now() if self.is_current else self.end_date
         return (self.start_date - end) if self.start_date and end else None
 
-    def __str__(self):
+    def __repr__(self):
         start = self.start_date.isoformat(sep=' ') if self.start_date else '?'
         if self.start_date and self.fuzzy_start_date:
             start = '~' + start
@@ -167,6 +183,21 @@ class DateInterval:
             if self.end_date and self.fuzzy_end_date and not self.is_current:
                 end = '~' + end
         return f'[{start}, {end}]'
+
+    @classmethod
+    def from_string(cls, s: str) -> DateInterval:
+        m = re.fullmatch(r'\[((~?)(\d{4}(?:-\d{2}){2})|\?),\s*((~?)(\d{4}(?:-\d{2}){2})|\?)]', s)
+        if not m:
+            raise ValueError('cannot parse string')
+        start_approx, start_date = cls._extract_datetime(m, 0)
+        end_approx, end_date = cls._extract_datetime(m, 3)
+        return DateInterval(start_date, start_approx, end_date, end_approx)
+
+    @staticmethod
+    def _extract_datetime(m: re.Match, offset: int) -> tuple[bool, _dt.datetime | None]:
+        if m.group(1 + offset) == '?':
+            return False, None
+        return m.group(2 + offset) == '~', _dt.datetime.strptime(m.group(3 + offset), '%y-%m-%d %H:%M:%S')
 
 
 @_dc.dataclass(frozen=True)
