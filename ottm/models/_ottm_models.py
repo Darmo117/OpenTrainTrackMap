@@ -122,10 +122,6 @@ class OperatorTypeTranslations(Translation):
     translated_object = _dj_models.ForeignKey(OperatorType, _dj_models.CASCADE, related_name='translations')
 
 
-class SiteType(Enumeration):
-    pass
-
-
 class TrackUseType(Enumeration):
     pass
 
@@ -199,7 +195,7 @@ class TemporalObject(Serializable):
     comment = _dj_models.TextField(null=True, blank=True)
 
 
-class Infrastructure(TemporalObject):
+class Network(TemporalObject):
     pass
 
 
@@ -207,16 +203,20 @@ class Operator(TemporalObject):
     pass
 
 
-class OperatedEntity(TemporalObject):
-    opened_by = _dj_models.ManyToManyField(Operator, related_name='opened_entities')
+class Relation(TemporalObject):
+    networks = _dj_models.ManyToManyField(Network, related_name='relations')
 
 
-class Site(OperatedEntity):
+class Site(Relation):
     pass
 
 
-class Line(OperatedEntity):
-    sites = _dj_models.ManyToManyField(Site, related_name='lines')
+class TrainRoute(Relation):
+    pass
+
+
+class Infrastructure(Relation):
+    pass
 
 
 class Geometry(TemporalObject):
@@ -247,7 +247,7 @@ class Gate(Polyline):
 
 
 class TrackSection(Polyline):
-    lines = _dj_models.ManyToManyField(Line, related_name='track_sections')
+    pass
 
 
 class VALTrackSection(TrackSection):
@@ -345,7 +345,6 @@ class Area(Polygon):
 
 
 class Construction(Polygon):
-    infrastructures = _dj_models.ManyToManyField(Infrastructure, related_name='constructions')
     materials = _dj_models.ManyToManyField(ConstructionMaterial, related_name='constructions')
 
 
@@ -503,37 +502,27 @@ class OperatorTypeState(TemporalState):
 
 
 class OperatorState(TemporalState):
-    operated_entity = _dj_models.ForeignKey(OperatedEntity, _dj_models.CASCADE, related_name='operated_entity_states')
-    operator = _dj_models.ForeignKey(Operator, _dj_models.PROTECT, related_name='operated_entity_states')
+    relation = _dj_models.ForeignKey(Relation, _dj_models.CASCADE, related_name='operator_states')
+    operator = _dj_models.ForeignKey(Operator, _dj_models.PROTECT, related_name='operator_states')
+    entity_id_number = _dj_models.CharField(max_length=50, blank=True, null=True)
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
         if 'operator' not in exclude and self.operator.id:
             if self._overlaps_with(operator=self.operator):
                 raise _dj_exc.ValidationError(
-                    f'overlapping operator {self.operator} for operated entity {self.operated_entity}')
-
-
-class SiteTypeState(TemporalState):
-    site = _dj_models.ForeignKey(Site, _dj_models.CASCADE, related_name='type_states')
-    type = _dj_models.ForeignKey(SiteType, _dj_models.PROTECT, related_name='type_states')
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if 'type' not in exclude and self.type.id:
-            if self._overlaps_with(site_type=self.type):
-                raise _dj_exc.ValidationError(f'overlapping site type {self.type} for site {self.site}')
+                    f'overlapping operator {self.operator} for operated entity {self.relation}')
 
 
 class GeometryState(TemporalState):
-    site = _dj_models.ForeignKey(Site, _dj_models.CASCADE, related_name='geometry_states')
+    relation = _dj_models.ForeignKey(Relation, _dj_models.CASCADE, related_name='geometry_states')
     geometry = _dj_models.ForeignKey(Geometry, _dj_models.CASCADE, related_name='geometry_states')
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
         if 'geometry' not in exclude and self.geometry.id:
             if self._overlaps_with(geometry=self.geometry):
-                raise _dj_exc.ValidationError(f'overlapping geometry {self.geometry} for site {self.site}')
+                raise _dj_exc.ValidationError(f'overlapping geometry {self.geometry} for entity {self.relation}')
 
 
 class TrackMainDirectionState(TemporalState):
