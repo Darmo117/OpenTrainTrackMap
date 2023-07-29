@@ -1,69 +1,25 @@
 from __future__ import annotations
 
-import json as _json
+import base64 as _b64
+import struct as _struct
 
 import django.core.exceptions as _dj_exc
 import django.db.models as _dj_models
 
+from . import _i18n_models
 from .. import model_fields as _mf
-from ..api import constants as _cons, data_types as _dt
-
-
-class Serializable(_dj_models.Model):
-    @classmethod
-    def deserialize_full(cls, json_object: dict) -> Serializable:
-        kwargs = {}
-        many2many_args = {}
-        for k, v in json_object.items():
-            if isinstance(v, list):
-                many2many_args[k] = v
-            else:
-                kwargs[k] = v
-        o = cls(**kwargs)
-        for k, v in many2many_args.items():
-            for value in v:
-                class_ = globals()[value['class']]
-                if not issubclass(class_, Serializable):
-                    raise TypeError(f'expected Serializable subclass, got {class_}')
-                getattr(o, k).add(class_.deserialize_reference(value['id']))
-        return o
-
-    def serialize_full(self) -> dict:
-        data = {}
-        for k, v in self.__dict__.items():
-            if isinstance(v, Serializable):
-                data[k] = v.serialize_reference()
-            elif isinstance(v, _dj_models.Manager):
-                data[k] = [o.serialize_reference() for o in v.all()]
-            else:
-                data[k] = v
-        return data
-
-    @classmethod
-    def deserialize_reference(cls, id_: int) -> Serializable:
-        # noinspection PyUnresolvedReferences
-        return cls.objects.get(id=id_)
-
-    def serialize_reference(self) -> dict:
-        # noinspection PyUnresolvedReferences
-        return {
-            'class': self.__class__.__name__,
-            'id': self.id,
-        }
-
-    class Meta:
-        abstract = True
+from ..api import data_types as _dt
 
 
 # region Validators
 
 
-def positive_validator(v):
+def positive_validator(v: float | int):
     if v < 0:
         raise _dj_exc.ValidationError(f'negative value: {v}')
 
 
-def degrees_angle_validator(v):
+def degrees_angle_validator(v: float | int):
     if not (0 <= v <= 360):
         raise _dj_exc.ValidationError(f'invalid degrees angle value: {v}')
 
@@ -71,12 +27,13 @@ def degrees_angle_validator(v):
 # endregion
 # region Translations
 
-class Translated(Serializable):
+class Translated(_dj_models.Model):
     # The 'translations' attribute should be defined by Translation subclasses as the relation’s 'related_name'
 
     def get_translations(self) -> dict[str, str]:
+        # self.translations defined in subclasses of Translation as related_name
         # noinspection PyUnresolvedReferences
-        return {t.lang_code: t.label for t in self.translations.all()}
+        return {t.language: t.label for t in self.translations.all()}
 
     def get_translation(self, lang_code: str) -> str | None:
         try:
@@ -89,14 +46,14 @@ class Translated(Serializable):
         abstract = True
 
 
-class Translation(Serializable):
+class Translation(_dj_models.Model):
     translated_object: Translated  # Defined in subclasses
-    lang_code = _dj_models.CharField(max_length=10)
+    language = _dj_models.ForeignKey(_i18n_models.Language, _dj_models.CASCADE)
     label = _dj_models.CharField(max_length=100)
 
     class Meta:
         abstract = True
-        unique_together = ('lang_code', 'label')
+        unique_together = ('language', 'label')
 
 
 # endregion
@@ -114,56 +71,105 @@ class ConstructionMaterial(Enumeration):
     pass
 
 
-class OperatorType(Enumeration):
+class ConstructionMaterialTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(ConstructionMaterial, _dj_models.CASCADE, related_name='translations')
+
+
+class TrackInfrastructureUseType(Enumeration):
     pass
 
 
-class OperatorTypeTranslations(Translation):
-    translated_object = _dj_models.ForeignKey(OperatorType, _dj_models.CASCADE, related_name='translations')
+class TrackInfrastructureUseTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TrackInfrastructureUseType, _dj_models.CASCADE,
+                                              related_name='translations')
 
 
-class TrackUseType(Enumeration):
+class BridgeStructure(Enumeration):
     pass
 
 
-class CrossingType(Enumeration):
-    pass
-
-
-class ElectrificationSystem(Enumeration):
-    pass
-
-
-class CurrentType(Enumeration):
-    pass
-
-
-class TractionType(Enumeration):
-    pass
-
-
-class RailType(Enumeration):
-    pass
-
-
-class TieType(Enumeration):
-    pass
-
-
-class BuildingUseType(Enumeration):
-    pass
+class BridgeStructureTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(BridgeStructure, _dj_models.CASCADE, related_name='translations')
 
 
 class BuildingType(Enumeration):
     pass
 
 
-class BridgeSectionStructure(Enumeration):
+class BuildingTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(BuildingType, _dj_models.CASCADE, related_name='translations')
+
+
+class BuildingUseType(Enumeration):
     pass
 
 
-class TrackInfrastructureUseType(Enumeration):
+class BuildingUseTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(BuildingUseType, _dj_models.CASCADE, related_name='translations')
+
+
+class TrackUseType(Enumeration):
     pass
+
+
+class TrackUseTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TrackUseType, _dj_models.CASCADE, related_name='translations')
+
+
+class CrossingType(Enumeration):
+    pass
+
+
+class CrossingTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(CrossingType, _dj_models.CASCADE, related_name='translations')
+
+
+class ElectrificationSystem(Enumeration):
+    pass
+
+
+class ElectrificationSystemTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(ElectrificationSystem, _dj_models.CASCADE, related_name='translations')
+
+
+class CurrentType(Enumeration):
+    pass
+
+
+class CurrentTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(CurrentType, _dj_models.CASCADE, related_name='translations')
+
+
+class TractionType(Enumeration):
+    pass
+
+
+class TractionTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TractionType, _dj_models.CASCADE, related_name='translations')
+
+
+class RailType(Enumeration):
+    pass
+
+
+class RailTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(RailType, _dj_models.CASCADE, related_name='translations')
+
+
+class TieType(Enumeration):
+    pass
+
+
+class TieTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TieType, _dj_models.CASCADE, related_name='translations')
+
+
+class OperatorType(Enumeration):
+    pass
+
+
+class OperatorTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(OperatorType, _dj_models.CASCADE, related_name='translations')
 
 
 # endregion
@@ -172,7 +178,6 @@ class TrackInfrastructureUseType(Enumeration):
 
 class Unit(Translated):
     symbol = _dj_models.CharField(max_length=10, unique=True)
-    to_base_unit_coef = _dj_models.FloatField()
 
 
 class UnitTranslation(Translation):
@@ -187,7 +192,7 @@ class SpeedUnit(Unit):
     pass
 
 
-class TemporalObject(Serializable):
+class TemporalObject(_dj_models.Model):
     existence_interval = _mf.DateIntervalField()
     label = _dj_models.CharField(max_length=200, unique=True)
     qid = _dj_models.CharField(max_length=10, null=True, blank=True)  # QID on Wikidata
@@ -223,7 +228,8 @@ class Geometry(TemporalObject):
     pass
 
 
-class Note(Serializable):
+class Note(_dj_models.Model):
+    author = _dj_models.ForeignKey('CustomUser', on_delete=_dj_models.PROTECT, related_name='edit_groups')
     text = _dj_models.TextField()
     geometries = _dj_models.ManyToManyField(Geometry, related_name='notes')
 
@@ -235,7 +241,16 @@ class Node(Geometry):
 
 
 class Polyline(Geometry):
-    nodes = _dj_models.ManyToManyField(Node, related_name='polylines')
+    nodes = _dj_models.ManyToManyField(Node, related_name='polylines', through='PolylineNodes')
+
+
+class PolylineNodes(_dj_models.Model):
+    node = _dj_models.ForeignKey(Node, _dj_models.CASCADE)
+    polyline = _dj_models.ForeignKey(Polyline, _dj_models.CASCADE)
+    order = _dj_models.IntegerField()
+
+    class Meta:
+        ordering = ('order',)
 
 
 class WallSection(Polyline):
@@ -328,7 +343,16 @@ class RailFerryRouteSection(ConventionalTrackSection):
 
 
 class Polygon(Geometry):
-    nodes = _dj_models.ManyToManyField(Node, related_name='polygons')
+    nodes = _dj_models.ManyToManyField(Node, related_name='polygons', through='PolygonNodes')
+
+
+class PolygonNodes(_dj_models.Model):
+    node = _dj_models.ForeignKey(Node, _dj_models.CASCADE)
+    polygon = _dj_models.ForeignKey(Polygon, _dj_models.CASCADE)
+    order = _dj_models.IntegerField()
+
+    class Meta:
+        ordering = ('order',)
 
 
 class PolygonHole(Polygon):
@@ -336,8 +360,8 @@ class PolygonHole(Polygon):
 
     def validate_constraints(self, exclude=None):  # TODO keep it depending on Leaflet.js’s rendering abilities
         super().validate_constraints(exclude=exclude)
-        if 'parent' not in exclude and isinstance(self.parent, PolygonHole):
-            raise _dj_exc.ValidationError('PolygonHole’s parent cannot be PolygonHole')
+        if (exclude is None or 'parent' not in exclude) and isinstance(self.parent, PolygonHole):
+            raise _dj_exc.ValidationError('PolygonHole cannot have parents of type PolygonHole')
 
 
 class Area(Polygon):
@@ -406,7 +430,7 @@ class Lift(ManeuverStructure):
 
 
 class BridgeSection(TrackInfrastructure):
-    structure = _dj_models.ForeignKey(BridgeSectionStructure, _dj_models.PROTECT, related_name='bridge_sections')
+    structure = _dj_models.ForeignKey(BridgeStructure, _dj_models.PROTECT, related_name='bridge_sections')
 
 
 class StaticBridgeSection(BridgeSection):
@@ -469,19 +493,25 @@ class Building(Construction):
 # region Temporal states
 
 
-class TemporalState(Serializable):
-    no_overlap = False
+class TemporalState(_dj_models.Model):
     existence_interval = _mf.DateIntervalField()
 
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if 'existence_invertal' not in exclude and self.no_overlap:
-            if self._overlaps_with():
-                raise _dj_exc.ValidationError('overlapping existence intervals')
+    def validate_unique(self, exclude=None):
+        super().validate_unique(exclude=exclude)
+        filters = {k: getattr(self, k) for k in self._get_overlap_filter()}
+        if (
+                filters
+                and (exclude is None or 'existence_invertal' not in exclude and not any(k in exclude for k in filters))
+                and self._overlaps_any(**filters)
+        ):
+            raise _dj_exc.ValidationError(f'overlapping existence intervals for objects: {filters}')
 
-    def _overlaps_with(self, **filters):
+    def _overlaps_any(self, **filters):
         return any(self.existence_interval.overlaps(state.existence_interval)
                    for state in TemporalState.objects.filter(id=~_dj_models.Q(id=self.id), **filters))
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ()
 
     class Meta:
         abstract = True
@@ -491,84 +521,73 @@ class TemporalObjectNameState(TemporalState, Translated):
     object = _dj_models.ForeignKey(TemporalObject, _dj_models.CASCADE, related_name='name_states')
 
 
-class TemporalObjectNameTranslation(Translation):
+class TemporalObjectNameStateTranslation(Translation):
     translated_object = _dj_models.ForeignKey(TemporalObjectNameState, _dj_models.CASCADE, related_name='translations')
 
 
 class OperatorTypeState(TemporalState):
-    no_overlap = True
     operator = _dj_models.ForeignKey(Operator, _dj_models.CASCADE, related_name='type_states')
     type = _dj_models.ForeignKey(OperatorType, _dj_models.PROTECT, related_name='type_states')
 
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('operator',)
+
 
 class OperatorState(TemporalState):
-    relation = _dj_models.ForeignKey(Relation, _dj_models.CASCADE, related_name='operator_states')
     operator = _dj_models.ForeignKey(Operator, _dj_models.PROTECT, related_name='operator_states')
-    entity_id_number = _dj_models.CharField(max_length=50, blank=True, null=True)
+    relation = _dj_models.ForeignKey(Relation, _dj_models.CASCADE, related_name='operator_states')
+    entity_id_number = _dj_models.CharField(max_length=50, blank=True, null=True)  # For train routes only
 
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if 'operator' not in exclude and self.operator.id:
-            if self._overlaps_with(operator=self.operator):
-                raise _dj_exc.ValidationError(
-                    f'overlapping operator {self.operator} for operated entity {self.relation}')
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return 'operator', 'relation'
 
 
-class GeometryState(TemporalState):
+class ContainedGeometryState(TemporalState):
     relation = _dj_models.ForeignKey(Relation, _dj_models.CASCADE, related_name='geometry_states')
     geometry = _dj_models.ForeignKey(Geometry, _dj_models.CASCADE, related_name='geometry_states')
 
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if 'geometry' not in exclude and self.geometry.id:
-            if self._overlaps_with(geometry=self.geometry):
-                raise _dj_exc.ValidationError(f'overlapping geometry {self.geometry} for entity {self.relation}')
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return 'relation', 'geometry'
 
 
 class TrackMainDirectionState(TemporalState):
     class Direction(_dj_models.IntegerChoices):
-        NONE = 0
-        FORWARD = 1
-        BACKWARD = 2
+        FORWARD = 0
+        BACKWARD = 1
 
-    no_overlap = True
     track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='main_direction_states')
-    direction = _dj_models.IntegerField(choices=Direction.choices)
+    reversed = _dj_models.BooleanField()
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('track_section',)
 
 
 class TrackMaximumSpeedState(TemporalState):
-    no_overlap = True
     track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='maximum_speed_states')
     max_speed = _dj_models.FloatField(validators=[positive_validator])
     unit = _dj_models.ForeignKey(SpeedUnit, _dj_models.PROTECT)
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('track_section',)
 
 
 class TrackUseTypeState(TemporalState):
     track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='use_type_states')
     use_type = _dj_models.ForeignKey(TrackUseType, _dj_models.PROTECT, related_name='use_type_states')
 
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if 'use_type' not in exclude and self.use_type.id:
-            if self._overlaps_with(use_type=self.use_type):
-                raise _dj_exc.ValidationError(
-                    f'overlapping track use type {self.use_type} for track section {self.track_section}')
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return 'track_section', 'use_type'
 
 
 class CrossingTypeState(TemporalState):
     track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='crossing_type_states')
     type = _dj_models.ForeignKey(CrossingType, _dj_models.PROTECT, related_name='crossing_type_states')
 
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if 'type' not in exclude and self.type.id:
-            if self._overlaps_with(type=self.type):
-                raise _dj_exc.ValidationError(
-                    f'overlapping crossing type {self.type} for track section {self.track_section}')
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return 'track_section', 'type'
 
 
 class TrackElectrificationState(TemporalState):
-    no_overlap = True
     track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='electrification_states')
     current_type = _dj_models.ForeignKey(CurrentType, _dj_models.PROTECT, related_name='electrification_states',
                                          null=True, blank=True)
@@ -577,93 +596,121 @@ class TrackElectrificationState(TemporalState):
     electrified = _dj_models.BooleanField()
     tension = _dj_models.FloatField(validators=[positive_validator], null=True, blank=True)
 
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('track_section',)
+
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
-        if 'electrified' not in exclude and not self.electrified and (
-                self.tension is not None or self.electrification_system is not None or self.current_type is not None):
+        if (
+                (exclude is None or 'electrified' not in exclude)
+                and not self.electrified
+                and (self.tension is not None
+                     or self.electrification_system is not None
+                     or self.current_type is not None)
+        ):
             raise _dj_exc.ValidationError(
                 'tension, electrification_system and current_type should be None if electrified is False')
 
 
 class TireRollwaysState(TemporalState):
-    no_overlap = True
     track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE,
                                           related_name='tire_rollways_states')
     has_tire_rollways = _dj_models.BooleanField()
 
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('track_section',)
+
 
 class TrackPitState(TemporalState):
-    no_overlap = True
     track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE, related_name='pit_states')
     has_pit = _dj_models.BooleanField()
 
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('track_section',)
+
 
 class TractionTypeState(TemporalState):
-    no_overlap = True
     track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE,
                                           related_name='traction_type_states')
     traction_type = _dj_models.ForeignKey(TractionType, _dj_models.PROTECT, related_name='traction_type_states')
 
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('track_section',)
+
 
 class RailTypeState(TemporalState):
-    no_overlap = True
     track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE, related_name='rail_type_states')
     rail_type = _dj_models.ForeignKey(RailType, _dj_models.PROTECT, related_name='rail_type_states')
 
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('track_section',)
+
 
 class TieTypeState(TemporalState):
-    no_overlap = True
     track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE, related_name='tie_type_states')
     tie_type = _dj_models.ForeignKey(TieType, _dj_models.PROTECT, related_name='tie_type_states')
 
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('track_section',)
+
 
 class RuinState(TemporalState):
-    no_overlap = True
     construction = _dj_models.ForeignKey(Construction, _dj_models.CASCADE, related_name='ruin_states')
     ruined = _dj_models.BooleanField()
 
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('construction',)
+
 
 class ManeuverStructureMovingPartState(TemporalState):
-    no_overlap = True
     maneuver_structure = _dj_models.ForeignKey(ManeuverStructure, _dj_models.CASCADE, related_name='moving_part_states')
     has_moving_part = _dj_models.BooleanField()
 
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('maneuver_structure',)
+
 
 class FloorState(TemporalState):
-    no_overlap = True
     building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='floor_states')
     floors_number = _dj_models.IntegerField(validators=[positive_validator])
-    basement_floors_number = _dj_models.IntegerField(validators=[positive_validator])
+    basements_number = _dj_models.IntegerField(validators=[positive_validator])
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('building',)
 
 
 class BuildingHeightState(TemporalState):
-    no_overlap = True
     building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='height_states')
     height = _dj_models.FloatField(validators=[positive_validator])
+    unit = _dj_models.ForeignKey(LengthUnit, _dj_models.PROTECT)
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('building',)
 
 
 class BuildingTypeState(TemporalState):
-    no_overlap = True
     building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='type_states')
     type = _dj_models.ForeignKey(BuildingType, _dj_models.PROTECT, related_name='type_states')
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('building',)
 
 
 class BuildingUseTypeState(TemporalState):
     building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='use_type_states')
     use_type = _dj_models.ForeignKey(BuildingUseType, _dj_models.PROTECT, related_name='use_type_states')
 
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if 'use_type' not in exclude and self.use_type.id:
-            if self._overlaps_with(use_type=self.use_type):
-                raise _dj_exc.ValidationError(
-                    f'overlapping use type {self.use_type} for building {self.building}')
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return 'building', 'use_type'
 
 
 class LiftHeighState(TemporalState):
-    no_overlap = True
     lift = _dj_models.ForeignKey(Lift, _dj_models.CASCADE, related_name='height_states')
     height = _dj_models.FloatField(validators=[positive_validator])
+    unit = _dj_models.ForeignKey(LengthUnit, _dj_models.PROTECT)
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('lift',)
 
 
 class TrackInfrastructureUseTypeState(TemporalState):
@@ -671,12 +718,8 @@ class TrackInfrastructureUseTypeState(TemporalState):
                                                  related_name='use_type_states')
     use_type = _dj_models.ForeignKey(TrackInfrastructureUseType, _dj_models.PROTECT, related_name='use_type_states')
 
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude=exclude)
-        if 'use_type' not in exclude and self.use_type.id:
-            if self._overlaps_with(use_type=self.use_type):
-                raise _dj_exc.ValidationError(
-                    f'overlapping use type {self.use_type} for track infrastructure {self.track_infrastructure}')
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return 'track_infrastructure', 'use_type'
 
 
 # endregion
@@ -703,110 +746,104 @@ class EditGroup(_dj_models.Model):
 
 
 class Edit(_dj_models.Model):
-    edit_group = _dj_models.ForeignKey(EditGroup, on_delete=_dj_models.CASCADE)
+    edit_group = _dj_models.ForeignKey(EditGroup, on_delete=_dj_models.CASCADE, related_name='edits')
     object_id = _dj_models.IntegerField(validators=[positive_validator])
     object_type = _dj_models.CharField(max_length=50)
 
     class Meta:
         abstract = True
 
-
-class ObjectEdit(Edit):
-    operation = _dj_models.CharField(max_length=10, choices=tuple((v, v) for v in _cons.OBJECT_EDIT_ACTIONS))
-    # JSON serialization of deleted object, null for creation
-    deleted_data = _dj_models.JSONField(null=True, blank=True)
-
-    @property
-    def deleted_object(self) -> Serializable | None:
-        if self.deleted_data is None:
+    def get_object(self) -> _dj_models.Model | None:
+        try:
+            return globals()[self.object_type].objects.get(id=self.object_id)
+        except _dj_exc.ObjectDoesNotExist:
             return None
-        # noinspection PyTypeChecker
-        data = _json.loads(self.deleted_data)
-        class_ = globals()[data['class']]
-        if not issubclass(class_, Serializable):
-            raise TypeError(f'expected Serializable subclass, got {class_}')
-        return class_.deserialize_full(data['data'])
-
-    @deleted_object.setter
-    def deleted_object(self, o: Serializable | None):
-        if o is None:
-            self.deleted_data = None
-        else:
-            if not isinstance(o, Serializable):
-                raise TypeError(f'expected Serializable object, got {o.__class__}')
-            self.deleted_data = _json.dumps({'class': o.__class__.__name__, 'data': o.serialize_full()})
 
 
-class RelationEdit(Edit):
-    operation = _dj_models.CharField(max_length=10, choices=tuple((v, v) for v in _cons.RELATION_EDIT_ACTIONS))
-    relation_name = _dj_models.CharField(max_length=100)
-
-    class Meta:
-        abstract = True
+class ObjectAdded(Edit):
+    pass
 
 
-class ObjectRelationEdit(RelationEdit):
-    serialized_target_object = _dj_models.JSONField(null=True, blank=True)
+class ObjectDeleted(Edit):
+    pass
 
-    @property
-    def target_object(self) -> Serializable | None:
-        if self.serialized_target_object is None:
+
+class ObjectPropertyEdit(Edit):
+    property_name = _dj_models.CharField(max_length=50)
+    old_value = _dj_models.TextField(blank=True, null=True)
+    new_value = _dj_models.TextField(blank=True, null=True)
+
+    def get_old_value(self):
+        return self._deserialize_value(self.old_value)
+
+    def set_old_value(self, v):
+        self.old_value = self._serialize_value(v)
+
+    def get_new_value(self):
+        return self._deserialize_value(self.new_value)
+
+    def set_new_value(self, v):
+        self.new_value = self._serialize_value(v)
+
+    @classmethod
+    def _serialize_value(cls, v) -> str | None:
+        match v:
+            case None:
+                return None
+            case int(v):
+                return 'int:' + cls._to_base_64(v, 'q')
+            case float(v):
+                return 'float:' + cls._to_base_64(v, 'd')
+            case bool(v):
+                return 'bool:' + ('1' if v else '0')
+            case str(v):
+                return 'str:' + v
+            case v if isinstance(v, _dt.DateInterval):
+                return 'DateInterval:' + _mf.DateIntervalField.to_string(v)
+            case v if isinstance(v, _dj_models.Model):
+                return f'Model:{type(v)}:{v.id}'
+            case v:
+                raise TypeError(f'unsupported type: {type(v)}')
+
+    @staticmethod
+    def _to_base_64(v, f: str) -> str:
+        b = _struct.pack(f'>{f}', v)
+        return _b64.b64encode(b).decode('ascii')
+
+    @classmethod
+    def _deserialize_value(cls, s: str | None):
+        if s is None:
             return None
-        return self._deserialize_object(self.serialized_target_object)
-
-    @target_object.setter
-    def target_object(self, o: Serializable | None):
-        if o is None:
-            self.serialized_target_object = None
-        else:
-            self.serialized_target_object = self._serialize_object(o)
-
-    @staticmethod
-    def _deserialize_object(json_string: str) -> Serializable:
-        data = _json.loads(json_string)
-        class_ = globals()[data['class']]
-        if not issubclass(class_, Serializable):
-            raise TypeError(f'expected Serializable subclass, got {class_}')
-        return class_.deserialize_reference(data['id'])
-
-    @staticmethod
-    def _serialize_object(o: Serializable) -> str:
-        if not isinstance(o, Serializable):
-            raise TypeError(f'expected Serializable object, got {o.__class__}')
-        return _json.dumps(o.serialize_reference())
-
-
-class ObjectPropertyEdit(RelationEdit):
-    serialized_value = _dj_models.JSONField(null=True, blank=True)
-
-    @property
-    def value(self):
-        return self._deserialize_value(self.serialized_value)
-
-    @value.setter
-    def value(self, value):
-        self.serialized_value = self._serialize_value(value)
+        type_name, serialized_value = s.split(':', maxsplit=1)
+        match type_name:
+            case 'int':
+                return cls._from_base64(serialized_value, 'q')
+            case 'float':
+                return cls._from_base64(serialized_value, 'd')
+            case 'bool':
+                return bool(int(serialized_value))
+            case 'str':
+                return serialized_value
+            case 'DateInterval':
+                return _mf.DateIntervalField.parse(serialized_value)
+            case 'Model':
+                t, v = serialized_value.split(':', maxsplit=1)
+                try:
+                    return globals()[t].objects.get(id=int(v))
+                except _dj_exc.ObjectDoesNotExist:
+                    return None  # TODO raise error instead?
+            case t:
+                raise TypeError(f'unsupported type: {t}')
 
     @staticmethod
-    def _deserialize_value(json_string: str):
-        data = _json.loads(json_string)
-        type_ = data['type']
-        value = data.get('value')
-        if type_ in ('int', 'float', 'str', 'bool', None):
-            return value
-        if type_ == _dt.DateInterval.__name__:
-            return _dt.DateInterval.from_string(value)
-        raise TypeError(f'cannot deserialize type {type_}')
+    def _from_base64(s: str, f: str):
+        b = _b64.b64decode(s.encode('ascii'))
+        return _struct.unpack(f'>{f}', b)[0]
 
-    @staticmethod
-    def _serialize_value(v) -> str:
-        if v is None:
-            return _json.dumps({'type': None})
-        if isinstance(v, int | float | str | bool):
-            return _json.dumps({'type': v.__class__.__name__, 'value': v})
-        if isinstance(v, _dt.DateInterval):
-            return _json.dumps({'type': v.__class__.__name__, 'value': str(v)})
-        # noinspection PyUnresolvedReferences
-        raise TypeError(f'cannot serialize type {v.__class__.__name__}')
+
+class ObjectTranslationEdit(Edit):
+    old_label = _dj_models.TextField(blank=True, null=True)
+    new_label = _dj_models.TextField(blank=True, null=True)
+    language = _dj_models.ForeignKey(_i18n_models.Language, _dj_models.CASCADE)
 
 # endregion

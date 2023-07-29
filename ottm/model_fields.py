@@ -28,23 +28,27 @@ class DateIntervalField(_dj_models.Field):
     def from_db_value(self, value: str | None, _expression, _connection) -> _dt.DateInterval | None:
         if value is None:
             return None
-        return self._parse(value)
+        return self.parse(value)
 
     def to_python(self, value: _dt.DateInterval | str | None) -> _dt.DateInterval | None:
         if value is None or isinstance(value, _dt.DateInterval):
             return value
-        return self._parse(value)
+        return self.parse(value)
 
     def get_prep_value(self, value: _dt.DateInterval | None) -> str | None:
         if value is None:
             return None
+        return self.to_string(value)
+
+    @staticmethod
+    def to_string(value: _dt.DateInterval) -> str:
         start_date = value.start_date.isoformat()
         end_date = value.end_date.isoformat()
         return (f'{start_date};{int(value.fuzzy_start_date)};{end_date};'
                 f'{int(value.fuzzy_end_date)};{int(value.is_current)}')
 
     @staticmethod
-    def _parse(s: str) -> _dt.DateInterval:
+    def parse(s: str) -> _dt.DateInterval:
         parts = s.split(';')
         if len(parts) != 5:
             raise _dj_exc.ValidationError('invalid date interval data', code='date_interval_field_validation_error')
