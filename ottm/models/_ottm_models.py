@@ -30,15 +30,15 @@ def degrees_angle_validator(v: float | int):
 class Translated(_dj_models.Model):
     # The 'translations' attribute should be defined by Translation subclasses as the relation’s 'related_name'
 
-    def get_translations(self) -> dict[str, str]:
+    def get_translations(self) -> dict[_i18n_models.Language, str]:
         # self.translations defined in subclasses of Translation as related_name
         # noinspection PyUnresolvedReferences
         return {t.language: t.label for t in self.translations.all()}
 
-    def get_translation(self, lang_code: str) -> str | None:
+    def get_translation(self, language: _i18n_models.Language) -> str | None:
         try:
             # noinspection PyUnresolvedReferences
-            return self.translations.get(lang_code=lang_code)
+            return self.translations.get(language=language)
         except _dj_exc.ObjectDoesNotExist:
             return None
 
@@ -53,7 +53,7 @@ class Translation(_dj_models.Model):
 
     class Meta:
         abstract = True
-        unique_together = ('language', 'label')
+        unique_together = ('translated_object', 'language', 'label')
 
 
 # endregion
@@ -527,7 +527,7 @@ class TemporalObjectNameStateTranslation(Translation):
 
 class OperatorTypeState(TemporalState):
     operator = _dj_models.ForeignKey(Operator, _dj_models.CASCADE, related_name='type_states')
-    type = _dj_models.ForeignKey(OperatorType, _dj_models.PROTECT, related_name='type_states')
+    type = _dj_models.ForeignKey(OperatorType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return ('operator',)
@@ -573,7 +573,7 @@ class TrackMaximumSpeedState(TemporalState):
 
 class TrackUseTypeState(TemporalState):
     track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='use_type_states')
-    use_type = _dj_models.ForeignKey(TrackUseType, _dj_models.PROTECT, related_name='use_type_states')
+    use_type = _dj_models.ForeignKey(TrackUseType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return 'track_section', 'use_type'
@@ -581,7 +581,7 @@ class TrackUseTypeState(TemporalState):
 
 class CrossingTypeState(TemporalState):
     track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='crossing_type_states')
-    type = _dj_models.ForeignKey(CrossingType, _dj_models.PROTECT, related_name='crossing_type_states')
+    type = _dj_models.ForeignKey(CrossingType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return 'track_section', 'type'
@@ -589,10 +589,9 @@ class CrossingTypeState(TemporalState):
 
 class TrackElectrificationState(TemporalState):
     track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='electrification_states')
-    current_type = _dj_models.ForeignKey(CurrentType, _dj_models.PROTECT, related_name='electrification_states',
-                                         null=True, blank=True)
-    electrification_system = _dj_models.ForeignKey(ElectrificationSystem, _dj_models.PROTECT,
-                                                   related_name='electrification_states', null=True, blank=True)
+    current_type = _dj_models.ForeignKey(CurrentType, _dj_models.PROTECT, related_name='states', null=True, blank=True)
+    electrification_system = _dj_models.ForeignKey(ElectrificationSystem, _dj_models.PROTECT, related_name='states',
+                                                   null=True, blank=True)
     electrified = _dj_models.BooleanField()
     tension = _dj_models.FloatField(validators=[positive_validator], null=True, blank=True)
 
@@ -632,7 +631,7 @@ class TrackPitState(TemporalState):
 class TractionTypeState(TemporalState):
     track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE,
                                           related_name='traction_type_states')
-    traction_type = _dj_models.ForeignKey(TractionType, _dj_models.PROTECT, related_name='traction_type_states')
+    traction_type = _dj_models.ForeignKey(TractionType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return ('track_section',)
@@ -640,7 +639,7 @@ class TractionTypeState(TemporalState):
 
 class RailTypeState(TemporalState):
     track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE, related_name='rail_type_states')
-    rail_type = _dj_models.ForeignKey(RailType, _dj_models.PROTECT, related_name='rail_type_states')
+    rail_type = _dj_models.ForeignKey(RailType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return ('track_section',)
@@ -648,7 +647,7 @@ class RailTypeState(TemporalState):
 
 class TieTypeState(TemporalState):
     track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE, related_name='tie_type_states')
-    tie_type = _dj_models.ForeignKey(TieType, _dj_models.PROTECT, related_name='tie_type_states')
+    tie_type = _dj_models.ForeignKey(TieType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return ('track_section',)
@@ -663,11 +662,11 @@ class RuinState(TemporalState):
 
 
 class ManeuverStructureMovingPartState(TemporalState):
-    maneuver_structure = _dj_models.ForeignKey(ManeuverStructure, _dj_models.CASCADE, related_name='moving_part_states')
+    structure = _dj_models.ForeignKey(ManeuverStructure, _dj_models.CASCADE, related_name='moving_part_states')
     has_moving_part = _dj_models.BooleanField()
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('maneuver_structure',)
+        return ('structure',)
 
 
 class FloorState(TemporalState):
@@ -690,7 +689,7 @@ class BuildingHeightState(TemporalState):
 
 class BuildingTypeState(TemporalState):
     building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='type_states')
-    type = _dj_models.ForeignKey(BuildingType, _dj_models.PROTECT, related_name='type_states')
+    type = _dj_models.ForeignKey(BuildingType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return ('building',)
@@ -698,7 +697,7 @@ class BuildingTypeState(TemporalState):
 
 class BuildingUseTypeState(TemporalState):
     building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='use_type_states')
-    use_type = _dj_models.ForeignKey(BuildingUseType, _dj_models.PROTECT, related_name='use_type_states')
+    use_type = _dj_models.ForeignKey(BuildingUseType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return 'building', 'use_type'
@@ -714,12 +713,11 @@ class LiftHeighState(TemporalState):
 
 
 class TrackInfrastructureUseTypeState(TemporalState):
-    track_infrastructure = _dj_models.ForeignKey(TrackInfrastructure, _dj_models.CASCADE,
-                                                 related_name='use_type_states')
-    use_type = _dj_models.ForeignKey(TrackInfrastructureUseType, _dj_models.PROTECT, related_name='use_type_states')
+    infrastructure = _dj_models.ForeignKey(TrackInfrastructure, _dj_models.CASCADE, related_name='use_type_states')
+    use_type = _dj_models.ForeignKey(TrackInfrastructureUseType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return 'track_infrastructure', 'use_type'
+        return 'infrastructure', 'use_type'
 
 
 # endregion
@@ -749,9 +747,6 @@ class Edit(_dj_models.Model):
     edit_group = _dj_models.ForeignKey(EditGroup, on_delete=_dj_models.CASCADE, related_name='edits')
     object_id = _dj_models.IntegerField(validators=[positive_validator])
     object_type = _dj_models.CharField(max_length=50)
-
-    class Meta:
-        abstract = True
 
     def get_object(self) -> _dj_models.Model | None:
         try:
