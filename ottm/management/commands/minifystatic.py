@@ -32,17 +32,17 @@ class Command(dj_mngmt.BaseCommand):
 
     def _minify(self):
         self.stdout.write('Minifying static files…')
-        nb = self._map('*.js', lambda f: self._minify_(rjsmin.jsmin, 'js', f))
+        nb = self._map('*.js', lambda f: self._minify_(rjsmin.jsmin, f))
         self.stdout.write(f'Minified {nb} JS file(s).')
-        nb = self._map('*.css', lambda f: self._minify_(cssmin.cssmin, 'css', f))
+        nb = self._map('*.css', lambda f: self._minify_(cssmin.cssmin, f))
         self.stdout.write(f'Minified {nb} CSS file(s).')
 
     @staticmethod
-    def _minify_(minifier: typ.Callable[[str], str], ext: str, f: pathlib.Path):
+    def _minify_(minifier: typ.Callable[[str], str], f: pathlib.Path):
         with f.open(encoding='utf-8') as fp:
             content = fp.read()
         minified = minifier(content)
-        fname = '{0}.min.{1}'.format(f.name.rsplit('.', maxsplit=1)[0], ext)
+        fname = '{0}.min.{1}'.format(*f.name.rsplit('.', maxsplit=1))
         with (f.parent / fname).open(mode='w', encoding='utf-8') as fp:
             fp.write(minified)
 
