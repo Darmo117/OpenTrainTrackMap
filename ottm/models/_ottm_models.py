@@ -229,7 +229,7 @@ class Geometry(TemporalObject):
 
 
 class Note(_dj_models.Model):
-    author = _dj_models.ForeignKey('CustomUser', on_delete=_dj_models.PROTECT, related_name='edit_groups')
+    author = _dj_models.ForeignKey('CustomUser', on_delete=_dj_models.PROTECT, related_name='notes')
     text = _dj_models.TextField()
     geometries = _dj_models.ManyToManyField(Geometry, related_name='notes')
 
