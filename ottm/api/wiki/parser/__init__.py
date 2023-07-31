@@ -191,13 +191,14 @@ class Parser:
         categories = []
         size_before = len(wikicode.encode('utf-8'))
 
-        parsed = self._parse_template_tags(wikicode)
-        parsed = self._sanitize_html_tags(parsed)
-        parsed = self._transclude(parsed)
-        parsed = self._extract_custom_tags(parsed)
-        parsed = self._parse(parsed)
-        parsed = self._substitute_custom_tags_placeholders(parsed)
-        parsed = self._substitute_nowiki_placeholders(parsed)
+        # parsed = self._parse_template_tags(wikicode)
+        # parsed = self._sanitize_html_tags(parsed)
+        # parsed = self._transclude(parsed)
+        # parsed = self._extract_custom_tags(parsed)
+        # parsed = self._parse(parsed)
+        # parsed = self._substitute_custom_tags_placeholders(parsed)
+        # parsed = self._substitute_nowiki_placeholders(parsed)
+        parsed = wikicode  # FIXME disabled because of infinite loop
 
         self._metadata = ParsingMetadata(
             links=links,
