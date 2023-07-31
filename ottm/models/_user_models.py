@@ -12,7 +12,7 @@ import pytz as _pytz
 
 from . import _i18n_models as _i18n_m, _ottm_models as _ottm_m
 from .. import model_fields, settings as _settings
-from ..api import constants as _cons, data_types as _data_types, groups as _groups, permissions as _perms, \
+from ..api import data_types as _data_types, groups as _groups, permissions as _perms, \
     timezones as _tz, utils as _utils
 from ..api.wiki import constants as _w_cons, namespaces as _w_ns, notifications as _notif, search_engine as _se
 
@@ -951,9 +951,8 @@ class User:
         """Return the total number of notes created by this user."""
         if not self.exists:
             return 0
-        return (_ottm_m.ObjectEdit.objects
-                .filter(edit_group__author=self._user, operation=_cons.OBJECT_CREATED,
-                        object_type=_ottm_m.Note.__name__)
+        return (_ottm_m.ObjectAdded.objects
+                .filter(edit_group__author=self._user, object_type=_ottm_m.Note.__name__)
                 .count())
 
     def edits_count(self) -> int:
