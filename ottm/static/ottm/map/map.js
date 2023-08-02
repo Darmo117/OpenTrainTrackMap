@@ -121,7 +121,8 @@
         maxZoom: 19,
       });
       const googleSatelliteTiles = L.tileLayer('http://www.google.com/maps/vt?lyrs=s@189&x={x}&y={y}&z={z}', { // lyrs=s@189 -> satellite images
-        attribution: 'Tiles © Google'
+        attribution: 'Tiles © Google',
+        maxZoom: 18,
       });
 
       if (editable) {
