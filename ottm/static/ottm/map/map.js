@@ -107,7 +107,7 @@
       const osmGrayscaleTiles = L.tileLayer.grayscale("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         maxZoom: 19,
-      }).addTo(map); // Select layer by default
+      });
       const osmColoredTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         maxZoom: 19,
@@ -123,6 +123,12 @@
       const googleSatelliteTiles = L.tileLayer('http://www.google.com/maps/vt?lyrs=s@189&x={x}&y={y}&z={z}', { // lyrs=s@189 -> satellite images
         attribution: 'Tiles © Google'
       });
+
+      if (editable) {
+        maptilerSatelliteTiles.addTo(map);
+      } else {
+        osmGrayscaleTiles.addTo(map);
+      }
 
       this.#baseLayers = {
         [ottm.translations.get("map.controls.layers.base.black_and_white")]: osmGrayscaleTiles,
@@ -158,25 +164,18 @@
 
       this.#scaleControl = L.control.scale().addTo(map);
 
-      L.esri.Geocoding.geosearch({
-        title: ottm.translations.get("map.controls.search.tooltip"),
-        placeholder: ottm.translations.get("map.controls.search.placeholder"),
-        expanded: true,
-        collapseAfterResult: false,
-        providers: [
-          L.esri.Geocoding.arcgisOnlineProvider({
-            // TODO hide key
-            apikey: '5PelNcEc4zGc3OEutmIG', // FIXME wrong key?
-          }),
-        ],
-      }).addTo(map);
-      // L.Control.geocoder({
-      //   title: ottm._translations.get("map.controls.search.tooltip"),
-      //   placeholder: ottm._translations.get("map.controls.search.placeholder"),
-      //   expanded: true,
-      //   collapseAfterResult: false,
-      //   position: 'topleft',
-      // }).addTo(map);
+      // TODO restrict API key usage to production site’s host only (will require a new key)
+      //  cf. https://documentation.maptiler.com/hc/en-us/articles/360020806037-Protect-your-map-key
+      const c = L.control.maptilerGeocoding({
+        apiKey: "5PelNcEc4zGc3OEutmIG",
+      }).setPosition("topleft").addTo(map);
+      const $control = $(c._container);
+      $control.addClass("leaflet-bar");
+      $control.find("input").attr("placeholder", ottm.translations.get("map.controls.search.placeholder"));
+      $control.find("button.search-button svg").remove()
+      $control.find("button.search-button").append('<span class="mdi mdi-magnify"></span>');
+      $control.find("button.clear-button-container svg").remove()
+      $control.find("button.clear-button-container").append('<span class="mdi mdi-window-close"></span>');
 
       if (editable) {
         initEditor(map);

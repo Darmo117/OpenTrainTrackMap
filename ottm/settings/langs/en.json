@@ -711,8 +711,7 @@
             "tooltip": "Zoom out"
           },
           "search": {
-            "tooltip": "Location search",
-            "placeholder": "Search for places or addresses…"
+            "placeholder": "Search for places"
           },
           "google_maps_button": {
             "tooltip": "Open current location in Google Maps"
