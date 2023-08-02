@@ -53,18 +53,6 @@ function initEditor(map) {
   map.addControl(new NewLineControl());
   map.addControl(new NewPolygonControl());
 
-  // map.pm.addControls({
-  //   position: 'topleft',
-  //   drawCircleMarker: false,
-  //   drawCircle: false,
-  //   drawText: false,
-  //   drawRectangle: false,
-  //   cutPolygon: false,
-  //   editMode: false,
-  //   dragMode: false,
-  //   rotateMode: false,
-  // });
-  // map.pm.enableGlobalEditMode();
   let snap = new L.Handler.MarkerSnap(map);
   let snapMarker = L.marker(map.getCenter(), {
     icon: map.editTools.createVertexIcon({className: 'leaflet-div-icon leaflet-drawing-icon'}),
@@ -89,9 +77,22 @@ function initEditor(map) {
   // We have to remove the currently dragged layer from the guides list
   // as otherwise geometryutils would throw errors.
   // The object is added back into the list after the drag has stopped.
-  // TODO merge points on snap
+  // TODO "merge" points on snap
   map.on("editable:created", function (e) {
-    addSnapGuide(e.layer);
+    const layer = e.layer;
+    addSnapGuide(layer);
+    if (layer instanceof L.Marker) {
+      // Markers do not fire "editable:vertex:*" events on their own
+      layer.on("dragstart", function () {
+        map.fire("editable:vertex:dragstart", {layer: layer, vertex: layer});
+      });
+      layer.on("dragend", function () {
+        map.fire("editable:vertex:dragend", {layer: layer, vertex: layer});
+      });
+      layer.on("click", function () {
+        map.fire("editable:vertex:rawclick", {layer: layer, vertex: layer});
+      })
+    }
   });
   map.on("editable:vertex:dragstart", function (e) {
     removeSnapGuide(e.layer);
@@ -126,10 +127,16 @@ function initEditor(map) {
     snapMarker.remove();
   });
   // Continue editing on Ctrl+LMB on first or last vertex of polyline
-  map.on("editable:vertex:ctrlclick editable:vertex:metakeyclick", function (e) {
+  map.on("editable:vertex:ctrlclick editable:vertex:metakeyclick", function (e) { // TODO put in context menu
     e.vertex.continue();
   });
-  // map.on("editable:vertex:clicked", function (e) {
-  //   e.vertex.set;
-  // });
+  map.on("editable:vertex:rawclick", function (e) {
+    if (!(e.layer instanceof L.Marker)) {
+      e.cancel(); // Disable default behavior: delete vertex
+    }
+    const icon = e.vertex._icon;
+    console.log(icon); // DEBUG
+    // TODO select vertex
+  });
+  // TODO polyline/polygon selection
 }
