@@ -1,5 +1,3 @@
-// noinspection JSUnusedGlobalSymbols
-
 /**
  * Base script for the whole site.
  */

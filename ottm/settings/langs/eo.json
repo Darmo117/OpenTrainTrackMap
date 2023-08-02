@@ -700,10 +700,16 @@
       "map": {
         "controls": {
           "layers": {
-            "standard": "Mapo",
-            "black_and_white": "Mapo (nigra-blanka)",
-            "satellite_maptiler": "Satelita (MapTiler)",
-            "satellite_esri": "Satelita (Esri)"
+            "base": {
+              "black_and_white": "Grizoskala mapo",
+              "colored": "Kolora mapo",
+              "satellite_maptiler": "Satelita (MapTiler)",
+              "satellite_esri": "Satelita (Esri)",
+              "satellite_google": "Satelita (Google)"
+            },
+            "overlays": {
+              "tracks": "Fervojoj"
+            }
           },
           "zoom_in": {
             "tooltip": "Zomi"

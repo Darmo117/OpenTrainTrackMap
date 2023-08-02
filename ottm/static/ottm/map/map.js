@@ -40,30 +40,6 @@
 
   L.control.button = options => new L.Control.Button(options);
 
-  L.EditControl = L.Control.extend({
-    options: {
-      position: "topleft",
-      callback: null,
-      kind: "",
-      html: ""
-    },
-
-    onAdd: function (map) {
-      const container = L.DomUtil.create("div", "leaflet-control leaflet-bar");
-      const link = L.DomUtil.create("a", "", container);
-
-      link.href = "#";
-      link.title = ottm.translations.get(`map.controls.edit.${this.options.kind}.tooltip`);
-      link.innerHTML = this.options.html;
-      L.DomEvent.on(link, "click", L.DomEvent.stop)
-        .on(link, "click", () => {
-          window.LAYER = this.options.callback.call(map.editTools);
-        }, this);
-
-      return container;
-    },
-  });
-
   /**
    * Wrapper class around a Leaflet map object.
    * Adds various buttons to control the map’s view.
@@ -75,10 +51,15 @@
      */
     #map;
     /**
-     * Map’s tile layers.
+     * Map’s base tile layers.
      * @type {Object<string, L.TileLayer>}
      */
-    #layers;
+    #baseLayers;
+    /**
+     * Map’s overlay layers.
+     * @type {Object<string, L.Layer>}
+     */
+    #overlayLayers = {};
     /**
      * View zoom control.
      * @type {L.Zoom}
@@ -99,31 +80,17 @@
      * @type {boolean}
      */
     #updatingView = false;
-    /**
-     * List of markers.
-     * @type {?[]}
-     */
-    #markers = [];
-    /**
-     * List of polylines.
-     * @type {?[]}
-     */
-    #lines = [];
-    /**
-     * List of polygons.
-     * @type {?[]}
-     */
-    #polygons = [];
 
     /**
      * Create a map wrapper object.
      * @param mapID {string} Map’s HTML tag ID.
-     * @param editMode {boolean} Whether the map should be editable.
+     * @param editable {boolean} Whether the map should be editable.
      */
-    constructor(mapID, editMode) {
+    constructor(mapID, editable) {
       const map = L.map(mapID, {
         zoomControl: false, // Remove default zoom control
-        editable: editMode,
+        editable: editable,
+        editOptions: {}
       }).setView([0, 0], 2);
 
       map.on("zoomend", () => this.updateUrl());
@@ -137,31 +104,33 @@
         position: "topright",
       }).addTo(map);
 
-      const osmTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      const osmGrayscaleTiles = L.tileLayer.grayscale("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
         maxZoom: 19,
-      }).addTo(map);
-      const mapnikBWTiles = L.tileLayer("https://tiles.wmflabs.org/bw-mapnik/{z}/{x}/{y}.png", {
+      }).addTo(map); // Select layer by default
+      const osmColoredTiles = L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
         attribution: 'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
-        maxZoom: 18,
+        maxZoom: 19,
       });
-      // Make call to server to hide API key
       const maptilerSatelliteTiles = L.tileLayer("/tile?provider=maptiler&x={x}&y={y}&z={z}", {
         attribution: 'Tiles © <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>, Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors',
         maxZoom: 19,
       });
       const esriSatelliteTiles = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", {
-        attribution: "Tiles © Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
+        attribution: "Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
         maxZoom: 19,
       });
+      const googleSatelliteTiles = L.tileLayer('http://www.google.com/maps/vt?lyrs=s@189&x={x}&y={y}&z={z}', { // lyrs=s@189 -> satellite images
+        attribution: 'Tiles © Google'
+      });
 
-      this.#layers = {
-        [ottm.translations.get("map.controls.layers.standard")]: osmTiles,
-        [ottm.translations.get("map.controls.layers.black_and_white")]: mapnikBWTiles,
-        [ottm.translations.get("map.controls.layers.satellite_maptiler")]: maptilerSatelliteTiles,
-        [ottm.translations.get("map.controls.layers.satellite_esri")]: esriSatelliteTiles,
+      this.#baseLayers = {
+        [ottm.translations.get("map.controls.layers.base.black_and_white")]: osmGrayscaleTiles,
+        [ottm.translations.get("map.controls.layers.base.colored")]: osmColoredTiles,
+        [ottm.translations.get("map.controls.layers.base.satellite_maptiler")]: maptilerSatelliteTiles,
+        [ottm.translations.get("map.controls.layers.base.satellite_esri")]: esriSatelliteTiles,
+        [ottm.translations.get("map.controls.layers.base.satellite_google")]: googleSatelliteTiles,
       };
-      L.control.layers(this.#layers).addTo(map);
 
       /**
        * Open the current view in the given online mapping service.
@@ -196,6 +165,7 @@
         collapseAfterResult: false,
         providers: [
           L.esri.Geocoding.arcgisOnlineProvider({
+            // TODO hide key
             apikey: '5PelNcEc4zGc3OEutmIG', // FIXME wrong key?
           }),
         ],
@@ -208,38 +178,11 @@
       //   position: 'topleft',
       // }).addTo(map);
 
-      if (editMode) {
-        L.NewLineControl = L.EditControl.extend({
-          options: {
-            position: "topleft",
-            callback: map.editTools.startPolyline,
-            kind: "new_line",
-            html: '<span class="mdi mdi-vector-polyline"></span>',
-          }
-        });
-
-        L.NewPolygonControl = L.EditControl.extend({
-          options: {
-            position: "topleft",
-            callback: map.editTools.startPolygon,
-            kind: "new_polygon",
-            html: '<span class="mdi mdi-vector-polygon"></span>',
-          }
-        });
-
-        L.NewMarkerControl = L.EditControl.extend({
-          options: {
-            position: "topleft",
-            callback: map.editTools.startMarker,
-            kind: "new_marker",
-            html: '<span class="mdi mdi-vector-point"></span>',
-          }
-        });
-
-        map.addControl(new L.NewMarkerControl());
-        map.addControl(new L.NewLineControl());
-        map.addControl(new L.NewPolygonControl());
+      if (editable) {
+        initEditor(map);
       }
+
+      L.control.layers(this.#baseLayers, this.#overlayLayers).addTo(map);
 
       this.#map = map;
       if (this.getPositionFromURL()[1]) {

@@ -693,10 +693,16 @@
       "map": {
         "controls": {
           "layers": {
-            "standard": "Map",
-            "black_and_white": "Map (black and white)",
-            "satellite_maptiler": "Satellite (MapTiler)",
-            "satellite_esri": "Satellite (Esri)"
+            "base": {
+              "black_and_white": "Grayscale Map",
+              "colored": "Colored Map",
+              "satellite_maptiler": "Satellite (MapTiler)",
+              "satellite_esri": "Satellite (Esri)",
+              "satellite_google": "Satellite (Google)"
+            },
+            "overlays": {
+              "tracks": "Tracks"
+            }
           },
           "zoom_in": {
             "tooltip": "Zoom in"

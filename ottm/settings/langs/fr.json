@@ -721,10 +721,16 @@
       "map": {
         "controls": {
           "layers": {
-            "standard": "Carte",
-            "black_and_white": "Carte (noir et blanc)",
-            "satellite_maptiler": "Satellite (MapTiler)",
-            "satellite_esri": "Satellite (Esri)"
+            "base": {
+              "black_and_white": "Carte niveaux de gris",
+              "colorized": "Carte couleurs",
+              "satellite_maptiler": "Satellite (MapTiler)",
+              "satellite_esri": "Satellite (Esri)",
+              "satellite_google": "Satellite (Google)"
+            },
+            "overlays": {
+              "tracks": "Voies"
+            }
           },
           "zoom_in": {
             "tooltip": "Zoomer"

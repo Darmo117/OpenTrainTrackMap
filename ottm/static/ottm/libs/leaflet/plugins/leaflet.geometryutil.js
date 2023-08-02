@@ -172,7 +172,7 @@ L.GeometryUtil = L.extend(L.GeometryUtil || {}, {
     */
     closest: function (map, layer, latlng, vertices) {
 
-        var latlngs,
+        var latlngs = [],
             mindist = Infinity,
             result = null,
             i, n, distance, subResult;
@@ -204,8 +204,16 @@ L.GeometryUtil = L.extend(L.GeometryUtil || {}, {
         if (! ( layer instanceof L.Polyline ) )
             return result;
 
+        // FIX: some layers may contain recursive objects that throw errors with JSON.stringify()
+        let lls = layer.getLatLngs();
+        if (!L.LineUtil.isFlat(lls)) {
+            lls = lls[0];
+        }
+        for (const latLng of lls) {
+            latlngs.push({lat: latLng.lat, lng: latLng.lng});
+        }
         // deep copy of latlngs
-        latlngs = JSON.parse(JSON.stringify(layer.getLatLngs().slice(0)));
+        // latlngs = JSON.parse(JSON.stringify(layer.getLatLngs().slice(0)));
 
         // add the last segment for L.Polygon
         if (layer instanceof L.Polygon) {
