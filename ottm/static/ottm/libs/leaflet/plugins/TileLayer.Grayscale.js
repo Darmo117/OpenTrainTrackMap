@@ -14,11 +14,11 @@ L.TileLayer.Grayscale = L.TileLayer.extend({
   },
 
   initialize: function (url, options) {
-    options = options || {}
+    options = options ?? {}
     options.crossOrigin = true;
     L.TileLayer.prototype.initialize.call(this, url, options);
 
-    this.on('tileload', function (e) {
+    this.on("tileload", function (e) {
       this._makeGrayscale(e.tile);
     });
   },
@@ -30,24 +30,26 @@ L.TileLayer.Grayscale = L.TileLayer.extend({
   },
 
   _makeGrayscale: function (img) {
-    if (img.getAttribute('data-grayscaled')) {
+    if (img.getAttribute("data-grayscaled")) {
       return;
     }
 
-    img.crossOrigin = '';
+    img.crossOrigin = "";
     const canvas = document.createElement("canvas");
     canvas.width = img.width;
     canvas.height = img.height;
-    const ctx = canvas.getContext("2d");
-    ctx.drawImage(img, 0, 0);
+    const context = canvas.getContext("2d");
+    context.drawImage(img, 0, 0);
 
-    const imgd = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pix = imgd.data;
-    for (let i = 0, n = pix.length; i < n; i += 4) {
-      pix[i] = pix[i + 1] = pix[i + 2] = (this.options.quotaRed * pix[i] + this.options.quotaGreen * pix[i + 1] + this.options.quotaBlue * pix[i + 2]) / this.options.quotaDivider();
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+    for (let i = 0, n = pixels.length; i < n; i += 4) {
+      pixels[i] = pixels[i + 1] = pixels[i + 2] =
+        (this.options.quotaRed * pixels[i] + this.options.quotaGreen * pixels[i + 1] + this.options.quotaBlue * pixels[i + 2])
+        / this.options.quotaDivider();
     }
-    ctx.putImageData(imgd, 0, 0);
-    img.setAttribute('data-grayscaled', true);
+    context.putImageData(imageData, 0, 0);
+    img.setAttribute("data-grayscaled", true);
     img.src = canvas.toDataURL();
   }
 });

@@ -53,21 +53,23 @@ function initEditor(map) {
   map.addControl(new NewLineControl());
   map.addControl(new NewPolygonControl());
 
-  let snap = new L.Handler.MarkerSnap(map);
+  let snapHandler = new L.Handler.MarkerSnap(map, null, {
+    snapDistance: 10,
+  });
   let snapMarker = L.marker(map.getCenter(), {
-    icon: map.editTools.createVertexIcon({className: 'leaflet-div-icon leaflet-drawing-icon'}),
+    icon: map.editTools.createVertexIcon({className: "leaflet-div-icon leaflet-drawing-icon"}),
     opacity: 1,
     zIndexOffset: 1000
   });
-  snap.watchMarker(snapMarker);
+  snapHandler.watchMarker(snapMarker);
 
   function addSnapGuide(g) {
-    snap.addGuideLayer(g);
+    snapHandler.addGuideLayer(g);
   }
 
   function removeSnapGuide(g) {
     // No clean way to remove a guide from the list
-    snap._guides.splice(snap._guides.indexOf(g), 1);
+    snapHandler._guides.splice(snapHandler._guides.indexOf(g), 1);
   }
 
   function followMouse(e) {
@@ -96,11 +98,11 @@ function initEditor(map) {
   });
   map.on("editable:vertex:dragstart", function (e) {
     removeSnapGuide(e.layer);
-    snap.watchMarker(e.vertex);
+    snapHandler.watchMarker(e.vertex);
   });
   map.on("editable:vertex:dragend", function (e) {
     addSnapGuide(e.layer);
-    snap.unwatchMarker(e.vertex);
+    snapHandler.unwatchMarker(e.vertex);
   });
   map.on("editable:drawing:start", function (e) {
     removeSnapGuide(e.layer);
