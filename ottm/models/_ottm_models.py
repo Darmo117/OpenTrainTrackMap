@@ -234,18 +234,32 @@ class Note(_dj_models.Model):
     geometries = _dj_models.ManyToManyField(Geometry, related_name='notes')
 
 
-class Node(Geometry):
+class Node(_dj_models.Model):
     altitude = _dj_models.FloatField()
     latitude = _dj_models.FloatField()
-    longitude = _dj_models.FloatField()
+
+    class Meta:
+        abstract = True
+
+
+class IsolatedNode(Node, Geometry):
+    pass
+
+
+class SignalMast(IsolatedNode):
+    pass
+
+
+class SegmentNode(Node):
+    pass
 
 
 class Polyline(Geometry):
-    nodes = _dj_models.ManyToManyField(Node, related_name='polylines', through='PolylineNodes')
+    nodes = _dj_models.ManyToManyField(SegmentNode, related_name='polylines', through='PolylineNodes')
 
 
 class PolylineNodes(_dj_models.Model):
-    node = _dj_models.ForeignKey(Node, _dj_models.CASCADE)
+    node = _dj_models.ForeignKey(SegmentNode, _dj_models.CASCADE)
     polyline = _dj_models.ForeignKey(Polyline, _dj_models.CASCADE)
     order = _dj_models.IntegerField()
 
@@ -343,11 +357,11 @@ class RailFerryRouteSection(ConventionalTrackSection):
 
 
 class Polygon(Geometry):
-    nodes = _dj_models.ManyToManyField(Node, related_name='polygons', through='PolygonNodes')
+    nodes = _dj_models.ManyToManyField(SegmentNode, related_name='polygons', through='PolygonNodes')
 
 
 class PolygonNodes(_dj_models.Model):
-    node = _dj_models.ForeignKey(Node, _dj_models.CASCADE)
+    node = _dj_models.ForeignKey(SegmentNode, _dj_models.CASCADE)
     polygon = _dj_models.ForeignKey(Polygon, _dj_models.CASCADE)
     order = _dj_models.IntegerField()
 
@@ -718,6 +732,11 @@ class TrackInfrastructureUseTypeState(TemporalState):
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return 'infrastructure', 'use_type'
+
+
+class BufferStopState(TemporalState):
+    node = _dj_models.ForeignKey(SegmentNode, _dj_models.CASCADE, related_name='buffer_stop_states')
+    is_present = _dj_models.BooleanField()
 
 
 # endregion
