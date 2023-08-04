@@ -58,7 +58,6 @@ function initEditor(map) {
   });
   let snapMarker = L.marker(map.getCenter(), {
     icon: map.editTools.createVertexIcon({className: "leaflet-div-icon leaflet-drawing-icon"}),
-    opacity: 1,
     zIndexOffset: 1000
   });
   snapHandler.watchMarker(snapMarker);
@@ -80,6 +79,7 @@ function initEditor(map) {
   // as otherwise geometryutils would throw errors.
   // The object is added back into the list after the drag has stopped.
   // TODO "merge" points on snap
+  // TODO put layer being edited on top (max z-index)
   map.on("editable:created", function (e) {
     const layer = e.layer;
     addSnapGuide(layer);
@@ -106,6 +106,7 @@ function initEditor(map) {
   });
   map.on("editable:drawing:start", function (e) {
     removeSnapGuide(e.layer);
+    snapMarker.addTo(map);
     this.on("mousemove", followMouse);
   });
   map.on("editable:drawing:end", function (e) {
@@ -121,12 +122,6 @@ function initEditor(map) {
     let latlng = snapMarker.getLatLng();
     e.latlng.lat = latlng.lat;
     e.latlng.lng = latlng.lng;
-  });
-  snapMarker.on("snap", function () {
-    snapMarker.addTo(map);
-  });
-  snapMarker.on("unsnap", function () {
-    snapMarker.remove();
   });
   // Continue editing on Ctrl+LMB on first or last vertex of polyline
   map.on("editable:vertex:ctrlclick editable:vertex:metakeyclick", function (e) { // TODO put in context menu
