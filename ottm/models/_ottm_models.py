@@ -67,6 +67,14 @@ class Enumeration(Translated):
         abstract = True
 
 
+class SurfaceMaterial(Enumeration):
+    pass
+
+
+class SurfaceMaterialTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(SurfaceMaterial, _dj_models.CASCADE, related_name='translations')
+
+
 class ConstructionMaterial(Enumeration):
     pass
 
@@ -83,13 +91,12 @@ class BarrierTypeTranslation(Translation):
     translated_object = _dj_models.ForeignKey(BarrierType, _dj_models.CASCADE, related_name='translations')
 
 
-class TrackInfrastructureUseType(Enumeration):
+class TrackInfrastructureUsage(Enumeration):
     pass
 
 
-class TrackInfrastructureUseTypeTranslation(Translation):
-    translated_object = _dj_models.ForeignKey(TrackInfrastructureUseType, _dj_models.CASCADE,
-                                              related_name='translations')
+class TrackInfrastructureUsageTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TrackInfrastructureUsage, _dj_models.CASCADE, related_name='translations')
 
 
 class BridgeStructure(Enumeration):
@@ -100,20 +107,28 @@ class BridgeStructureTranslation(Translation):
     translated_object = _dj_models.ForeignKey(BridgeStructure, _dj_models.CASCADE, related_name='translations')
 
 
-class BuildingUse(Enumeration):
+class BuildingUsage(Enumeration):
     pass
 
 
 class BuildingUseTranslation(Translation):
-    translated_object = _dj_models.ForeignKey(BuildingUse, _dj_models.CASCADE, related_name='translations')
+    translated_object = _dj_models.ForeignKey(BuildingUsage, _dj_models.CASCADE, related_name='translations')
 
 
-class TrackUse(Enumeration):
+class TrackService(Enumeration):
     pass
 
 
-class TrackUseTranslation(Translation):
-    translated_object = _dj_models.ForeignKey(TrackUse, _dj_models.CASCADE, related_name='translations')
+class TrackServiceTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TrackService, _dj_models.CASCADE, related_name='translations')
+
+
+class TrackUsage(Enumeration):
+    pass
+
+
+class TrackUsageTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TrackUsage, _dj_models.CASCADE, related_name='translations')
 
 
 class ElectrificationSystem(Enumeration):
@@ -383,12 +398,12 @@ class Area(Polygon):
     pass
 
 
+class Platform(Polygon):
+    material = _dj_models.ForeignKey(SurfaceMaterial, related_name='platforms')
+
+
 class Construction(Polygon):
     materials = _dj_models.ManyToManyField(ConstructionMaterial, related_name='constructions')
-
-
-class Platform(Construction):
-    pass
 
 
 class BridgeAbutment(Construction):
@@ -586,12 +601,20 @@ class TrackMaximumSpeedState(TemporalState):
         return ('track',)
 
 
-class TrackUseState(TemporalState):
-    track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='use_states')
-    use = _dj_models.ForeignKey(TrackUse, _dj_models.PROTECT, related_name='states')
+class TrackServiceState(TemporalState):
+    track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='usage_states')
+    service = _dj_models.ForeignKey(TrackService, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return 'track', 'use'
+        return ('track',)
+
+
+class TrackUsageState(TemporalState):
+    track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='usage_states')
+    usage = _dj_models.ForeignKey(TrackUsage, _dj_models.PROTECT, related_name='states')
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('track',)
 
 
 class TrackElectrificationState(TemporalState):
@@ -674,6 +697,14 @@ class ManeuverStructureMovingPartState(TemporalState):
         return ('structure',)
 
 
+class ManeuverStructureTrackState(TemporalState):
+    structure = _dj_models.ForeignKey(ManeuverStructure, _dj_models.CASCADE, related_name='track_states')
+    has_track = _dj_models.BooleanField()
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('structure',)
+
+
 class FloorState(TemporalState):
     building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='floor_states')
     floors_number = _dj_models.IntegerField(validators=[positive_validator])
@@ -692,12 +723,12 @@ class BuildingHeightState(TemporalState):
         return ('building',)
 
 
-class BuildingUseState(TemporalState):
-    building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='use_states')
-    use = _dj_models.ForeignKey(BuildingUse, _dj_models.PROTECT, related_name='states')
+class BuildingUsageState(TemporalState):
+    building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='usage_states')
+    usage = _dj_models.ForeignKey(BuildingUsage, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return 'building', 'use'
+        return ('building',)
 
 
 class LiftHeighState(TemporalState):
@@ -709,12 +740,12 @@ class LiftHeighState(TemporalState):
         return ('lift',)
 
 
-class TrackInfrastructureUseTypeState(TemporalState):
-    infrastructure = _dj_models.ForeignKey(TrackInfrastructure, _dj_models.CASCADE, related_name='use_type_states')
-    use_type = _dj_models.ForeignKey(TrackInfrastructureUseType, _dj_models.PROTECT, related_name='states')
+class TrackInfrastructureUsageState(TemporalState):
+    infrastructure = _dj_models.ForeignKey(TrackInfrastructure, _dj_models.CASCADE, related_name='usage_states')
+    usage = _dj_models.ForeignKey(TrackInfrastructureUsage, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return 'infrastructure', 'use_type'
+        return ('infrastructure',)
 
 
 class SegmentNodeTypeState(TemporalState):
