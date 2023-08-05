@@ -87,12 +87,17 @@
      * @param editable {boolean} Whether the map should be editable.
      */
     constructor(mapID, editable) {
+      const editor = editable ? new MapEditor() : null;
       const map = L.map(mapID, {
         zoomControl: false, // Remove default zoom control
         editable: editable,
-        editOptions: {}
+        editOptions: editable ? editor.getMapEditOptions() : {},
       }).setView([0, 0], 2);
+      if (editable) {
+        editor.initEditor(map);
+      }
 
+      map.off("dblclick"); // Disable zoom-in on double-click
       map.on("zoomend", () => this.updateUrl());
       map.on("moveend", () => this.updateUrl());
       map.on("resize", () => this.updateUrl());
@@ -177,10 +182,6 @@
       $control.find("button.search-button").append('<span class="mdi mdi-magnify"></span>');
       $control.find("button.clear-button-container svg").remove()
       $control.find("button.clear-button-container").append('<span class="mdi mdi-window-close"></span>');
-
-      if (editable) {
-        initEditor(map);
-      }
 
       L.control.layers(this.#baseLayers, this.#overlayLayers).addTo(map);
 
