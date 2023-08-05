@@ -75,6 +75,14 @@ class ConstructionMaterialTranslation(Translation):
     translated_object = _dj_models.ForeignKey(ConstructionMaterial, _dj_models.CASCADE, related_name='translations')
 
 
+class BarrierType(Enumeration):
+    pass
+
+
+class BarrierTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(BarrierType, _dj_models.CASCADE, related_name='translations')
+
+
 class TrackInfrastructureUseType(Enumeration):
     pass
 
@@ -92,36 +100,20 @@ class BridgeStructureTranslation(Translation):
     translated_object = _dj_models.ForeignKey(BridgeStructure, _dj_models.CASCADE, related_name='translations')
 
 
-class BuildingType(Enumeration):
+class BuildingUse(Enumeration):
     pass
 
 
-class BuildingTypeTranslation(Translation):
-    translated_object = _dj_models.ForeignKey(BuildingType, _dj_models.CASCADE, related_name='translations')
+class BuildingUseTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(BuildingUse, _dj_models.CASCADE, related_name='translations')
 
 
-class BuildingUseType(Enumeration):
+class TrackUse(Enumeration):
     pass
 
 
-class BuildingUseTypeTranslation(Translation):
-    translated_object = _dj_models.ForeignKey(BuildingUseType, _dj_models.CASCADE, related_name='translations')
-
-
-class TrackUseType(Enumeration):
-    pass
-
-
-class TrackUseTypeTranslation(Translation):
-    translated_object = _dj_models.ForeignKey(TrackUseType, _dj_models.CASCADE, related_name='translations')
-
-
-class CrossingType(Enumeration):
-    pass
-
-
-class CrossingTypeTranslation(Translation):
-    translated_object = _dj_models.ForeignKey(CrossingType, _dj_models.CASCADE, related_name='translations')
+class TrackUseTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TrackUse, _dj_models.CASCADE, related_name='translations')
 
 
 class ElectrificationSystem(Enumeration):
@@ -140,12 +132,12 @@ class CurrentTypeTranslation(Translation):
     translated_object = _dj_models.ForeignKey(CurrentType, _dj_models.CASCADE, related_name='translations')
 
 
-class TractionType(Enumeration):
+class TractionSystem(Enumeration):
     pass
 
 
-class TractionTypeTranslation(Translation):
-    translated_object = _dj_models.ForeignKey(TractionType, _dj_models.CASCADE, related_name='translations')
+class TractionSystemTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TractionSystem, _dj_models.CASCADE, related_name='translations')
 
 
 class RailType(Enumeration):
@@ -170,6 +162,14 @@ class OperatorType(Enumeration):
 
 class OperatorTypeTranslation(Translation):
     translated_object = _dj_models.ForeignKey(OperatorType, _dj_models.CASCADE, related_name='translations')
+
+
+class SegmentNodeType(Enumeration):
+    pass
+
+
+class SegmentNodeTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(SegmentNodeType, _dj_models.CASCADE, related_name='translations')
 
 
 # endregion
@@ -250,6 +250,10 @@ class SignalMast(IsolatedNode):
     pass
 
 
+class OverheadLinePylon(IsolatedNode):
+    pass
+
+
 class SegmentNode(Node):
     pass
 
@@ -267,79 +271,76 @@ class PolylineNodes(_dj_models.Model):
         ordering = ('order',)
 
 
-class WallSection(Polyline):
-    materials = _dj_models.ManyToManyField(ConstructionMaterial, related_name='wall_sections')
+class Barrier(Polyline):
+    materials = _dj_models.ManyToManyField(ConstructionMaterial, related_name='barriers')
+    type = _dj_models.ForeignKey(BarrierType, _dj_models.PROTECT, related_name='type')
 
 
-class Gate(Polyline):
-    materials = _dj_models.ManyToManyField(ConstructionMaterial, related_name='gates')
-
-
-class TrackSection(Polyline):
+class Track(Polyline):
     pass
 
 
-class VALTrackSection(TrackSection):
+class VALTrack(Track):
     pass
 
 
-class MonorailTrackSection(TrackSection):
-    materials = _dj_models.ManyToManyField(ConstructionMaterial, related_name='monorail_track_sections')
+class MonorailTrack(Track):
+    materials = _dj_models.ManyToManyField(ConstructionMaterial, related_name='monorail_tracks')
 
 
-class RubberTiredTramTrackSection(MonorailTrackSection):
+class RubberTiredTramTrack(MonorailTrack):
     pass
 
 
-class GLTTrackSection(TrackSection):  # Guided Light Transit
+class GLTTrack(Track):  # Guided Light Transit
     unguided = _dj_models.BooleanField()
 
 
-class TranshlohrTrackSection(TrackSection):
+class TranshlohrTrack(Track):
     pass
 
 
-class LartigueMonorailTrackSection(TrackSection):
+class LartigueMonorailTrack(Track):
     pass
 
 
-class StraddleBeamMonorailTrackSection(TrackSection):
+class StraddleBeamMonorailTrack(Track):
     pass
 
 
-class MaglevMonorailTrackSection(StraddleBeamMonorailTrackSection):
+class MaglevMonorailTrack(StraddleBeamMonorailTrack):
     pass
 
 
-class InvertedTMonorailTrackSection(MonorailTrackSection):
+class InvertedTMonorailTrack(MonorailTrack):
     pass
 
 
-class SuspendedMonorailTrackSection(MonorailTrackSection):
+class SuspendedMonorailTrack(MonorailTrack):
     pass
 
 
-class SAFEGEMonorailTrackSection(SuspendedMonorailTrackSection):
+class SAFEGEMonorailTrack(SuspendedMonorailTrack):
     pass
 
 
-class GroundRailMonorailTrackSection(MonorailTrackSection):
+class GroundRailMonorailTrack(MonorailTrack):
     pass
 
 
-class GyroscopicMonorailTrackSection(GroundRailMonorailTrackSection):
+class GyroscopicMonorailTrack(GroundRailMonorailTrack):
     pass
 
 
-class AddisMonorailTrackSection(GroundRailMonorailTrackSection):
+class AddisMonorailTrack(GroundRailMonorailTrack):
     pass
 
 
-class PSMTMonorailTrackSection(GroundRailMonorailTrackSection):
+class PSMTMonorailTrack(GroundRailMonorailTrack):
     pass
 
 
-class CailletMonorailTrackSection(GroundRailMonorailTrackSection):
+class CailletMonorailTrack(GroundRailMonorailTrack):
     pass
 
 
@@ -348,11 +349,11 @@ class TrackGauge(_dj_models.Model):
     unit = _dj_models.ForeignKey(LengthUnit, _dj_models.PROTECT)
 
 
-class ConventionalTrackSection(TrackSection):
-    gauges = _dj_models.ManyToManyField(TrackGauge, related_name='track_sections')
+class ConventionalTrack(Track):
+    gauges = _dj_models.ManyToManyField(TrackGauge, related_name='tracks')
 
 
-class RailFerryRouteSection(ConventionalTrackSection):
+class RailFerryRoute(ConventionalTrack):
     pass
 
 
@@ -399,7 +400,7 @@ class BridgePier(Construction):
 
 
 class TrackInfrastructure(Construction):
-    track_sections = _dj_models.ManyToManyField(TrackSection, related_name='track_infrastructures')
+    tracks = _dj_models.ManyToManyField(Track, related_name='track_infrastructures')
 
 
 class Earthwork(TrackInfrastructure):
@@ -414,11 +415,11 @@ class Embankment(Earthwork):
     pass
 
 
-class TrackCoverSection(TrackInfrastructure):
+class TrackCover(TrackInfrastructure):
     pass
 
 
-class TunnelSection(TrackInfrastructure):
+class Tunnel(TrackInfrastructure):
     pass
 
 
@@ -443,59 +444,59 @@ class Lift(ManeuverStructure):
     pass
 
 
-class BridgeSection(TrackInfrastructure):
-    structure = _dj_models.ForeignKey(BridgeStructure, _dj_models.PROTECT, related_name='bridge_sections')
+class Bridge(TrackInfrastructure):
+    structure = _dj_models.ForeignKey(BridgeStructure, _dj_models.PROTECT, related_name='bridges')
 
 
-class StaticBridgeSection(BridgeSection):
+class StaticBridge(Bridge):
     pass
 
 
-class MoveableBridgeSection(BridgeSection):
+class MoveableBridge(Bridge):
     pass
 
 
-class BasculeBridgeSection(MoveableBridgeSection):
+class BasculeBridge(MoveableBridge):
     pass
 
 
-class FerrySlipSection(MoveableBridgeSection):
+class FerrySlip(MoveableBridge):
     pass
 
 
-class LiftBridgeSection(MoveableBridgeSection):
+class LiftBridge(MoveableBridge):
     pass
 
 
-class RetractableBridgeSection(MoveableBridgeSection):
+class RetractableBridge(MoveableBridge):
     pass
 
 
-class SeesawBridgeSection(MoveableBridgeSection):
+class SeesawBridge(MoveableBridge):
     pass
 
 
-class SubmersibleBridgeSection(MoveableBridgeSection):
+class SubmersibleBridge(MoveableBridge):
     pass
 
 
-class SwingBridgeSection(MoveableBridgeSection):
+class SwingBridge(MoveableBridge):
     pass
 
 
-class TableBridgeSection(MoveableBridgeSection):
+class TableBridge(MoveableBridge):
     pass
 
 
-class TiltBridgeSection(MoveableBridgeSection):
+class TiltBridge(MoveableBridge):
     pass
 
 
-class TransporterBridgeSection(MoveableBridgeSection):
+class TransporterBridge(MoveableBridge):
     pass
 
 
-class VlotbrugSection(MoveableBridgeSection):
+class Vlotbrug(MoveableBridge):
     pass
 
 
@@ -548,7 +549,7 @@ class OperatorTypeState(TemporalState):
 
 
 class OperatorState(TemporalState):
-    operator = _dj_models.ForeignKey(Operator, _dj_models.PROTECT, related_name='operator_states')
+    operator = _dj_models.ForeignKey(Operator, _dj_models.CASCADE, related_name='operator_states')
     relation = _dj_models.ForeignKey(Relation, _dj_models.CASCADE, related_name='operator_states')
     entity_id_number = _dj_models.CharField(max_length=50, blank=True, null=True)  # For train routes only
 
@@ -569,40 +570,32 @@ class TrackMainDirectionState(TemporalState):
         FORWARD = 0
         BACKWARD = 1
 
-    track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='main_direction_states')
+    track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='main_direction_states')
     reversed = _dj_models.BooleanField()
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('track_section',)
+        return ('track',)
 
 
 class TrackMaximumSpeedState(TemporalState):
-    track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='maximum_speed_states')
+    track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='maximum_speed_states')
     max_speed = _dj_models.FloatField(validators=[positive_validator])
     unit = _dj_models.ForeignKey(SpeedUnit, _dj_models.PROTECT)
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('track_section',)
+        return ('track',)
 
 
-class TrackUseTypeState(TemporalState):
-    track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='use_type_states')
-    use_type = _dj_models.ForeignKey(TrackUseType, _dj_models.PROTECT, related_name='states')
-
-    def _get_overlap_filter(self) -> tuple[str, ...]:
-        return 'track_section', 'use_type'
-
-
-class CrossingTypeState(TemporalState):
-    track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='crossing_type_states')
-    type = _dj_models.ForeignKey(CrossingType, _dj_models.PROTECT, related_name='states')
+class TrackUseState(TemporalState):
+    track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='use_states')
+    use = _dj_models.ForeignKey(TrackUse, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return 'track_section', 'type'
+        return 'track', 'use'
 
 
 class TrackElectrificationState(TemporalState):
-    track_section = _dj_models.ForeignKey(TrackSection, _dj_models.CASCADE, related_name='electrification_states')
+    track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='electrification_states')
     current_type = _dj_models.ForeignKey(CurrentType, _dj_models.PROTECT, related_name='states', null=True, blank=True)
     electrification_system = _dj_models.ForeignKey(ElectrificationSystem, _dj_models.PROTECT, related_name='states',
                                                    null=True, blank=True)
@@ -610,7 +603,7 @@ class TrackElectrificationState(TemporalState):
     tension = _dj_models.FloatField(validators=[positive_validator], null=True, blank=True)
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('track_section',)
+        return ('track',)
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude=exclude)
@@ -626,45 +619,43 @@ class TrackElectrificationState(TemporalState):
 
 
 class TireRollwaysState(TemporalState):
-    track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE,
-                                          related_name='tire_rollways_states')
+    track = _dj_models.ForeignKey(ConventionalTrack, _dj_models.CASCADE, related_name='tire_rollways_states')
     has_tire_rollways = _dj_models.BooleanField()
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('track_section',)
+        return ('track',)
 
 
 class TrackPitState(TemporalState):
-    track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE, related_name='pit_states')
+    track = _dj_models.ForeignKey(ConventionalTrack, _dj_models.CASCADE, related_name='pit_states')
     has_pit = _dj_models.BooleanField()
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('track_section',)
+        return ('track',)
 
 
-class TractionTypeState(TemporalState):
-    track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE,
-                                          related_name='traction_type_states')
-    traction_type = _dj_models.ForeignKey(TractionType, _dj_models.PROTECT, related_name='states')
+class TractionSystemState(TemporalState):
+    track = _dj_models.ForeignKey(ConventionalTrack, _dj_models.CASCADE, related_name='traction_system_states')
+    traction_system = _dj_models.ForeignKey(TractionSystem, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('track_section',)
+        return ('track',)
 
 
 class RailTypeState(TemporalState):
-    track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE, related_name='rail_type_states')
+    track = _dj_models.ForeignKey(ConventionalTrack, _dj_models.CASCADE, related_name='rail_type_states')
     rail_type = _dj_models.ForeignKey(RailType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('track_section',)
+        return ('track',)
 
 
 class TieTypeState(TemporalState):
-    track_section = _dj_models.ForeignKey(ConventionalTrackSection, _dj_models.CASCADE, related_name='tie_type_states')
+    track = _dj_models.ForeignKey(ConventionalTrack, _dj_models.CASCADE, related_name='tie_type_states')
     tie_type = _dj_models.ForeignKey(TieType, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('track_section',)
+        return ('track',)
 
 
 class RuinState(TemporalState):
@@ -701,20 +692,12 @@ class BuildingHeightState(TemporalState):
         return ('building',)
 
 
-class BuildingTypeState(TemporalState):
-    building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='type_states')
-    type = _dj_models.ForeignKey(BuildingType, _dj_models.PROTECT, related_name='states')
+class BuildingUseState(TemporalState):
+    building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='use_states')
+    use = _dj_models.ForeignKey(BuildingUse, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
-        return ('building',)
-
-
-class BuildingUseTypeState(TemporalState):
-    building = _dj_models.ForeignKey(Building, _dj_models.CASCADE, related_name='use_type_states')
-    use_type = _dj_models.ForeignKey(BuildingUseType, _dj_models.PROTECT, related_name='states')
-
-    def _get_overlap_filter(self) -> tuple[str, ...]:
-        return 'building', 'use_type'
+        return 'building', 'use'
 
 
 class LiftHeighState(TemporalState):
@@ -734,9 +717,12 @@ class TrackInfrastructureUseTypeState(TemporalState):
         return 'infrastructure', 'use_type'
 
 
-class BufferStopState(TemporalState):
-    node = _dj_models.ForeignKey(SegmentNode, _dj_models.CASCADE, related_name='buffer_stop_states')
-    is_present = _dj_models.BooleanField()
+class SegmentNodeTypeState(TemporalState):
+    node = _dj_models.ForeignKey(SegmentNode, _dj_models.CASCADE, related_name='type_states')
+    type = _dj_models.ForeignKey(SegmentNodeType, _dj_models.PROTECT, related_name='type')
+
+    def _get_overlap_filter(self) -> tuple[str, ...]:
+        return ('node',)
 
 
 # endregion
