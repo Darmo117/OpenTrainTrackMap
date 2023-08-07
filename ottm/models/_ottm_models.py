@@ -285,6 +285,10 @@ class OverheadLinePylon(IsolatedNode):
     pass
 
 
+class PointOfInterest(IsolatedNode):
+    pass
+
+
 class SegmentNode(Node):
     pass
 
