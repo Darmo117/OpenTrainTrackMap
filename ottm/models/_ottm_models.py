@@ -311,6 +311,10 @@ class Barrier(Polyline):
     type = _dj_models.ForeignKey(BarrierType, _dj_models.PROTECT, related_name='type', blank=True, null=True)
 
 
+class Gate(Polyline):
+    pass
+
+
 class Track(Polyline):
     level = _dj_models.ForeignKey(TrackLevel, _dj_models.CASCADE, related_name='tracks')
 

@@ -3642,7 +3642,7 @@ r2=+ translations</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1860</x>
+      <x>1840</x>
       <y>1090</y>
       <w>100</w>
       <h>30</h>
@@ -3681,7 +3681,7 @@ m1=0,1
 r1=+ type
 m2=*
 r2=+ barriers</panel_attributes>
-    <additional_attributes>50.0;90.0;50.0;20.0;90.0;20.0</additional_attributes>
+    <additional_attributes>40.0;90.0;40.0;20.0;90.0;20.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
@@ -4016,5 +4016,28 @@ bg=cyan</panel_attributes>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;-</panel_attributes>
     <additional_attributes>10.0;10.0;10.0;120.0;30.0;120.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1940</x>
+      <y>1050</y>
+      <w>120</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>Gate
+bg=cyan</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2050</x>
+      <y>890</y>
+      <w>50</w>
+      <h>190</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>30.0;10.0;30.0;170.0;10.0;170.0</additional_attributes>
   </element>
 </diagram>
