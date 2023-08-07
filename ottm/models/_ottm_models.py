@@ -16,12 +16,12 @@ from ..api import data_types as _dt
 
 def positive_validator(v: float | int):
     if v < 0:
-        raise _dj_exc.ValidationError(f'negative value: {v}')
+        raise _dj_exc.ValidationError(f'negative value: {v}', code='negative_value')
 
 
 def degrees_angle_validator(v: float | int):
     if not (0 <= v <= 360):
-        raise _dj_exc.ValidationError(f'invalid degrees angle value: {v}')
+        raise _dj_exc.ValidationError(f'invalid degrees angle value: {v}', code='invalid_angle_range')
 
 
 # endregion
@@ -49,7 +49,7 @@ class Translated(_dj_models.Model):
 class Translation(_dj_models.Model):
     translated_object: Translated  # Defined in subclasses
     language = _dj_models.ForeignKey(_i18n_models.Language, _dj_models.CASCADE)
-    label = _dj_models.CharField(max_length=100)
+    label = _dj_models.TextField()
 
     class Meta:
         abstract = True
@@ -113,6 +113,14 @@ class BuildingUsage(Enumeration):
 
 class BuildingUseTranslation(Translation):
     translated_object = _dj_models.ForeignKey(BuildingUsage, _dj_models.CASCADE, related_name='translations')
+
+
+class TrackLevel(Enumeration):
+    pass
+
+
+class TrackLevelTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(TrackLevel, _dj_models.CASCADE, related_name='translations')
 
 
 class TrackService(Enumeration):
@@ -185,6 +193,14 @@ class SegmentNodeType(Enumeration):
 
 class SegmentNodeTypeTranslation(Translation):
     translated_object = _dj_models.ForeignKey(SegmentNodeType, _dj_models.CASCADE, related_name='translations')
+
+
+class CrossingBarrierType(Enumeration):
+    pass
+
+
+class CrossingBarrierTypeTranslation(Translation):
+    translated_object = _dj_models.ForeignKey(CrossingBarrierType, _dj_models.CASCADE, related_name='translations')
 
 
 # endregion
@@ -288,11 +304,11 @@ class PolylineNodes(_dj_models.Model):
 
 class Barrier(Polyline):
     materials = _dj_models.ManyToManyField(ConstructionMaterial, related_name='barriers')
-    type = _dj_models.ForeignKey(BarrierType, _dj_models.PROTECT, related_name='type')
+    type = _dj_models.ForeignKey(BarrierType, _dj_models.PROTECT, related_name='type', blank=True, null=True)
 
 
 class Track(Polyline):
-    pass
+    level = _dj_models.ForeignKey(TrackLevel, _dj_models.CASCADE, related_name='tracks')
 
 
 class VALTrack(Track):
@@ -391,7 +407,10 @@ class PolygonHole(Polygon):
     def validate_constraints(self, exclude=None):  # TODO keep it depending on Leaflet.js’s rendering abilities
         super().validate_constraints(exclude=exclude)
         if (exclude is None or 'parent' not in exclude) and isinstance(self.parent, PolygonHole):
-            raise _dj_exc.ValidationError('PolygonHole cannot have parents of type PolygonHole')
+            raise _dj_exc.ValidationError(
+                'PolygonHole cannot have parents of type PolygonHole',
+                code='polygon_hole_invalid_parent'
+            )
 
 
 class Area(Polygon):
@@ -399,7 +418,8 @@ class Area(Polygon):
 
 
 class Platform(Polygon):
-    material = _dj_models.ForeignKey(SurfaceMaterial, related_name='platforms')
+    material = _dj_models.ForeignKey(SurfaceMaterial, _dj_models.PROTECT, related_name='platforms',
+                                     blank=True, null=True)
 
 
 class Construction(Polygon):
@@ -460,7 +480,8 @@ class Lift(ManeuverStructure):
 
 
 class Bridge(TrackInfrastructure):
-    structure = _dj_models.ForeignKey(BridgeStructure, _dj_models.PROTECT, related_name='bridges')
+    structure = _dj_models.ForeignKey(BridgeStructure, _dj_models.PROTECT, related_name='bridges',
+                                      blank=True, null=True)
 
 
 class StaticBridge(Bridge):
@@ -534,7 +555,10 @@ class TemporalState(_dj_models.Model):
                 and (exclude is None or 'existence_invertal' not in exclude and not any(k in exclude for k in filters))
                 and self._overlaps_any(**filters)
         ):
-            raise _dj_exc.ValidationError(f'overlapping existence intervals for objects: {filters}')
+            raise _dj_exc.ValidationError(
+                f'overlapping existence intervals for objects: {filters}',
+                code='temporal_state_overlap'
+            )
 
     def _overlaps_any(self, **filters):
         return any(self.existence_interval.overlaps(state.existence_interval)
@@ -619,10 +643,10 @@ class TrackUsageState(TemporalState):
 
 class TrackElectrificationState(TemporalState):
     track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='electrification_states')
+    electrified = _dj_models.BooleanField()
     current_type = _dj_models.ForeignKey(CurrentType, _dj_models.PROTECT, related_name='states', null=True, blank=True)
     electrification_system = _dj_models.ForeignKey(ElectrificationSystem, _dj_models.PROTECT, related_name='states',
                                                    null=True, blank=True)
-    electrified = _dj_models.BooleanField()
     tension = _dj_models.FloatField(validators=[positive_validator], null=True, blank=True)
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
@@ -638,7 +662,9 @@ class TrackElectrificationState(TemporalState):
                      or self.current_type is not None)
         ):
             raise _dj_exc.ValidationError(
-                'tension, electrification_system and current_type should be None if electrified is False')
+                'tension, electrification_system and current_type should be None if electrified is False',
+                'track_electrification_state_invalid_electricity_data'
+            )
 
 
 class TireRollwaysState(TemporalState):
@@ -750,10 +776,28 @@ class TrackInfrastructureUsageState(TemporalState):
 
 class SegmentNodeTypeState(TemporalState):
     node = _dj_models.ForeignKey(SegmentNode, _dj_models.CASCADE, related_name='type_states')
-    type = _dj_models.ForeignKey(SegmentNodeType, _dj_models.PROTECT, related_name='type')
+    type = _dj_models.ForeignKey(SegmentNodeType, _dj_models.PROTECT, related_name='states')
+    # Field when type is a crossing
+    has_crossing_lights = _dj_models.BooleanField(blank=True, null=True)
+    has_crossing_bells = _dj_models.BooleanField(blank=True, null=True)
+    has_crossing_markings = _dj_models.BooleanField(blank=True, null=True)
+    crossing_barriers_type = _dj_models.ForeignKey(CrossingBarrierType, _dj_models.PROTECT, related_name='states',
+                                                   blank=True, null=True)
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
         return ('node',)
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude)
+        if ('crossing' not in self.type.label and (
+                self.has_crossing_lights is not None
+                or self.has_crossing_bells is not None
+                or self.has_crossing_markings is not None
+                or self.crossing_barriers_type is not None)):
+            raise _dj_exc.ValidationError(
+                'non-crossing node cannot have non-null crossing-related fields',
+                code='segment_node_type_state_invalid_crossing_data'
+            )
 
 
 # endregion

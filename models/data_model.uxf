@@ -765,7 +765,7 @@ r2=+ parent</panel_attributes>
   <element>
     <id>UMLNote</id>
     <coordinates>
-      <x>1140</x>
+      <x>1080</x>
       <y>1000</y>
       <w>180</w>
       <h>50</h>
@@ -780,11 +780,11 @@ style=wordwrap</panel_attributes>
     <coordinates>
       <x>1020</x>
       <y>980</y>
-      <w>140</w>
-      <h>70</h>
+      <w>80</w>
+      <h>60</h>
     </coordinates>
     <panel_attributes>lt=.</panel_attributes>
-    <additional_attributes>10.0;10.0;120.0;50.0</additional_attributes>
+    <additional_attributes>10.0;10.0;60.0;40.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
@@ -2535,7 +2535,7 @@ bg=cyan</panel_attributes>
       <h>80</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
-m1=1
+m1=0,1
 r1=+ structure
 m2=*
 r2=+ bridges</panel_attributes>
@@ -3457,22 +3457,26 @@ r2=+ translations</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1270</x>
+      <x>1280</x>
       <y>730</y>
-      <w>180</w>
-      <h>40</h>
+      <w>220</w>
+      <h>100</h>
     </coordinates>
     <panel_attributes>SegmentNodeTypeState
 «no overlap»
+--
++ has_crossing_lights: bool?
++ has_crossing_bells: bool?
++ has_crossing_markings: bool?
 bg=pink</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1350</x>
+      <x>1380</x>
       <y>660</y>
-      <w>210</w>
+      <w>180</w>
       <h>90</h>
     </coordinates>
     <panel_attributes>lt=-&gt;
@@ -3480,7 +3484,7 @@ m1=*
 r1=+ type_states
 m2=1
 r2=+ node</panel_attributes>
-    <additional_attributes>10.0;70.0;10.0;20.0;190.0;20.0</additional_attributes>
+    <additional_attributes>10.0;70.0;10.0;20.0;160.0;20.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
@@ -3539,7 +3543,7 @@ bg=cyan</panel_attributes>
       <h>150</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;-</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;70.0;290.0;70.0;290.0;130.0</additional_attributes>
+    <additional_attributes>10.0;10.0;10.0;90.0;290.0;90.0;290.0;130.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
@@ -3578,8 +3582,8 @@ bg=cyan</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1320</x>
-      <y>870</y>
+      <x>1550</x>
+      <y>810</y>
       <w>140</w>
       <h>30</h>
     </coordinates>
@@ -3596,23 +3600,23 @@ bg=orange</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1350</x>
-      <y>760</y>
-      <w>90</w>
-      <h>130</h>
+      <x>1490</x>
+      <y>740</y>
+      <w>190</w>
+      <h>90</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
 m1=1
-r1=+ feature
+r1=+ type
 m2=*
 r2=+ states</panel_attributes>
-    <additional_attributes>10.0;110.0;10.0;10.0</additional_attributes>
+    <additional_attributes>130.0;70.0;130.0;20.0;10.0;20.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1170</x>
-      <y>960</y>
+      <x>1510</x>
+      <y>940</y>
       <w>220</w>
       <h>30</h>
     </coordinates>
@@ -3623,17 +3627,17 @@ bg=light_gray</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1170</x>
-      <y>860</y>
-      <w>200</w>
-      <h>120</h>
+      <x>1610</x>
+      <y>830</y>
+      <w>150</w>
+      <h>130</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
 m1=1
 r1=+ translated_object
 m2=*
 r2=+ translations</panel_attributes>
-    <additional_attributes>150.0;20.0;90.0;20.0;90.0;100.0</additional_attributes>
+    <additional_attributes>10.0;10.0;10.0;100.0;10.0;110.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
@@ -3673,7 +3677,7 @@ bg=light_gray</panel_attributes>
       <h>110</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
-m1=1
+m1=0,1
 r1=+ type
 m2=*
 r2=+ barriers</panel_attributes>
@@ -3869,10 +3873,125 @@ bg=orange</panel_attributes>
       <h>50</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
-m1=1
+m1=0,1
 r1=+ material
 m2=*
 r2=+ platforms</panel_attributes>
     <additional_attributes>210.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>2430</x>
+      <y>1180</y>
+      <w>100</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>TrackLevel
+--
+on_ground
+underground
+overground
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>2260</x>
+      <y>1180</y>
+      <w>190</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=1
+r1=+ level
+m2=*
+r2=+ tracks</panel_attributes>
+    <additional_attributes>170.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1340</x>
+      <y>820</y>
+      <w>120</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>lt=.</panel_attributes>
+    <additional_attributes>100.0;30.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLNote</id>
+    <coordinates>
+      <x>1280</x>
+      <y>850</y>
+      <w>330</w>
+      <h>40</h>
+    </coordinates>
+    <panel_attributes>type ∈ {road_crossing, pedestrian_crossing}
+→ has_crossing_* = None ∧ barrier_type = None
+bg=yellow</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1120</x>
+      <y>830</y>
+      <w>150</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>CrossingBarrierType
+--
+none
+full
+half
+double_half
+gate
+bg=orange</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1160</x>
+      <y>740</y>
+      <w>140</w>
+      <h>110</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=0,1
+r1=+ barrier_type
+m2=*
+r2=+ states</panel_attributes>
+    <additional_attributes>10.0;90.0;10.0;20.0;120.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1140</x>
+      <y>960</y>
+      <w>220</w>
+      <h>30</h>
+    </coordinates>
+    <panel_attributes>CrossingBarrierTypeTranslation
+bg=light_gray</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1160</x>
+      <y>850</y>
+      <w>150</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;-
+m1=1
+r1=+ translated_object
+m2=*
+r2=+ translations</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;110.0</additional_attributes>
   </element>
 </diagram>
