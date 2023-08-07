@@ -630,7 +630,7 @@ class TrackMaximumSpeedState(TemporalState):
 
 
 class TrackServiceState(TemporalState):
-    track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='usage_states')
+    track = _dj_models.ForeignKey(Track, _dj_models.CASCADE, related_name='service_states')
     service = _dj_models.ForeignKey(TrackService, _dj_models.PROTECT, related_name='states')
 
     def _get_overlap_filter(self) -> tuple[str, ...]:
