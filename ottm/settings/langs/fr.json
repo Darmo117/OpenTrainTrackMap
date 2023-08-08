@@ -759,6 +759,12 @@
               "tooltip": "Créer un nouveau polygone"
             }
           }
+        },
+        "editor_panel": {
+          "title": {
+            "edit_feature": "Modifier l’élément",
+            "select_feature": "Sélectionner un élément"
+          }
         }
       },
       "wiki": {

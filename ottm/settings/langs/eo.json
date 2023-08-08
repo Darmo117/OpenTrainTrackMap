@@ -738,6 +738,12 @@
               "tooltip": "Krei novan plurangulon"
             }
           }
+        },
+        "editor_panel": {
+          "title": {
+            "edit_feature": "Redakti la objekton",
+            "select_feature": "Selekti objekton"
+          }
         }
       },
       "wiki": {

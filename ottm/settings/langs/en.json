@@ -730,6 +730,12 @@
               "tooltip": "Create a new polygon"
             }
           }
+        },
+        "editor_panel": {
+          "title": {
+            "edit_feature": "Edit feature",
+            "select_feature": "Select a feature"
+          }
         }
       },
       "wiki": {

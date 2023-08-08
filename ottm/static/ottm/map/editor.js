@@ -1,43 +1,84 @@
 class MapEditor {
+  #map;
   /**
-   * The currently selected layer.
-   * @type {null}
+   * The currently selected feature.
+   * @type {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
    */
-  #selectedLayer = null;
+  #selectedFeature = null;
   /**
    * Used to ignore the "click" event fired by the map right after a polyline or polygon is clicked.
    * @type {boolean}
    */
   #layerClicked = false;
+  /**
+   * Used to ignore the "contextmenu" event fired by the map when right-clicking a feature.
+   * @type {boolean}
+   */
+  #isFeatureMenuVisible = false;
+  /**
+   * @type {MapEditor.Polyline|MapEditor.Polygon|null}
+   */
+  #drawing = null;
+  /**
+   * @type {{feature:MapEditor.Polyline|MapEditor.Polygon,latlng:L.LatLng,to:MapEditor.Polyline|MapEditor.Polygon}|null}
+   */
+  #snap = null;
+  /**
+   * Panel containing forms to edit map features.
+   * @type {MapEditorPanel}
+   */
+  #editorPanel = new MapEditorPanel("editor-panel");
+
+  Marker;
+  VertexMarker;
+  Polyline;
+  Polygon;
 
   constructor() {
     const thisEditor = this;
 
+    /**
+     * @param selected {boolean}
+     */
+    const setSelected = function (selected) {
+      const v = this.hasOwnProperty("_icon") ? this._icon : this._path;
+      if (selected) {
+        L.DomUtil.addClass(v, "layer-selected");
+      } else {
+        L.DomUtil.removeClass(v, "layer-selected");
+      }
+    };
+
+    /**
+     * @param latlng {L.LatLng}
+     * @return {MapEditor.VertexMarker|null}
+     */
+    const getVertexMarker = function (latlng) {
+      return null; // TODO
+    }
+
     this.Marker = L.Marker.extend({
       initialize: function (latlngs, options) {
         L.Marker.prototype.initialize.call(this, latlngs, options);
-        this.on("click", function () {
+        this.on("click", () => {
           thisEditor.#updateSelection(this);
+        });
+        this.on("contextmenu", () => {
+          thisEditor.#onContextMenu(this);
         });
       },
 
-      /**
-       * @param selected {boolean}
-       */
-      setSelected: function (selected) {
-        if (selected) {
-          L.DomUtil.addClass(this._icon, "layer-selected");
-        } else {
-          L.DomUtil.removeClass(this._icon, "layer-selected");
-        }
-      },
+      setSelected: setSelected,
     });
 
     this.VertexMarker = L.Editable.VertexMarker.extend({
       initialize: function (latlng, latlngs, editor, options) {
         L.Editable.VertexMarker.prototype.initialize.call(this, latlng, latlngs, editor, options);
-        this.on("click", function () {
+        this.on("click", () => {
           thisEditor.#updateSelection(this);
+        });
+        this.on("contextmenu", () => {
+          thisEditor.#onContextMenu(this);
         });
       },
 
@@ -48,63 +89,66 @@ class MapEditor {
         if (!this._icon) {
           return;
         }
-        if (selected) {
-          L.DomUtil.addClass(this._icon, "layer-selected");
-        } else {
-          L.DomUtil.removeClass(this._icon, "layer-selected");
-        }
+        setSelected.call(this, selected)
       },
     });
 
+    // TODO make draggable
     this.Polyline = L.Polyline.extend({
       initialize: function (latlngs, options) {
+        // TODO set style options depending on underlying model data type
         options.weight = 4;
-        options.color = '#fff';
+        options.color = "#fff";
         L.Polyline.prototype.initialize.call(this, latlngs, options);
         this.on("click", function () {
           thisEditor.#layerClicked = true;
           thisEditor.#updateSelection(this);
         });
+        this.on("contextmenu", () => {
+          thisEditor.#isFeatureMenuVisible = true;
+          thisEditor.#onContextMenu(this);
+        });
       },
 
-      /**
-       * @param selected {boolean}
-       */
-      setSelected: function (selected) {
-        if (selected) {
-          L.DomUtil.addClass(this._path, "layer-selected");
-        } else {
-          L.DomUtil.removeClass(this._path, "layer-selected");
-        }
-      },
+      setSelected: setSelected,
+
+      getVertexMarker: getVertexMarker,
     });
 
+    // TODO make draggable
     this.Polygon = L.Polygon.extend({
       initialize: function (latlngs, options) {
+        // TODO set style options depending on underlying model data type
+        options.weight = 4;
+        options.color = "#fff";
         L.Polygon.prototype.initialize.call(this, latlngs, options);
         this.on("click", function () {
           thisEditor.#layerClicked = true;
           thisEditor.#updateSelection(this);
         });
+        this.on("contextmenu", () => {
+          thisEditor.#isFeatureMenuVisible = true;
+          thisEditor.#onContextMenu(this);
+        });
       },
 
-      /**
-       * @param selected {boolean}
-       */
-      setSelected: function (selected) {
-        if (selected) {
-          L.DomUtil.addClass(this._path, "layer-selected");
-        } else {
-          L.DomUtil.removeClass(this._path, "layer-selected");
-        }
-      },
+      setSelected: setSelected,
+
+      getVertexMarker: getVertexMarker,
     });
   }
 
-  #updateSelection(layer) {
-    this.#selectedLayer?.setSelected(false);
-    this.#selectedLayer = layer;
-    this.#selectedLayer?.setSelected(true);
+  /**
+   * Set the feature to show in the editor panel.
+   *
+   * @param feature {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
+   *  Feature to show in the editor panel. May be null.
+   */
+  #updateSelection(feature) {
+    this.#selectedFeature?.setSelected(false);
+    this.#selectedFeature = feature;
+    this.#selectedFeature?.setSelected(true);
+    this.#editorPanel.setFeature(feature);
   }
 
   /**
@@ -116,7 +160,6 @@ class MapEditor {
       polygonClass: this.Polygon,
       markerClass: this.Marker,
       vertexMarkerClass: this.VertexMarker,
-      // middleMarkerClass: this.VertexMarker,
     };
   }
 
@@ -126,9 +169,11 @@ class MapEditor {
    * @param map A Leaflet map object.
    */
   initEditor(map) {
+    this.#map = map;
+
     const EditControl = L.Control.extend({
       options: {
-        position: "topleft",
+        position: "topcenter",
       },
 
       onAdd: function (map) {
@@ -175,20 +220,27 @@ class MapEditor {
     map.addControl(new NewLineControl());
     map.addControl(new NewPolygonControl());
 
-    const snapHandler = new L.Handler.MarkerSnap(map);
+    const snapHandler = new L.Handler.MarkerSnap(map, null, {
+      onlyVertices: true,
+    });
     const snapMarker = L.marker(map.getCenter(), {
       icon: map.editTools.createVertexIcon({className: "leaflet-div-icon leaflet-drawing-icon"}),
       zIndexOffset: 1000
     });
     snapHandler.watchMarker(snapMarker);
 
-    function addSnapGuide(g) {
-      snapHandler.addGuideLayer(g);
-    }
+    const addSnapGuide = g => {
+      if (!(g instanceof this.Marker)) {
+        snapHandler.addGuideLayer(g);
+      }
+    };
 
     function removeSnapGuide(g) {
-      // No clean way to remove a guide from the list
-      snapHandler._guides.splice(snapHandler._guides.indexOf(g), 1);
+      const i = snapHandler._guides.indexOf(g);
+      if (i >= 0) {
+        // No clean way to remove a guide from the list
+        snapHandler._guides.splice(i, 1);
+      }
     }
 
     function followMouse(e) {
@@ -196,59 +248,60 @@ class MapEditor {
     }
 
     map.on("click", () => {
+      // Prevent instant deselection when clicking polylines/polygons
       if (this.#layerClicked) {
         this.#layerClicked = false;
-      } else {
-        this.#updateSelection(null);
+        return;
       }
+      this.#updateSelection(null);
     });
-    map.on("contextmenu", function (e) {
-      // Disable browser’s context menu
+    map.on("contextmenu", () => {
+      if (this.#isFeatureMenuVisible) {
+        this.#isFeatureMenuVisible = false;
+        return;
+      }
+      this.#onContextMenu(null);
     });
-    // We have to remove the currently dragged layer from the guides list
+    // We have to remove the currently dragged feature from the guides list
     // as otherwise geometryutils would throw errors.
     // The object is added back into the list after the drag has stopped.
-    // TODO "merge" points on snap
-    map.on("editable:created", e => {
-      const layer = e.layer;
-      addSnapGuide(layer);
-      if (layer instanceof L.Marker) {
-        // Markers do not fire "editable:vertex:*" events on their own
-        layer.on("dragstart", () => {
-          map.fire("editable:vertex:dragstart", {layer: layer, vertex: layer});
-        });
-        layer.on("dragend", () => {
-          map.fire("editable:vertex:dragend", {layer: layer, vertex: layer});
-        });
-        layer.on("click", () => {
-          map.fire("editable:vertex:rawclick", {layer: layer, vertex: layer});
-        })
-      }
-    });
+    map.on("editable:created", e => addSnapGuide(e.layer));
     map.on("editable:vertex:dragstart", e => {
-      removeSnapGuide(e.layer);
-      snapHandler.watchMarker(e.vertex);
+      const feature = e.layer;
+      const vertex = e.vertex;
+      removeSnapGuide(feature);
+      snapHandler.watchMarker(vertex);
+      vertex.on("snap", ev => this.#onSnap(feature, vertex.latlng, ev.layer));
+      vertex.on("unsnap", _ => this.#onUnsnap());
     });
     map.on("editable:vertex:dragend", e => {
+      this.#mergeSnap();
       addSnapGuide(e.layer);
       snapHandler.unwatchMarker(e.vertex);
+      e.vertex.off("snap");
+      e.vertex.off("unsnap");
     });
-    map.on("editable:drawing:start", function (e) {
+    map.on("editable:drawing:start", e => {
       removeSnapGuide(e.layer);
-      snapMarker.addTo(map);
-      this.on("mousemove", followMouse);
+      if (!(e.layer instanceof this.Marker)) {
+        snapMarker.addTo(map);
+        this.#drawing = e.layer;
+      }
+      map.on("mousemove", followMouse);
     });
-    map.on("editable:drawing:end", function (e) {
+    map.on("editable:drawing:end", e => {
       addSnapGuide(e.layer);
-      this.off("mousemove", followMouse);
+      map.off("mousemove", followMouse);
       snapMarker.remove();
+      this.#drawing = null;
     });
     map.on("editable:drawing:click", e => {
-      // Leaflet copy event data to another object when firing,
+      this.#mergeSnap();
+      // Leaflet copies event data to another object when firing,
       // so the event object we have here is not the one fired by
       // Leaflet.Editable; it's not a deep copy though, so we can change
       // the other objects that have a reference here.
-      let latlng = snapMarker.getLatLng();
+      const latlng = snapMarker.getLatLng();
       e.latlng.lat = latlng.lat;
       e.latlng.lng = latlng.lng;
     });
@@ -257,9 +310,107 @@ class MapEditor {
       e.vertex.continue();
     });
     map.on("editable:vertex:rawclick", e => {
-      if (!(e.layer instanceof L.Marker)) {
+      if (!(e.layer instanceof this.Marker)) {
         e.cancel(); // Disable default behavior: delete vertex
       }
     });
+    snapMarker.on("snap", e => this.#onSnap(this.#drawing, e.latlng, e.layer));
+    snapMarker.on("unsnap", () => this.#onUnsnap());
+
+    $("#editor-panel").css({display: "block"}).addClass("split");
+    $("#map").addClass("split");
+    window.Split(["#editor-panel", "#map"], {
+      sizes: [20, 80],
+      minSize: [0, 100],
+      gutterSize: 5,
+    });
+
+    this.#updateSelection(null);
+  }
+
+  /**
+   * Register a vertex snap.
+   *
+   * @param feature {MapEditor.Polyline|MapEditor.Polygon} Feature being edited.
+   * @param latlng {L.LatLng} Position of the snapped vertex from the feature.
+   * @param to {MapEditor.Polyline|MapEditor.Polygon} Feature the vertex has been snapped to.
+   */
+  #onSnap(feature, latlng, to) {
+    this.#snap = {
+      feature: feature,
+      latlng: latlng,
+      to: to,
+    };
+  }
+
+  /**
+   * Unregister the current snap data.
+   */
+  #onUnsnap() {
+    this.#snap = null;
+  }
+
+  /**
+   * If #snap is not null, merge or create relevant vertices.
+   */
+  #mergeSnap() {
+    if (!this.#snap) {
+      return;
+    }
+    console.log("mergeSnap", this.#snap);
+    const sourceFeature = this.#snap.feature;
+    const targetFeature = this.#snap.to;
+    const snapPoint = this.#snap.latlng;
+    let sourceVertex = sourceFeature.getVertexMarker(snapPoint);
+    let targetVertex = targetFeature.getVertexMarker(snapPoint);
+    console.log(sourceVertex, targetVertex);
+    // TODO merge vertices
+  }
+
+  /**
+   * Show a context menu for the given object.
+   *
+   * @param feature {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
+   *  Feature being edited.
+   */
+  #onContextMenu(feature) {
+    this.#updateSelection(feature);
+    // TODO context menu
+    console.log(feature);
+  }
+}
+
+class MapEditorPanel {
+  #$title;
+
+  /**
+   * The feature being edited.
+   * @type {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
+   */
+  #feature;
+
+  /**
+   * Create an editor panel.
+   *
+   * @param divID {string} ID of the div element to use as an editor panel.
+   */
+  constructor(divID) {
+    const $div = $(`#${divID}`);
+    this.#$title = $('<h1 id="editor-panel-title"></h1>');
+    $div.append(this.#$title);
+  }
+
+  /**
+   * Set the feature to edit.
+   *
+   * @param feature {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
+   */
+  setFeature(feature) {
+    this.#feature = feature;
+    if (feature) {
+      this.#$title.text(ottm.translations.get("map.editor_panel.title.edit_feature"));
+    } else {
+      this.#$title.text(ottm.translations.get("map.editor_panel.title.select_feature"));
+    }
   }
 }

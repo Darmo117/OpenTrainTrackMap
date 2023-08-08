@@ -87,6 +87,28 @@
      * @param editable {boolean} Whether the map should be editable.
      */
     constructor(mapID, editable) {
+      // Add center position
+      // Code from https://stackoverflow.com/a/60391674/3779986
+      L.Map.include({
+        _initControlPos: function () {
+          const l = "leaflet-";
+          this._controlCorners = {};
+          this._controlContainer = L.DomUtil.create("div", l + "control-container", this._container);
+
+          const createCorner = (vSide, hSide) => {
+            const className = l + vSide + " " + l + hSide;
+            this._controlCorners[vSide + hSide] = L.DomUtil.create("div", className, this._controlContainer);
+          };
+
+          createCorner("top", "left");
+          createCorner("top", "right");
+          createCorner("bottom", "left");
+          createCorner("bottom", "right");
+          createCorner("top", "center");
+          createCorner("bottom", "center");
+        }
+      });
+
       const editor = editable ? new MapEditor() : null;
       const map = L.map(mapID, {
         zoomControl: false, // Remove default zoom control
@@ -144,6 +166,8 @@
         [ottm.translations.get("map.controls.layers.base.satellite_google")]: googleSatelliteTiles,
       };
 
+      L.control.layers(this.#baseLayers, this.#overlayLayers).addTo(map);
+
       /**
        * Open the current view in the given online mapping service.
        * @param map Leaflet map object.
@@ -182,8 +206,6 @@
       $control.find("button.search-button").append('<span class="mdi mdi-magnify"></span>');
       $control.find("button.clear-button-container svg").remove()
       $control.find("button.clear-button-container").append('<span class="mdi mdi-window-close"></span>');
-
-      L.control.layers(this.#baseLayers, this.#overlayLayers).addTo(map);
 
       this.#map = map;
       if (this.getPositionFromURL()[1]) {

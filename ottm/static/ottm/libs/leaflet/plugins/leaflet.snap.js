@@ -14,10 +14,10 @@ L.Snap = {
     };
   },
 
-  _findClosestLayerSnap: function (map, layers, latlng, tolerance, withVertices) {
+  _findClosestLayerSnap: function (map, layers, latlng, tolerance, onlyVertices) {
     const closest = L.GeometryUtil.nClosestLayers(map, layers, latlng, 6);
 
-    // code to correct prefer snap to shapes (and their vertices, if withVertices is true)
+    // code to correct prefer snap to shapes (or only their vertices, if onlyVertices is true)
     // to gridlines and guidelines, and then guidelines to gridlines
     const withinTolerance = [];
     const pointsWithinTolerance = [];
@@ -28,7 +28,7 @@ L.Snap = {
         withinTolerance.push(layerInfo);
         if (layerInfo.layer.hasOwnProperty("_latlng")) {
           pointsWithinTolerance.push(layerInfo);
-        } else if (!layerInfo.layer.hasOwnProperty("_gridlineGroup") && !layerInfo.layer.hasOwnProperty('_guidelineGroup')) {
+        } else if (!layerInfo.layer.hasOwnProperty("_gridlineGroup") && !layerInfo.layer.hasOwnProperty("_guidelineGroup")) {
           shapesWithinTolerance.push(layerInfo);
         } else if (layerInfo.layer.hasOwnProperty("_guidelineGroup")) {
           guidesWithinTolerance.push(layerInfo);
@@ -55,21 +55,23 @@ L.Snap = {
 
       // this is code from L.GeometryUtil.closestSnap that will find
       // the closest vertex of this layer to the point
-      if (withVertices && (typeof shapeInfo.layer.getLatLngs == 'function')) {
-        const vertexLatLng = L.GeometryUtil.closest(map, shapeInfo.layer, shapeInfo.latlng, true);
+      const vertexLatLng = L.GeometryUtil.closest(map, shapeInfo.layer, shapeInfo.latlng, true);
 
-        if (vertexLatLng) {
-          const d = L.GeometryUtil.distance(map, latlng, vertexLatLng);
-          if (d < tolerance) {
-            returnLatLng = new L.LatLng(vertexLatLng.lat, vertexLatLng.lng);
-          }
+      if (vertexLatLng) {
+        const d = L.GeometryUtil.distance(map, latlng, vertexLatLng);
+        if (d < tolerance) {
+          returnLatLng = new L.LatLng(vertexLatLng.lat, vertexLatLng.lng);
+        } else if (onlyVertices) {
+          return null;
         }
+      } else if (onlyVertices) {
+        return null;
       }
     } else if (guidesWithinTolerance.length > 0) {
       const guideInfo = guidesWithinTolerance[0];
 
       for (const item of withinTolerance) {
-        intInfo = this._findGuideIntersection('guide', map, latlng, [guideInfo, item]);
+        intInfo = this._findGuideIntersection("guide", map, latlng, [guideInfo, item]);
         if (intInfo.distance < tolerance) {
           returnLatLng = intInfo.intersection;
           break;
@@ -77,7 +79,7 @@ L.Snap = {
       }
     } else {
       if (withinTolerance.length === 2) {
-        intInfo = this._findGuideIntersection('grid', map, latlng, withinTolerance);
+        intInfo = this._findGuideIntersection("grid", map, latlng, withinTolerance);
         if (intInfo.distance < tolerance) {
           returnLatLng = intInfo.intersection;
         }
@@ -85,8 +87,8 @@ L.Snap = {
     }
 
     return {
-      'layer': returnLayer,
-      'latlng': returnLatLng
+      "layer": returnLayer,
+      "latlng": returnLatLng
     };
   },
 
@@ -150,7 +152,7 @@ L.Snap = {
     }
 
     const closest =
-      this._findClosestLayerSnap(map, snaplist, latlng, options.snapDistance, options.snapVertices)
+      this._findClosestLayerSnap(map, snaplist, latlng, options.snapDistance, options.onlyVertices)
       ?? {layer: null, latlng: null};
     this._updateSnap(marker, closest.layer, closest.latlng);
 
@@ -163,7 +165,7 @@ L.Snap = {
 L.Handler.MarkerSnap = L.Handler.extend({
   options: {
     snapDistance: 15, // in pixels
-    snapVertices: true
+    onlyVertices: false
   },
 
   initialize: function (map, marker, options) {
