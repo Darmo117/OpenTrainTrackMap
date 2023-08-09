@@ -1,3 +1,27 @@
+class SnapData {
+  /** @type {MapEditor.Polyline|MapEditor.Polygon} */
+  feature;
+  /** @type {MapEditor.Polyline|MapEditor.Polygon} */
+  to;
+  /** @type {MapEditor.VertexMarker|null} */
+  draggedVertex = null;
+  /** @type {L.LatLng} */
+  latlng;
+
+  /**
+   * @param feature {MapEditor.Polyline|MapEditor.Polygon} Feature being edited.
+   * @param to {MapEditor.Polyline|MapEditor.Polygon} Feature the vertex has been snapped to.
+   * @param draggedVertex {MapEditor.VertexMarker|null} Vertex being dragged and snapped. Null if drawing.
+   * @param latlng {L.LatLng} Position of the snapped vertex from the feature.
+   */
+  constructor(feature, to, draggedVertex, latlng) {
+    this.feature = feature;
+    this.to = to;
+    this.draggedVertex = draggedVertex;
+    this.latlng = latlng;
+  }
+}
+
 class MapEditor {
   #map;
   /**
@@ -20,9 +44,9 @@ class MapEditor {
    */
   #drawing = null;
   /**
-   * @type {{feature:MapEditor.Polyline|MapEditor.Polygon,latlng:L.LatLng,to:MapEditor.Polyline|MapEditor.Polygon}|null}
+   * @type {SnapData|null}
    */
-  #snap = null;
+  #snapData = null;
   /**
    * Panel containing forms to edit map features.
    * @type {MapEditorPanel}
@@ -54,7 +78,12 @@ class MapEditor {
      * @return {MapEditor.VertexMarker|null}
      */
     const getVertexMarker = function (latlng) {
-      return null; // TODO
+      for (const marker of this._markers) {
+        if (marker.getLatLng().equals(latlng)) {
+          return marker;
+        }
+      }
+      return null;
     }
 
     this.Marker = L.Marker.extend({
@@ -68,12 +97,25 @@ class MapEditor {
         });
       },
 
+      /**
+       * Set the selection of this feature.
+       *
+       * @param selected {boolean}
+       */
       setSelected: setSelected,
     });
 
     this.VertexMarker = L.Editable.VertexMarker.extend({
       initialize: function (latlng, latlngs, editor, options) {
         L.Editable.VertexMarker.prototype.initialize.call(this, latlng, latlngs, editor, options);
+
+        /**
+         * List of vertices this one is pinned to.
+         * Only vertex markers are pinnable.
+         * @type {Set<MapEditor.VertexMarker>}
+         */
+        this._pinnedTo = new Set();
+
         this.on("click", () => {
           thisEditor.#updateSelection(this);
         });
@@ -83,6 +125,8 @@ class MapEditor {
       },
 
       /**
+       * Set the selection of this feature.
+       *
        * @param selected {boolean}
        */
       setSelected: function (selected) {
@@ -91,15 +135,51 @@ class MapEditor {
         }
         setSelected.call(this, selected)
       },
+
+      onDrag: function (e, propagate = true) {
+        console.log(this, propagate); // DEBUG
+        L.Editable.VertexMarker.prototype.onDrag.call(this, e);
+        if (propagate) {
+          this._pinnedTo.forEach(v => {
+            v.onDrag(e, false); // FIXME doesn’t move v
+            // v._latlng = this._latlng;
+            // console.log(v); // DEBUG
+          });
+        }
+      },
+
+      /**
+       * Pin this vertex to the given one.
+       *
+       * @param vertex {MapEditor.VertexMarker}
+       */
+      pinTo: function (vertex) {
+        if (this._pinnedTo.has(vertex)) {
+          return;
+        }
+        this._pinnedTo.add(vertex);
+        this._pinnedTo.forEach(v => {
+          if (v === vertex) {
+            return;
+          }
+          v.pinTo(vertex);
+        });
+        vertex.pinTo(this);
+        console.log(this._pinnedTo.size, this.editor.feature._path); // DEBUG
+      }
     });
 
-    // TODO make draggable
+    // TODO make draggable from context menu
     this.Polyline = L.Polyline.extend({
       initialize: function (latlngs, options) {
         // TODO set style options depending on underlying model data type
         options.weight = 4;
         options.color = "#fff";
         L.Polyline.prototype.initialize.call(this, latlngs, options);
+
+        /** @type {MapEditor.VertexMarker[]} */
+        this._markers = [];
+
         this.on("click", function () {
           thisEditor.#layerClicked = true;
           thisEditor.#updateSelection(this);
@@ -108,20 +188,45 @@ class MapEditor {
           thisEditor.#isFeatureMenuVisible = true;
           thisEditor.#onContextMenu(this);
         });
+        this.on("editable:vertex:new", e => {
+          const latLngs = this.getLatLngs();
+          const vertexPos = e.vertex.getLatLng();
+          for (let i = 0, n = latLngs.length; i < n; i++) {
+            if (vertexPos.equals(latLngs[i])) {
+              this._markers.splice(i, 0, e.vertex); // Insert new vertex at i
+            }
+          }
+          thisEditor.#mergeSnap();
+        });
       },
 
+      /**
+       * Set the selection of this feature.
+       *
+       * @param selected {boolean}
+       */
       setSelected: setSelected,
 
+      /**
+       * Return the VertexMarker at the given position.
+       *
+       * @param latlng {L.LatLng} Vertex’ position.
+       * @return {MapEditor.VertexMarker|null} The marker or null if none matched.
+       */
       getVertexMarker: getVertexMarker,
     });
 
-    // TODO make draggable
+    // TODO make draggable from context menu
     this.Polygon = L.Polygon.extend({
       initialize: function (latlngs, options) {
         // TODO set style options depending on underlying model data type
         options.weight = 4;
         options.color = "#fff";
         L.Polygon.prototype.initialize.call(this, latlngs, options);
+
+        /** @type {MapEditor.VertexMarker[]} */
+        this._markers = [];
+
         this.on("click", function () {
           thisEditor.#layerClicked = true;
           thisEditor.#updateSelection(this);
@@ -130,10 +235,31 @@ class MapEditor {
           thisEditor.#isFeatureMenuVisible = true;
           thisEditor.#onContextMenu(this);
         });
+        this.on("editable:vertex:new", e => {
+          const latLngs = this.getLatLngs()[0];
+          const vertexPos = e.vertex.getLatLng();
+          for (let i = 0, n = latLngs.length; i < n; i++) {
+            if (vertexPos.equals(latLngs[i])) { // FIXME last middle marker added to start
+              this._markers.splice(i, 0, e.vertex); // Insert new vertex at i
+            }
+          }
+          thisEditor.#mergeSnap();
+        });
       },
 
+      /**
+       * Set the selection of this feature.
+       *
+       * @param selected {boolean}
+       */
       setSelected: setSelected,
 
+      /**
+       * Return the VertexMarker at the given position.
+       *
+       * @param latlng {L.LatLng} Vertex’ position.
+       * @return {MapEditor.VertexMarker|null} The marker or null if none matched.
+       */
       getVertexMarker: getVertexMarker,
     });
   }
@@ -271,15 +397,23 @@ class MapEditor {
       const vertex = e.vertex;
       removeSnapGuide(feature);
       snapHandler.watchMarker(vertex);
-      vertex.on("snap", ev => this.#onSnap(feature, vertex.latlng, ev.layer));
+      vertex.on("snap", ev => {
+        this.#onSnap(feature, vertex, ev.latlng, ev.layer);
+      });
       vertex.on("unsnap", _ => this.#onUnsnap());
     });
     map.on("editable:vertex:dragend", e => {
-      this.#mergeSnap();
       addSnapGuide(e.layer);
       snapHandler.unwatchMarker(e.vertex);
       e.vertex.off("snap");
       e.vertex.off("unsnap");
+      L.DomUtil.removeClass(e.vertex._icon, "marker-snapped");
+      if (this.#snapData?.draggedVertex) {
+        // Fix actual position of dragged vertex if snapped
+        this.#snapData.draggedVertex._latlng.lat = this.#snapData.latlng.lat;
+        this.#snapData.draggedVertex._latlng.lng = this.#snapData.latlng.lng;
+      }
+      this.#mergeSnap();
     });
     map.on("editable:drawing:start", e => {
       removeSnapGuide(e.layer);
@@ -296,7 +430,6 @@ class MapEditor {
       this.#drawing = null;
     });
     map.on("editable:drawing:click", e => {
-      this.#mergeSnap();
       // Leaflet copies event data to another object when firing,
       // so the event object we have here is not the one fired by
       // Leaflet.Editable; it's not a deep copy though, so we can change
@@ -314,7 +447,7 @@ class MapEditor {
         e.cancel(); // Disable default behavior: delete vertex
       }
     });
-    snapMarker.on("snap", e => this.#onSnap(this.#drawing, e.latlng, e.layer));
+    snapMarker.on("snap", e => this.#onSnap(this.#drawing, null, e.latlng, e.layer));
     snapMarker.on("unsnap", () => this.#onUnsnap());
 
     $("#editor-panel").css({display: "block"}).addClass("split");
@@ -332,39 +465,39 @@ class MapEditor {
    * Register a vertex snap.
    *
    * @param feature {MapEditor.Polyline|MapEditor.Polygon} Feature being edited.
+   * @param draggedVertex {MapEditor.VertexMarker|null} Vertex being dragged and snapped. Null if drawing.
    * @param latlng {L.LatLng} Position of the snapped vertex from the feature.
    * @param to {MapEditor.Polyline|MapEditor.Polygon} Feature the vertex has been snapped to.
    */
-  #onSnap(feature, latlng, to) {
-    this.#snap = {
-      feature: feature,
-      latlng: latlng,
-      to: to,
-    };
+  #onSnap(feature, draggedVertex, latlng, to) {
+    this.#snapData = new SnapData(
+      feature,
+      to,
+      draggedVertex,
+      latlng,
+    );
   }
 
   /**
    * Unregister the current snap data.
    */
   #onUnsnap() {
-    this.#snap = null;
+    this.#snapData = null;
   }
 
   /**
-   * If #snap is not null, merge or create relevant vertices.
+   * If #snapData is not null, merge or create relevant vertices.
    */
   #mergeSnap() {
-    if (!this.#snap) {
+    if (!this.#snapData) {
       return;
     }
-    console.log("mergeSnap", this.#snap);
-    const sourceFeature = this.#snap.feature;
-    const targetFeature = this.#snap.to;
-    const snapPoint = this.#snap.latlng;
-    let sourceVertex = sourceFeature.getVertexMarker(snapPoint);
-    let targetVertex = targetFeature.getVertexMarker(snapPoint);
-    console.log(sourceVertex, targetVertex);
-    // TODO merge vertices
+    const sourceFeature = this.#snapData.feature;
+    const targetFeature = this.#snapData.to;
+    const snapPoint = this.#snapData.latlng;
+    const sourceVertex = sourceFeature.getVertexMarker(snapPoint);
+    const targetVertex = targetFeature.getVertexMarker(snapPoint);
+    sourceVertex.pinTo(targetVertex);
   }
 
   /**
@@ -376,7 +509,7 @@ class MapEditor {
   #onContextMenu(feature) {
     this.#updateSelection(feature);
     // TODO context menu
-    console.log(feature);
+    console.log(feature); // DEBUG
   }
 }
 

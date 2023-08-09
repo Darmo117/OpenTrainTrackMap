@@ -7,6 +7,7 @@ L.Snap = {
     const ns = this._defaultShape(guides[nsi].layer._latlngs)[0];
     const we = this._defaultShape(guides[wei].layer._latlngs)[0];
     const intersection = new L.LatLng(ns.lat, we.lng);
+    // noinspection JSCheckFunctionSignatures
     const distance = L.GeometryUtil.distance(map, intersection, latlng);
     return {
       "intersection": intersection,

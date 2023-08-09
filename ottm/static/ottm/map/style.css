@@ -135,11 +135,25 @@
  * Geometry selection
  */
 
-.layer-selected {
-  animation: 1s infinite alternate ease-in-out border-blink;
+.marker-snapped {
+  animation: 1s infinite alternate ease-in-out border-blink-snap;
 }
 
-@keyframes border-blink {
+.layer-selected {
+  animation: 1s infinite alternate ease-in-out border-blink-selection;
+}
+
+@keyframes border-blink-snap {
+  from {
+    filter: drop-shadow(2px 2px 0 #ffe251ff) drop-shadow(-2px -2px 0 #ffe251ff) drop-shadow(2px -2px 0 #ffe251ff) drop-shadow(-2px 2px 0 #ffe251ff);
+  }
+
+  to {
+    filter: drop-shadow(2px 2px 0 #ffe25100) drop-shadow(-2px -2px 0 #ffe25100) drop-shadow(2px -2px 0 #ffe25100) drop-shadow(-2px 2px 0 #ffe25100);
+  }
+}
+
+@keyframes border-blink-selection {
   from {
     filter: drop-shadow(2px 2px 0 #ff5151ff) drop-shadow(-2px -2px 0 #ff5151ff) drop-shadow(2px -2px 0 #ff5151ff) drop-shadow(-2px 2px 0 #ff5151ff);
   }
