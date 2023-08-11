@@ -17,16 +17,17 @@ const setMapEditor = function (editor) {
  */
 const setSelected = function (selected) {
   const v = this.hasOwnProperty("_icon") ? this._icon : this._path;
+  const className = "layer-selected";
   if (selected) {
-    L.DomUtil.addClass(v, "layer-selected");
+    L.DomUtil.addClass(v, className);
   } else {
-    L.DomUtil.removeClass(v, "layer-selected");
+    L.DomUtil.removeClass(v, className);
   }
 };
 
 /**
  * @param latlng {L.LatLng}
- * @return {VertexMarker|null}
+ * @return {?VertexMarker}
  */
 const getVertexMarker = function (latlng) {
   for (const marker of this._markers) {
@@ -40,6 +41,9 @@ const getVertexMarker = function (latlng) {
 // endregion Commons
 // region Feature sub-classes
 
+/**
+ * @class
+ */
 const Marker = L.Marker.extend({
   initialize: function (latlngs, options) {
     L.Marker.prototype.initialize.call(this, latlngs, options);
@@ -50,12 +54,8 @@ const Marker = L.Marker.extend({
      */
     this._mapEditor = null;
 
-    this.on("click", () => {
-      this._mapEditor.updateSelection(this);
-    });
-    this.on("contextmenu", () => {
-      this._mapEditor.onContextMenu(this);
-    });
+    this.on("click", () => this._mapEditor.updateSelection(this));
+    this.on("contextmenu", () => this._mapEditor.onContextMenu(this));
   },
 
   /**
@@ -73,6 +73,9 @@ const Marker = L.Marker.extend({
   setSelected: setSelected,
 });
 
+/**
+ * @class
+ */
 const VertexMarker = LeafletEditable.VertexMarker.extend({
   initialize: function (latlng, latlngs, editor, options) {
     LeafletEditable.VertexMarker.prototype.initialize.call(this, latlng, latlngs, editor, options);
@@ -89,12 +92,8 @@ const VertexMarker = LeafletEditable.VertexMarker.extend({
      */
     this._pinnedTo = new Set();
 
-    this.on("click", () => {
-      this._mapEditor.updateSelection(this);
-    });
-    this.on("contextmenu", () => {
-      this._mapEditor.onContextMenu(this);
-    });
+    this.on("click", () => this._mapEditor.updateSelection(this));
+    this.on("contextmenu", () => this._mapEditor.onContextMenu(this));
   },
 
   /**
@@ -145,11 +144,13 @@ const VertexMarker = LeafletEditable.VertexMarker.extend({
       v.pinTo(vertex);
     });
     vertex.pinTo(this);
-    console.log(this._pinnedTo.size, this.editor.feature._path); // DEBUG
   }
 });
 
 // TODO make draggable from context menu
+/**
+ * @class
+ */
 const Polyline = L.Polyline.extend({
   initialize: function (latlngs, options) {
     // TODO set style options depending on underlying model data type
@@ -165,13 +166,8 @@ const Polyline = L.Polyline.extend({
     /** @type {VertexMarker[]} */
     this._markers = [];
 
-    this.on("click", function () {
-      this._mapEditor.updateSelection(this);
-    });
-    this.on("contextmenu", () => {
-      this._mapEditor.isFeatureMenuVisible = true;
-      this._mapEditor.onContextMenu(this);
-    });
+    this.on("click", () => this._mapEditor.updateSelection(this));
+    this.on("contextmenu", () => this._mapEditor.onContextMenu(this));
     this.on("editable:vertex:new", e => {
       const latLngs = this.getLatLngs();
       const vertexPos = e.vertex.getLatLng();
@@ -208,6 +204,9 @@ const Polyline = L.Polyline.extend({
 });
 
 // TODO make draggable from context menu
+/**
+ * @class
+ */
 const Polygon = L.Polygon.extend({
   initialize: function (latlngs, options) {
     // TODO set style options depending on underlying model data type
@@ -223,13 +222,8 @@ const Polygon = L.Polygon.extend({
     /** @type {VertexMarker[]} */
     this._markers = [];
 
-    this.on("click", function () {
-      this._mapEditor.updateSelection(this);
-    });
-    this.on("contextmenu", () => {
-      this._mapEditor.isFeatureMenuVisible = true;
-      this._mapEditor.onContextMenu(this);
-    });
+    this.on("click", () => this._mapEditor.updateSelection(this));
+    this.on("contextmenu", () => this._mapEditor.onContextMenu(this));
     this.on("editable:vertex:new", e => {
       const latLngs = this.getLatLngs()[0];
       const vertexPos = e.vertex.getLatLng();
@@ -305,10 +299,10 @@ export class MapEditor {
    */
   #ignoreNextMapClick = false;
   /**
-   * Used to ignore the "contextmenu" event fired by the map when right-clicking a feature.
+   * Used to ignore the "contextmenu" event fired by the map when right-clicking a polyline or polygon.
    * @type {boolean}
    */
-  #isFeatureMenuVisible = false;
+  #ignoreNextMapContextMenu = false;
   /**
    * @type {Polyline|Polygon|null}
    */
@@ -322,6 +316,7 @@ export class MapEditor {
    * @type {MapEditorPanel}
    */
   #editorPanel = new MapEditorPanel("editor-panel");
+
   // endregion
 
   constructor() {
@@ -461,8 +456,8 @@ export class MapEditor {
       this.updateSelection(null);
     });
     map.on("contextmenu", () => {
-      if (this.#isFeatureMenuVisible) {
-        this.#isFeatureMenuVisible = false;
+      if (this.#ignoreNextMapContextMenu) {
+        this.#ignoreNextMapContextMenu = false;
         return;
       }
       this.onContextMenu(null);
@@ -476,10 +471,8 @@ export class MapEditor {
       const vertex = e.vertex;
       removeSnapGuide(feature);
       snapHandler.watchMarker(vertex);
-      vertex.on("snap", ev => {
-        this.#onSnap(feature, vertex, ev.latlng, ev.layer);
-      });
-      vertex.on("unsnap", _ => this.#onUnsnap());
+      vertex.on("snap", ev => this.#onSnap(feature, vertex, ev.latlng, ev.layer));
+      vertex.on("unsnap", () => this.#onUnsnap());
     });
     map.on("editable:vertex:dragend", e => {
       addSnapGuide(e.layer);
@@ -548,7 +541,7 @@ export class MapEditor {
    * @param feature {Marker|VertexMarker|Polyline|Polygon|null} Feature to show in the editor panel. May be null.
    */
   updateSelection(feature) {
-    this.#ignoreNextMapClick = feature instanceof Polyline || feature instanceof Polygon;
+    this.#ignoreNextMapClick = !this.#ignoreNextMapContextMenu && (feature instanceof Polyline || feature instanceof Polygon);
     if (feature && feature === this.#selectedFeature) {
       return;
     }
@@ -564,6 +557,7 @@ export class MapEditor {
    * @param feature {Marker|VertexMarker|Polyline|Polygon|null} Feature being edited.
    */
   onContextMenu(feature) {
+    this.#ignoreNextMapContextMenu = feature instanceof Polyline || feature instanceof Polygon;
     this.updateSelection(feature);
     // TODO context menu
     console.log(feature); // DEBUG
