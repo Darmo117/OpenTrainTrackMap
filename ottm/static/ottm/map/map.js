@@ -118,9 +118,7 @@ class Map {
       editable: editable,
       editOptions: editor?.getMapEditOptions() ?? {},
     }).setView([0, 0], 2);
-    if (editable) {
-      editor.initEditor(map);
-    }
+    editor?.initEditor(map);
 
     map.off("dblclick"); // Disable zoom-in on double-click
     map.on("zoomend", () => this.updateUrl());
@@ -155,11 +153,8 @@ class Map {
       maxZoom: 18,
     });
 
-    if (editable) {
-      maptilerSatelliteTiles.addTo(map);
-    } else {
-      osmGrayscaleTiles.addTo(map);
-    }
+    const defaultLayer = editable ? maptilerSatelliteTiles : osmGrayscaleTiles;
+    defaultLayer.addTo(map);
 
     this.#baseLayers = {
       [ottm.translations.get("map.controls.layers.base.black_and_white")]: osmGrayscaleTiles,
@@ -204,7 +199,7 @@ class Map {
       placeholder: ottm.translations.get("map.controls.search.placeholder"),
       errorMessage: ottm.translations.get("map.controls.search.no_results"),
       geocoder: leafletControlGeocoder.geocoders.arcgis(),
-    }).on("markgeocode", function (e) {
+    }).on("markgeocode", e => {
       const bbox = e.geocode.bbox;
       const poly = L.polygon([
         bbox.getSouthEast(),
@@ -216,7 +211,7 @@ class Map {
     }).addTo(map);
 
     this.#map = map;
-    if (this.getPositionFromURL()[1]) {
+    if (this.getPositionFromURL().found) {
       this.centerViewFromUrl();
     } else {
       this.centerViewToUserLocation();
@@ -233,7 +228,8 @@ class Map {
    */
   centerViewToUserLocation() {
     navigator.permissions.query({name: "geolocation"}).then(result => {
-      if (result.state === "granted" || result.state === "prompt") {
+      const status = result.state;
+      if (status === "granted" || status === "prompt") {
         navigator.geolocation.getCurrentPosition(
           p => this.#map.setView([p.coords.latitude, p.coords.longitude], 13),
           e => {
@@ -246,13 +242,19 @@ class Map {
             timeout: 20000,
           }
         );
-      } else if (result.state === "denied") {
+      } else if (status === "denied") {
         console.log("User does not allow geolocation");
         this.updateUrl();
       }
     });
   }
 
+  /**
+   * Return a map position from the current URL.
+   *
+   * @return {{pos: [number, number, number], found: boolean}} An array containing the latitude, longitude and zoom,
+   *  and a boolean indicating whether values could be extracted from the URL.
+   */
   getPositionFromURL() {
     const match = /^#map=(\d+)\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)$/.exec(window.location.hash);
     if (match) {
@@ -261,13 +263,13 @@ class Map {
       const zoom = Math.max(minZoom, Math.min(maxZoom, parseInt(match[1])));
       const lat = parseFloat(match[2]);
       const long = parseFloat(match[3]);
-      return [[lat, long, zoom], true];
+      return {pos: [lat, long, zoom], found: true};
     }
-    return [[0, 0, 15], false];
+    return {pos: [0, 0, 15], found: false};
   }
 
   /**
-   * Update page’s URL hash from the current map view.
+   * Update page’s URL hash from the current map view position.
    */
   updateUrl() {
     if (this.#updatingView) {
@@ -297,7 +299,7 @@ class Map {
     if (this.#updatingHash) {
       this.#updatingHash = false;
     } else {
-      const [[lat, long, zoom], found] = this.getPositionFromURL();
+      const {pos: [lat, long, zoom], found} = this.getPositionFromURL();
       if (found) {
         this.#updatingView = true;
         this.#map.setView([lat, long], zoom);

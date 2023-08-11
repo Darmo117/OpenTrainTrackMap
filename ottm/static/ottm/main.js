@@ -392,7 +392,7 @@
   function hookDarkModeCallback() {
     $("#dark-mode-checkbox").on("click", e => {
       const checked = $(e.target).prop("checked");
-      Cookies.set('dark_mode', checked);
+      Cookies.set("dark_mode", checked);
       location.reload();
     });
   }
