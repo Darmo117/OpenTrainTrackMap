@@ -1,4 +1,7 @@
-L.Snap = {
+import * as L from "../leaflet-src.esm.js";
+import {GeometryUtil} from "./leaflet.geometryutil.js";
+
+export const Snap = {
   // try to prefer the corner of guidelines, or the the intersection of gridlines, if we're within the tolerance of two
   _findGuideIntersection: function (gType, map, latlng, guides) {
     const isNS = guides[0].layer[`_${gType}lineGroup`] === "NS";
@@ -8,7 +11,7 @@ L.Snap = {
     const we = this._defaultShape(guides[wei].layer._latlngs)[0];
     const intersection = new L.LatLng(ns.lat, we.lng);
     // noinspection JSCheckFunctionSignatures
-    const distance = L.GeometryUtil.distance(map, intersection, latlng);
+    const distance = GeometryUtil.distance(map, intersection, latlng);
     return {
       "intersection": intersection,
       "distance": distance
@@ -16,7 +19,7 @@ L.Snap = {
   },
 
   _findClosestLayerSnap: function (map, layers, latlng, tolerance, onlyVertices) {
-    const closest = L.GeometryUtil.nClosestLayers(map, layers, latlng, 6);
+    const closest = GeometryUtil.nClosestLayers(map, layers, latlng, 6);
 
     // code to correct prefer snap to shapes (or only their vertices, if onlyVertices is true)
     // to gridlines and guidelines, and then guidelines to gridlines
@@ -54,12 +57,12 @@ L.Snap = {
       returnLayer = shapeInfo.layer;
       returnLatLng = shapeInfo.latlng;
 
-      // this is code from L.GeometryUtil.closestSnap that will find
+      // this is code from GeometryUtil.closestSnap that will find
       // the closest vertex of this layer to the point
-      const vertexLatLng = L.GeometryUtil.closest(map, shapeInfo.layer, shapeInfo.latlng, true);
+      const vertexLatLng = GeometryUtil.closest(map, shapeInfo.layer, shapeInfo.latlng, true);
 
       if (vertexLatLng) {
-        const d = L.GeometryUtil.distance(map, latlng, vertexLatLng);
+        const d = GeometryUtil.distance(map, latlng, vertexLatLng);
         if (d < tolerance) {
           returnLatLng = new L.LatLng(vertexLatLng.lat, vertexLatLng.lng);
         } else if (onlyVertices) {
@@ -221,6 +224,6 @@ L.Handler.MarkerSnap = L.Handler.extend({
   },
 
   _snapMarker: function (e) {
-    L.Snap.snapMarker(e, this._guides, this._map, this.options);
+    Snap.snapMarker(e, this._guides, this._map, this.options);
   }
 });

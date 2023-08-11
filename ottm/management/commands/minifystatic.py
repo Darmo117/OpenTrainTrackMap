@@ -1,11 +1,12 @@
 """This module defines a command that manages minified static files."""
 import pathlib
+import re
 import typing as typ
 
 import cssmin
+from django.conf import settings
 import django.core.management.base as dj_mngmt
 import rjsmin
-from django.conf import settings
 
 
 class Command(dj_mngmt.BaseCommand):
@@ -27,27 +28,40 @@ class Command(dj_mngmt.BaseCommand):
 
     def _purge(self):
         self.stdout.write('Purging minified static files…')
-        nb = self._map('*.min.*', lambda f: f.unlink())
+        nb = self._apply('*.min.*', lambda f: f.unlink())
         self.stdout.write(f'{nb} file(s) successfully deleted.')
 
     def _minify(self):
         self.stdout.write('Minifying static files…')
-        nb = self._map('*.js', lambda f: self._minify_(rjsmin.jsmin, f))
+        nb = self._apply('*.js', lambda f: self._minify_code(rjsmin.jsmin, f))
         self.stdout.write(f'Minified {nb} JS file(s).')
-        nb = self._map('*.css', lambda f: self._minify_(cssmin.cssmin, f))
+        nb = self._apply('*.css', lambda f: self._minify_code(cssmin.cssmin, f))
         self.stdout.write(f'Minified {nb} CSS file(s).')
 
-    @staticmethod
-    def _minify_(minifier: typ.Callable[[str], str], f: pathlib.Path):
+    def _minify_code(self, minifier: typ.Callable[[str], str], f: pathlib.Path):
         with f.open(encoding='utf-8') as fp:
             content = fp.read()
-        minified = minifier(content)
+        minified = minifier(self._adapt_imports(content))
         fname = '{0}.min.{1}'.format(*f.name.rsplit('.', maxsplit=1))
         with (f.parent / fname).open(mode='w', encoding='utf-8') as fp:
             fp.write(minified)
 
-    @staticmethod
-    def _map(pattern: str, callback: typ.Callable[[pathlib.Path], None]) -> int:
+    def _adapt_imports(self, content: str) -> str:
+        """Add ".min" to all imports that are not from the ottm/libs/ directory.
+
+        :param content: Source code to modify.
+        :return: The modified source code.
+        """
+
+        def repl(m: re.Match[str]) -> str:
+            import_, path = m.groups()
+            if '/libs/' not in path:
+                path = path.replace('.js', '.min.js')
+            return f'import {import_} from "{path}";'
+
+        return re.sub('import (.+) from "([^"]+)";', repl, content)
+
+    def _apply(self, pattern: str, callback: typ.Callable[[pathlib.Path], None]) -> int:
         dirs = []
         with (settings.BASE_DIR / 'minify.txt').open(encoding='utf-8') as f:
             for line in f:

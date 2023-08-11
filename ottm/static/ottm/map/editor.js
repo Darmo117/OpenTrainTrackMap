@@ -1,3 +1,8 @@
+import * as L from "../libs/leaflet/leaflet-src.esm.js";
+import {Editable} from "../libs/leaflet/plugins/Leaflet.Editable.js";
+import "../libs/leaflet/plugins/leaflet.snap.js";
+import "../libs/split.min.js";
+
 class SnapData {
   /** @type {MapEditor.Polyline|MapEditor.Polygon} */
   feature;
@@ -22,7 +27,7 @@ class SnapData {
   }
 }
 
-class MapEditor {
+export class MapEditor {
   #map;
   /**
    * The currently selected feature.
@@ -105,9 +110,9 @@ class MapEditor {
       setSelected: setSelected,
     });
 
-    this.VertexMarker = L.Editable.VertexMarker.extend({
+    this.VertexMarker = Editable.VertexMarker.extend({
       initialize: function (latlng, latlngs, editor, options) {
-        L.Editable.VertexMarker.prototype.initialize.call(this, latlng, latlngs, editor, options);
+        Editable.VertexMarker.prototype.initialize.call(this, latlng, latlngs, editor, options);
 
         /**
          * List of vertices this one is pinned to.
@@ -138,7 +143,7 @@ class MapEditor {
 
       onDrag: function (e, propagate = true) {
         console.log(this, propagate); // DEBUG
-        L.Editable.VertexMarker.prototype.onDrag.call(this, e);
+        Editable.VertexMarker.prototype.onDrag.call(this, e);
         if (propagate) {
           this._pinnedTo.forEach(v => {
             v.onDrag(e, false); // FIXME doesn’t move v

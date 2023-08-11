@@ -2,6 +2,8 @@
  * L.TileLayer.Grayscale is a regular tilelayer with grayscale makeover.
  */
 
+import * as L from "../leaflet-src.esm.js";
+
 L.TileLayer.Grayscale = L.TileLayer.extend({
   options: {
     quotaRed: 21,
