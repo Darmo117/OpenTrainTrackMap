@@ -1,22 +1,286 @@
 import * as L from "../libs/leaflet/leaflet-src.esm.js";
-import {Editable} from "../libs/leaflet/plugins/Leaflet.Editable.js";
+import {Editable as LeafletEditable} from "../libs/leaflet/plugins/Leaflet.Editable.js";
 import "../libs/leaflet/plugins/leaflet.snap.js";
 import "../libs/split.min.js";
 
+// region Common functions for Marker, VertexMarker, Polyline and Polygon classes.
+
+/**
+ * @param editor {MapEditor}
+ */
+const setMapEditor = function (editor) {
+  this._mapEditor = editor;
+}
+
+/**
+ * @param selected {boolean}
+ */
+const setSelected = function (selected) {
+  const v = this.hasOwnProperty("_icon") ? this._icon : this._path;
+  if (selected) {
+    L.DomUtil.addClass(v, "layer-selected");
+  } else {
+    L.DomUtil.removeClass(v, "layer-selected");
+  }
+};
+
+/**
+ * @param latlng {L.LatLng}
+ * @return {VertexMarker|null}
+ */
+const getVertexMarker = function (latlng) {
+  for (const marker of this._markers) {
+    if (marker.getLatLng().equals(latlng)) {
+      return marker;
+    }
+  }
+  return null;
+}
+
+// endregion Commons
+// region Feature sub-classes
+
+const Marker = L.Marker.extend({
+  initialize: function (latlngs, options) {
+    L.Marker.prototype.initialize.call(this, latlngs, options);
+
+    /**
+     * Reference to the map editor.
+     * @type {MapEditor}
+     */
+    this._mapEditor = null;
+
+    this.on("click", () => {
+      this._mapEditor.updateSelection(this);
+    });
+    this.on("contextmenu", () => {
+      this._mapEditor.onContextMenu(this);
+    });
+  },
+
+  /**
+   * Set the map editor.
+   *
+   * @param editor {MapEditor}
+   */
+  setMapEditor: setMapEditor,
+
+  /**
+   * Set the selection of this feature.
+   *
+   * @param selected {boolean}
+   */
+  setSelected: setSelected,
+});
+
+const VertexMarker = LeafletEditable.VertexMarker.extend({
+  initialize: function (latlng, latlngs, editor, options) {
+    LeafletEditable.VertexMarker.prototype.initialize.call(this, latlng, latlngs, editor, options);
+
+    /**
+     * Reference to the map editor.
+     * @type {MapEditor}
+     */
+    this._mapEditor = null;
+    /**
+     * List of vertices this one is pinned to.
+     * Only vertex markers are pinnable.
+     * @type {Set<VertexMarker>}
+     */
+    this._pinnedTo = new Set();
+
+    this.on("click", () => {
+      this._mapEditor.updateSelection(this);
+    });
+    this.on("contextmenu", () => {
+      this._mapEditor.onContextMenu(this);
+    });
+  },
+
+  /**
+   * Set the map editor.
+   *
+   * @param editor {MapEditor}
+   */
+  setMapEditor: setMapEditor,
+
+  /**
+   * Set the selection of this feature.
+   *
+   * @param selected {boolean}
+   */
+  setSelected: function (selected) {
+    if (!this._icon) {
+      return;
+    }
+    setSelected.call(this, selected)
+  },
+
+  onDrag: function (e, propagate = true) {
+    console.log(this, propagate); // DEBUG
+    LeafletEditable.VertexMarker.prototype.onDrag.call(this, e);
+    if (propagate) {
+      this._pinnedTo.forEach(v => {
+        v.onDrag(e, false); // FIXME doesn’t move v
+        // v._latlng = this._latlng;
+        // console.log(v); // DEBUG
+      });
+    }
+  },
+
+  /**
+   * Pin this vertex to the given one.
+   *
+   * @param vertex {VertexMarker}
+   */
+  pinTo: function (vertex) {
+    if (this._pinnedTo.has(vertex)) {
+      return;
+    }
+    this._pinnedTo.add(vertex);
+    this._pinnedTo.forEach(v => {
+      if (v === vertex) {
+        return;
+      }
+      v.pinTo(vertex);
+    });
+    vertex.pinTo(this);
+    console.log(this._pinnedTo.size, this.editor.feature._path); // DEBUG
+  }
+});
+
+// TODO make draggable from context menu
+const Polyline = L.Polyline.extend({
+  initialize: function (latlngs, options) {
+    // TODO set style options depending on underlying model data type
+    options.weight = 4;
+    options.color = "#fff";
+    L.Polyline.prototype.initialize.call(this, latlngs, options);
+
+    /**
+     * Reference to the map editor.
+     * @type {MapEditor}
+     */
+    this._mapEditor = null;
+    /** @type {VertexMarker[]} */
+    this._markers = [];
+
+    this.on("click", function () {
+      this._mapEditor.updateSelection(this);
+    });
+    this.on("contextmenu", () => {
+      this._mapEditor.isFeatureMenuVisible = true;
+      this._mapEditor.onContextMenu(this);
+    });
+    this.on("editable:vertex:new", e => {
+      const latLngs = this.getLatLngs();
+      const vertexPos = e.vertex.getLatLng();
+      for (let i = 0, n = latLngs.length; i < n; i++) {
+        if (vertexPos.equals(latLngs[i])) {
+          this._markers.splice(i, 0, e.vertex); // Insert new vertex at i
+        }
+      }
+      this._mapEditor.mergeVertices();
+    });
+  },
+
+  /**
+   * Set the map editor.
+   *
+   * @param editor {MapEditor}
+   */
+  setMapEditor: setMapEditor,
+
+  /**
+   * Set the selection of this feature.
+   *
+   * @param selected {boolean}
+   */
+  setSelected: setSelected,
+
+  /**
+   * Return the VertexMarker at the given position.
+   *
+   * @param latlng {L.LatLng} Vertex’ position.
+   * @return {VertexMarker|null} The marker or null if none matched.
+   */
+  getVertexMarker: getVertexMarker,
+});
+
+// TODO make draggable from context menu
+const Polygon = L.Polygon.extend({
+  initialize: function (latlngs, options) {
+    // TODO set style options depending on underlying model data type
+    options.weight = 4;
+    options.color = "#fff";
+    L.Polygon.prototype.initialize.call(this, latlngs, options);
+
+    /**
+     * Reference to the map editor.
+     * @type {MapEditor}
+     */
+    this._mapEditor = null;
+    /** @type {VertexMarker[]} */
+    this._markers = [];
+
+    this.on("click", function () {
+      this._mapEditor.updateSelection(this);
+    });
+    this.on("contextmenu", () => {
+      this._mapEditor.isFeatureMenuVisible = true;
+      this._mapEditor.onContextMenu(this);
+    });
+    this.on("editable:vertex:new", e => {
+      const latLngs = this.getLatLngs()[0];
+      const vertexPos = e.vertex.getLatLng();
+      for (let i = 0, n = latLngs.length; i < n; i++) {
+        if (vertexPos.equals(latLngs[i])) { // FIXME last middle marker added to start
+          this._markers.splice(i, 0, e.vertex); // Insert new vertex at i
+        }
+      }
+      this._mapEditor.mergeVertices();
+    });
+  },
+
+  /**
+   * Set the map editor.
+   *
+   * @param editor {MapEditor}
+   */
+  setMapEditor: setMapEditor,
+
+  /**
+   * Set the selection of this feature.
+   *
+   * @param selected {boolean}
+   */
+  setSelected: setSelected,
+
+  /**
+   * Return the VertexMarker at the given position.
+   *
+   * @param latlng {L.LatLng} Vertex’ position.
+   * @return {VertexMarker|null} The marker or null if none matched.
+   */
+  getVertexMarker: getVertexMarker,
+});
+
+// endregion
+
 class SnapData {
-  /** @type {MapEditor.Polyline|MapEditor.Polygon} */
+  /** @type {Polyline|Polygon} */
   feature;
-  /** @type {MapEditor.Polyline|MapEditor.Polygon} */
+  /** @type {Polyline|Polygon} */
   to;
-  /** @type {MapEditor.VertexMarker|null} */
+  /** @type {VertexMarker|null} */
   draggedVertex = null;
   /** @type {L.LatLng} */
   latlng;
 
   /**
-   * @param feature {MapEditor.Polyline|MapEditor.Polygon} Feature being edited.
-   * @param to {MapEditor.Polyline|MapEditor.Polygon} Feature the vertex has been snapped to.
-   * @param draggedVertex {MapEditor.VertexMarker|null} Vertex being dragged and snapped. Null if drawing.
+   * @param feature {Polyline|Polygon} Feature being edited.
+   * @param to {Polyline|Polygon} Feature the vertex has been snapped to.
+   * @param draggedVertex {VertexMarker|null} Vertex being dragged and snapped. Null if drawing.
    * @param latlng {L.LatLng} Position of the snapped vertex from the feature.
    */
   constructor(feature, to, draggedVertex, latlng) {
@@ -28,24 +292,25 @@ class SnapData {
 }
 
 export class MapEditor {
+  // region Fields
   #map;
   /**
    * The currently selected feature.
-   * @type {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
+   * @type {Marker|VertexMarker|Polyline|Polygon|null}
    */
   #selectedFeature = null;
   /**
    * Used to ignore the "click" event fired by the map right after a polyline or polygon is clicked.
    * @type {boolean}
    */
-  #layerClicked = false;
+  #ignoreNextMapClick = false;
   /**
    * Used to ignore the "contextmenu" event fired by the map when right-clicking a feature.
    * @type {boolean}
    */
   #isFeatureMenuVisible = false;
   /**
-   * @type {MapEditor.Polyline|MapEditor.Polygon|null}
+   * @type {Polyline|Polygon|null}
    */
   #drawing = null;
   /**
@@ -57,229 +322,24 @@ export class MapEditor {
    * @type {MapEditorPanel}
    */
   #editorPanel = new MapEditorPanel("editor-panel");
-
-  Marker;
-  VertexMarker;
-  Polyline;
-  Polygon;
+  // endregion
 
   constructor() {
-    const thisEditor = this;
-
-    /**
-     * @param selected {boolean}
-     */
-    const setSelected = function (selected) {
-      const v = this.hasOwnProperty("_icon") ? this._icon : this._path;
-      if (selected) {
-        L.DomUtil.addClass(v, "layer-selected");
-      } else {
-        L.DomUtil.removeClass(v, "layer-selected");
-      }
-    };
-
-    /**
-     * @param latlng {L.LatLng}
-     * @return {MapEditor.VertexMarker|null}
-     */
-    const getVertexMarker = function (latlng) {
-      for (const marker of this._markers) {
-        if (marker.getLatLng().equals(latlng)) {
-          return marker;
-        }
-      }
-      return null;
-    }
-
-    this.Marker = L.Marker.extend({
-      initialize: function (latlngs, options) {
-        L.Marker.prototype.initialize.call(this, latlngs, options);
-        this.on("click", () => {
-          thisEditor.#updateSelection(this);
-        });
-        this.on("contextmenu", () => {
-          thisEditor.#onContextMenu(this);
-        });
-      },
-
-      /**
-       * Set the selection of this feature.
-       *
-       * @param selected {boolean}
-       */
-      setSelected: setSelected,
-    });
-
-    this.VertexMarker = Editable.VertexMarker.extend({
-      initialize: function (latlng, latlngs, editor, options) {
-        Editable.VertexMarker.prototype.initialize.call(this, latlng, latlngs, editor, options);
-
-        /**
-         * List of vertices this one is pinned to.
-         * Only vertex markers are pinnable.
-         * @type {Set<MapEditor.VertexMarker>}
-         */
-        this._pinnedTo = new Set();
-
-        this.on("click", () => {
-          thisEditor.#updateSelection(this);
-        });
-        this.on("contextmenu", () => {
-          thisEditor.#onContextMenu(this);
-        });
-      },
-
-      /**
-       * Set the selection of this feature.
-       *
-       * @param selected {boolean}
-       */
-      setSelected: function (selected) {
-        if (!this._icon) {
-          return;
-        }
-        setSelected.call(this, selected)
-      },
-
-      onDrag: function (e, propagate = true) {
-        console.log(this, propagate); // DEBUG
-        Editable.VertexMarker.prototype.onDrag.call(this, e);
-        if (propagate) {
-          this._pinnedTo.forEach(v => {
-            v.onDrag(e, false); // FIXME doesn’t move v
-            // v._latlng = this._latlng;
-            // console.log(v); // DEBUG
-          });
-        }
-      },
-
-      /**
-       * Pin this vertex to the given one.
-       *
-       * @param vertex {MapEditor.VertexMarker}
-       */
-      pinTo: function (vertex) {
-        if (this._pinnedTo.has(vertex)) {
-          return;
-        }
-        this._pinnedTo.add(vertex);
-        this._pinnedTo.forEach(v => {
-          if (v === vertex) {
-            return;
-          }
-          v.pinTo(vertex);
-        });
-        vertex.pinTo(this);
-        console.log(this._pinnedTo.size, this.editor.feature._path); // DEBUG
-      }
-    });
-
-    // TODO make draggable from context menu
-    this.Polyline = L.Polyline.extend({
-      initialize: function (latlngs, options) {
-        // TODO set style options depending on underlying model data type
-        options.weight = 4;
-        options.color = "#fff";
-        L.Polyline.prototype.initialize.call(this, latlngs, options);
-
-        /** @type {MapEditor.VertexMarker[]} */
-        this._markers = [];
-
-        this.on("click", function () {
-          thisEditor.#layerClicked = true;
-          thisEditor.#updateSelection(this);
-        });
-        this.on("contextmenu", () => {
-          thisEditor.#isFeatureMenuVisible = true;
-          thisEditor.#onContextMenu(this);
-        });
-        this.on("editable:vertex:new", e => {
-          const latLngs = this.getLatLngs();
-          const vertexPos = e.vertex.getLatLng();
-          for (let i = 0, n = latLngs.length; i < n; i++) {
-            if (vertexPos.equals(latLngs[i])) {
-              this._markers.splice(i, 0, e.vertex); // Insert new vertex at i
-            }
-          }
-          thisEditor.#mergeSnap();
-        });
-      },
-
-      /**
-       * Set the selection of this feature.
-       *
-       * @param selected {boolean}
-       */
-      setSelected: setSelected,
-
-      /**
-       * Return the VertexMarker at the given position.
-       *
-       * @param latlng {L.LatLng} Vertex’ position.
-       * @return {MapEditor.VertexMarker|null} The marker or null if none matched.
-       */
-      getVertexMarker: getVertexMarker,
-    });
-
-    // TODO make draggable from context menu
-    this.Polygon = L.Polygon.extend({
-      initialize: function (latlngs, options) {
-        // TODO set style options depending on underlying model data type
-        options.weight = 4;
-        options.color = "#fff";
-        L.Polygon.prototype.initialize.call(this, latlngs, options);
-
-        /** @type {MapEditor.VertexMarker[]} */
-        this._markers = [];
-
-        this.on("click", function () {
-          thisEditor.#layerClicked = true;
-          thisEditor.#updateSelection(this);
-        });
-        this.on("contextmenu", () => {
-          thisEditor.#isFeatureMenuVisible = true;
-          thisEditor.#onContextMenu(this);
-        });
-        this.on("editable:vertex:new", e => {
-          const latLngs = this.getLatLngs()[0];
-          const vertexPos = e.vertex.getLatLng();
-          for (let i = 0, n = latLngs.length; i < n; i++) {
-            if (vertexPos.equals(latLngs[i])) { // FIXME last middle marker added to start
-              this._markers.splice(i, 0, e.vertex); // Insert new vertex at i
-            }
-          }
-          thisEditor.#mergeSnap();
-        });
-      },
-
-      /**
-       * Set the selection of this feature.
-       *
-       * @param selected {boolean}
-       */
-      setSelected: setSelected,
-
-      /**
-       * Return the VertexMarker at the given position.
-       *
-       * @param latlng {L.LatLng} Vertex’ position.
-       * @return {MapEditor.VertexMarker|null} The marker or null if none matched.
-       */
-      getVertexMarker: getVertexMarker,
-    });
+    this.#injectMixins();
   }
 
-  /**
-   * Set the feature to show in the editor panel.
-   *
-   * @param feature {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
-   *  Feature to show in the editor panel. May be null.
-   */
-  #updateSelection(feature) {
-    this.#selectedFeature?.setSelected(false);
-    this.#selectedFeature = feature;
-    this.#selectedFeature?.setSelected(true);
-    this.#editorPanel.setFeature(feature);
+  #injectMixins() {
+    const thisEditor = this;
+    // Replace LeafletEditable.PathEditor.addVertexMarker() by a custom function
+    // that passes this editor instance to the new VertexMarker
+    const addVertexMarker = LeafletEditable.PathEditor.prototype.addVertexMarker; // Local copy to avoid recursion loop
+    LeafletEditable.PathEditor.include({
+      addVertexMarker: function (latlng, latlngs) {
+        const vertexMarker = addVertexMarker.call(this, latlng, latlngs);
+        vertexMarker.setMapEditor(thisEditor);
+        return vertexMarker;
+      },
+    });
   }
 
   /**
@@ -287,10 +347,10 @@ export class MapEditor {
    */
   getMapEditOptions() {
     return {
-      polylineClass: this.Polyline,
-      polygonClass: this.Polygon,
-      markerClass: this.Marker,
-      vertexMarkerClass: this.VertexMarker,
+      polylineClass: Polyline,
+      polygonClass: Polygon,
+      markerClass: Marker,
+      vertexMarkerClass: VertexMarker,
     };
   }
 
@@ -302,6 +362,7 @@ export class MapEditor {
   initEditor(map) {
     this.#map = map;
 
+    // region Edit control classes
     const EditControl = L.Control.extend({
       options: {
         position: "topcenter",
@@ -325,7 +386,11 @@ export class MapEditor {
 
     const NewMarkerControl = EditControl.extend({
       options: {
-        callback: map.editTools.startMarker,
+        callback: (latlng, options) => {
+          const marker = map.editTools.startMarker(latlng, options);
+          marker.setMapEditor(this);
+          return marker;
+        },
         kind: "new_marker",
         html: '<span class="mdi mdi-vector-point"></span>',
       }
@@ -333,7 +398,11 @@ export class MapEditor {
 
     const NewLineControl = EditControl.extend({
       options: {
-        callback: map.editTools.startPolyline,
+        callback: (latlng, options) => {
+          const polyline = map.editTools.startPolyline(latlng, options);
+          polyline.setMapEditor(this);
+          return polyline;
+        },
         kind: "new_line",
         html: '<span class="mdi mdi-vector-polyline"></span>',
       }
@@ -341,11 +410,16 @@ export class MapEditor {
 
     const NewPolygonControl = EditControl.extend({
       options: {
-        callback: map.editTools.startPolygon,
+        callback: (latlng, options) => {
+          const polygon = map.editTools.startPolygon(latlng, options);
+          polygon.setMapEditor(this);
+          return polygon;
+        },
         kind: "new_polygon",
         html: '<span class="mdi mdi-vector-polygon"></span>',
       }
     });
+    // endregion
 
     map.addControl(new NewMarkerControl());
     map.addControl(new NewLineControl());
@@ -361,7 +435,7 @@ export class MapEditor {
     snapHandler.watchMarker(snapMarker);
 
     const addSnapGuide = g => {
-      if (!(g instanceof this.Marker)) {
+      if (!(g instanceof Marker)) {
         snapHandler.addGuideLayer(g);
       }
     };
@@ -380,18 +454,18 @@ export class MapEditor {
 
     map.on("click", () => {
       // Prevent instant deselection when clicking polylines/polygons
-      if (this.#layerClicked) {
-        this.#layerClicked = false;
+      if (this.#ignoreNextMapClick) {
+        this.#ignoreNextMapClick = false;
         return;
       }
-      this.#updateSelection(null);
+      this.updateSelection(null);
     });
     map.on("contextmenu", () => {
       if (this.#isFeatureMenuVisible) {
         this.#isFeatureMenuVisible = false;
         return;
       }
-      this.#onContextMenu(null);
+      this.onContextMenu(null);
     });
     // We have to remove the currently dragged feature from the guides list
     // as otherwise geometryutils would throw errors.
@@ -415,14 +489,16 @@ export class MapEditor {
       L.DomUtil.removeClass(e.vertex._icon, "marker-snapped");
       if (this.#snapData?.draggedVertex) {
         // Fix actual position of dragged vertex if snapped
-        this.#snapData.draggedVertex._latlng.lat = this.#snapData.latlng.lat;
-        this.#snapData.draggedVertex._latlng.lng = this.#snapData.latlng.lng;
+        // noinspection JSUnresolvedReference
+        const ll = this.#snapData.draggedVertex._latlng;
+        ll.lat = this.#snapData.latlng.lat;
+        ll.lng = this.#snapData.latlng.lng;
       }
-      this.#mergeSnap();
+      this.mergeVertices();
     });
     map.on("editable:drawing:start", e => {
       removeSnapGuide(e.layer);
-      if (!(e.layer instanceof this.Marker)) {
+      if (!(e.layer instanceof Marker)) {
         snapMarker.addTo(map);
         this.#drawing = e.layer;
       }
@@ -437,7 +513,7 @@ export class MapEditor {
     map.on("editable:drawing:click", e => {
       // Leaflet copies event data to another object when firing,
       // so the event object we have here is not the one fired by
-      // Leaflet.Editable; it's not a deep copy though, so we can change
+      // LeafletEditable; it's not a deep copy though, so we can change
       // the other objects that have a reference here.
       const latlng = snapMarker.getLatLng();
       e.latlng.lat = latlng.lat;
@@ -448,7 +524,7 @@ export class MapEditor {
       e.vertex.continue();
     });
     map.on("editable:vertex:rawclick", e => {
-      if (!(e.layer instanceof this.Marker)) {
+      if (!(e.layer instanceof Marker)) {
         e.cancel(); // Disable default behavior: delete vertex
       }
     });
@@ -463,16 +539,58 @@ export class MapEditor {
       gutterSize: 5,
     });
 
-    this.#updateSelection(null);
+    this.updateSelection(null);
+  }
+
+  /**
+   * Set the feature to show in the editor panel.
+   *
+   * @param feature {Marker|VertexMarker|Polyline|Polygon|null} Feature to show in the editor panel. May be null.
+   */
+  updateSelection(feature) {
+    this.#ignoreNextMapClick = feature instanceof Polyline || feature instanceof Polygon;
+    if (feature && feature === this.#selectedFeature) {
+      return;
+    }
+    this.#selectedFeature?.setSelected(false);
+    this.#selectedFeature = feature;
+    this.#selectedFeature?.setSelected(true);
+    this.#editorPanel.setFeature(feature);
+  }
+
+  /**
+   * Show a context menu for the given object.
+   *
+   * @param feature {Marker|VertexMarker|Polyline|Polygon|null} Feature being edited.
+   */
+  onContextMenu(feature) {
+    this.updateSelection(feature);
+    // TODO context menu
+    console.log(feature); // DEBUG
+  }
+
+  /**
+   * If this.#snapData is not null, merge relevant vertices.
+   */
+  mergeVertices() {
+    if (!this.#snapData) {
+      return;
+    }
+    const sourceFeature = this.#snapData.feature;
+    const targetFeature = this.#snapData.to;
+    const snapPoint = this.#snapData.latlng;
+    const sourceVertex = sourceFeature.getVertexMarker(snapPoint);
+    const targetVertex = targetFeature.getVertexMarker(snapPoint);
+    sourceVertex.pinTo(targetVertex);
   }
 
   /**
    * Register a vertex snap.
    *
-   * @param feature {MapEditor.Polyline|MapEditor.Polygon} Feature being edited.
-   * @param draggedVertex {MapEditor.VertexMarker|null} Vertex being dragged and snapped. Null if drawing.
+   * @param feature {Polyline|Polygon} Feature being edited.
+   * @param draggedVertex {VertexMarker|null} Vertex being dragged and snapped. Null if drawing.
    * @param latlng {L.LatLng} Position of the snapped vertex from the feature.
-   * @param to {MapEditor.Polyline|MapEditor.Polygon} Feature the vertex has been snapped to.
+   * @param to {Polyline|Polygon} Feature the vertex has been snapped to.
    */
   #onSnap(feature, draggedVertex, latlng, to) {
     this.#snapData = new SnapData(
@@ -489,33 +607,6 @@ export class MapEditor {
   #onUnsnap() {
     this.#snapData = null;
   }
-
-  /**
-   * If #snapData is not null, merge or create relevant vertices.
-   */
-  #mergeSnap() {
-    if (!this.#snapData) {
-      return;
-    }
-    const sourceFeature = this.#snapData.feature;
-    const targetFeature = this.#snapData.to;
-    const snapPoint = this.#snapData.latlng;
-    const sourceVertex = sourceFeature.getVertexMarker(snapPoint);
-    const targetVertex = targetFeature.getVertexMarker(snapPoint);
-    sourceVertex.pinTo(targetVertex);
-  }
-
-  /**
-   * Show a context menu for the given object.
-   *
-   * @param feature {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
-   *  Feature being edited.
-   */
-  #onContextMenu(feature) {
-    this.#updateSelection(feature);
-    // TODO context menu
-    console.log(feature); // DEBUG
-  }
 }
 
 class MapEditorPanel {
@@ -523,7 +614,7 @@ class MapEditorPanel {
 
   /**
    * The feature being edited.
-   * @type {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
+   * @type {Marker|VertexMarker|Polyline|Polygon|null}
    */
   #feature;
 
@@ -541,7 +632,7 @@ class MapEditorPanel {
   /**
    * Set the feature to edit.
    *
-   * @param feature {MapEditor.Marker|MapEditor.VertexMarker|MapEditor.Polyline|MapEditor.Polygon|null}
+   * @param feature {Marker|VertexMarker|Polyline|Polygon|null}
    */
   setFeature(feature) {
     this.#feature = feature;
