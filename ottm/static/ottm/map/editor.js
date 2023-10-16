@@ -2,6 +2,7 @@ import * as L from "../libs/leaflet/leaflet-src.esm.js";
 import {Editable as LeafletEditable} from "../libs/leaflet/plugins/Leaflet.Editable.js";
 import "../libs/leaflet/plugins/leaflet.snap.js";
 import "../libs/split.min.js";
+import * as utils from "../utils.js";
 
 // region Common functions for Marker, VertexMarker, Polyline and Polygon classes.
 
@@ -116,13 +117,37 @@ const VertexMarker = LeafletEditable.VertexMarker.extend({
   },
 
   onDrag: function (e, propagate = true) {
-    console.log(this, propagate); // DEBUG
+    // FIXME last snapped vertices do not update properly when other parts of features are moved
+    // console.log("editor.VertexMarker.onDrag", this, propagate); // DEBUG
     LeafletEditable.VertexMarker.prototype.onDrag.call(this, e);
     if (propagate) {
       this._pinnedTo.forEach(v => {
-        v.onDrag(e, false); // FIXME doesn’t move v
-        // v._latlng = this._latlng;
-        // console.log(v); // DEBUG
+        v._latlng = e.latlng; // Force update
+        // noinspection JSUnresolvedReference
+        v.update();
+        v.onDrag(utils.shallowCopy(e), false);
+      });
+    }
+  },
+
+  onDragStart: function (e, propagate = true) {
+    LeafletEditable.VertexMarker.prototype.onDragStart.call(this, e);
+    if (propagate) {
+      this._pinnedTo.forEach(v => {
+        // v._latlng = this.latlng; // Force update
+        // v.update();
+        v.onDragStart(utils.shallowCopy(e), false);
+      });
+    }
+  },
+
+  onDragEnd: function (e, propagate = true) {
+    LeafletEditable.VertexMarker.prototype.onDragEnd.call(this, e);
+    if (propagate) {
+      this._pinnedTo.forEach(v => {
+        // v._latlng = this.latlng; // Force update
+        // v.update();
+        v.onDragEnd(utils.shallowCopy(e), false);
       });
     }
   },
@@ -133,7 +158,7 @@ const VertexMarker = LeafletEditable.VertexMarker.extend({
    * @param vertex {VertexMarker}
    */
   pinTo: function (vertex) {
-    if (this._pinnedTo.has(vertex)) {
+    if (this._pinnedTo.has(vertex) || !vertex) {
       return;
     }
     this._pinnedTo.add(vertex);
