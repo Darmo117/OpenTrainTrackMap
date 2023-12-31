@@ -1,0 +1,2739 @@
+<?xml version="1.0"?>
+<Ontology xmlns="http://www.w3.org/2002/07/owl#"
+     xml:base="http://www.darmo-creations.net/ontologies/ottm.owl"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:xml="http://www.w3.org/XML/1998/namespace"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     ontologyIRI="http://www.darmo-creations.net/ontologies/ottm.owl">
+    <Prefix name="" IRI="http://www.darmo-creations.net/ontologies/ottm.owl"/>
+    <Prefix name="owl" IRI="http://www.w3.org/2002/07/owl#"/>
+    <Prefix name="rdf" IRI="http://www.w3.org/1999/02/22-rdf-syntax-ns#"/>
+    <Prefix name="xml" IRI="http://www.w3.org/XML/1998/namespace"/>
+    <Prefix name="xsd" IRI="http://www.w3.org/2001/XMLSchema#"/>
+    <Prefix name="rdfs" IRI="http://www.w3.org/2000/01/rdf-schema#"/>
+    <Import>http://www.w3.org/2006/time#2016</Import>
+    <Declaration>
+        <Class IRI="#AddisMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Area"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#BasculeBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#BridgeAbutment"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#BridgePier"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#BridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#BridgeSectionStructure"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Building"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#BuildingType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#BuildingTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#BuildingUseType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#BuildingUseTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#CailletMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#CarDumper"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Construction"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ConstructionMaterial"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ConventionalTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#CrossingType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#CrossingTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#CurrentType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Earthwork"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ElectrificationSystem"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Embankment"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Enumeration"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#EwingMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#FerrySlipSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#FloorState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#FuzzyProperInterval"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#GLTTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Gate"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Geometry"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#GeometryState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#GroundRailMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#GyroscopicMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#HeightState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Infrastructure"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#InvertedTMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#LartigueMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#LengthUnit"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Lift"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#LiftBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Line"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#MaglevMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ManeuverStructure"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#ManeuverStructureMovingPartState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#MonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#MoveableBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Node"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Note"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#OTTMObject"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#OperatedEntity"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Operator"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#OperatorState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#OperatorType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#OperatorTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Platform"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Polygon"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#PolygonHole"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Polyline"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#RailFerryRouteSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#RailType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#RailTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#RetractableBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#RubberTiredTramTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#RuinState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#SAFEGEMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#SeesawBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Site"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#SiteType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#SiteTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#SpeedUnit"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#StaticBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#StraddleBeamMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#SubmersibleBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#SuspendedMonorailTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#SwingBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TableBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TemporalState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TieType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TieTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TiltBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TireRollwaysState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackCoverSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackElectrificationState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackGauge"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackInfrastructure"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackInfrastructureUseType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackInfrastructureUseTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackMainDirectionState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackMaximumSpeedState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackPitState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackUseType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TrackUseTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TractionType"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TractionTypeState"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TransferTable"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TranslohrTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TransporterBridgeSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Trench"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#TunnelSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Turntable"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#Unit"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#VALTrackSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#VlotbrugSection"/>
+    </Declaration>
+    <Declaration>
+        <Class IRI="#WallSection"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#bridge_structure"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#building_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#building_type_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#building_use_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#building_use_type_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#construction_material"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#crossing_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#crossing_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#current_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#electrification_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#electrification_system"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#existence_interval"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#floor_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#gauges"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#geometries"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#geometry"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#geometry_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#height_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#holes"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#infrastructures"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#length_unit"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#lines"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#main_direction_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#maximum_speed_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#moving_part_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#nodes"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#notes"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#opened_by"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#operator"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#operator_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#operator_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#operator_type_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#parent_polygon"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#pit_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#rail_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#rail_type_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#ruin_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#site_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#site_type_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#sites"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#speed_unit"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#tie_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#tie_type_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#tire_rollways_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#track_infrastructures"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#track_sections"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#track_use_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#track_use_type_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#traction_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#traction_type_states"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#use_type"/>
+    </Declaration>
+    <Declaration>
+        <ObjectProperty IRI="#use_type_states"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#altitude"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#approximate_end_date"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#approximate_start_date"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#basement_floors_number"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#direction"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#electrified"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#floors_number"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#gauge"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#has_moving_part"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#has_pit"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#has_tire_rollways"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#height"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#is_bridge"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#latitude"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#longitude"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#max_rotation_angle"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#max_speed"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#note_text"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#qid"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#ruined"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#sources"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#symbol"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#tension"/>
+    </Declaration>
+    <Declaration>
+        <DataProperty IRI="#unguided"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#abandonned"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#amusement_park"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#arch_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#artillery"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#asphalt"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#association"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#beam_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#box_girder_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#bricks"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#cantilever"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#cast_iron"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#coal_tower"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#concrete"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#concrete_dual-block_ties"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#concrete_single-block_ties"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#concrete_slab"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#covered_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#crib_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#declassed"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#depot"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#derailing"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#direct_current"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#dirt"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#double_head"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#engine_shed"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#factory"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#freight"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#funicular"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#garage"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#girder_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#gravel"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#hanscotte"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#inches"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#kilometers_per_hour"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#light_rail"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#maintenance"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#metal_ties"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#meter_gauge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#metro"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#miles_per_hour"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#military"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#military_corps"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#millimeter"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#mine"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#museum"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#no_traction"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#normal_gauge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#overhead_wire"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#passenger"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#passenger_building"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#paved"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#pedestrian"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#pedestrian_crossing"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#plate_girder_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#pontoon_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#private_company"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#private_individual"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#public_company"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#rack"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#rail"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#road"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#road_crossing"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#service"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#shunting"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#single_phase_current"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#station"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#steel"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#stone"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#substation"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#suspended_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#third_rail"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#through_arch_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#tiles"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#tourism"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#tramway"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#trestle_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#triage"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#triage_yard"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#triple_phase_current"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#truss_arch_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#truss_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#tubular_bridge"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#unused"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#unused_infra"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#vignole"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#water_tower"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#wood"/>
+    </Declaration>
+    <Declaration>
+        <NamedIndividual IRI="#wooden_ties"/>
+    </Declaration>
+    <SubClassOf>
+        <Class IRI="#AddisMonorailTrackSection"/>
+        <Class IRI="#GroundRailMonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Area"/>
+        <Class IRI="#Polygon"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#BasculeBridgeSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#BridgeAbutment"/>
+        <Class IRI="#Construction"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#BridgePier"/>
+        <Class IRI="#Construction"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#BridgeSection"/>
+        <Class IRI="#TrackInfrastructure"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#BridgeSectionStructure"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Building"/>
+        <Class IRI="#Construction"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#BuildingType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#BuildingTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#BuildingUseType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#BuildingUseTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#CailletMonorailTrackSection"/>
+        <Class IRI="#GroundRailMonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#CarDumper"/>
+        <Class IRI="#ManeuverStructure"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Construction"/>
+        <Class IRI="#Polygon"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#ConstructionMaterial"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#ConventionalTrackSection"/>
+        <Class IRI="#TrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#CrossingType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#CrossingTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#CurrentType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Earthwork"/>
+        <Class IRI="#TrackInfrastructure"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#ElectrificationSystem"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Embankment"/>
+        <Class IRI="#Earthwork"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#EwingMonorailTrackSection"/>
+        <Class IRI="#GroundRailMonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#FerrySlipSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#FloorState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#FuzzyProperInterval"/>
+        <Class IRI="http://www.w3.org/2006/time#ProperInterval"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GLTTrackSection"/>
+        <Class IRI="#RubberTiredTramTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Gate"/>
+        <Class IRI="#Polyline"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Geometry"/>
+        <Class IRI="#OTTMObject"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GeometryState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GroundRailMonorailTrackSection"/>
+        <Class IRI="#MonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#GyroscopicMonorailTrackSection"/>
+        <Class IRI="#GroundRailMonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#HeightState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Infrastructure"/>
+        <Class IRI="#OTTMObject"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#InvertedTMonorailTrackSection"/>
+        <Class IRI="#MonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#LartigueMonorailTrackSection"/>
+        <Class IRI="#MonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#LengthUnit"/>
+        <Class IRI="#Unit"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Lift"/>
+        <Class IRI="#ManeuverStructure"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#LiftBridgeSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Line"/>
+        <Class IRI="#OperatedEntity"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#MaglevMonorailTrackSection"/>
+        <Class IRI="#StraddleBeamMonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#ManeuverStructure"/>
+        <Class IRI="#TrackInfrastructure"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#ManeuverStructureMovingPartState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#MonorailTrackSection"/>
+        <Class IRI="#TrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#MoveableBridgeSection"/>
+        <Class IRI="#BridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Node"/>
+        <Class IRI="#Geometry"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#OperatedEntity"/>
+        <Class IRI="#OTTMObject"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Operator"/>
+        <Class IRI="#OTTMObject"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#OperatorState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#OperatorType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#OperatorTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Platform"/>
+        <Class IRI="#Polygon"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Polygon"/>
+        <Class IRI="#Geometry"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#PolygonHole"/>
+        <Class IRI="#Polygon"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Polyline"/>
+        <Class IRI="#Geometry"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#RailFerryRouteSection"/>
+        <Class IRI="#ConventionalTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#RailType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#RailTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#RetractableBridgeSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#RubberTiredTramTrackSection"/>
+        <Class IRI="#TrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#RuinState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#SAFEGEMonorailTrackSection"/>
+        <Class IRI="#SuspendedMonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#SeesawBridgeSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Site"/>
+        <Class IRI="#OperatedEntity"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#SiteType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#SiteTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#SpeedUnit"/>
+        <Class IRI="#Unit"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#StaticBridgeSection"/>
+        <Class IRI="#BridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#StraddleBeamMonorailTrackSection"/>
+        <Class IRI="#MonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#SubmersibleBridgeSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#SuspendedMonorailTrackSection"/>
+        <Class IRI="#MonorailTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#SwingBridgeSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TableBridgeSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TieType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TieTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TiltBridgeSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TireRollwaysState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackCoverSection"/>
+        <Class IRI="#TrackInfrastructure"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackElectrificationState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackInfrastructure"/>
+        <Class IRI="#Construction"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackInfrastructureUseType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackInfrastructureUseTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackMainDirectionState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackMaximumSpeedState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackPitState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackSection"/>
+        <Class IRI="#Polyline"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackUseType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TrackUseTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TractionType"/>
+        <Class IRI="#Enumeration"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TractionTypeState"/>
+        <Class IRI="#TemporalState"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TransferTable"/>
+        <Class IRI="#ManeuverStructure"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TranslohrTrackSection"/>
+        <Class IRI="#RubberTiredTramTrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TransporterBridgeSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Trench"/>
+        <Class IRI="#Earthwork"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#TunnelSection"/>
+        <Class IRI="#TrackInfrastructure"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#Turntable"/>
+        <Class IRI="#ManeuverStructure"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#VALTrackSection"/>
+        <Class IRI="#TrackSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#VlotbrugSection"/>
+        <Class IRI="#MoveableBridgeSection"/>
+    </SubClassOf>
+    <SubClassOf>
+        <Class IRI="#WallSection"/>
+        <Class IRI="#Polyline"/>
+    </SubClassOf>
+    <DisjointClasses>
+        <Class IRI="#AddisMonorailTrackSection"/>
+        <Class IRI="#CailletMonorailTrackSection"/>
+        <Class IRI="#EwingMonorailTrackSection"/>
+        <Class IRI="#GyroscopicMonorailTrackSection"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Area"/>
+        <Class IRI="#Construction"/>
+        <Class IRI="#Platform"/>
+        <Class IRI="#PolygonHole"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#BasculeBridgeSection"/>
+        <Class IRI="#FerrySlipSection"/>
+        <Class IRI="#LiftBridgeSection"/>
+        <Class IRI="#RetractableBridgeSection"/>
+        <Class IRI="#SeesawBridgeSection"/>
+        <Class IRI="#SubmersibleBridgeSection"/>
+        <Class IRI="#SwingBridgeSection"/>
+        <Class IRI="#TableBridgeSection"/>
+        <Class IRI="#TiltBridgeSection"/>
+        <Class IRI="#TransporterBridgeSection"/>
+        <Class IRI="#VlotbrugSection"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#BridgeAbutment"/>
+        <Class IRI="#BridgePier"/>
+        <Class IRI="#Building"/>
+        <Class IRI="#TrackInfrastructure"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#BridgeSection"/>
+        <Class IRI="#Earthwork"/>
+        <Class IRI="#ManeuverStructure"/>
+        <Class IRI="#TrackCoverSection"/>
+        <Class IRI="#TunnelSection"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#BridgeSectionStructure"/>
+        <Class IRI="#BuildingType"/>
+        <Class IRI="#BuildingUseType"/>
+        <Class IRI="#ConstructionMaterial"/>
+        <Class IRI="#CrossingType"/>
+        <Class IRI="#CurrentType"/>
+        <Class IRI="#ElectrificationSystem"/>
+        <Class IRI="#OperatorType"/>
+        <Class IRI="#RailType"/>
+        <Class IRI="#SiteType"/>
+        <Class IRI="#TieType"/>
+        <Class IRI="#TrackInfrastructureUseType"/>
+        <Class IRI="#TrackUseType"/>
+        <Class IRI="#TractionType"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#BuildingTypeState"/>
+        <Class IRI="#BuildingUseTypeState"/>
+        <Class IRI="#CrossingTypeState"/>
+        <Class IRI="#FloorState"/>
+        <Class IRI="#GeometryState"/>
+        <Class IRI="#HeightState"/>
+        <Class IRI="#ManeuverStructureMovingPartState"/>
+        <Class IRI="#OperatorState"/>
+        <Class IRI="#OperatorTypeState"/>
+        <Class IRI="#RailTypeState"/>
+        <Class IRI="#RuinState"/>
+        <Class IRI="#SiteTypeState"/>
+        <Class IRI="#TieTypeState"/>
+        <Class IRI="#TireRollwaysState"/>
+        <Class IRI="#TrackElectrificationState"/>
+        <Class IRI="#TrackInfrastructureUseTypeState"/>
+        <Class IRI="#TrackMainDirectionState"/>
+        <Class IRI="#TrackMaximumSpeedState"/>
+        <Class IRI="#TrackPitState"/>
+        <Class IRI="#TrackUseTypeState"/>
+        <Class IRI="#TractionTypeState"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#CarDumper"/>
+        <Class IRI="#Lift"/>
+        <Class IRI="#TransferTable"/>
+        <Class IRI="#Turntable"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#ConventionalTrackSection"/>
+        <Class IRI="#MonorailTrackSection"/>
+        <Class IRI="#RubberTiredTramTrackSection"/>
+        <Class IRI="#VALTrackSection"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Embankment"/>
+        <Class IRI="#Trench"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Enumeration"/>
+        <Class IRI="#Note"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Enumeration"/>
+        <Class IRI="#OTTMObject"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Enumeration"/>
+        <Class IRI="#TemporalState"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Enumeration"/>
+        <Class IRI="#TrackGauge"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Enumeration"/>
+        <Class IRI="#Unit"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#GLTTrackSection"/>
+        <Class IRI="#TranslohrTrackSection"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Gate"/>
+        <Class IRI="#TrackSection"/>
+        <Class IRI="#WallSection"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Geometry"/>
+        <Class IRI="#Infrastructure"/>
+        <Class IRI="#OperatedEntity"/>
+        <Class IRI="#Operator"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#GroundRailMonorailTrackSection"/>
+        <Class IRI="#InvertedTMonorailTrackSection"/>
+        <Class IRI="#LartigueMonorailTrackSection"/>
+        <Class IRI="#StraddleBeamMonorailTrackSection"/>
+        <Class IRI="#SuspendedMonorailTrackSection"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#LengthUnit"/>
+        <Class IRI="#SpeedUnit"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Line"/>
+        <Class IRI="#Site"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#MoveableBridgeSection"/>
+        <Class IRI="#StaticBridgeSection"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Node"/>
+        <Class IRI="#Polygon"/>
+        <Class IRI="#Polyline"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Note"/>
+        <Class IRI="#OTTMObject"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Note"/>
+        <Class IRI="#TemporalState"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Note"/>
+        <Class IRI="#TrackGauge"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#Note"/>
+        <Class IRI="#Unit"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#OTTMObject"/>
+        <Class IRI="#TemporalState"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#OTTMObject"/>
+        <Class IRI="#TrackGauge"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#OTTMObject"/>
+        <Class IRI="#Unit"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#TemporalState"/>
+        <Class IRI="#TrackGauge"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#TemporalState"/>
+        <Class IRI="#Unit"/>
+    </DisjointClasses>
+    <DisjointClasses>
+        <Class IRI="#TrackGauge"/>
+        <Class IRI="#Unit"/>
+    </DisjointClasses>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#abandonned"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#amusement_park"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#arch_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#artillery"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#asphalt"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#OperatorType"/>
+        <NamedIndividual IRI="#association"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#beam_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#box_girder_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#bricks"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#cantilever"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#cast_iron"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BuildingType"/>
+        <NamedIndividual IRI="#coal_tower"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#concrete"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TieType"/>
+        <NamedIndividual IRI="#concrete_dual-block_ties"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TieType"/>
+        <NamedIndividual IRI="#concrete_single-block_ties"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TieType"/>
+        <NamedIndividual IRI="#concrete_slab"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#covered_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#crib_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#declassed"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#SiteType"/>
+        <NamedIndividual IRI="#depot"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#derailing"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#CurrentType"/>
+        <NamedIndividual IRI="#direct_current"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#dirt"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#RailType"/>
+        <NamedIndividual IRI="#double_head"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BuildingType"/>
+        <NamedIndividual IRI="#engine_shed"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#SiteType"/>
+        <NamedIndividual IRI="#factory"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#freight"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TractionType"/>
+        <NamedIndividual IRI="#funicular"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#garage"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#girder_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#gravel"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TractionType"/>
+        <NamedIndividual IRI="#hanscotte"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#LengthUnit"/>
+        <NamedIndividual IRI="#inches"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#SpeedUnit"/>
+        <NamedIndividual IRI="#kilometers_per_hour"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#light_rail"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#maintenance"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TieType"/>
+        <NamedIndividual IRI="#metal_ties"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackGauge"/>
+        <NamedIndividual IRI="#meter_gauge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#metro"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#SpeedUnit"/>
+        <NamedIndividual IRI="#miles_per_hour"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#military"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#OperatorType"/>
+        <NamedIndividual IRI="#military_corps"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#LengthUnit"/>
+        <NamedIndividual IRI="#millimeter"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#mine"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#SiteType"/>
+        <NamedIndividual IRI="#museum"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TractionType"/>
+        <NamedIndividual IRI="#no_traction"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackGauge"/>
+        <NamedIndividual IRI="#normal_gauge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ElectrificationSystem"/>
+        <NamedIndividual IRI="#overhead_wire"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#passenger"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BuildingType"/>
+        <NamedIndividual IRI="#passenger_building"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#paved"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackInfrastructureUseType"/>
+        <NamedIndividual IRI="#pedestrian"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#CrossingType"/>
+        <NamedIndividual IRI="#pedestrian_crossing"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#plate_girder_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#pontoon_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#OperatorType"/>
+        <NamedIndividual IRI="#private_company"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#OperatorType"/>
+        <NamedIndividual IRI="#private_individual"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#OperatorType"/>
+        <NamedIndividual IRI="#public_company"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TractionType"/>
+        <NamedIndividual IRI="#rack"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackInfrastructureUseType"/>
+        <NamedIndividual IRI="#rail"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackInfrastructureUseType"/>
+        <NamedIndividual IRI="#road"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#CrossingType"/>
+        <NamedIndividual IRI="#road_crossing"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#service"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#shunting"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#CurrentType"/>
+        <NamedIndividual IRI="#single_phase_current"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#SiteType"/>
+        <NamedIndividual IRI="#station"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#steel"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#stone"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BuildingType"/>
+        <NamedIndividual IRI="#substation"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#suspended_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ElectrificationSystem"/>
+        <NamedIndividual IRI="#third_rail"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#through_arch_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#tiles"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#tourism"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#tramway"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#trestle_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#triage"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#SiteType"/>
+        <NamedIndividual IRI="#triage_yard"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#CurrentType"/>
+        <NamedIndividual IRI="#triple_phase_current"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#truss_arch_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#truss_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BridgeSectionStructure"/>
+        <NamedIndividual IRI="#tubular_bridge"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackUseType"/>
+        <NamedIndividual IRI="#unused"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TrackInfrastructureUseType"/>
+        <NamedIndividual IRI="#unused_infra"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#RailType"/>
+        <NamedIndividual IRI="#vignole"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#BuildingType"/>
+        <NamedIndividual IRI="#water_tower"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#ConstructionMaterial"/>
+        <NamedIndividual IRI="#wood"/>
+    </ClassAssertion>
+    <ClassAssertion>
+        <Class IRI="#TieType"/>
+        <NamedIndividual IRI="#wooden_ties"/>
+    </ClassAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#length_unit"/>
+        <NamedIndividual IRI="#meter_gauge"/>
+        <NamedIndividual IRI="#millimeter"/>
+    </ObjectPropertyAssertion>
+    <ObjectPropertyAssertion>
+        <ObjectProperty IRI="#length_unit"/>
+        <NamedIndividual IRI="#normal_gauge"/>
+        <NamedIndividual IRI="#millimeter"/>
+    </ObjectPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#gauge"/>
+        <NamedIndividual IRI="#meter_gauge"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">1000</Literal>
+    </DataPropertyAssertion>
+    <DataPropertyAssertion>
+        <DataProperty IRI="#gauge"/>
+        <NamedIndividual IRI="#normal_gauge"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">1435</Literal>
+    </DataPropertyAssertion>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#geometries"/>
+        <ObjectProperty IRI="#notes"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#holes"/>
+        <ObjectProperty IRI="#parent_polygon"/>
+    </InverseObjectProperties>
+    <InverseObjectProperties>
+        <ObjectProperty IRI="#lines"/>
+        <ObjectProperty IRI="#sites"/>
+    </InverseObjectProperties>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#bridge_structure"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#building_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#building_use_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#crossing_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#current_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#electrification_system"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#existence_interval"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#geometry"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#length_unit"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#operator"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#operator_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#parent_polygon"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#rail_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#site_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#speed_unit"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#tie_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#track_use_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#traction_type"/>
+    </FunctionalObjectProperty>
+    <FunctionalObjectProperty>
+        <ObjectProperty IRI="#use_type"/>
+    </FunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#building_type_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#building_use_type_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#crossing_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#electrification_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#floor_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#geometry_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#height_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#holes"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#main_direction_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#maximum_speed_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#moving_part_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#operator_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#operator_type_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#pit_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#rail_type_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#ruin_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#site_type_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#tie_type_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#tire_rollways_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#track_use_type_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#traction_type_states"/>
+    </InverseFunctionalObjectProperty>
+    <InverseFunctionalObjectProperty>
+        <ObjectProperty IRI="#use_type_states"/>
+    </InverseFunctionalObjectProperty>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#bridge_structure"/>
+        <Class IRI="#BridgeSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#building_type"/>
+        <Class IRI="#BuildingTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#building_type_states"/>
+        <Class IRI="#Building"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#building_use_type"/>
+        <Class IRI="#BuildingUseTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#building_use_type_states"/>
+        <Class IRI="#Building"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#construction_material"/>
+        <ObjectUnionOf>
+            <Class IRI="#Construction"/>
+            <Class IRI="#Gate"/>
+            <Class IRI="#MonorailTrackSection"/>
+            <Class IRI="#Platform"/>
+            <Class IRI="#WallSection"/>
+        </ObjectUnionOf>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#crossing_states"/>
+        <Class IRI="#TrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#crossing_type"/>
+        <Class IRI="#CrossingTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#current_type"/>
+        <Class IRI="#TrackElectrificationState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#electrification_states"/>
+        <Class IRI="#TrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#electrification_system"/>
+        <Class IRI="#TrackElectrificationState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#existence_interval"/>
+        <ObjectUnionOf>
+            <Class IRI="#OTTMObject"/>
+            <Class IRI="#TemporalState"/>
+        </ObjectUnionOf>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#floor_states"/>
+        <Class IRI="#Building"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#gauges"/>
+        <Class IRI="#ConventionalTrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#geometries"/>
+        <Class IRI="#Note"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#geometry"/>
+        <Class IRI="#GeometryState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#geometry_states"/>
+        <Class IRI="#Site"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#height_states"/>
+        <ObjectUnionOf>
+            <Class IRI="#Building"/>
+            <Class IRI="#Lift"/>
+        </ObjectUnionOf>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#holes"/>
+        <Class IRI="#Polygon"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#holes"/>
+        <ObjectComplementOf>
+            <Class IRI="#PolygonHole"/>
+        </ObjectComplementOf>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#infrastructures"/>
+        <Class IRI="#Construction"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#length_unit"/>
+        <Class IRI="#TrackGauge"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#lines"/>
+        <Class IRI="#Site"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#main_direction_states"/>
+        <Class IRI="#TrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#maximum_speed_states"/>
+        <Class IRI="#TrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#moving_part_states"/>
+        <Class IRI="#ManeuverStructure"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#nodes"/>
+        <ObjectUnionOf>
+            <Class IRI="#Polygon"/>
+            <Class IRI="#Polyline"/>
+        </ObjectUnionOf>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#notes"/>
+        <Class IRI="#Geometry"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#opened_by"/>
+        <Class IRI="#OperatedEntity"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#operator"/>
+        <Class IRI="#OperatorState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#operator_states"/>
+        <Class IRI="#OperatedEntity"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#operator_type"/>
+        <Class IRI="#OperatorTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#operator_type_states"/>
+        <Class IRI="#Operator"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#parent_polygon"/>
+        <Class IRI="#PolygonHole"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#pit_states"/>
+        <Class IRI="#ConventionalTrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#rail_type"/>
+        <Class IRI="#RailTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#rail_type_states"/>
+        <Class IRI="#ConventionalTrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#ruin_states"/>
+        <Class IRI="#Construction"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#site_type"/>
+        <Class IRI="#SiteTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#site_type_states"/>
+        <Class IRI="#Site"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#sites"/>
+        <Class IRI="#Line"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#speed_unit"/>
+        <Class IRI="#TrackMaximumSpeedState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#tie_type"/>
+        <Class IRI="#TieTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#tie_type_states"/>
+        <Class IRI="#ConventionalTrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#tire_rollways_states"/>
+        <Class IRI="#ConventionalTrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#track_infrastructures"/>
+        <Class IRI="#TrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#track_sections"/>
+        <Class IRI="#Line"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#track_use_type"/>
+        <Class IRI="#TrackUseTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#track_use_type_states"/>
+        <Class IRI="#TrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#traction_type"/>
+        <Class IRI="#TractionTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#traction_type_states"/>
+        <Class IRI="#ConventionalTrackSection"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#use_type"/>
+        <Class IRI="#TrackInfrastructureUseTypeState"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyDomain>
+        <ObjectProperty IRI="#use_type_states"/>
+        <Class IRI="#TrackInfrastructure"/>
+    </ObjectPropertyDomain>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#bridge_structure"/>
+        <Class IRI="#BridgeSectionStructure"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#building_type"/>
+        <Class IRI="#BuildingType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#building_type_states"/>
+        <Class IRI="#BuildingTypeState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#building_use_type"/>
+        <Class IRI="#BuildingUseType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#building_use_type_states"/>
+        <Class IRI="#BuildingUseTypeState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#construction_material"/>
+        <Class IRI="#ConstructionMaterial"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#crossing_states"/>
+        <Class IRI="#CrossingTypeState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#crossing_type"/>
+        <Class IRI="#CrossingType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#current_type"/>
+        <Class IRI="#CurrentType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#electrification_states"/>
+        <Class IRI="#TrackElectrificationState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#electrification_system"/>
+        <Class IRI="#ElectrificationSystem"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#existence_interval"/>
+        <Class IRI="http://www.w3.org/2006/time#ProperInterval"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#floor_states"/>
+        <Class IRI="#FloorState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#gauges"/>
+        <Class IRI="#TrackGauge"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#geometries"/>
+        <Class IRI="#Geometry"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#geometry"/>
+        <Class IRI="#Geometry"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#geometry_states"/>
+        <Class IRI="#GeometryState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#height_states"/>
+        <Class IRI="#HeightState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#holes"/>
+        <Class IRI="#PolygonHole"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#infrastructures"/>
+        <Class IRI="#Infrastructure"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#length_unit"/>
+        <Class IRI="#LengthUnit"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#lines"/>
+        <Class IRI="#Line"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#main_direction_states"/>
+        <Class IRI="#TrackMainDirectionState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#maximum_speed_states"/>
+        <Class IRI="#TrackMaximumSpeedState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#moving_part_states"/>
+        <Class IRI="#ManeuverStructureMovingPartState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#nodes"/>
+        <Class IRI="#Node"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#notes"/>
+        <Class IRI="#Note"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#opened_by"/>
+        <Class IRI="#Operator"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#operator"/>
+        <Class IRI="#Operator"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#operator_states"/>
+        <Class IRI="#OperatorState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#operator_type"/>
+        <Class IRI="#OperatorType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#operator_type_states"/>
+        <Class IRI="#OperatorTypeState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#parent_polygon"/>
+        <Class IRI="#Polygon"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#parent_polygon"/>
+        <ObjectComplementOf>
+            <Class IRI="#PolygonHole"/>
+        </ObjectComplementOf>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#pit_states"/>
+        <Class IRI="#TrackPitState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#rail_type"/>
+        <Class IRI="#RailType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#rail_type_states"/>
+        <Class IRI="#RailTypeState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#ruin_states"/>
+        <Class IRI="#RuinState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#site_type"/>
+        <Class IRI="#SiteType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#site_type_states"/>
+        <Class IRI="#SiteTypeState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#sites"/>
+        <Class IRI="#Site"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#speed_unit"/>
+        <Class IRI="#SpeedUnit"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#tie_type"/>
+        <Class IRI="#TieType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#tie_type_states"/>
+        <Class IRI="#TieTypeState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#tire_rollways_states"/>
+        <Class IRI="#TireRollwaysState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#track_infrastructures"/>
+        <Class IRI="#TrackInfrastructure"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#track_sections"/>
+        <Class IRI="#TrackSection"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#track_use_type"/>
+        <Class IRI="#TrackUseType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#track_use_type_states"/>
+        <Class IRI="#TrackUseTypeState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#traction_type"/>
+        <Class IRI="#TractionType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#traction_type_states"/>
+        <Class IRI="#TractionTypeState"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#use_type"/>
+        <Class IRI="#TrackInfrastructureUseType"/>
+    </ObjectPropertyRange>
+    <ObjectPropertyRange>
+        <ObjectProperty IRI="#use_type_states"/>
+        <Class IRI="#TrackInfrastructureUseTypeState"/>
+    </ObjectPropertyRange>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#altitude"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#approximate_end_date"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#approximate_start_date"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#basement_floors_number"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#direction"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#electrified"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#floors_number"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#gauge"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#has_moving_part"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#has_pit"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#has_tire_rollways"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#height"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#is_bridge"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#latitude"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#longitude"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#max_rotation_angle"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#max_speed"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#note_text"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#qid"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#ruined"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#symbol"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#tension"/>
+    </FunctionalDataProperty>
+    <FunctionalDataProperty>
+        <DataProperty IRI="#unguided"/>
+    </FunctionalDataProperty>
+    <DataPropertyDomain>
+        <DataProperty IRI="#altitude"/>
+        <Class IRI="#Node"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#approximate_end_date"/>
+        <Class IRI="#FuzzyProperInterval"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#approximate_start_date"/>
+        <Class IRI="#FuzzyProperInterval"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#basement_floors_number"/>
+        <Class IRI="#FloorState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#direction"/>
+        <Class IRI="#TrackMainDirectionState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#electrified"/>
+        <Class IRI="#TrackElectrificationState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#floors_number"/>
+        <Class IRI="#FloorState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#gauge"/>
+        <Class IRI="#TrackGauge"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#has_moving_part"/>
+        <Class IRI="#ManeuverStructureMovingPartState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#has_pit"/>
+        <ObjectUnionOf>
+            <Class IRI="#TrackPitState"/>
+            <Class IRI="#TransferTable"/>
+        </ObjectUnionOf>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#has_tire_rollways"/>
+        <Class IRI="#TireRollwaysState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#height"/>
+        <Class IRI="#HeightState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#is_bridge"/>
+        <Class IRI="#Turntable"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#latitude"/>
+        <Class IRI="#Node"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#longitude"/>
+        <Class IRI="#Node"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#max_rotation_angle"/>
+        <Class IRI="#Turntable"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#max_speed"/>
+        <Class IRI="#TrackMaximumSpeedState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#note_text"/>
+        <Class IRI="#Note"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#qid"/>
+        <Class IRI="#OTTMObject"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#ruined"/>
+        <Class IRI="#RuinState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#sources"/>
+        <Class IRI="#OTTMObject"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#symbol"/>
+        <Class IRI="#Unit"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#tension"/>
+        <Class IRI="#TrackElectrificationState"/>
+    </DataPropertyDomain>
+    <DataPropertyDomain>
+        <DataProperty IRI="#unguided"/>
+        <Class IRI="#GLTTrackSection"/>
+    </DataPropertyDomain>
+    <DataPropertyRange>
+        <DataProperty IRI="#altitude"/>
+        <Datatype abbreviatedIRI="xsd:double"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#approximate_end_date"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#approximate_start_date"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#basement_floors_number"/>
+        <Datatype abbreviatedIRI="xsd:unsignedInt"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#direction"/>
+        <Datatype abbreviatedIRI="xsd:unsignedInt"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#electrified"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#floors_number"/>
+        <Datatype abbreviatedIRI="xsd:unsignedInt"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#gauge"/>
+        <Datatype abbreviatedIRI="xsd:unsignedInt"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#has_moving_part"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#has_pit"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#has_tire_rollways"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#height"/>
+        <Datatype abbreviatedIRI="xsd:unsignedInt"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#is_bridge"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#latitude"/>
+        <Datatype abbreviatedIRI="xsd:double"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#longitude"/>
+        <Datatype abbreviatedIRI="xsd:double"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#max_rotation_angle"/>
+        <Datatype abbreviatedIRI="xsd:double"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#max_speed"/>
+        <Datatype abbreviatedIRI="xsd:double"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#note_text"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#qid"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#ruined"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#sources"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#symbol"/>
+        <Datatype abbreviatedIRI="xsd:string"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#tension"/>
+        <Datatype abbreviatedIRI="xsd:double"/>
+    </DataPropertyRange>
+    <DataPropertyRange>
+        <DataProperty IRI="#unguided"/>
+        <Datatype abbreviatedIRI="xsd:boolean"/>
+    </DataPropertyRange>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#AddisMonorailTrackSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Addis%27s_Single_Rail_Tramway</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#BasculeBridgeSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Bascule_bridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#CailletMonorailTrackSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Caillet_monorail</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#EwingMonorailTrackSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Ewing_System
+https://en.wikipedia.org/wiki/Patiala_State_Monorail_Trainways
+https://en.wikipedia.org/wiki/Kundala_Valley_Railway</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#FerrySlipSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Ferry_slip</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#GLTTrackSection</IRI>
+        <Literal xml:lang="en">https://en.wikipedia.org/wiki/Bombardier_Guided_Light_Transit</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#GyroscopicMonorailTrackSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Gyro_monorail</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#LiftBridgeSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Vertical-lift_bridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#RetractableBridgeSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Retractable_bridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#SAFEGEMonorailTrackSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/SAFEGE</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#SeesawBridgeSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Double-beam_drawbridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#SubmersibleBridgeSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Submersible_bridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#SwingBridgeSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Swing_bridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#TableBridgeSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Table_bridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#TiltBridgeSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Tilt_bridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#TranslohrTrackSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Translohr</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#TransporterBridgeSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Transporter_bridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#VlotbrugSection</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Vlotbrug</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#crib_bridge</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Crib_bridge</Literal>
+    </AnnotationAssertion>
+    <AnnotationAssertion>
+        <AnnotationProperty abbreviatedIRI="rdfs:comment"/>
+        <IRI>#pontoon_bridge</IRI>
+        <Literal>https://en.wikipedia.org/wiki/Pontoon_bridge</Literal>
+    </AnnotationAssertion>
+</Ontology>
+
+
+
+<!-- Generated by the OWL API (version 4.5.9.2019-02-01T07:24:44Z) https://github.com/owlcs/owlapi -->
+
