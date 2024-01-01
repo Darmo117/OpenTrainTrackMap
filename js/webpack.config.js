@@ -10,9 +10,9 @@ module.exports = {
       }
     ]
   },
-  entry: "./js_modules/map.js",
+  entry: "./modules/map.js",
   output: {
     filename: "map-bundle.js",
-    path: path.resolve(__dirname, "./ottm/static/ottm/map"),
+    path: path.resolve("../ottm/static/ottm/map"),
   },
 };

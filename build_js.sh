@@ -1,1 +1,1 @@
-npm run dev
+npm run --prefix js dev
