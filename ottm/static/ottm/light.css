@@ -13,5 +13,5 @@
 }
 
 :not(a).masked {
-  color: gray;
+  color: grey;
 }

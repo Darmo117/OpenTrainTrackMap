@@ -69,7 +69,10 @@ class Command(dj_mngmt.BaseCommand):
         nb = 0
         for directory in dirs:
             for file in map(pathlib.Path, directory.rglob(pattern)):
-                if 'libs' not in file.parts and '.min.' not in file.name and file.is_file():
+                if 'libs' not in file.parts and self._test_file_name(file.name) and file.is_file():
                     callback(file)
                     nb += 1
         return nb
+
+    def _test_file_name(self, fname: str) -> bool:
+        return '.min.' not in fname and '-bundle' not in fname

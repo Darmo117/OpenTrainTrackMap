@@ -1,0 +1,2 @@
+Tutorial on how to setup NPM with Django:
+https://www.saaspegasus.com/guides/modern-javascript-for-django-developers/integrating-javascript-pipeline/

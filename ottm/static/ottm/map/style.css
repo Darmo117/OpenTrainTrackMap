@@ -4,18 +4,11 @@
   height: calc(100% - 61px); /* Navbar’s approximate height */
 }
 
-/* TODO put color-related rules in theme stylesheets */
-
 /*
  * Editor panel
  */
 
-#editor-panel {
-  background-color: #cbcbcb;
-}
-
 #editor-panel-title {
-  background-color: #dcdcdc;
   font-weight: bold;
   text-align: center;
   font-size: 1.5em;
@@ -33,7 +26,6 @@
 }
 
 .gutter {
-  background-color: #eee;
   background-repeat: no-repeat;
   background-position: 50%;
 }
@@ -49,9 +41,49 @@
 }
 
 /*
- * Leaflet controls
+ * MapLibre controls
  */
 
+.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-search-bar {
+  display: flex;
+  align-items: center;
+}
+
+.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-search-bar > input[type="text"] {
+  border: none;
+  margin-left: 2px;
+  font-size: 1.1em;
+  display: inline;
+}
+
+.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-search-bar > button {
+  font-size: 1.5em;
+  display: inline;
+}
+
+.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-results-panel {
+  padding: 0.5em 0 0.5em 0.5em;
+  max-width: 250px;
+}
+
+.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-results-panel > ul {
+  padding-left: 0;
+  margin-bottom: 0;
+  list-style: none;
+  padding-right: 1em; /* Leave space for the scroll-bar */
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.maplibre-ctrl-open-location > button > img {
+  max-height: 24px;
+  max-width: 24px;
+}
+
+/*
+ * Leaflet controls
+ */
+/*
 .leaflet-control a .mdi {
   font-size: 2em;
 }
@@ -111,12 +143,12 @@
   border-bottom-right-radius: 2px;
   border-left: 1px #ccc solid;
 }
-
+*/
 /*
  * Custom center position for map controls.
  * From https://stackoverflow.com/a/60391674/3779986
  */
-
+/*
 .leaflet-center {
   left: 50%;
   transform: translate(-50%, 0%);
@@ -130,7 +162,7 @@
 .leaflet-center .leaflet-control:not(:first-child) {
   margin-left: 10px;
 }
-
+*/
 /*
  * Geometry selection
  */

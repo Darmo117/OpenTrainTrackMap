@@ -1,0 +1,36 @@
+{
+  "name": "opentraintrackmap",
+  "version": "1.0.0",
+  "description": "JavaScript dependencies for OTTM’s map viewer/editor.",
+  "main": "map.js",
+  "scripts": {
+    "dev": "webpack --mode development"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Darmo117/OpenTrainTrackMap.git"
+  },
+  "keywords": [],
+  "author": "Darmo",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Darmo117/OpenTrainTrackMap/issues"
+  },
+  "homepage": "https://github.com/Darmo117/OpenTrainTrackMap#readme",
+  "devDependencies": {
+    "css-loader": "^6.8.1",
+    "style-loader": "^3.3.3",
+    "webpack": "^5.89.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@mapbox-controls/compass": "^1.1.0",
+    "@mapbox-controls/helpers": "^1.1.0",
+    "@mapbox-controls/styles": "^1.1.0",
+    "@mapbox-controls/zoom": "^1.1.0",
+    "@mapbox/mapbox-gl-draw": "^1.4.3",
+    "mapbox-gl-draw-snap-mode": "^0.2.0",
+    "maplibre-gl": "^3.6.2",
+    "split.js": "^1.6.5"
+  }
+}

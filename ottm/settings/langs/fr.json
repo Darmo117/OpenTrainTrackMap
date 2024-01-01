@@ -722,8 +722,7 @@
         "controls": {
           "layers": {
             "base": {
-              "black_and_white": "Carte niveaux de gris",
-              "colorized": "Carte couleurs",
+              "osm": "Carte",
               "satellite_maptiler": "Satellite (MapTiler)",
               "satellite_esri": "Satellite (Esri)",
               "satellite_google": "Satellite (Google)"
@@ -739,14 +738,33 @@
             "tooltip": "Dézoomer"
           },
           "search": {
-            "tooltip": "Rechercher un lieu",
-            "placeholder": "Rechercher un lieu ou une adresse…"
+            "placeholder": "Rechercher un lieu",
+            "search_button": {
+              "title": "Chercher"
+            },
+            "erase_button": {
+              "title": "Effacer"
+            },
+            "no_results": "Aucun résultat.",
+            "error": "Une erreur est survenue, veuillez réessayer plus tard."
           },
           "google_maps_button": {
-            "tooltip": "Ouvrir l’emplacement actuel sur Google Maps"
+            "tooltip": "Ouvrir l’emplacement actuel dans Google Maps"
+          },
+          "bing_maps_button": {
+            "tooltip": "Ouvrir l’emplacement actuel dans Bing Maps"
+          },
+          "osm_button": {
+            "tooltip": "Ouvrir l’emplacement actuel dans OpenStreetMap"
+          },
+          "ohm_button": {
+            "tooltip": "Ouvrir l’emplacement actuel dans OpenHistoricalMap"
+          },
+          "geohack_button": {
+            "tooltip": "Ouvrir l’emplacement actuel dans GeoHack"
           },
           "ign_compare_button": {
-            "tooltip": "Ouvrir l’emplacement actuel sur l’outil de comparaison de l’IGN"
+            "tooltip": "Ouvrir l’emplacement actuel dans l’outil de comparaison de l’IGN"
           },
           "edit": {
             "new_marker": {

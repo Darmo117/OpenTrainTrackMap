@@ -1,0 +1,20 @@
+/*
+ * Editor panel
+ */
+
+#editor-panel {
+  background-color: #cbcbcb;
+}
+
+#editor-panel-title {
+  background-color: #dcdcdc;
+}
+
+.gutter {
+  background-color: #eee;
+}
+
+.mapbox-ctrl-zoom button,
+.mapbox-ctrl-styles-compact button {
+  color: inherit !important; /* Use text color */
+}

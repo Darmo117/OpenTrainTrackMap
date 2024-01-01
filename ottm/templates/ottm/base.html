@@ -12,7 +12,7 @@
 
   <title>{% if context.tab_title %}{{ context.tab_title }} &mdash; {% endif %}{{ context.site_name }}</title>
   {# https://commons.wikimedia.org/wiki/File:Map-icon-pure.svg #}
-  <link href="{% static 'ottm/images/favicon.png' %}" type="image/png" rel="icon">
+  <link href="{% static 'ottm/images/icons/favicon.png' %}" type="image/png" rel="icon">
 
   {# https://github.com/Templarian/MaterialDesign #}
   <link href="{% static 'ottm/libs/materialdesign-icons/css/materialdesignicons.min.css' %}" rel="stylesheet">
@@ -33,7 +33,7 @@
 <body>
   <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
     <a id="nav-main-link" class="navbar-brand" href="{% url 'ottm:map' %}">
-      <img src="{% static 'ottm/images/favicon.png' %}" width="30" height="30"
+      <img src="{% static 'ottm/images/icons/favicon.png' %}" width="30" height="30"
            class="d-inline-block align-top" alt="site logo">
       {{ context.site_name }}
     </a>

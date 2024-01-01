@@ -694,8 +694,7 @@
         "controls": {
           "layers": {
             "base": {
-              "black_and_white": "Grayscale Map",
-              "colored": "Colored Map",
+              "osm": "Map",
               "satellite_maptiler": "Satellite (MapTiler)",
               "satellite_esri": "Satellite (Esri)",
               "satellite_google": "Satellite (Google)"
@@ -711,10 +710,30 @@
             "tooltip": "Zoom out"
           },
           "search": {
-            "placeholder": "Search for places"
+            "placeholder": "Search a place",
+            "search_button": {
+              "title": "Search"
+            },
+            "erase_button": {
+              "title": "Erase"
+            },
+            "no_results": "No results.",
+            "error": "An error occured, please try again later."
           },
           "google_maps_button": {
             "tooltip": "Open current location in Google Maps"
+          },
+          "bing_maps_button": {
+            "tooltip": "Open current location in Bing Maps"
+          },
+          "osm_button": {
+            "tooltip": "Open current location in OpenStreetMap"
+          },
+          "ohm_button": {
+            "tooltip": "Open current location in OpenHistoricalMap"
+          },
+          "geohack_button": {
+            "tooltip": "Open current location in GeoHack"
           },
           "ign_compare_button": {
             "tooltip": "Open current location in IGN’s comparing tool"

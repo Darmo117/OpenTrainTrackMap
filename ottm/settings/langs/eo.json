@@ -701,8 +701,7 @@
         "controls": {
           "layers": {
             "base": {
-              "black_and_white": "Grizoskala mapo",
-              "colored": "Kolora mapo",
+              "osm": "Mapo",
               "satellite_maptiler": "Satelita (MapTiler)",
               "satellite_esri": "Satelita (Esri)",
               "satellite_google": "Satelita (Google)"
@@ -718,11 +717,30 @@
             "tooltip": "Malzomi"
           },
           "search": {
-            "tooltip": "Serĉi lokon",
-            "placeholder": "Serĉi lokojn aŭ adresojn…"
+            "placeholder": "Serĉi lokon",
+            "search_button": {
+              "title": "Serĉi"
+            },
+            "erase_button": {
+              "title": "Viŝi"
+            },
+            "no_results": "Neniom da rezultoj.",
+            "error": "Eraro okazis, bonvolu reprovi poste."
           },
           "google_maps_button": {
             "tooltip": "Montri la nunan lokon en Google Maps"
+          },
+          "bing_maps_button": {
+            "tooltip": "Montri la nunan lokon en Bing Maps"
+          },
+          "osm_button": {
+            "tooltip": "Montri la nunan lokon en OpenStreetMap"
+          },
+          "ohm_button": {
+            "tooltip": "Montri la nunan lokon en OpenHistoricalMap"
+          },
+          "geohack_button": {
+            "tooltip": "Montri la nunan lokon en GeoHack"
           },
           "ign_compare_button": {
             "tooltip": "Montri la nunan lokon en la komparilo de la IGN"
