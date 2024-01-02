@@ -18,7 +18,7 @@ module.exports = {
   resolve: {
     extensions: [".tsx", ".ts", ".js"],
   },
-  entry: "./modules/index.ts",
+  entry: "./modules/index-default.ts",
   devtool: "inline-source-map",
   output: {
     filename: "index-bundle.js",

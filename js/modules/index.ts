@@ -5,9 +5,8 @@ import $ from "jquery";
 import Cookies from "js-cookie";
 
 import {OTTM} from "./types";
-import initMap from "./map";
-import initWiki from "./wiki";
 import hookExitConfirm from "./confirm-form-exit";
+// `<IMPORTS_PLACEHOLDER>`
 
 window.ottm = new OTTM();
 window.ottm.setReferer();
@@ -18,12 +17,7 @@ hookDarkModeCallback();
 hookLanguageSelectorCallback();
 initForms();
 
-if (window.hasOwnProperty("OTTM_MAP_CONFIG")) {
-  initMap();
-}
-if (window.ottm.config.get("wPath")) {
-  initWiki();
-}
+// `<INIT_PLACEHOLDER>`
 
 /*
  * Functions

@@ -230,6 +230,10 @@
   {% endif %}
 {% endblock %}
 
+{% block global-script %}
+  <script src="{% static 'ottm/wiki/index-bundle.js' %}"></script>
+{% endblock %}
+
 {% block post-global-script %}
   {{ block.super }}
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}

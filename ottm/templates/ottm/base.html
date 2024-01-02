@@ -143,7 +143,9 @@
   <script src="{% static 'ottm/libs/bootstrap-4.5.2-dist/js/bootstrap.min.js' %}"></script>
   <script id="ottm-config-script">window.OTTM_CONFIG = {{ context.js_config|safe }};</script>
   {% block pre-global-script %}{% endblock %}
-  <script src="{% static 'ottm/index-bundle.js' %}"></script>
+  {% block global-script %}
+    <script src="{% static 'ottm/index-bundle.js' %}"></script>
+  {% endblock %}
   {% block post-global-script %}{% endblock %}
 </body>
 </html>
