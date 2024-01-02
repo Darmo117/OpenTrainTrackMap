@@ -17,8 +17,7 @@
   <div id="map"></div>
 {% endblock %}
 
-{% block page-scripts %}
+{% block pre-global-script %}
   {{ block.super }}
   <script id="ottm-map-config-script">window.OTTM_MAP_CONFIG = {{ context.map_js_config|safe }};</script>
-  <script type="module" src="{% static 'ottm/map/map-bundle.js' %}"></script>
 {% endblock %}

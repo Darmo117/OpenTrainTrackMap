@@ -137,15 +137,13 @@
   </nav>
   {% block page-content %}{% endblock %}
 
-  {# https://github.com/js-cookie/js-cookie #}
-  <script src="{% static 'ottm/libs/js.cookie.min.js' %}"></script>
+  {# Needed for Bootstrap #}
   <script src="{% static 'ottm/libs/jquery-3.6.0.min.js' %}"></script>
-  <script src="{% static 'ottm/libs/jquery.confirmExit.min.js' %}"></script>
   <script src="{% static 'ottm/libs/popper.min.js' %}"></script>
   <script src="{% static 'ottm/libs/bootstrap-4.5.2-dist/js/bootstrap.min.js' %}"></script>
   <script id="ottm-config-script">window.OTTM_CONFIG = {{ context.js_config|safe }};</script>
-  <script src="{% static 'ottm/main.min.js' %}"></script>
-  <script src="{% static 'ottm/forms.min.js' %}"></script>
-  {% block page-scripts %}{% endblock %}
+  {% block pre-global-script %}{% endblock %}
+  <script src="{% static 'ottm/index-bundle.js' %}"></script>
+  {% block post-global-script %}{% endblock %}
 </body>
 </html>

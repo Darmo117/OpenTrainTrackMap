@@ -1172,6 +1172,7 @@
   {% endwith %}
 {% endblock %}
 
-{% block page-scripts %}
+{% block post-global-script %}
+  {{ block.super }}
   <script src="{% static 'ottm/user-settings.min.js' %}"></script>
 {% endblock %}

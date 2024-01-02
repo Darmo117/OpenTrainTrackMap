@@ -222,10 +222,16 @@
   </footer>
 {% endblock %}
 
-{% block page-scripts %}
+{% block pre-global-script %}
+  {{ block.super }}
   <script src="{% static 'ottm/libs/highlight/highlight.min.js' %}"></script>
-  <script src="{% static 'ottm/libs/jquery.confirmExit.min.js' %}"></script>
-  <script src="{% static 'ottm/wiki/main.min.js' %}"></script>
+  {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT or context.action == ACTION_TALK %}
+    <script src="{% static 'ottm/libs/ace-editor/ace.js' %}"></script>
+  {% endif %}
+{% endblock %}
+
+{% block post-global-script %}
+  {{ block.super }}
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}
     {# Using "with" to avoid warning #}
     {% with path='ottm/wiki/special_pages/'|add:context.page.base_name|add:'/script.min.js' %}
@@ -234,6 +240,7 @@
   {% endif %}
 
   {% wiki_static 'Interface:Common.js' %}
+  {% wiki_static 'gadgets' %}
   {% if context.user.is_authenticated %}
     {% wiki_static 'User:'|add:context.user.username|add:'/Common.js' %}
     {% if context.dark_mode %}
@@ -242,15 +249,7 @@
       {% wiki_static 'User:'|add:context.user.username|add:'/Common-light.js' %}
     {% endif %}
   {% endif %}
-  {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT or context.action == ACTION_TALK %}
-    <script src="{% static 'ottm/libs/ace-editor/ace.js' %}"></script>
-    {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT %}
-      <script src="{% static 'ottm/wiki/editor.min.js' %}"></script>
-    {% elif context.action == ACTION_TALK %}
-      <script src="{% static 'ottm/wiki/talk.min.js' %}"></script>
-    {% endif %}
-  {% endif %}
-  {% wiki_static 'gadgets' %}
+
   {% if context.page_cache_metadata %}
     <!--
     Parser report:

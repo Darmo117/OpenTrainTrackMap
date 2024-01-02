@@ -7,12 +7,21 @@ module.exports = {
       {
         test: /\.css$/,
         use: ["style-loader", "css-loader"]
-      }
+      },
+      {
+        test: /\.tsx?$/,
+        use: "ts-loader",
+        exclude: /node_modules/,
+      },
     ]
   },
-  entry: "./modules/map.js",
+  resolve: {
+    extensions: [".tsx", ".ts", ".js"],
+  },
+  entry: "./modules/index.ts",
+  devtool: "inline-source-map",
   output: {
-    filename: "map-bundle.js",
-    path: path.resolve("../ottm/static/ottm/map"),
+    filename: "index-bundle.js",
+    path: path.resolve("../ottm/static/ottm"),
   },
 };
