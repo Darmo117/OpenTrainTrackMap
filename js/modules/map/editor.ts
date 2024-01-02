@@ -2,11 +2,11 @@ import {Map} from "maplibre-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import {
-  SnapDirectSelect,
   SnapLineMode,
-  SnapModeDrawStyles,
   SnapPointMode,
   SnapPolygonMode,
+  SnapDirectSelect,
+  SnapModeDrawStyles,
 } from "mapbox-gl-draw-snap-mode";
 import Split from "split.js";
 
