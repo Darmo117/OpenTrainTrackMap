@@ -13,7 +13,6 @@ import GeocoderControl from "./geocoder-control";
 import OpenExternalMapControl from "./open-external-map-control";
 import initMapEditor from "./map-editor";
 import {RasterSourceSpecification} from "@maplibre/maplibre-gl-style-spec";
-import {OTTM} from "../types";
 
 declare global {
   interface Window {
