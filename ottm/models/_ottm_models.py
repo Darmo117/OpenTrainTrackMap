@@ -266,8 +266,8 @@ class Note(_dj_models.Model):
 
 
 class Node(_dj_models.Model):
-    altitude = _dj_models.FloatField()
     latitude = _dj_models.FloatField()
+    longitude = _dj_models.FloatField()
 
     class Meta:
         abstract = True
