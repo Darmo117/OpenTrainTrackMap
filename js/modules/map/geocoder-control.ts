@@ -116,23 +116,57 @@ export default class GeocoderControl implements IControl {
     } else {
       const list = document.createElement("ul");
       console.log(results); // DEBUG
-      const specialAddressTypes = ["building", "amenity"];
+      // Translations only acknowledge values with at least 1000 uses.
+      // Values:
+      // * https://taginfo.openstreetmap.org/keys/amenity#values
+      // * https://taginfo.openstreetmap.org/keys/aerialway#values
+      // * https://taginfo.openstreetmap.org/keys/aeroway#values
+      // * https://taginfo.openstreetmap.org/keys/building#values
+      // * https://taginfo.openstreetmap.org/keys/highway#values
+      // * https://taginfo.openstreetmap.org/keys/leisure#values
+      // * https://taginfo.openstreetmap.org/keys/man_made#values
+      // * https://taginfo.openstreetmap.org/keys/natural#values
+      // * https://taginfo.openstreetmap.org/keys/place#values
+      // * https://taginfo.openstreetmap.org/keys/railway#values
+      // * https://taginfo.openstreetmap.org/keys/tourism#values
+      // * https://taginfo.openstreetmap.org/keys/waterway#values
+      const specialAddressTypes = [
+        "amenity",
+        "aerialway",
+        "aeroway",
+        "building",
+        "highway",
+        "historic",
+        "leisure",
+        "man_made",
+        "natural",
+        "place",
+        "railway",
+        "road",
+        "tourism",
+        "waterway",
+      ];
       for (const result of results) {
         const type = result.type;
+        const category = result.category;
         const addressType = result.addresstype;
         const displayName = result.display_name;
         const boundingBox = result.boundingbox;
         const lat = result.lat;
         const lng = result.lon;
-        let displayType;
+        let actualType;
         if (specialAddressTypes.includes(addressType) && type !== "yes") {
-          displayType = type;
+          actualType = this.getActualFeatureType(category, type);
         } else {
-          displayType = addressType;
+          actualType = this.getActualFeatureType(category, addressType);
         }
 
         const item = document.createElement("li");
-        item.appendChild(document.createTextNode(`${displayType} – `)); // TODO translate type
+        const displayType = window.ottm.translate(
+          "map.controls.search.result.type." + actualType,
+          actualType
+        );
+        item.appendChild(document.createTextNode(`${displayType} – `));
         const link = document.createElement("a");
         link.textContent = displayName;
         link.href = "#";
@@ -150,6 +184,40 @@ export default class GeocoderControl implements IControl {
       this.resultsPanel.appendChild(list);
     }
     this.showResultsPanel();
+  }
+
+  /**
+   * Return the actual type of the given feature category.
+   * @param category Feature’s category.
+   * @param type Category’s type.
+   * @return The feature’s actual type.
+   */
+  private getActualFeatureType(category: string, type: string): string {
+    const higwayValues = [
+      "residential",
+      "service",
+      "proposed",
+      "abandoned",
+    ];
+    const railwayValues = [
+      "abandoned",
+      "crossing",
+      "platform",
+      "stop",
+      "proposed",
+    ];
+    const leisureValues = [
+      "track",
+    ];
+    if (category === "highway" && higwayValues.includes(type)) {
+      return `${type}_road`;
+    } else if (category === "railway" && railwayValues.includes(type)) {
+      return `${type}_railway`;
+    } else if (category === "leisure" && leisureValues.includes(type)) {
+      return `${type}_leisure`;
+    } else {
+      return type;
+    }
   }
 
   /**

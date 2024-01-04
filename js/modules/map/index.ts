@@ -27,25 +27,25 @@ declare global {
 export default function initMap() {
   const mapStyles: maplibregl.StyleSpecification[] = [
     buildStyle(
-      window.ottm.translations.get("map.controls.layers.base.osm"),
+      window.ottm.translate("map.controls.layers.base.osm"),
       "osm",
       "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
       'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
     ),
     buildStyle(
-      window.ottm.translations.get("map.controls.layers.base.satellite_esri"),
+      window.ottm.translate("map.controls.layers.base.satellite_esri"),
       "arcgis",
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       "Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
     ),
     buildStyle(
-      window.ottm.translations.get("map.controls.layers.base.satellite_maptiler"),
+      window.ottm.translate("map.controls.layers.base.satellite_maptiler"),
       "maptiler",
       "/tile?provider=maptiler&x={x}&y={y}&z={z}",
       'Tiles © <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>, Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
     ),
     buildStyle(
-      window.ottm.translations.get("map.controls.layers.base.satellite_google"),
+      window.ottm.translate("map.controls.layers.base.satellite_google"),
       "google",
       "http://www.google.com/maps/vt?lyrs=s@189&x={x}&y={y}&z={z}", // lyrs=s@189 -> satellite images
       "Tiles © Google",
@@ -76,11 +76,11 @@ export default function initMap() {
 
   map.addControl(new GeocoderControl({
     language: window.ottm.getPageLanguage().code,
-    searchButtonTitle: window.ottm.translations.get("map.controls.search.search_button.title"),
-    eraseButtonTitle: window.ottm.translations.get("map.controls.search.erase_button.title"),
-    placeholderText: window.ottm.translations.get("map.controls.search.placeholder"),
-    noResultsMessage: window.ottm.translations.get("map.controls.search.no_results"),
-    errorMessage: window.ottm.translations.get("map.controls.search.error"),
+    searchButtonTitle: window.ottm.translate("map.controls.search.search_button.title"),
+    eraseButtonTitle: window.ottm.translate("map.controls.search.erase_button.title"),
+    placeholderText: window.ottm.translate("map.controls.search.placeholder"),
+    noResultsMessage: window.ottm.translate("map.controls.search.no_results"),
+    errorMessage: window.ottm.translate("map.controls.search.error"),
   }), "top-left");
 
   if (window.OTTM_MAP_CONFIG.edit) {
@@ -107,42 +107,42 @@ export default function initMap() {
   map.addControl(new ZoomControl(), "top-right"); // TODO translate
 
   map.addControl(new OpenExternalMapControl({
-    buttonTitle: window.ottm.translations.get("map.controls.google_maps_button.tooltip"),
+    buttonTitle: window.ottm.translate("map.controls.google_maps_button.tooltip"),
     iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/GoogleMaps.png`,
     urlPattern: "https://www.google.com/maps/@{lat},{lng},{zoom}z",
     zoomMapping: zoom => (zoom + 1).toFixed(2),
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
-    buttonTitle: window.ottm.translations.get("map.controls.bing_maps_button.tooltip"),
+    buttonTitle: window.ottm.translate("map.controls.bing_maps_button.tooltip"),
     iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/Bing.ico`,
     urlPattern: "https://www.bing.com/maps/?cp={lat}~{lng}&lvl={zoom}",
     zoomMapping: zoom => (zoom + 1).toFixed(1),
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
-    buttonTitle: window.ottm.translations.get("map.controls.osm_button.tooltip"),
+    buttonTitle: window.ottm.translate("map.controls.osm_button.tooltip"),
     iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/OSM.png`,
     urlPattern: "https://www.openstreetmap.org/#map={zoom}/{lat}/{lng}",
     zoomMapping: zoom => Math.round(zoom) + 1,
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
-    buttonTitle: window.ottm.translations.get("map.controls.ohm_button.tooltip"),
+    buttonTitle: window.ottm.translate("map.controls.ohm_button.tooltip"),
     iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/OHM.ico`,
     urlPattern: "https://www.openhistoricalmap.org/#map={zoom}/{lat}/{lng}",
     zoomMapping: zoom => Math.round(zoom) + 1,
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
-    buttonTitle: window.ottm.translations.get("map.controls.ign_compare_button.tooltip"),
+    buttonTitle: window.ottm.translate("map.controls.ign_compare_button.tooltip"),
     iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/IGN.ico`,
     urlPattern: "https://remonterletemps.ign.fr/comparer/basic?x={lng}&y={lat}&z={zoom}",
     zoomMapping: zoom => Math.round(zoom) + 1,
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
-    buttonTitle: window.ottm.translations.get("map.controls.geohack_button.tooltip"),
+    buttonTitle: window.ottm.translate("map.controls.geohack_button.tooltip"),
     iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/WikimediaCloudServices.svg`,
     urlPattern: "https://geohack.toolforge.org/geohack.php?params={lat}_N_{lng}_E_scale:{zoom}",
     // Function extrapolated by an exponential trend line in LibreOffice Calc, using the values at:

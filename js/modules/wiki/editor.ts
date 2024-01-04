@@ -38,7 +38,7 @@ export default function initEditor() {
   $("#wiki-edit-form").on("submit", e => {
     const comment = ($("#wiki-edit-form-comment").val() as string).trim();
     if (!comment && window.ottm.user.get("warnWhenNoWikiEditComment")) {
-      const message = window.ottm.translations.get("wiki.edit.no_summary_warning");
+      const message = window.ottm.translate("wiki.edit.no_summary_warning");
       if (!confirm(message)) {
         e.preventDefault();
       }

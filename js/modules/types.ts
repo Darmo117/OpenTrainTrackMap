@@ -202,7 +202,7 @@ export class OTTM {
   /** Current user’s data. */
   public readonly user: Mapping<any>;
   /** UI translations. */
-  public readonly translations: Mapping<string>;
+  private readonly translations: Mapping<string>;
   /** Map of all available UI languages. */
   public readonly languages: Dict<Language> = {};
 
@@ -229,6 +229,16 @@ export class OTTM {
     }
     delete window.OTTM_CONFIG;
     $("#ottm-config-script").remove();
+  }
+
+  /**
+   * Translate the given key.
+   * @param key The key.
+   * @param defaultValue Optional value to return if the key is undefined.
+   * @return The translation or the key if no translation was found and no default value was provided.
+   */
+  translate(key: string, defaultValue?: string): string {
+    return this.translations.get(key) ?? (defaultValue ?? key);
   }
 
   /**
