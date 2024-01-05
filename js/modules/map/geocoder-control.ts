@@ -209,12 +209,19 @@ export default class GeocoderControl implements IControl {
     const leisureValues = [
       "track",
     ];
+    const aerialwayValues = [
+      "station",
+    ];
     if (category === "highway" && higwayValues.includes(type)) {
       return `${type}_road`;
     } else if (category === "railway" && railwayValues.includes(type)) {
       return `${type}_railway`;
     } else if (category === "leisure" && leisureValues.includes(type)) {
       return `${type}_leisure`;
+    } else if (category === "aerialway" && aerialwayValues.includes(type)) {
+      return `${type}_aerialway`;
+    } else if (category === "shop" && type === "ticket") {
+      return "ticket";
     } else {
       return type;
     }
