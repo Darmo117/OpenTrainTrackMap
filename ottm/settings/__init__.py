@@ -1,5 +1,6 @@
 """This package defines the website’s settings."""
 import datetime as _dt
+import json
 import json as _json
 import logging as _logging
 import math as _math
@@ -145,7 +146,8 @@ class UILanguage:
 
     @property
     def js_mappings(self) -> dict[str, str]:
-        return self._js_mappings
+        """A copy of this language’s JavaScript mappings."""
+        return dict(self._js_mappings)
 
     def translate(self, key: str, default: str = None, gender: _data_types.UserGender = None, **kwargs) -> str:
         """Translate the given key.
@@ -241,35 +243,45 @@ def init_languages():
     """Initialize UI languages."""
     from .. import models  # Local import to avoid loops
     LOGGER.info('Loading translations…')
+    langs_dir = _pathlib.Path(__file__).parent / 'langs'
     for language in models.Language.objects.filter(available_for_ui=True):
-        lang_file = _pathlib.Path(__file__).parent / 'langs' / f'{language.code}.json'
+        lang_file = langs_dir / f'{language.code}.json'
         if not lang_file.exists():
             LOGGER.error(f'Missing translation file for language code {language.code}')
             continue
-        with lang_file.open(encoding='utf-8') as lang_file:
-            json_obj = _json.load(lang_file)
-            mapping = _build_mapping(json_obj['mappings'])
-            js_mappings = {}
-            for k, v in list(mapping.items()):
-                if k.startswith('js.'):
-                    js_mappings[k[3:]] = v
-                    del mapping[k]
-            LANGUAGES[language.code] = UILanguage(
-                language=language,
-                comma=json_obj['comma'],
-                and_word=json_obj['and'],
-                day_names=tuple(json_obj['day_names']),
-                abbr_day_names=tuple(json_obj['abbr_day_names']),
-                month_names=tuple(json_obj['month_names']),
-                abbr_month_names=tuple(json_obj['abbr_month_names']),
-                am_pm=tuple(json_obj['am_pm']),
-                day_suffixes=json_obj.get('day_suffixes', {}),
-                decimal_sep=json_obj['number_format']['decimal_sep'],
-                thousands_sep=json_obj['number_format']['thousands_sep'],
-                mappings=mapping,
-                js_mappings=js_mappings,
-            )
-            LOGGER.info(f'Loaded translations for {language.name} ({language.code})')
+        with lang_file.open(encoding='UTF-8') as f:
+            json_obj = _json.load(f)
+
+        mappings_ = json_obj['mappings']
+        # Inject OSM feature type translations
+        osm_trans_file = langs_dir / f'feature_translations/{language.code}.json'
+        if osm_trans_file.exists():
+            with osm_trans_file.open(encoding='UTF-8') as f:
+                mappings_['js']['osm_feature_type'] = json.load(f)
+
+        mapping = _build_mapping(mappings_)
+        js_mappings = {}
+        for k, v in list(mapping.items()):
+            if k.startswith('js.'):
+                js_mappings[k[3:]] = v
+                del mapping[k]
+
+        LANGUAGES[language.code] = UILanguage(
+            language=language,
+            comma=json_obj['comma'],
+            and_word=json_obj['and'],
+            day_names=tuple(json_obj['day_names']),
+            abbr_day_names=tuple(json_obj['abbr_day_names']),
+            month_names=tuple(json_obj['month_names']),
+            abbr_month_names=tuple(json_obj['abbr_month_names']),
+            am_pm=tuple(json_obj['am_pm']),
+            day_suffixes=json_obj.get('day_suffixes', {}),
+            decimal_sep=json_obj['number_format']['decimal_sep'],
+            thousands_sep=json_obj['number_format']['thousands_sep'],
+            mappings=mapping,
+            js_mappings=js_mappings,
+        )
+        LOGGER.info(f'Loaded translations for {language.name} ({language.code})')
     LOGGER.info('Translations loaded.')
 
 

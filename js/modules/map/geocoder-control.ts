@@ -1,5 +1,7 @@
-import {IControl, Map, Marker, LngLatBoundsLike} from "maplibre-gl";
+import {IControl, LngLatBoundsLike, Map, Marker} from "maplibre-gl";
 import {controlButton, controlContainer} from "@mapbox-controls/helpers";
+
+import {capitalize} from "../utils";
 
 export type GeocoderControlOptions = {
   language: string;
@@ -29,6 +31,9 @@ type SearchResult = {
 
 /**
  * Control with a search bar that allows searching for a location.
+ *
+ * @see https://wiki.openstreetmap.org/wiki/Nominatim/FAQ#Where_are_the_translations_of_features?
+ * @see https://github.com/openstreetmap/openstreetmap-website/tree/master/config/locales
  */
 export default class GeocoderControl implements IControl {
   private static readonly BASE_URL: string =
@@ -115,61 +120,41 @@ export default class GeocoderControl implements IControl {
       this.resultsPanel.textContent = this.noResultsMessage;
     } else {
       const list = document.createElement("ul");
-      console.log(results); // DEBUG
-      // Translations only acknowledge values with at least 1000 uses.
-      // Values:
-      // * https://taginfo.openstreetmap.org/keys/amenity#values
-      // * https://taginfo.openstreetmap.org/keys/aerialway#values
-      // * https://taginfo.openstreetmap.org/keys/aeroway#values
-      // * https://taginfo.openstreetmap.org/keys/building#values
-      // * https://taginfo.openstreetmap.org/keys/highway#values
-      // * https://taginfo.openstreetmap.org/keys/leisure#values
-      // * https://taginfo.openstreetmap.org/keys/man_made#values
-      // * https://taginfo.openstreetmap.org/keys/natural#values
-      // * https://taginfo.openstreetmap.org/keys/place#values
-      // * https://taginfo.openstreetmap.org/keys/railway#values
-      // * https://taginfo.openstreetmap.org/keys/tourism#values
-      // * https://taginfo.openstreetmap.org/keys/waterway#values
-      const specialAddressTypes = [
-        "amenity",
-        "aerialway",
-        "aeroway",
-        "building",
-        "highway",
-        "historic",
-        "leisure",
-        "man_made",
-        "natural",
-        "place",
-        "railway",
-        "road",
-        "tourism",
-        "waterway",
-      ];
+      const noTranslationsMark = "```";
       for (const result of results) {
         const type = result.type;
         const category = result.category;
-        const addressType = result.addresstype;
-        const displayName = result.display_name;
-        const boundingBox = result.boundingbox;
-        const lat = result.lat;
-        const lng = result.lon;
-        let actualType;
-        if (specialAddressTypes.includes(addressType) && type !== "yes") {
-          actualType = this.getActualFeatureType(category, type);
-        } else {
-          actualType = this.getActualFeatureType(category, addressType);
+        // Prefix name translation algorithm from
+        // https://github.com/openstreetmap/openstreetmap-website/blob/master/app/controllers/geocoder_controller.rb#L109
+        let prefixName = window.ottm.translate(
+          `osm_feature_type.prefix.${category}.${type}`,
+          () => noTranslationsMark + capitalize(type.replace("_", " "))
+        );
+        if (category === "boundary" && type === "administrative") {
+          // Check if a better translation exists
+          prefixName = window.ottm.translate(
+            `osm_feature_type.prefix.place.${result.addresstype}`,
+            () => window.ottm.translate(
+              `osm_feature_type.admin_levels.level${Math.floor((result.place_rank + 1) / 2)}`,
+              prefixName
+            )
+          );
         }
 
         const item = document.createElement("li");
-        const displayType = window.ottm.translate(
-          "map.controls.search.result.type." + actualType,
-          actualType
-        );
-        item.appendChild(document.createTextNode(`${displayType} – `));
+        if (prefixName.includes(noTranslationsMark)) {
+          // Italicize if no translation
+          const emNode = document.createElement("em");
+          emNode.appendChild(document.createTextNode(prefixName.slice(noTranslationsMark.length)))
+          item.appendChild(emNode);
+        } else {
+          item.appendChild(document.createTextNode(prefixName));
+        }
+        item.appendChild(document.createTextNode(" – "));
         const link = document.createElement("a");
-        link.textContent = displayName;
+        link.textContent = result.display_name;
         link.href = "#";
+        const boundingBox = result.boundingbox;
         const bb: LngLatBoundsLike = [{
           lat: boundingBox[0],
           lng: boundingBox[2]
@@ -177,54 +162,13 @@ export default class GeocoderControl implements IControl {
           lat: boundingBox[1],
           lng: boundingBox[3]
         }];
-        link.onclick = () => this.onResultClick(lat, lng, bb);
+        link.onclick = () => this.onResultClick(result.lat, result.lon, bb);
         item.appendChild(link);
         list.appendChild(item);
       }
       this.resultsPanel.appendChild(list);
     }
     this.showResultsPanel();
-  }
-
-  /**
-   * Return the actual type of the given feature category.
-   * @param category Feature’s category.
-   * @param type Category’s type.
-   * @return The feature’s actual type.
-   */
-  private getActualFeatureType(category: string, type: string): string {
-    const higwayValues = [
-      "residential",
-      "service",
-      "proposed",
-      "abandoned",
-    ];
-    const railwayValues = [
-      "abandoned",
-      "crossing",
-      "platform",
-      "stop",
-      "proposed",
-    ];
-    const leisureValues = [
-      "track",
-    ];
-    const aerialwayValues = [
-      "station",
-    ];
-    if (category === "highway" && higwayValues.includes(type)) {
-      return `${type}_road`;
-    } else if (category === "railway" && railwayValues.includes(type)) {
-      return `${type}_railway`;
-    } else if (category === "leisure" && leisureValues.includes(type)) {
-      return `${type}_leisure`;
-    } else if (category === "aerialway" && aerialwayValues.includes(type)) {
-      return `${type}_aerialway`;
-    } else if (category === "shop" && type === "ticket") {
-      return "ticket";
-    } else {
-      return type;
-    }
   }
 
   /**

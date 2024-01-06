@@ -1,4 +1,6 @@
 .idea/
 venv/
-node_modules/
+js/node_modules/
+js/translations/raw_files/
+
 *.sqlite3
