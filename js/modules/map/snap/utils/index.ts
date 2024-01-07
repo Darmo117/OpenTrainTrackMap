@@ -22,6 +22,7 @@ import polygonToLine from "@turf/polygon-to-line";
 import nearestPointOnLine, {NearestPointOnLine} from "@turf/nearest-point-on-line";
 import nearestPointInPointSet from "@turf/nearest-point";
 import midpoint from "@turf/midpoint";
+
 import {SnapOptions, State} from "../state";
 
 const {geojsonTypes} = MapboxDraw.constants;
@@ -32,8 +33,8 @@ export const IDS = {
 };
 
 export type LngLatDict = {
-  lng: number,
-  lat: number,
+  lng: number;
+  lat: number;
 };
 
 export function addPointTovertices(
@@ -167,10 +168,10 @@ function getNearestGuideline(vertices: Position[], coords: LngLatDict): { vertic
 }
 
 type LayerDistance = {
-  latlng: LngLatDict,
-  segment?: Position[],
-  distance: number,
-  isMarker: boolean,
+  latlng: LngLatDict;
+  segment?: Position[];
+  distance: number;
+  isMarker: boolean;
 };
 
 /**
@@ -269,8 +270,8 @@ function calculateLayerDistance(lngLat: LngLatDict, layer: Feature<Geometries>):
 }
 
 type FeatureWithNearestPoint = {
-  feature: Feature<LineString>,
-  point: NearestPointOnLine,
+  feature: Feature<LineString>;
+  point: NearestPointOnLine;
 };
 
 function getFeatureWithNearestPoint(lineStrings: Feature<LineString>[], p: Position): FeatureWithNearestPoint {

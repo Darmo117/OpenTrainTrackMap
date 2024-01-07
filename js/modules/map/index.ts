@@ -1,9 +1,9 @@
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
+import {RasterSourceSpecification} from "@maplibre/maplibre-gl-style-spec";
 import ZoomControl from "@mapbox-controls/zoom";
 import "@mapbox-controls/zoom/src/index.css";
-import StylesControl from "@mapbox-controls/styles";
-import {Style} from "@mapbox-controls/styles";
+import StylesControl, {Style} from "@mapbox-controls/styles";
 import "@mapbox-controls/styles/src/index.css";
 import CompassControl from "@mapbox-controls/compass";
 import "@mapbox-controls/compass/src/index.css";
@@ -12,7 +12,6 @@ import $ from "jquery";
 import GeocoderControl from "./geocoder-control";
 import OpenExternalMapControl from "./open-external-map-control";
 import initMapEditor from "./editor";
-import {RasterSourceSpecification} from "@maplibre/maplibre-gl-style-spec";
 
 declare global {
   interface Window {

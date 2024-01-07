@@ -2,11 +2,11 @@ import {Dict} from "../types";
 import initEditor from "./editor";
 
 type GadgetCode = {
-  name: string,
-  version?: string,
-  init: () => void,
-  run: () => void,
-}
+  name: string;
+  version?: string;
+  init: () => void;
+  run: () => void;
+};
 
 /**
  * Base class for wiki gadgets.
@@ -149,9 +149,9 @@ export type PageContentTransformer = (content: string) => (string | {
  * An object returned by the {@link WikiAPI.editPage} method.
  */
 export type PageEditResponse = {
-  success: boolean,
-  errorMessage?: string,
-}
+  success: boolean;
+  errorMessage?: string;
+};
 
 /**
  * This class provides methods to interact with the wiki’s HTTP API.

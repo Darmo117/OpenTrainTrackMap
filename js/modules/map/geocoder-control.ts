@@ -10,7 +10,7 @@ export type GeocoderControlOptions = {
   placeholderText?: string;
   noResultsMessage?: string;
   errorMessage?: string;
-}
+};
 
 type SearchResult = {
   addresstype: string;
@@ -27,7 +27,7 @@ type SearchResult = {
   place_id: number;
   place_rank: number;
   type: string;
-}
+};
 
 /**
  * Control with a search bar that allows searching for a location.

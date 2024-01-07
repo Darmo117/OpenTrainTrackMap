@@ -1,8 +1,9 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
+import {Feature, Geometries} from "@turf/helpers";
+
 import {createSnapList, getGuideFeature, IDS, shouldHideGuide, snap,} from "../utils";
 import {GeometryState, Options} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
-import {Feature, Geometries,} from "@turf/helpers";
 
 const {doubleClickZoom} = MapboxDraw.lib;
 const DrawPoint = MapboxDraw.modes.draw_point;

@@ -7,14 +7,14 @@ import {IControl, Map} from "maplibre-gl";
  * @param {number} zoom The zoom value.
  * @return {any} The transformed zoom value.
  */
-export type ZoomTransformer = (zoom: number) => any
+export type ZoomTransformer = (zoom: number) => any;
 
 export type OpenExternalMapControlOptions = {
-  buttonTitle: string,
-  iconUrl: string,
-  urlPattern: string,
-  zoomMapping?: ZoomTransformer,
-}
+  buttonTitle: string;
+  iconUrl: string;
+  urlPattern: string;
+  zoomMapping?: ZoomTransformer;
+};
 
 /**
  * Control that opens the map’s current location in the specified external map.

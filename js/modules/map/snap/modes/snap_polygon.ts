@@ -1,10 +1,11 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
-import {addPointTovertices, createSnapList, getGuideFeature, IDS, shouldHideGuide, snap,} from "../utils";
 import booleanIntersects from "@turf/boolean-intersects";
-import {GeometryState, Options} from "../state";
-import {DrawCustomModeWithContext} from "./patch";
 import {Feature, Geometries, Polygon,} from "@turf/helpers";
 import * as turf from "@turf/turf";
+
+import {addPointTovertices, createSnapList, getGuideFeature, IDS, shouldHideGuide, snap,} from "../utils";
+import {GeometryState, Options} from "../state";
+import {DrawCustomModeWithContext} from "./patch";
 
 const {geojsonTypes, modes, cursors} = MapboxDraw.constants;
 const {doubleClickZoom} = MapboxDraw.lib;
@@ -14,14 +15,14 @@ type PolygonOptions = Options & {
   overlap: boolean;
 };
 
-interface PolygonState extends GeometryState<PolygonOptions> {
+type PolygonState = GeometryState<PolygonOptions> & {
   polygon: MapboxDraw.DrawPolygon;
   currentVertexPosition: number;
   selectedFeatures: MapboxDraw.DrawFeature[];
   snappedLng?: number;
   snappedLat?: number;
   lastVertex?: any;
-}
+};
 
 // @ts-ignore
 const SnapPolygonMode: DrawCustomModeWithContext<PolygonState, PolygonOptions> = {...DrawPolygon};

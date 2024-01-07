@@ -1,10 +1,11 @@
 import {MapMouseEvent} from "maplibre-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import {Position} from "@turf/helpers";
+
+import {Dict} from "../../../types";
 import {createSnapList, getGuideFeature, IDS, LngLatDict, snap} from "../utils";
 import {Options, State} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
-import {Dict} from "../../../types";
 
 const {doubleClickZoom} = MapboxDraw.lib;
 const DirectSelect = MapboxDraw.modes.direct_select;
@@ -29,8 +30,8 @@ interface DirectSelectDrawCustomMode extends DrawCustomModeWithContext<DirectSel
 // @ts-ignore
 const SnapDirectSelect: DirectSelectDrawCustomMode = {...DirectSelect};
 
-SnapDirectSelect.onSetup = function (opts: Dict) {
-  const featureId = opts.featureId;
+SnapDirectSelect.onSetup = function (options: Dict) {
+  const featureId = options.featureId;
   const feature = this.getFeature(featureId);
 
   if (!feature) {
@@ -56,10 +57,10 @@ SnapDirectSelect.onSetup = function (opts: Dict) {
     map: this.map as any,
     featureId,
     feature,
-    dragMoveLocation: opts.startPos || null,
+    dragMoveLocation: options.startPos || null,
     dragMoving: false,
     canDragMove: false,
-    selectedCoordPaths: opts.coordPath ? [opts.coordPath] : [],
+    selectedCoordPaths: options.coordPath ? [options.coordPath] : [],
     vertices,
     snapList,
     verticalGuide,

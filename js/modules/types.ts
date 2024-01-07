@@ -32,7 +32,7 @@ declare global {
 
 export type Dict<T = any> = {
   [key: string]: T
-}
+};
 
 /**
  * Immutable object that maps keys to values.
