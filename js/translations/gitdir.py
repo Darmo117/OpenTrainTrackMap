@@ -1,9 +1,3 @@
-#!/usr/bin/python3
-"""
-Adapted from:
-https://github.com/sdushantha/gitdir/blob/master/gitdir/gitdir.py
-Licensed under MIT License.
-"""
 import argparse
 import json
 import pathlib
