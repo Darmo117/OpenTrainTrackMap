@@ -8,9 +8,9 @@ declare global {
     // Cf. PageContext class in ottm/page_handlers/_core.py for site-wide entries
     //  and get_js_config() in ottm/api/wiki/pages.py for wiki-related entries
     OTTM_CONFIG: {
-      config: Dict<any>,
-      page: Dict<any>,
-      user: Dict<any>,
+      config: Dict,
+      page: Dict,
+      user: Dict,
       languages: {
         code: string,
         name: string,
@@ -30,7 +30,7 @@ declare global {
   }
 }
 
-export type Dict<T> = {
+export type Dict<T = any> = {
   [key: string]: T
 }
 
@@ -38,7 +38,7 @@ export type Dict<T> = {
  * Immutable object that maps keys to values.
  * @template T The type of this mapping’s values.
  */
-export class Mapping<T> {
+export class Mapping<T = any> {
   readonly #mappings: Dict<T>;
 
   /**
@@ -199,11 +199,11 @@ export class Language {
  */
 export class OTTM {
   /** Site’s configuration values. */
-  readonly config: Mapping<any>;
+  readonly config: Mapping;
   /** Current page’s data. */
-  readonly page: Mapping<any>;
+  readonly page: Mapping;
   /** Current user’s data. */
-  readonly user: Mapping<any>;
+  readonly user: Mapping;
   /** Map of all available UI languages. */
   readonly languages: Mapping<Language>;
   /** UI translations. */
@@ -213,10 +213,10 @@ export class OTTM {
   readonly Language = Language;
 
   constructor() {
-    this.config = new Mapping<any>(window.OTTM_CONFIG.config);
-    this.page = new Mapping<any>(window.OTTM_CONFIG.page);
-    this.user = new Mapping<any>(window.OTTM_CONFIG.user);
-    this.translations = new Mapping<string>(window.OTTM_CONFIG.translations);
+    this.config = new Mapping(window.OTTM_CONFIG.config);
+    this.page = new Mapping(window.OTTM_CONFIG.page);
+    this.user = new Mapping(window.OTTM_CONFIG.user);
+    this.translations = new Mapping(window.OTTM_CONFIG.translations);
     const langs: Dict<Language> = {};
     for (const langData of window.OTTM_CONFIG.languages) {
       langs[langData.code] = new Language(
@@ -234,7 +234,7 @@ export class OTTM {
         langData.thousandsSep,
       );
     }
-    this.languages = new Mapping<Language>(langs);
+    this.languages = new Mapping(langs);
     delete window.OTTM_CONFIG;
     $("#ottm-config-script").remove();
   }
@@ -301,7 +301,7 @@ export class OTTM {
    * @param path Path to pass to "return_to" argument.
    * @param args Additional arguments to append to URL.
    */
-  #setReturnTo($link: JQuery, path: string, args?: Dict<any>) {
+  #setReturnTo($link: JQuery, path: string, args?: Dict) {
     const url = new URL($link.prop("href"));
     const params = new URLSearchParams({return_to: path});
     if (args) {

@@ -1,13 +1,7 @@
 import {Map} from "maplibre-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
-import {
-  SnapLineMode,
-  SnapPointMode,
-  SnapPolygonMode,
-  SnapDirectSelect,
-  SnapModeDrawStyles,
-} from "mapbox-gl-draw-snap-mode";
+import {SnapDirectSelect, SnapLineMode, SnapModeDrawStyles, SnapPointMode, SnapPolygonMode,} from "./snap"
 import Split from "split.js";
 
 import $ from "jquery";
@@ -39,7 +33,6 @@ export default function initMapEditor(map: Map) { // TODO disable editing if zoo
     snap: true,
     snapOptions: {
       snapPx: 15, // defaults to 15
-      snapToMidPoints: false, // defaults to false
       snapVertexPriorityDistance: 0.0025, // defaults to 1.25
     },
     guides: false,
