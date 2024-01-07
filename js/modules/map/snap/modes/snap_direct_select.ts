@@ -3,7 +3,7 @@ import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import {Position} from "@turf/helpers";
 
 import {Dict} from "../../../types";
-import {createSnapList, getGuideFeature, IDS, LngLatDict, snap} from "../utils";
+import {createSnapList, getGuideFeature, GuideId, LngLatDict, snap} from "../utils";
 import {Options, State} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
@@ -45,10 +45,8 @@ SnapDirectSelect.onSetup = function (options: Dict) {
   const [snapList, vertices] =
     createSnapList(this.map as any, this._ctx.api, feature as any);
 
-  const verticalGuide = this.newFeature(getGuideFeature(IDS.VERTICAL_GUIDE));
-  const horizontalGuide = this.newFeature(
-    getGuideFeature(IDS.HORIZONTAL_GUIDE)
-  );
+  const verticalGuide = this.newFeature(getGuideFeature(GuideId.VERTICAL));
+  const horizontalGuide = this.newFeature(getGuideFeature(GuideId.HORIZONTAL));
 
   this.addFeature(verticalGuide);
   this.addFeature(horizontalGuide);
@@ -98,8 +96,8 @@ SnapDirectSelect.dragVertex = function (state: DirectSelectState, e: MapMouseEve
 };
 
 SnapDirectSelect.onStop = function (state: DirectSelectState) {
-  this.deleteFeature(IDS.VERTICAL_GUIDE, {silent: true});
-  this.deleteFeature(IDS.HORIZONTAL_GUIDE, {silent: true});
+  this.deleteFeature(GuideId.VERTICAL, {silent: true});
+  this.deleteFeature(GuideId.HORIZONTAL, {silent: true});
 
   // remove moveemd callback
   //   this.map.off("moveend", state.moveendCallback);

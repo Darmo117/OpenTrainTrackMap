@@ -1,7 +1,7 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import {Feature, Geometries} from "@turf/helpers";
 
-import {createSnapList, getGuideFeature, IDS, shouldHideGuide, snap,} from "../utils";
+import {createSnapList, getGuideFeature, GuideId, shouldHideGuide, snap} from "../utils";
 import {GeometryState, Options} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
@@ -30,10 +30,8 @@ SnapPointMode.onSetup = function () {
     },
   }) as MapboxDraw.DrawPoint;
 
-  const verticalGuide = this.newFeature(getGuideFeature(IDS.VERTICAL_GUIDE));
-  const horizontalGuide = this.newFeature(
-    getGuideFeature(IDS.HORIZONTAL_GUIDE)
-  );
+  const verticalGuide = this.newFeature(getGuideFeature(GuideId.VERTICAL));
+  const horizontalGuide = this.newFeature(getGuideFeature(GuideId.HORIZONTAL));
 
   this.addFeature(point);
   this.addFeature(verticalGuide);
@@ -135,8 +133,8 @@ SnapPointMode.toDisplayFeatures = function (
 
 // This is 'extending' DrawPoint.onStop
 SnapPointMode.onStop = function (state) {
-  this.deleteFeature(IDS.VERTICAL_GUIDE, {silent: true});
-  this.deleteFeature(IDS.HORIZONTAL_GUIDE, {silent: true});
+  this.deleteFeature(GuideId.VERTICAL, {silent: true});
+  this.deleteFeature(GuideId.HORIZONTAL, {silent: true});
 
   // remove moveemd callback
   this.map.off("moveend", state.moveendCallback);

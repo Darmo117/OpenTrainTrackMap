@@ -3,7 +3,7 @@ import booleanIntersects from "@turf/boolean-intersects";
 import {Feature, Geometries, Polygon,} from "@turf/helpers";
 import * as turf from "@turf/turf";
 
-import {addPointTovertices, createSnapList, getGuideFeature, IDS, shouldHideGuide, snap,} from "../utils";
+import {addPointToList, createSnapList, getGuideFeature, GuideId, shouldHideGuide, snap} from "../utils";
 import {GeometryState, Options} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
@@ -37,10 +37,8 @@ SnapPolygonMode.onSetup = function () {
     },
   }) as MapboxDraw.DrawPolygon;
 
-  const verticalGuide = this.newFeature(getGuideFeature(IDS.VERTICAL_GUIDE));
-  const horizontalGuide = this.newFeature(
-    getGuideFeature(IDS.HORIZONTAL_GUIDE)
-  );
+  const verticalGuide = this.newFeature(getGuideFeature(GuideId.VERTICAL));
+  const horizontalGuide = this.newFeature(getGuideFeature(GuideId.HORIZONTAL));
 
   this.addFeature(polygon);
   this.addFeature(verticalGuide);
@@ -113,7 +111,7 @@ SnapPolygonMode.onClick = function (state) {
 
   // const point = state.map.project();
 
-  addPointTovertices(state.map, state.vertices, [lng, lat]);
+  addPointToList(state.map, state.vertices, [lng, lat]);
 
   state.polygon.updateCoordinate(`0.${state.currentVertexPosition}`, lng, lat);
 
@@ -170,8 +168,8 @@ SnapPolygonMode.toDisplayFeatures = function (
 
 // This is 'extending' DrawPolygon.onStop
 SnapPolygonMode.onStop = function (state: PolygonState) {
-  this.deleteFeature(IDS.VERTICAL_GUIDE, {silent: true});
-  this.deleteFeature(IDS.HORIZONTAL_GUIDE, {silent: true});
+  this.deleteFeature(GuideId.VERTICAL, {silent: true});
+  this.deleteFeature(GuideId.HORIZONTAL, {silent: true});
 
   // remove moveemd callback
   this.map.off("moveend", state.moveendCallback);

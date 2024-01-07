@@ -1,7 +1,7 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import {Feature, Geometries,} from "@turf/helpers";
 
-import {addPointTovertices, createSnapList, getGuideFeature, IDS, shouldHideGuide, snap,} from "../utils";
+import {addPointToList, createSnapList, getGuideFeature, GuideId, shouldHideGuide, snap} from "../utils";
 import {GeometryState, Options} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
@@ -36,10 +36,8 @@ SnapLineMode.onSetup = function () {
     },
   }) as MapboxDraw.DrawLineString;
 
-  const verticalGuide = this.newFeature(getGuideFeature(IDS.VERTICAL_GUIDE));
-  const horizontalGuide = this.newFeature(
-    getGuideFeature(IDS.HORIZONTAL_GUIDE)
-  );
+  const verticalGuide = this.newFeature(getGuideFeature(GuideId.VERTICAL));
+  const horizontalGuide = this.newFeature(getGuideFeature(GuideId.HORIZONTAL));
 
   this.addFeature(line);
   this.addFeature(verticalGuide);
@@ -107,7 +105,7 @@ SnapLineMode.onClick = function (state: LineState) {
 
   // const point = state.map.project({ lng: lng, lat: lat });
 
-  addPointTovertices(state.map, state.vertices, [lng, lat]);
+  addPointToList(state.map, state.vertices, [lng, lat]);
 
   state.line.updateCoordinate(state.currentVertexPosition.toString(), lng, lat);
 
@@ -162,8 +160,8 @@ SnapLineMode.toDisplayFeatures = function (
 
 // This is 'extending' DrawLine.onStop
 SnapLineMode.onStop = function (state: LineState) {
-  this.deleteFeature(IDS.VERTICAL_GUIDE, {silent: true});
-  this.deleteFeature(IDS.HORIZONTAL_GUIDE, {silent: true});
+  this.deleteFeature(GuideId.VERTICAL, {silent: true});
+  this.deleteFeature(GuideId.HORIZONTAL, {silent: true});
 
   // remove moveemd callback
   this.map.off("moveend", state.moveendCallback);
