@@ -310,12 +310,13 @@ export class OTTM {
    */
   setReturnTo($link: JQuery, path: string, args?: Dict<any>) {
     const url = new URL($link.prop("href"));
-    // TODO use URLSearchParams
-    url.search = "return_to=" + encodeURIComponent(path);
+    const params = new URLSearchParams({return_to: path});
     if (args) {
-      url.search += "&" + $.map(Object.entries(args),
-        e => `${encodeURIComponent(e[0])}=${encodeURIComponent(e[1])}`).join("&");
+      for (const [k, v] of Object.entries(args)) {
+        params.append(k, v ?? "");
+      }
     }
+    url.search = params.toString();
     $link.attr("href", url.href);
   }
 
