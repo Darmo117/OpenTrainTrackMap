@@ -1,29 +1,51 @@
 import {Dict} from "../types";
 import initEditor from "./editor";
 
+type GadgetCode = {
+  name: string,
+  version?: string,
+  init: () => void,
+  run: () => void,
+}
+
 /**
  * Base class for wiki gadgets.
  */
-export abstract class WikiGadget {
+export class WikiGadget {
   /** This gadget’s name. */
-  public readonly name: string;
+  readonly name: string;
   /** This gadget’s version. */
-  public readonly version: string;
+  readonly version: string | undefined;
+  /** The actual gadget object. */
+  readonly #code: GadgetCode;
 
   /**
    * Create a new gadget.
-   * @param name Gadget’s name.
-   * @param version Gadget’s version.
+   * @param code The actual gadget object.
+   * @throws Error If the passed object is malformed or the object’s init() function threw an error.
    */
-  protected constructor(name: string, version: string) {
-    this.name = name;
-    this.version = version;
+  constructor(code: GadgetCode) {
+    if (!code.hasOwnProperty("name")) {
+      throw new Error("Missing \"name\" property in gadget");
+    }
+    this.name = code.name;
+    this.version = code.version;
+    this.#code = code;
+    this.#code.init();
   }
 
   /**
    * Called when this gadget has been initialized and the manager is ready.
+   * @returns True if the gadget was run successfully, false if any error occurred.
    */
-  onReady() {
+  run(): boolean {
+    try {
+      this.#code.run();
+    } catch (e) {
+      console.error(e);
+      return false;
+    }
+    return true;
   }
 }
 
@@ -32,50 +54,43 @@ export abstract class WikiGadget {
  */
 export class WikiGadgetManager {
   /** Mapping of all successfully loaded gadgets. */
-  private readonly gadgets: Dict<WikiGadget>;
+  readonly #gadgets: Dict<WikiGadget> = {};
   /** Number of gadgets still loading. */
-  private gadgetsQueueSize: number;
+  #gadgetsQueueSize: number = 0;
   /** Whether all gadgets have been registered. */
-  private finishedRegistration: boolean;
+  #finishedRegistration: boolean = false;
   /** Whether this manager is locked. Once locked, no more gadgets can be registered. */
-  private locked: boolean;
-
-  constructor() {
-    this.gadgetsQueueSize = 0;
-    this.gadgets = {};
-    this.finishedRegistration = false;
-    this.locked = false;
-  }
+  #locked: boolean = false;
 
   /**
    * Register a gadget to be loaded asynchronously.
    * @param gadgetName The gadget’s name.
+   * @throws Error If this manager is locked.
    */
   registerGadget(gadgetName: string) {
-    if (this.locked) {
+    if (this.#locked) {
       throw new Error("Cannot register gadgets when manager is locked");
     }
     console.log(`Registering gadget "${gadgetName}…"`);
-    this.gadgetsQueueSize++;
+    this.#gadgetsQueueSize++;
     const apiPath = window.ottm.config.get("wApiPath");
     $.get(
       apiPath,
       {
         action: "query",
         query: "gadget",
-        title: encodeURIComponent(gadgetName),
+        title: gadgetName,
       },
       data => {
         try {
-          // We expect a function returning a WikiGadget subclass instance in the response data.
-          const gadget: WikiGadget = eval(data);
-          this.gadgets[gadget.name] = gadget;
+          const gadget = new WikiGadget(eval(data));
+          this.#gadgets[gadget.name] = gadget;
         } catch (e) {
           console.error(`Error while loading gadget "${gadgetName}":\n${e}`);
         }
-        this.gadgetsQueueSize--;
-        if (this.gadgetsQueueSize === 0 && this.finishedRegistration) {
-          this.lock();
+        this.#gadgetsQueueSize--;
+        if (this.#gadgetsQueueSize === 0 && this.#finishedRegistration) {
+          this.#lock();
         }
       }
     );
@@ -86,17 +101,17 @@ export class WikiGadgetManager {
    * If the loading queue is already empty, lock this manager immediately.
    */
   finishRegistration() {
-    this.finishedRegistration = true;
-    if (this.gadgetsQueueSize === 0) {
-      this.lock();
+    this.#finishedRegistration = true;
+    if (this.#gadgetsQueueSize === 0) {
+      this.#lock();
     }
   }
 
   /**
    * Lock this manager after all gadgets have been loaded.
    */
-  private lock() {
-    this.locked = true;
+  #lock() {
+    this.#locked = true;
   }
 
   /**
@@ -105,7 +120,7 @@ export class WikiGadgetManager {
    * @return The gadget or undefined if none matched.
    */
   getGadget(name: string): WikiGadget | undefined {
-    return this.gadgets[name];
+    return this.#gadgets[name];
   }
 
   /**
@@ -114,7 +129,7 @@ export class WikiGadgetManager {
    * @return True if a gadget with the specified name is registered, false otherwise.
    */
   isGadgetRegistered(name: string): boolean {
-    return this.gadgets[name] !== undefined;
+    return this.#gadgets[name] !== undefined;
   }
 }
 
@@ -122,13 +137,13 @@ export class WikiGadgetManager {
  * @param content Current page content.
  * @return The new content or an object with additional parameters.
  */
-export type PageContentTransformer = (content: string) => string | {
+export type PageContentTransformer = (content: string) => (string | {
   content: string,
   summary?: string,
   minor?: boolean,
   hidden?: boolean,
   follow?: boolean,
-};
+});
 
 /**
  * An object returned by the {@link WikiAPI.editPage} method.
@@ -220,7 +235,7 @@ declare global {
     wiki: {
       gadgetsManager: WikiGadgetManager,
       api: WikiAPI,
-      editor: any | null,
+      editor: any,
     };
     // Actual object is defined by ottm/static/ottm/libs/highlight/highlight.js
     hljs: {

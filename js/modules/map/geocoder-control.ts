@@ -36,77 +36,79 @@ type SearchResult = {
  * @see https://github.com/openstreetmap/openstreetmap-website/tree/master/config/locales
  */
 export default class GeocoderControl implements IControl {
-  private static readonly BASE_URL: string =
+  static readonly #BASE_URL: string =
     "https://nominatim.openstreetmap.org/search?q={query}&format=jsonv2&accept-language={lang}";
-  private readonly language: string;
-  private readonly noResultsMessage: string;
-  private readonly errorMessage: string;
-  private readonly container: HTMLDivElement;
-  private readonly textField: HTMLInputElement;
-  private readonly eraseButton: HTMLButtonElement;
-  private readonly searchButton: HTMLButtonElement;
-  private readonly resultsPanel: HTMLDivElement;
-  private marker: Marker;
-  private map: Map;
+
+  readonly #language: string;
+  readonly #noResultsMessage: string;
+  readonly #errorMessage: string;
+  readonly #container: HTMLDivElement;
+  readonly #textField: HTMLInputElement;
+  readonly #eraseButton: HTMLButtonElement;
+  readonly #searchButton: HTMLButtonElement;
+  readonly #resultsPanel: HTMLDivElement;
+
+  #marker: Marker;
+  #map: Map;
 
   constructor(options?: GeocoderControlOptions) {
-    this.language = options.language;
-    this.noResultsMessage = options.noResultsMessage ?? "No results.";
-    this.errorMessage = options.errorMessage ?? "An error occured.";
+    this.#language = options.language;
+    this.#noResultsMessage = options.noResultsMessage ?? "No results.";
+    this.#errorMessage = options.errorMessage ?? "An error occured.";
 
-    this.container = controlContainer("maplibre-ctrl-geocoder");
+    this.#container = controlContainer("maplibre-ctrl-geocoder");
 
-    this.textField = document.createElement("input");
-    this.textField.type = "text";
-    this.textField.placeholder = options.placeholderText ?? "Search";
-    this.textField.accessKey = "f";
+    this.#textField = document.createElement("input");
+    this.#textField.type = "text";
+    this.#textField.placeholder = options.placeholderText ?? "Search";
+    this.#textField.accessKey = "f";
     // Submit on enter key pressed
-    this.textField.onkeyup = e => {
+    this.#textField.onkeyup = e => {
       if (e.key === "Enter") {
-        this.onInputSubmit();
+        this.#onInputSubmit();
       }
     };
     // Hide results when the text changes
-    this.textField.oninput = () => {
-      this.hideResultsPanel();
+    this.#textField.oninput = () => {
+      this.#hideResultsPanel();
     };
 
     const eraseIcon = document.createElement("span");
     eraseIcon.className = "mdi mdi-close";
-    this.eraseButton = controlButton({
+    this.#eraseButton = controlButton({
       title: options.eraseButtonTitle ?? "Erase",
       icon: eraseIcon,
-      onClick: () => this.onErase(),
+      onClick: () => this.#onErase(),
     });
 
     const searchIcon = document.createElement("span");
     searchIcon.className = "mdi mdi-magnify";
-    this.searchButton = controlButton({
+    this.#searchButton = controlButton({
       title: options.searchButtonTitle ?? "Go",
       icon: searchIcon,
-      onClick: () => this.onInputSubmit(),
+      onClick: () => this.#onInputSubmit(),
     });
 
-    this.resultsPanel = document.createElement("div");
-    this.resultsPanel.className = "maplibre-ctrl-geocoder-results-panel";
-    this.resultsPanel.style.display = "none";
+    this.#resultsPanel = document.createElement("div");
+    this.#resultsPanel.className = "maplibre-ctrl-geocoder-results-panel";
+    this.#resultsPanel.style.display = "none";
   }
 
-  onErase() {
-    this.hideResultsPanel();
-    this.textField.value = "";
-    this.textField.focus();
+  #onErase() {
+    this.#hideResultsPanel();
+    this.#textField.value = "";
+    this.#textField.focus();
   }
 
-  onInputSubmit() {
-    const query = (this.textField.value ?? "").trim();
+  #onInputSubmit() {
+    const query = (this.#textField.value ?? "").trim();
     if (query) {
-      const url = GeocoderControl.BASE_URL
+      const url = GeocoderControl.#BASE_URL
         .replace("{query}", encodeURIComponent(query))
-        .replace("{lang}", encodeURIComponent(this.language));
+        .replace("{lang}", encodeURIComponent(this.#language));
       $.get(url)
-        .done(data => this.onResult(data))
-        .fail(() => this.onFailure());
+        .done(data => this.#onResult(data))
+        .fail(() => this.#onFailure());
     }
   }
 
@@ -114,10 +116,10 @@ export default class GeocoderControl implements IControl {
    * Called when a geocoding request succeeded.
    * @param results The list of results.
    */
-  onResult(results: SearchResult[]) {
-    this.resultsPanel.replaceChildren(); // Clear
+  #onResult(results: SearchResult[]) {
+    this.#resultsPanel.replaceChildren(); // Clear
     if (results.length === 0) {
-      this.resultsPanel.textContent = this.noResultsMessage;
+      this.#resultsPanel.textContent = this.#noResultsMessage;
     } else {
       const list = document.createElement("ul");
       const noTranslationsMark = "```";
@@ -162,22 +164,22 @@ export default class GeocoderControl implements IControl {
           lat: boundingBox[1],
           lng: boundingBox[3]
         }];
-        link.onclick = () => this.onResultClick(result.lat, result.lon, bb);
+        link.onclick = () => this.#onResultClick(result.lat, result.lon, bb);
         item.appendChild(link);
         list.appendChild(item);
       }
-      this.resultsPanel.appendChild(list);
+      this.#resultsPanel.appendChild(list);
     }
-    this.showResultsPanel();
+    this.#showResultsPanel();
   }
 
   /**
    * Called when a geocoding request failed.
    */
-  onFailure() {
-    this.resultsPanel.replaceChildren(); // Clear
-    this.resultsPanel.textContent = this.errorMessage;
-    this.showResultsPanel();
+  #onFailure() {
+    this.#resultsPanel.replaceChildren(); // Clear
+    this.#resultsPanel.textContent = this.#errorMessage;
+    this.#showResultsPanel();
   }
 
   /**
@@ -186,37 +188,37 @@ export default class GeocoderControl implements IControl {
    * @param lng Result’s longitude.
    * @param boundingBox Result’s bounding box.
    */
-  onResultClick(lat: number, lng: number, boundingBox: LngLatBoundsLike) {
-    this.marker?.remove();
-    this.map.fitBounds(boundingBox);
-    this.marker = new Marker({});
-    this.marker.setLngLat({lat: lat, lng: lng});
-    this.marker.addTo(this.map);
+  #onResultClick(lat: number, lng: number, boundingBox: LngLatBoundsLike) {
+    this.#marker?.remove();
+    this.#map.fitBounds(boundingBox);
+    this.#marker = new Marker({});
+    this.#marker.setLngLat({lat: lat, lng: lng});
+    this.#marker.addTo(this.#map);
   }
 
-  showResultsPanel() {
-    this.resultsPanel.style.display = "block";
+  #showResultsPanel() {
+    this.#resultsPanel.style.display = "block";
   }
 
-  hideResultsPanel() {
-    this.marker?.remove();
-    this.resultsPanel.style.display = "none";
-    this.resultsPanel.replaceChildren(); // Clear
+  #hideResultsPanel() {
+    this.#marker?.remove();
+    this.#resultsPanel.style.display = "none";
+    this.#resultsPanel.replaceChildren(); // Clear
   }
 
   onAdd(map: Map): HTMLElement {
-    this.map = map;
+    this.#map = map;
     const inputContainer = document.createElement("div");
     inputContainer.className = "maplibre-ctrl-geocoder-search-bar";
-    inputContainer.appendChild(this.searchButton);
-    inputContainer.appendChild(this.textField);
-    inputContainer.appendChild(this.eraseButton);
-    this.container.appendChild(inputContainer);
-    this.container.appendChild(this.resultsPanel);
-    return this.container;
+    inputContainer.appendChild(this.#searchButton);
+    inputContainer.appendChild(this.#textField);
+    inputContainer.appendChild(this.#eraseButton);
+    this.#container.appendChild(inputContainer);
+    this.#container.appendChild(this.#resultsPanel);
+    return this.#container;
   }
 
   onRemove() {
-    this.container.parentNode?.removeChild(this.container);
+    this.#container.parentNode?.removeChild(this.#container);
   }
 }

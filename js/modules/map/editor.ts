@@ -16,7 +16,7 @@ import $ from "jquery";
  * Hook a map editor to the given map.
  * @param map The map object.
  */
-export default function initMapEditor(map: Map) {
+export default function initMapEditor(map: Map) { // TODO disable editing if zoom level is too small
   // @ts-ignore
   map.addControl(new MapboxDraw({ // TODO translate
     modes: {

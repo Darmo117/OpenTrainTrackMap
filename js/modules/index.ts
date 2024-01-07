@@ -18,7 +18,7 @@ initForms();
 // `<INIT_PLACEHOLDER>`
 
 window.ottm.setReferrer();
-window.ottm.setAccessKeys();
+setAccessKeys();
 
 /*
  * Functions
@@ -98,4 +98,19 @@ function initForms() {
   $("form input[name='warn-unsaved']")
     .each((_, e) =>
       hookExitConfirm($(e).closest("form") as JQuery<HTMLFormElement>));
+}
+
+/**
+ * Add the shortcut to the title attribute of any element that has an access key.
+ */
+function setAccessKeys() {
+  $("*[accesskey]").each((_, element) => {
+    const $element = $(element);
+    const accessKey = $element.attr("accesskey");
+    if (accessKey) {
+      const title = $element.attr("title");
+      const shortcut = `[Alt+Shift+${accessKey}]`;
+      $element.attr("title", (title ? title + " " : "") + shortcut);
+    }
+  });
 }
