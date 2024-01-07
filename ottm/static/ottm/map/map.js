@@ -288,7 +288,7 @@ class Map {
         url.hash = hash;
         $navLink.attr("href", url.href);
       }
-      window.ottm.setReferer();
+      window.ottm.setReferrer();
     }
   }
 

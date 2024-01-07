@@ -332,7 +332,7 @@ export default function initMap() {
         url.hash = hash;
         $navLink.attr("href", url.href);
       }
-      window.ottm.setReferer();
+      window.ottm.setReferrer();
     }
   }
 

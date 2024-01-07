@@ -9,8 +9,6 @@ import hookExitConfirm from "./confirm-form-exit";
 // `<IMPORTS_PLACEHOLDER>`
 
 window.ottm = new OTTM();
-window.ottm.setReferer();
-window.ottm.setAccessKeys();
 
 hookSettingsDropdownBehavior();
 hookDarkModeCallback();
@@ -18,6 +16,9 @@ hookLanguageSelectorCallback();
 initForms();
 
 // `<INIT_PLACEHOLDER>`
+
+window.ottm.setReferrer();
+window.ottm.setAccessKeys();
 
 /*
  * Functions

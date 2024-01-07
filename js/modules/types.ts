@@ -286,9 +286,9 @@ export class OTTM {
   }
 
   /**
-   * Set referer URL to login-related links.
+   * Set referrer URL to login-related links.
    */
-  setReferer() {
+  setReferrer() {
     const path = window.location.pathname + window.location.hash;
     const linkSelectors = [
       "#nav-login-link",
