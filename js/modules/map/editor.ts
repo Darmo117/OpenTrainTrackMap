@@ -4,7 +4,7 @@ import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import Split from "split.js";
 import $ from "jquery";
 
-import {SnapDirectSelect, SnapLineMode, SnapModeDrawStyles, SnapPointMode, SnapPolygonMode,} from "./snap";
+import {SnapDirectSelect, SnapLineMode, SnapModeDrawStyles, SnapPointMode, SnapPolygonMode} from "./snap";
 
 /**
  * Hook a map editor to the given map.
