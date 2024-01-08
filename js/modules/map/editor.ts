@@ -5,12 +5,14 @@ import Split from "split.js";
 import $ from "jquery";
 
 import {SnapDirectSelect, SnapLineMode, SnapModeDrawStyles, SnapPointMode, SnapPolygonMode} from "./snap";
+import {SnapOptions} from "./snap/state";
 
 /**
  * Hook a map editor to the given map.
  * @param map The map object.
  */
 export default function initMapEditor(map: Map) { // TODO disable editing if zoom level is too small
+  type DrawOptions = MapboxDraw.MapboxDrawOptions & SnapOptions;
   // @ts-ignore
   map.addControl(new MapboxDraw({ // TODO translate
     modes: {
@@ -19,6 +21,8 @@ export default function initMapEditor(map: Map) { // TODO disable editing if zoo
       draw_polygon: SnapPolygonMode,
       draw_line_string: SnapLineMode,
       direct_select: SnapDirectSelect,
+      // TODO custom simple_select mode to enable point feature snapping
+      //  cf. https://github.com/mapbox/mapbox-gl-draw/blob/main/docs/API.md#simple_select
     },
     displayControlsDefault: false,
     controls: {
@@ -29,14 +33,13 @@ export default function initMapEditor(map: Map) { // TODO disable editing if zoo
     },
     styles: SnapModeDrawStyles,
     userProperties: true,
-    // @ts-ignore
     snap: true,
     snapOptions: {
       snapPx: 15, // defaults to 15
       snapVertexPriorityDistance: 0.0025, // defaults to 1.25
     },
     guides: false,
-  }), "top-left");
+  } as DrawOptions), "top-left");
 
   $("#editor-panel").css({display: "block"}).addClass("split");
   $("#map").addClass("split");

@@ -4,7 +4,7 @@ import {Position} from "@turf/helpers";
 
 import {Dict} from "../../../types";
 import {createSnapList, getGuideFeature, GuideId, LngLatDict, snap} from "../utils";
-import {Options, State} from "../state";
+import {SnapOptions, State} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
 const {doubleClickZoom} = MapboxDraw.lib;
@@ -76,7 +76,7 @@ SnapDirectSelect.onSetup = function (options: Dict) {
     uncombineFeatures: false,
   });
 
-  const optionsChangedCallBack = (options: Options) => {
+  const optionsChangedCallBack = (options: SnapOptions) => {
     state.options = options;
   };
 

@@ -24,7 +24,7 @@ import nearestPointInPointSet from "@turf/nearest-point";
 import midpoint from "@turf/midpoint";
 import {GeoJSON} from "geojson";
 
-import {SnapOptions, State} from "../state";
+import {SnapSubOptions, State} from "../state";
 
 const {geojsonTypes} = MapboxDraw.constants;
 
@@ -463,7 +463,7 @@ function getMetersPerPixel(latitude: number, zoomLevel: number): number {
  */
 function snapToLineOrPolygon(
   closestLayer: LayerDistance,
-  snapOptions: SnapOptions | undefined,
+  snapOptions: SnapSubOptions | undefined,
   snapVertexPriorityDistance: number
 ): LngLatDict {
   // A and B are the points of the closest segment to P (the marker position we want to snap).
@@ -508,7 +508,7 @@ function snapToLineOrPolygon(
  */
 function checkPrioritiySnapping(
   closestLayer: LayerDistance,
-  snapOptions: SnapOptions | undefined,
+  snapOptions: SnapSubOptions | undefined,
   snapVertexPriorityDistance: number = 1.25
 ): LngLatDict {
   return !closestLayer.segment ? closestLayer.latlng : snapToLineOrPolygon(

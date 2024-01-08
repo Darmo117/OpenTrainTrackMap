@@ -2,20 +2,20 @@ import {Map} from "maplibre-gl";
 import {DrawFeature} from "@mapbox/mapbox-gl-draw";
 import {Feature, Geometries, Position,} from "@turf/helpers";
 
-export type SnapOptions = {
+export type SnapSubOptions = {
   snapPx?: number;
   snapToMidPoints?: boolean;
   snapVertexPriorityDistance?: number;
   overlap?: boolean;
 };
 
-export type Options = {
+export type SnapOptions = {
   snap?: boolean;
-  snapOptions?: SnapOptions;
+  snapOptions?: SnapSubOptions;
   guides?: boolean;
 };
 
-export type State<O = Options> = {
+export type State<O = SnapOptions> = {
   map: Map;
   vertices: Position[];
   snapList: Feature<Geometries>[];
@@ -27,6 +27,6 @@ export type State<O = Options> = {
   showHorizontalSnapLine?: boolean;
 };
 
-export type GeometryState<O = Options> = State<O> & {
+export type GeometryState<O = SnapOptions> = State<O> & {
   moveendCallback?: () => void;
 };

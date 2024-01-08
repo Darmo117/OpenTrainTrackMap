@@ -2,7 +2,7 @@ import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import {Feature, Geometries} from "@turf/helpers";
 
 import {createSnapList, getGuideFeature, GuideId, shouldHideGuide, snap} from "../utils";
-import {GeometryState, Options} from "../state";
+import {GeometryState, SnapOptions} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
 const {doubleClickZoom} = MapboxDraw.lib;
@@ -64,7 +64,7 @@ SnapPointMode.onSetup = function () {
   // for removing listener later on close
   state.moveendCallback = moveendCallback;
 
-  const optionsChangedCallBack = (options: Options) => {
+  const optionsChangedCallBack = (options: SnapOptions) => {
     state.options = options;
   };
   // for removing listener later on close

@@ -4,14 +4,14 @@ import {Feature, Geometries, Polygon,} from "@turf/helpers";
 import * as turf from "@turf/turf";
 
 import {addPointToList, createSnapList, getGuideFeature, GuideId, shouldHideGuide, snap} from "../utils";
-import {GeometryState, Options} from "../state";
+import {GeometryState, SnapOptions} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
 const {geojsonTypes, modes, cursors} = MapboxDraw.constants;
 const {doubleClickZoom} = MapboxDraw.lib;
 const DrawPolygon = MapboxDraw.modes.draw_polygon;
 
-type PolygonOptions = Options & {
+type PolygonOptions = SnapOptions & {
   overlap: boolean;
 };
 
