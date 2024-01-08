@@ -441,14 +441,17 @@ function getClosestLayer(
   return closestLayer;
 }
 
-// minimal distance before marker snaps (in pixels)
+/**
+ * Get the number of meters per pixel for the given latitude and zoom level,
+ * assuming an Equator circumference of 40,075,017 meters.
+ * @param latitude A latitude.
+ * @param zoomLevel A zoom level.
+ * @returns The number of meters per pixel.
+ */
 function getMetersPerPixel(latitude: number, zoomLevel: number): number {
-  const earthCircumference = 40075017;
+  const earthCircumference = 40_075_017;
   const latitudeRadians = latitude * (Math.PI / 180);
-  return (
-    (earthCircumference * Math.cos(latitudeRadians)) /
-    Math.pow(2, zoomLevel + 8)
-  );
+  return (earthCircumference * Math.cos(latitudeRadians)) / (2 ** (zoomLevel + 8));
 }
 
 /**
