@@ -1,29 +1,17 @@
 // Heavily inspired from work of @davidgilbertson on Github and `leaflet-geoman` project.
 import {Map, MapMouseEvent} from "maplibre-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
-import {
-  Feature,
-  FeatureCollection,
-  featureCollection,
-  Geometries,
-  LineString,
-  lineString as turfLineString,
-  MultiLineString,
-  MultiPolygon,
-  point as turfPoint,
-  Polygon,
-  Position,
-} from "@turf/helpers";
+import {Feature, LineString, Polygon, Position} from "@turf/helpers";
 import bboxPolygon from "@turf/bbox-polygon";
 import booleanDisjoint from "@turf/boolean-disjoint";
 import {getCoords} from "@turf/invariant";
 import distance from "@turf/distance";
 import polygonToLine from "@turf/polygon-to-line";
-import nearestPointOnLine, {NearestPointOnLine} from "@turf/nearest-point-on-line";
-import nearestPointInPointSet from "@turf/nearest-point";
+import nearestPointOnLine from "@turf/nearest-point-on-line";
 import midpoint from "@turf/midpoint";
 
-import {SnapSubOptions, State} from "../state";
+import {ValidGeometry} from "../../editor-types";
+import {SnapSubOptions, State} from "../types";
 
 const {geojsonTypes} = MapboxDraw.constants;
 
@@ -70,13 +58,13 @@ export function addPointToList(
 export function createSnapList(
   map: Map,
   drawApi: any,
-  currentFeature: Feature<Geometries>
-): [Feature<Geometries>[], Position[]] {
+  currentFeature: Feature<ValidGeometry>
+): [Feature<ValidGeometry>[], Position[]] {
   // Get all drawn features
-  const features: Feature<Geometries>[] = drawApi.getAll().features;
+  const features: Feature<ValidGeometry>[] = drawApi.getAll().features;
   const bboxAsPolygon = getCurrentMapBbox(map);
 
-  const snapList: Feature<Geometries>[] = [];
+  const snapList: Feature<ValidGeometry>[] = [];
   const vertices: Position[] = [];
 
   function extractVertices(
@@ -193,6 +181,10 @@ type LayerDistance = {
   segment?: [Position, Position];
   distance: number;
   isMarker: boolean;
+  target: {
+    feature: Feature<ValidGeometry>,
+    path?: string,
+  };
 };
 
 /**
@@ -200,116 +192,47 @@ type LayerDistance = {
  * @param lngLat The coordinates of the point.
  * @param layer The layer to get the distance to.
  */
-function getDistanceToLayer(lngLat: LngLatDict, layer: Feature<Geometries>): LayerDistance {
+function getDistanceToLayer(lngLat: LngLatDict, layer: Feature<ValidGeometry>): LayerDistance {
   const point: Position = [lngLat.lng, lngLat.lat];
-  const layerLatLngs = getCoords(layer);
 
-  const isMarker = layer.geometry.type === "Point";
-  const isPolygon = layer.geometry.type === "Polygon";
-  const isMultiPolygon = layer.geometry.type === "MultiPolygon";
-  const isMultiPoint = layer.geometry.type === "MultiPoint";
-
-  if (isMarker) {
+  if (layer.geometry.type === "Point") {
+    const layerLatLngs = getCoords(layer);
     const [lng, lat] = layerLatLngs;
     return {
       latlng: {lng, lat},
       distance: distance(layerLatLngs, point),
       isMarker: true,
+      target: {
+        feature: layer,
+      },
     };
   }
 
-  if (isMultiPoint) {
-    const np = nearestPointInPointSet(
-      point,
-      featureCollection(layerLatLngs.map(x => turfPoint(x)))
-    );
-    const c = np.geometry.coordinates;
-    return {
-      latlng: {lng: c[0], lat: c[1]},
-      distance: np.properties.distanceToPoint,
-      isMarker: true,
-    };
-  }
-
-  let lines: Feature<LineString | MultiLineString> | FeatureCollection<LineString | MultiLineString>;
-
-  if (isPolygon || isMultiPolygon) {
-    lines = polygonToLine(layer as Feature<Polygon | MultiPolygon>);
+  let line: Feature<LineString>;
+  if (layer.geometry.type === "Polygon") {
+    // Extract the line from the polygon
+    line = polygonToLine(layer as Feature<Polygon>) as Feature<LineString>;
   } else {
-    lines = layer as Feature<LineString | MultiLineString>;
+    line = layer as Feature<LineString>;
   }
-
-  let linesString: Feature<LineString>;
-  let nearestPoint;
-  // Extract all lines from the (multi-)polygon
-  if (isPolygon) {
-    let lineStrings;
-    if ((lines as Feature<LineString | MultiLineString>).geometry.type === "LineString") {
-      lineStrings = [turfLineString((lines as Feature<LineString>).geometry.coordinates)];
-    } else {
-      lineStrings = (lines as Feature<MultiLineString>).geometry.coordinates.map((coords) =>
-        turfLineString(coords)
-      );
-    }
-
-    const closestFeature = getFeatureWithNearestPoint(lineStrings, point);
-    linesString = closestFeature.feature;
-    nearestPoint = closestFeature.point;
-  } else if (isMultiPolygon) {
-    const lineStrings = (lines as FeatureCollection<LineString | MultiLineString>).features
-      .map(feature => {
-        if (feature.geometry.type === "LineString") {
-          return [feature.geometry.coordinates];
-        } else {
-          return feature.geometry.coordinates;
-        }
-      })
-      .flatMap(coords => coords)
-      .map(coords => turfLineString(coords));
-
-    const closestFeature = getFeatureWithNearestPoint(lineStrings, point);
-    linesString = closestFeature.feature;
-    nearestPoint = closestFeature.point;
-  } else {
-    linesString = lines as Feature<LineString>;
-    nearestPoint = nearestPointOnLine(linesString, point);
-  }
-
-  const [lng, lat] = nearestPoint.geometry.coordinates;
+  const nearestPoint = nearestPointOnLine(line, point);
 
   let segmentIndex = nearestPoint.properties.index;
-  if (segmentIndex + 1 === linesString.geometry.coordinates.length) {
+  if (segmentIndex + 1 === line.geometry.coordinates.length) {
     segmentIndex--;
   }
 
+  const [lng, lat] = nearestPoint.geometry.coordinates;
   return {
     latlng: {lng, lat},
-    segment: linesString.geometry.coordinates.slice(segmentIndex, segmentIndex + 2) as [Position, Position],
+    segment: line.geometry.coordinates.slice(segmentIndex, segmentIndex + 2) as [Position, Position],
     distance: nearestPoint.properties.dist,
     isMarker: false,
+    target: {
+      feature: layer,
+      path: "",
+    },
   };
-}
-
-type FeatureWithNearestPoint = {
-  feature: Feature<LineString>;
-  point: NearestPointOnLine;
-};
-
-/**
- * Get the feature that is the closest to the given point.
- * @param lineStrings List of line features.
- * @param p A point.
- * @returns The closest feature with the point closest to the given one.
- */
-function getFeatureWithNearestPoint(lineStrings: Feature<LineString>[], p: Position): FeatureWithNearestPoint {
-  const nearestPointsOfEachFeature: FeatureWithNearestPoint[] = lineStrings.map(feature => ({
-    feature: feature,
-    point: nearestPointOnLine(feature, p),
-  }));
-  nearestPointsOfEachFeature.sort(
-    (a, b) => a.point.properties.dist - b.point.properties.dist
-  );
-  return nearestPointsOfEachFeature[0];
 }
 
 /**
@@ -320,7 +243,7 @@ function getFeatureWithNearestPoint(lineStrings: Feature<LineString>[], p: Posit
  */
 function getClosestLayer(
   lngLat: LngLatDict,
-  layers: Feature<Geometries>[]
+  layers: Feature<ValidGeometry>[]
 ): LayerDistance | undefined {
   let closestLayer: LayerDistance;
   layers.forEach(layer => {
@@ -361,7 +284,7 @@ function snapToLineOrPolygon(
   // A and B are the points of the closest segment to P (the marker position we want to snap).
   const [A, B] = closestLayer.segment;
   // C is the point we would snap to on the segment.
-  // The closest point on the closest segment of the closest polygon to P. That's right.
+  // The closest point on the closest segment of the closest polygon to P.
   const C = [closestLayer.latlng.lng, closestLayer.latlng.lat];
 
   // Distances from A to C and B to C to check which one is closer to C

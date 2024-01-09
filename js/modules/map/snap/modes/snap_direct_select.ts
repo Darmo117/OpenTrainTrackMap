@@ -4,7 +4,7 @@ import {Position} from "@turf/helpers";
 
 import {shallowCopy} from "../../../utils";
 import {createSnapList, snap} from "../utils";
-import {SnapOptions, State} from "../state";
+import {SnapOptions, State} from "../types";
 import {DrawCustomModeWithContext} from "./patch";
 
 const {doubleClickZoom} = MapboxDraw.lib;
@@ -45,7 +45,7 @@ SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Pos
   }
 
   if (feature.type === MapboxDraw.constants.geojsonTypes.POINT) {
-    throw new TypeError("direct_select mode doesn't handle point features");
+    throw new TypeError("Direct_select mode doesn’t handle point features");
   }
 
   const [snapList, vertices] =

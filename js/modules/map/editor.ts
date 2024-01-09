@@ -5,7 +5,7 @@ import Split from "split.js";
 import $ from "jquery";
 
 import {SnapDirectSelect, SnapLineMode, SnapModeDrawStyles, SnapPointMode, SnapPolygonMode} from "./snap";
-import {SnapOptions} from "./snap/state";
+import {SnapOptions} from "./snap/types";
 import {fixMapboxDrawControls} from "./controls/mapboxgl-draw";
 import {
   CreateFeaturesEvent,
@@ -45,31 +45,31 @@ export default function initMapEditor(map: Map) { // TODO disable editing if zoo
     snap: true,
     snapOptions: {
       snapPx: 5,
-      snapVertexPriorityDistance: 0.00125,
+      snapVertexPriorityDistance: 0.005,
     },
   } as DrawOptions)) as unknown as IControl, "top-left");
 
   fixMapboxDrawControls(map, mapboxDraw);
 
   map.on("draw.create", (e: CreateFeaturesEvent) => {
-    console.log("draw.create", e.features);
+    // console.log("draw.create", e.features);
     // TODO
   })
   // Not "draw.create" because it will never fire as we’re not using the default "trash" control
   map.on("editor.delete", (e: DeleteFeaturesEvent) => {
-    console.log("editor.delete", e.features);
+    // console.log("editor.delete", e.features);
     // TODO
   });
   map.on("draw.update", (e: FeatureUpdateEvent) => {
-    console.log("draw.update", e.features, e.action);
+    // console.log("draw.update", e.features, e.action);
     // TODO
   })
   map.on("draw.selectionchange", (e: SelectionChangedEvent) => {
-    console.log("draw.selectionchange", e.features);
+    // console.log("draw.selectionchange", e.features);
     // TODO
   })
   map.on("draw.modechange", (e: ModeChangedEvent) => {
-    console.log("draw.modechange", e.mode);
+    // console.log("draw.modechange", e.mode);
     // TODO
   })
 

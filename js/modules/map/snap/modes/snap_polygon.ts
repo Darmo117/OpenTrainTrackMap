@@ -4,7 +4,7 @@ import {Feature, Polygon,} from "@turf/helpers";
 import * as turf from "@turf/turf";
 
 import {addPointToList, createSnapList, snap} from "../utils";
-import {GeometryState, SnapOptions} from "../state";
+import {GeometryState, SnapOptions} from "../types";
 import {DrawCustomModeWithContext} from "./patch";
 
 const {geojsonTypes, modes, cursors} = MapboxDraw.constants;
@@ -79,16 +79,15 @@ SnapPolygonMode.onSetup = function () {
   return state;
 };
 
-SnapPolygonMode.onClick = function (state) {
+SnapPolygonMode.onClick = function (state: PolygonState) {
   // We save some processing by rounding on click, not mousemove
   const lng = state.snappedLng;
   const lat = state.snappedLat;
 
-  // End the drawing if this click is on the previous position
   if (state.currentVertexPosition > 0) {
-    const lastVertex =
-      state.polygon.coordinates[0][state.currentVertexPosition - 1];
+    const lastVertex = state.polygon.coordinates[0][state.currentVertexPosition - 1];
     state.lastVertex = lastVertex;
+    // End the drawing if this click is on the previous position
     if (lastVertex[0] === lng && lastVertex[1] === lat) {
       return this.changeMode(modes.SIMPLE_SELECT, {
         featureIds: [state.polygon.id],

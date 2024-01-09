@@ -1,7 +1,7 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 
 import {createSnapList, snap} from "../utils";
-import {GeometryState, SnapOptions} from "../state";
+import {GeometryState, SnapOptions} from "../types";
 import {DrawCustomModeWithContext} from "./patch";
 
 const {doubleClickZoom} = MapboxDraw.lib;
@@ -66,7 +66,7 @@ SnapPointMode.onSetup = function () {
   return state;
 };
 
-SnapPointMode.onClick = function (state) {
+SnapPointMode.onClick = function (state: PointState) {
   // We mock out e with the rounded lng/lat then call DrawPoint with it
   // TODO fire add event
   DrawPoint.onClick.call(this, state, {

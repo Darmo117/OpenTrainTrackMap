@@ -1,5 +1,7 @@
 import {Map} from "maplibre-gl";
-import {Feature, Geometries, Position,} from "@turf/helpers";
+import {Feature, Position} from "@turf/helpers";
+
+import {ValidGeometry} from "../editor-types";
 import {LngLatDict} from "./utils";
 
 export type SnapSubOptions = {
@@ -17,7 +19,7 @@ export type SnapOptions = {
 export type State<O = SnapOptions> = {
   map: Map;
   vertices: Position[];
-  snapList: Feature<Geometries>[];
+  snapList: Feature<ValidGeometry>[];
   options: O;
   optionsChangedCallBack?: (options: O) => void;
   /**

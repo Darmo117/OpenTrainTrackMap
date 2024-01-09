@@ -1,7 +1,9 @@
-import {Feature} from "@turf/helpers";
+import {Feature, LineString, Point, Polygon} from "@turf/helpers";
+
+export type ValidGeometry = Point | LineString | Polygon;
 
 type FeaturesEvent = {
-  features: Feature[];
+  features: Feature<ValidGeometry>[];
 };
 
 export type CreateFeaturesEvent = FeaturesEvent;

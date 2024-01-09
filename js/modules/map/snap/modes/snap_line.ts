@@ -1,7 +1,7 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 
 import {addPointToList, createSnapList, snap} from "../utils";
-import {GeometryState, SnapOptions} from "../state";
+import {GeometryState, SnapOptions} from "../types";
 import {DrawCustomModeWithContext} from "./patch";
 
 const {
@@ -79,11 +79,11 @@ SnapLineMode.onClick = function (state: LineState) {
   const lng = state.snappedLng;
   const lat = state.snappedLat;
 
-  // End the drawing if this click is on the previous position
-  // Note: not bothering with 'direction'
   if (state.currentVertexPosition > 0) {
     const lastVertex = state.line.coordinates[state.currentVertexPosition - 1];
     state.lastVertex = lastVertex;
+    // End the drawing if this click is on the previous position
+    // Note: not bothering with "direction"
     if (lastVertex[0] === lng && lastVertex[1] === lat) {
       return this.changeMode(modes.SIMPLE_SELECT, {
         featureIds: [state.line.id],
