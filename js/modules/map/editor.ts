@@ -38,7 +38,7 @@ export default function initMapEditor(map: Map) { // TODO disable editing if zoo
       snapPx: 15, // defaults to 15
       snapVertexPriorityDistance: 0.0025, // defaults to 1.25
     },
-    guides: false,
+    guides: true,
   } as DrawOptions), "top-left");
 
   $("#editor-panel").css({display: "block"}).addClass("split");

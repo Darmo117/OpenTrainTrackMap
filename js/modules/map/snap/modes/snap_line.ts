@@ -61,6 +61,7 @@ SnapLineMode.onSetup = function () {
     horizontalGuide,
     direction: "forward", // expected by DrawLineString
     options: this._ctx.options,
+    snappedTo: null,
   };
 
   const moveendCallback = () => {
@@ -93,9 +94,7 @@ SnapLineMode.onClick = function (state: LineState) {
   // Note: not bothering with 'direction'
   if (state.currentVertexPosition > 0) {
     const lastVertex = state.line.coordinates[state.currentVertexPosition - 1];
-
     state.lastVertex = lastVertex;
-
     if (lastVertex[0] === lng && lastVertex[1] === lat) {
       return this.changeMode(modes.SIMPLE_SELECT, {
         featureIds: [state.line.id],
@@ -103,19 +102,15 @@ SnapLineMode.onClick = function (state: LineState) {
     }
   }
 
-  // const point = state.map.project({ lng: lng, lat: lat });
-
+  // TODO fire add event
   addPointToList(state.map, state.vertices, [lng, lat]);
-
   state.line.updateCoordinate(state.currentVertexPosition.toString(), lng, lat);
-
   state.currentVertexPosition++;
-
   state.line.updateCoordinate(state.currentVertexPosition.toString(), lng, lat);
 };
 
 SnapLineMode.onMouseMove = function (state: LineState, e) {
-  const snapPos = snap(state, e as any);
+  const [snapPos, snapped] = snap(state, e as any);
   if (!snapPos) {
     return;
   }
@@ -124,14 +119,12 @@ SnapLineMode.onMouseMove = function (state: LineState, e) {
   state.line.updateCoordinate(state.currentVertexPosition.toString(), lng, lat);
   state.snappedLng = lng;
   state.snappedLat = lat;
-
   if (
     state.lastVertex &&
     state.lastVertex[0] === lng &&
     state.lastVertex[1] === lat
   ) {
     this.updateUIClasses({mouse: cursors.POINTER});
-
     // cursor options:
     // ADD: "add"
     // DRAG: "drag"

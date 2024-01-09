@@ -61,9 +61,8 @@ SnapPolygonMode.onSetup = function () {
     verticalGuide,
     horizontalGuide,
     // Adding default options
-    options: Object.assign(this._ctx.options, {
-      overlap: true,
-    }),
+    options: Object.assign(this._ctx.options, {overlap: true}),
+    snappedTo: null,
   };
 
   const moveendCallback = () => {
@@ -99,9 +98,7 @@ SnapPolygonMode.onClick = function (state) {
   if (state.currentVertexPosition > 0) {
     const lastVertex =
       state.polygon.coordinates[0][state.currentVertexPosition - 1];
-
     state.lastVertex = lastVertex;
-
     if (lastVertex[0] === lng && lastVertex[1] === lat) {
       return this.changeMode(modes.SIMPLE_SELECT, {
         featureIds: [state.polygon.id],
@@ -109,37 +106,29 @@ SnapPolygonMode.onClick = function (state) {
     }
   }
 
-  // const point = state.map.project();
-
+  // TODO fire add event
   addPointToList(state.map, state.vertices, [lng, lat]);
-
   state.polygon.updateCoordinate(`0.${state.currentVertexPosition}`, lng, lat);
-
   state.currentVertexPosition++;
-
   state.polygon.updateCoordinate(`0.${state.currentVertexPosition}`, lng, lat);
 };
 
 SnapPolygonMode.onMouseMove = function (state: PolygonState, e) {
-  const snapPos = snap(state, e as any);
-
+  const [snapPos, snapped] = snap(state, e as any);
   if (!snapPos) {
     return;
   }
 
   const {lng, lat} = snapPos;
-
   state.polygon.updateCoordinate(`0.${state.currentVertexPosition}`, lng, lat);
   state.snappedLng = lng;
   state.snappedLat = lat;
-
   if (
     state.lastVertex &&
     state.lastVertex[0] === lng &&
     state.lastVertex[1] === lat
   ) {
     this.updateUIClasses({mouse: cursors.POINTER});
-
     // cursor options:
     // ADD: "add"
     // DRAG: "drag"

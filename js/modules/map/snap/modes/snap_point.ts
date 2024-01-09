@@ -53,6 +53,7 @@ SnapPointMode.onSetup = function () {
     verticalGuide,
     horizontalGuide,
     options: this._ctx.options,
+    snappedTo: null,
   };
 
   const moveendCallback = () => {
@@ -78,6 +79,7 @@ SnapPointMode.onSetup = function () {
 
 SnapPointMode.onClick = function (state) {
   // We mock out e with the rounded lng/lat then call DrawPoint with it
+  // TODO fire add event
   DrawPoint.onClick.call(this, state, {
     lngLat: {
       lng: state.snappedLng,
@@ -87,24 +89,20 @@ SnapPointMode.onClick = function (state) {
 };
 
 SnapPointMode.onMouseMove = function (state: PointState, e) {
-  const snapPos = snap(state, e as any);
-
+  const [snapPos, snapped] = snap(state, e as any);
   if (!snapPos) {
     return;
   }
 
   const {lng, lat} = snapPos;
-
   state.snappedLng = lng;
   state.snappedLat = lat;
-
   if (
     state.lastVertex &&
     state.lastVertex[0] === lng &&
     state.lastVertex[1] === lat
   ) {
     this.updateUIClasses({mouse: cursors.POINTER});
-
     // cursor options:
     // ADD: "add"
     // DRAG: "drag"

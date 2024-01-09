@@ -138,25 +138,25 @@ export function createSnapList(
 }
 
 /**
- * Return a snap points for the given mouse event.
+ * Return a snap point for the given mouse event.
  * If there aren’t any available or the control key is held, the event’s lng/lat is returned.
  * Also, defines if vertices should show on the state object
  *
  * Mutates the state object.
  * @param state The current state.
  * @param e The mouse event.
- * @returns The snap coordinates.
+ * @returns The snap coordinates and a boolean indicating whether the point was snapped to a feature.
  */
-export function snap(state: State, e: MapMouseEvent): LngLatDict | null {
+export function snap(state: State, e: MapMouseEvent): [LngLatDict | null, boolean] {
   let latLng: LngLatDict = e.lngLat;
 
   if (e.originalEvent.ctrlKey) {
     state.showVerticalSnapLine = false;
     state.showHorizontalSnapLine = false;
-    return latLng;
+    return [latLng, false];
   }
   if (state.snapList.length == 0) {
-    return latLng;
+    return [latLng, false];
   }
 
   if (state.options.snap) {
@@ -164,12 +164,12 @@ export function snap(state: State, e: MapMouseEvent): LngLatDict | null {
     // If no layers found. Can happen when circle is the only visible layer on the map
     // and the hidden snapping-border circle layer is also on the map.
     if (!closestLayer) {
-      return null;
+      return [null, false];
     }
 
     let snapLatLng: LngLatDict;
     if (!closestLayer.isMarker) {
-      snapLatLng = checkPrioritiySnapping(
+      snapLatLng = checkPrioritySnapping(
         closestLayer,
         state.options.snapOptions,
         state.options.snapOptions?.snapVertexPriorityDistance
@@ -203,17 +203,17 @@ export function snap(state: State, e: MapMouseEvent): LngLatDict | null {
       (state.options.snapOptions?.snapPx ?? 15) *
       getMetersPerPixel(snapLatLng.lat, state.map.getZoom());
     if (closestLayer.distance * 1000 < minDistance) {
-      return snapLatLng;
+      return [snapLatLng, true];
     } else if (verticalPx || horizontalPx) {
       // Snap to guide line(s)
-      return {
+      return [{
         lng: verticalPx ?? e.lngLat.lng,
         lat: horizontalPx ?? e.lngLat.lat
-      };
+      }, false];
     }
   }
 
-  return latLng;
+  return [latLng, false];
 }
 
 /**
@@ -506,7 +506,7 @@ function snapToLineOrPolygon(
  * @param snapOptions The snap options.
  * @param snapVertexPriorityDistance The distance that needs to be undercut to trigger priority.
  */
-function checkPrioritiySnapping(
+function checkPrioritySnapping(
   closestLayer: LayerDistance,
   snapOptions: SnapSubOptions | undefined,
   snapVertexPriorityDistance: number = 1.25

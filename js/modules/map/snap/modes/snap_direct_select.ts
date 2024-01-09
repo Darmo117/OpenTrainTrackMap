@@ -2,8 +2,8 @@ import {MapMouseEvent} from "maplibre-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import {Position} from "@turf/helpers";
 
-import {Dict} from "../../../types";
-import {createSnapList, getGuideFeature, GuideId, LngLatDict, snap} from "../utils";
+import {shallowCopy} from "../../../utils";
+import {createSnapList, getGuideFeature, GuideId, snap} from "../utils";
 import {SnapOptions, State} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
@@ -11,26 +11,33 @@ const {doubleClickZoom} = MapboxDraw.lib;
 const DirectSelect = MapboxDraw.modes.direct_select;
 
 type DirectSelectState = State & {
-  featureId: number;
+  /**
+   * ID of the currently selected feature.
+   */
+  featureId: string;
+  /**
+   * The currently selected feature.
+   */
   feature: MapboxDraw.DrawFeature;
   dragMoveLocation: Position | null;
   dragMoving: boolean;
   canDragMove: boolean;
-  selectedCoordPaths: Position[];
+  selectedCoordPaths: string[];
 };
 
+// Expose implementation-only methods
 interface DirectSelectDrawCustomMode extends DrawCustomModeWithContext<DirectSelectState> {
-  // Patch in custom method
   dragVertex(state: DirectSelectState, e: MapMouseEvent): void;
 
-  // Expose implementation-only method
-  pathsToCoordinates(featureId: string, path: Position[]): { coord_path: string; feature_id: string }[];
+  stopDragging(state: DirectSelectState): void;
+
+  pathsToCoordinates(featureId: string, path: string[]): { coord_path: string; feature_id: string }[];
 }
 
 // @ts-ignore
 const SnapDirectSelect: DirectSelectDrawCustomMode = {...DirectSelect};
 
-SnapDirectSelect.onSetup = function (options: Dict) {
+SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Position, coordPath: string }) {
   const featureId = options.featureId;
   const feature = this.getFeature(featureId);
 
@@ -64,6 +71,7 @@ SnapDirectSelect.onSetup = function (options: Dict) {
     verticalGuide,
     horizontalGuide,
     options: this._ctx.options,
+    snappedTo: null,
   };
 
   this.setSelectedCoordinates(this.pathsToCoordinates(featureId, state.selectedCoordPaths));
@@ -88,19 +96,35 @@ SnapDirectSelect.onSetup = function (options: Dict) {
 };
 
 SnapDirectSelect.dragVertex = function (state: DirectSelectState, e: MapMouseEvent) {
-  const snapPos = snap(state, e);
+  const [snapPos, snapped] = snap(state, e);
   if (snapPos) {
-    const {lng, lat} = snapPos as LngLatDict;
-    state.feature.updateCoordinate(state.selectedCoordPaths[0].toString(), lng, lat);
+    if (snapped) {
+      // Store the position of the vertex we snapped to
+      state.snappedTo = shallowCopy(snapPos);
+      // TODO store vertex itself
+    } else {
+      state.snappedTo = null;
+    }
+    const {lng, lat} = snapPos;
+    state.feature.updateCoordinate(state.selectedCoordPaths[0], lng, lat);
+    // TODO update coordinates of merged vertices
   }
+};
+
+SnapDirectSelect.stopDragging = function (state: DirectSelectState) {
+  if (state.snappedTo) {
+    // TODO merge points
+    console.log("stopDragging", state.snappedTo);
+    state.snappedTo = null; // Reset
+  }
+  // Call default implementation
+  (DirectSelect as DirectSelectDrawCustomMode).stopDragging.call(this, state);
 };
 
 SnapDirectSelect.onStop = function (state: DirectSelectState) {
   this.deleteFeature(GuideId.VERTICAL, {silent: true});
   this.deleteFeature(GuideId.HORIZONTAL, {silent: true});
 
-  // remove moveemd callback
-  //   this.map.off("moveend", state.moveendCallback);
   this.map.off("draw.snap.options_changed", state.optionsChangedCallBack);
 
   // This relies on the the state of SnapPolygonMode being similar to DrawPolygon
