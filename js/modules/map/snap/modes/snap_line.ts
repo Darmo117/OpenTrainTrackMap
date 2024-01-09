@@ -52,7 +52,6 @@ SnapLineMode.onSetup = function () {
     selectedFeatures,
     direction: "forward", // expected by DrawLineString
     options: this._ctx.options,
-    snappedTo: null,
   };
 
   const moveendCallback = () => {
@@ -99,7 +98,7 @@ SnapLineMode.onClick = function (state: LineState) {
 };
 
 SnapLineMode.onMouseMove = function (state: LineState, e) {
-  const [snapPos, snapped] = snap(state, e as any);
+  const {latLng: snapPos, snapped, target} = snap(state, e as any);
   if (!snapPos) {
     return;
   }

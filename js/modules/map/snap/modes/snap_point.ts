@@ -44,7 +44,6 @@ SnapPointMode.onSetup = function () {
     snapList,
     selectedFeatures,
     options: this._ctx.options,
-    snappedTo: null,
   };
 
   const moveendCallback = () => {
@@ -78,7 +77,7 @@ SnapPointMode.onClick = function (state: PointState) {
 };
 
 SnapPointMode.onMouseMove = function (state: PointState, e) {
-  const [snapPos, snapped] = snap(state, e as any);
+  const {latLng: snapPos, snapped, target} = snap(state, e as any);
   if (!snapPos) {
     return;
   }

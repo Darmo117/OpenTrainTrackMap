@@ -54,7 +54,6 @@ SnapPolygonMode.onSetup = function () {
     selectedFeatures,
     // Adding default options
     options: Object.assign(this._ctx.options, {overlap: true}),
-    snappedTo: null,
   };
 
   const moveendCallback = () => {
@@ -103,7 +102,7 @@ SnapPolygonMode.onClick = function (state: PolygonState) {
 };
 
 SnapPolygonMode.onMouseMove = function (state: PolygonState, e) {
-  const [snapPos, snapped] = snap(state, e as any);
+  const {latLng: snapPos, snapped, target} = snap(state, e as any);
   if (!snapPos) {
     return;
   }

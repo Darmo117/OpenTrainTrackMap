@@ -113,6 +113,30 @@ export function createSnapList(
   return [snapList, vertices];
 }
 
+export type Snap = {
+  /**
+   * The feature the point was snapped to.
+   */
+  target?: {
+    /**
+     * The actual feature object.
+     */
+    feature: Feature<ValidGeometry>,
+    /**
+     * The path (vertex ID) the point was snapped to. Absent if the point was snapped on a segment.
+     */
+    path?: string,
+  };
+  /**
+   * The snap position.
+   */
+  latLng?: LngLatDict;
+  /**
+   * Whether the point was snapped to a feature.
+   */
+  snapped: boolean;
+};
+
 /**
  * Return a snap point for the given mouse event.
  * If there aren’t any available or the control key is held, the event’s lng/lat is returned.
@@ -123,41 +147,49 @@ export function createSnapList(
  * @param e The mouse event.
  * @returns The snap coordinates and a boolean indicating whether the point was snapped to a feature.
  */
-export function snap(state: State, e: MapMouseEvent): [LngLatDict | null, boolean] {
+export function snap(state: State, e: MapMouseEvent): Snap {
   let latLng: LngLatDict = e.lngLat;
 
   if (e.originalEvent.ctrlKey || state.snapList.length == 0) {
-    return [latLng, false];
+    return {latLng, snapped: false};
   }
 
   if (state.options.snap) {
     const closestLayer = getClosestLayer(latLng, state.snapList);
-    // If no layers found. Can happen when circle is the only visible layer on the map
+    // If no layers were found. Can happen when circle is the only visible layer on the map
     // and the hidden snapping-border circle layer is also on the map.
     if (!closestLayer) {
-      return [null, false];
+      return {snapped: false};
     }
 
     let snapLatLng: LngLatDict;
-    if (!closestLayer.isMarker) {
-      snapLatLng = checkPrioritySnapping(
+    let snapIndex: number;
+    if (closestLayer.isMarker) {
+      snapLatLng = closestLayer.latlng;
+    } else {
+      [snapLatLng, snapIndex] = checkPrioritySnapping(
         closestLayer,
         state.options.snapOptions,
         state.options.snapOptions?.snapVertexPriorityDistance
       );
-    } else {
-      snapLatLng = closestLayer.latlng;
     }
 
     const minDistance =
       (state.options.snapOptions?.snapPx ?? 15) *
       getMetersPerPixel(snapLatLng.lat, state.map.getZoom());
     if (closestLayer.distance * 1000 < minDistance) {
-      return [snapLatLng, true];
+      return {
+        latLng: snapLatLng,
+        snapped: true,
+        target: {
+          feature: closestLayer.feature,
+          path: snapIndex?.toString(),
+        },
+      };
     }
   }
 
-  return [latLng, false];
+  return {latLng, snapped: false};
 }
 
 /**
@@ -179,12 +211,10 @@ function getCurrentMapBbox(map: Map): Feature<Polygon> {
 type LayerDistance = {
   latlng: LngLatDict;
   segment?: [Position, Position];
+  segmentIndex?: number,
   distance: number;
   isMarker: boolean;
-  target: {
-    feature: Feature<ValidGeometry>,
-    path?: string,
-  };
+  feature: Feature<ValidGeometry>,
 };
 
 /**
@@ -202,9 +232,7 @@ function getDistanceToLayer(lngLat: LngLatDict, layer: Feature<ValidGeometry>): 
       latlng: {lng, lat},
       distance: distance(layerLatLngs, point),
       isMarker: true,
-      target: {
-        feature: layer,
-      },
+      feature: layer,
     };
   }
 
@@ -226,12 +254,10 @@ function getDistanceToLayer(lngLat: LngLatDict, layer: Feature<ValidGeometry>): 
   return {
     latlng: {lng, lat},
     segment: line.geometry.coordinates.slice(segmentIndex, segmentIndex + 2) as [Position, Position],
+    segmentIndex: segmentIndex,
     distance: nearestPoint.properties.dist,
     isMarker: false,
-    target: {
-      feature: layer,
-      path: "",
-    },
+    feature: layer,
   };
 }
 
@@ -274,13 +300,13 @@ function getMetersPerPixel(latitude: number, zoomLevel: number): number {
  * @param closestLayer The layer with its distance to the vertex to snap.
  * @param snapOptions The snap options.
  * @param snapVertexPriorityDistance The distance that needs to be undercut to trigger priority.
- * @returns The snap position.
+ * @returns The snap position and a number indicating if the index of the segment vertex the point was snapped to.
  */
 function snapToLineOrPolygon(
   closestLayer: LayerDistance,
   snapOptions: SnapSubOptions | undefined,
   snapVertexPriorityDistance: number
-): LngLatDict {
+): [LngLatDict, number] {
   // A and B are the points of the closest segment to P (the marker position we want to snap).
   const [A, B] = closestLayer.segment;
   // C is the point we would snap to on the segment.
@@ -291,8 +317,15 @@ function snapToLineOrPolygon(
   const distanceAC = distance(A, C);
   const distanceBC = distance(B, C);
 
-  // Closest latlng of A and B to C
-  let closestVertexLatLng = distanceAC < distanceBC ? A : B;
+  // Closest latlng to C among A and B
+  let closestVertexLatLng: number[];
+  let closestVertexIndex = closestLayer.segmentIndex;
+  if (distanceAC < distanceBC) {
+    closestVertexLatLng = A;
+  } else {
+    closestVertexLatLng = B;
+    closestVertexIndex += 1;
+  }
   // Distance between closestVertexLatLng and C
   let shortestDistance = distanceAC < distanceBC ? distanceAC : distanceBC;
 
@@ -310,9 +343,15 @@ function snapToLineOrPolygon(
 
   // If C is closer to the closestVertexLatLng (A, B or M) than the snapDistance,
   // the closestVertexLatLng has priority over C as the snapping point.
-  const [lng, lat] = shortestDistance < snapVertexPriorityDistance ? closestVertexLatLng : C;
+  let lng: number, lat: number;
+  let onPoint = shortestDistance < snapVertexPriorityDistance;
+  if (onPoint) {
+    [lng, lat] = closestVertexLatLng;
+  } else {
+    [lng, lat] = C;
+  }
   // Return the copy of snapping point
-  return {lng, lat};
+  return [{lng, lat}, onPoint ? closestVertexIndex : -1];
 }
 
 /**
@@ -320,13 +359,14 @@ function snapToLineOrPolygon(
  * @param closestLayer A layer.
  * @param snapOptions The snap options.
  * @param snapVertexPriorityDistance The distance that needs to be undercut to trigger priority.
+ * @returns The snap position and a number indicating if the index of the segment vertex the point was snapped to.
  */
 function checkPrioritySnapping(
   closestLayer: LayerDistance,
   snapOptions: SnapSubOptions | undefined,
   snapVertexPriorityDistance: number = 1.25
-): LngLatDict {
-  return !closestLayer.segment ? closestLayer.latlng : snapToLineOrPolygon(
+): [LngLatDict, number] {
+  return !closestLayer.segment ? [closestLayer.latlng, -1] : snapToLineOrPolygon(
     closestLayer,
     snapOptions,
     snapVertexPriorityDistance

@@ -60,7 +60,6 @@ SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Pos
     vertices,
     snapList,
     options: this._ctx.options,
-    snappedTo: null,
   };
 
   this.setSelectedCoordinates(this.pathsToCoordinates(featureId, state.selectedCoordPaths));
@@ -85,12 +84,14 @@ SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Pos
 };
 
 SnapDirectSelect.dragVertex = function (state: DirectSelectState, e: MapMouseEvent) {
-  const [snapPos, snapped] = snap(state, e);
+  const {latLng: snapPos, snapped, target} = snap(state, e);
   if (snapPos) {
     if (snapped) {
-      // Store the position of the vertex we snapped to
-      state.snappedTo = {...snapPos};
-      // TODO store vertex itself
+      // Store the position and vertex we snapped to
+      state.snappedTo = {
+        feature: target.feature,
+        path: target.path,
+      };
     } else {
       state.snappedTo = null;
     }
