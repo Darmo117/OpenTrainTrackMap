@@ -243,10 +243,19 @@ export class OTTM {
    * Translate the given key.
    * @param key The key.
    * @param defaultValue Optional value to return if the key is undefined. May be a function that returns a string.
+   * @param formatArgs Optional format arguments.
    * @return The translation or the key if no translation was found and no default value was provided.
    */
-  translate(key: string, defaultValue?: string | (() => string)): string {
-    return this.translations.get(key) ?? ((defaultValue instanceof Function ? defaultValue() : defaultValue) ?? key);
+  translate(key: string, defaultValue?: string | (() => string), formatArgs: Dict = {}): string {
+    let text: string = this.translations.get(key)
+      ?? (defaultValue instanceof Function ? defaultValue() : defaultValue)
+      ?? key;
+    if (text) {
+      for (const [key, value] of Object.entries(formatArgs)) {
+        text = text.replaceAll(`{${key}}`, value);
+      }
+    }
+    return text;
   }
 
   /**

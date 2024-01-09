@@ -40,8 +40,18 @@
   cursor: row-resize;
 }
 
+/*
+ * Map controls
+ */
+
 .maplibregl-ctrl button {
-  color: inherit !important; /* Use global text color */
+  /* Use global text color */
+  color: inherit !important;
+}
+
+.mapbox-gl-draw_ctrl-draw-btn {
+  /* Remove default background images from mapbox-draw buttons, we replace them by script */
+  background-image: none !important;
 }
 
 /*

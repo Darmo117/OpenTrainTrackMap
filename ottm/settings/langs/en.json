@@ -740,13 +740,13 @@
             "tooltip": "Reset orientation"
           },
           "edit": {
-            "new_marker": {
-              "tooltip": "Create a new marker"
+            "draw_point": {
+              "tooltip": "Create a new point"
             },
-            "new_line": {
-              "tooltip": "Create a new polyline"
+            "draw_line": {
+              "tooltip": "Create a new line"
             },
-            "new_polygon": {
+            "draw_polygon": {
               "tooltip": "Create a new polygon"
             }
           }

@@ -768,13 +768,13 @@
             "tooltip": "Réinitialiser l’orientation"
           },
           "edit": {
-            "new_marker": {
-              "tooltip": "Créer un nouveau marqueur"
+            "draw_point": {
+              "tooltip": "Créer un nouveau point"
             },
-            "new_line": {
+            "draw_line": {
               "tooltip": "Créer une nouvelle ligne"
             },
-            "new_polygon": {
+            "draw_polygon": {
               "tooltip": "Créer un nouveau polygone"
             }
           }

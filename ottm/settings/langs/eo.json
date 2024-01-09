@@ -747,13 +747,13 @@
             "tooltip": "Remeti la mapon norde"
           },
           "edit": {
-            "new_marker": {
-              "tooltip": "Krei novan markon"
+            "draw_point": {
+              "tooltip": "Krei novan punkton"
             },
-            "new_line": {
-              "tooltip": "Krei novan plurlinion"
+            "draw_line": {
+              "tooltip": "Krei novan linion"
             },
-            "new_polygon": {
+            "draw_polygon": {
               "tooltip": "Krei novan plurangulon"
             }
           }

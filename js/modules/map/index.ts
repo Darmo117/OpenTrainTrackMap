@@ -99,8 +99,8 @@ export default function initMap() {
   }), "top-left");
 
   map.addControl(new ZoomControl({
-    zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip"),
-    zoomOutTitle: window.ottm.translate("map.controls.zoom_out.tooltip"),
+    zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip") + " [+]",
+    zoomOutTitle: window.ottm.translate("map.controls.zoom_out.tooltip") + " [-]",
   }), "top-right");
 
   const staticPath = window.ottm.config.get("staticPath");
