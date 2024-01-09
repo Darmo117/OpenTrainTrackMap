@@ -12,7 +12,7 @@ import {
   DeleteFeaturesEvent,
   FeatureUpdateEvent,
   SelectionChangedEvent,
-  SelectionModeChangedEvent
+  ModeChangedEvent
 } from "./editor-types";
 
 /**
@@ -68,7 +68,7 @@ export default function initMapEditor(map: Map) { // TODO disable editing if zoo
     console.log("draw.selectionchange", e.features);
     // TODO
   })
-  map.on("draw.modechange", (e: SelectionModeChangedEvent) => {
+  map.on("draw.modechange", (e: ModeChangedEvent) => {
     console.log("draw.modechange", e.mode);
     // TODO
   })

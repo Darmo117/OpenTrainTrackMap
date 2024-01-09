@@ -14,6 +14,6 @@ export type FeatureUpdateEvent = FeaturesEvent & {
   action: "move" | "change_coordinates";
 };
 
-export type SelectionModeChangedEvent = {
+export type ModeChangedEvent = {
   mode: "simple_select" | "direct_select" | "draw_point" | "draw_line_string" | "draw_polygon";
 };
