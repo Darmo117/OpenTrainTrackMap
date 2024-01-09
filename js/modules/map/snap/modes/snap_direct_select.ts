@@ -1,8 +1,6 @@
 import {MapMouseEvent} from "maplibre-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import {Position} from "@turf/helpers";
-
-import {shallowCopy} from "../../../utils";
 import {createSnapList, snap} from "../utils";
 import {SnapOptions, State} from "../types";
 import {DrawCustomModeWithContext} from "./patch";
@@ -91,7 +89,7 @@ SnapDirectSelect.dragVertex = function (state: DirectSelectState, e: MapMouseEve
   if (snapPos) {
     if (snapped) {
       // Store the position of the vertex we snapped to
-      state.snappedTo = shallowCopy(snapPos);
+      state.snappedTo = {...snapPos};
       // TODO store vertex itself
     } else {
       state.snappedTo = null;
