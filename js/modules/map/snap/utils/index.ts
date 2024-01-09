@@ -22,16 +22,10 @@ import polygonToLine from "@turf/polygon-to-line";
 import nearestPointOnLine, {NearestPointOnLine} from "@turf/nearest-point-on-line";
 import nearestPointInPointSet from "@turf/nearest-point";
 import midpoint from "@turf/midpoint";
-import {GeoJSON} from "geojson";
 
 import {SnapSubOptions, State} from "../state";
 
 const {geojsonTypes} = MapboxDraw.constants;
-
-export enum GuideId {
-  VERTICAL = "VERTICAL_GUIDE",
-  HORIZONTAL = "HORIZONTAL_GUIDE",
-}
 
 export type LngLatDict = {
   lng: number;
@@ -120,12 +114,6 @@ export function createSnapList(
       return;
     }
 
-    // If this is re-running because a user is moving the map, the features might include
-    // vertices or the last leg of a polygon
-    if (feature.id === GuideId.HORIZONTAL || feature.id === GuideId.VERTICAL) {
-      return;
-    }
-
     extractVertices(feature.geometry.coordinates);
 
     // If feature is currently on viewport add to snap list
@@ -150,12 +138,7 @@ export function createSnapList(
 export function snap(state: State, e: MapMouseEvent): [LngLatDict | null, boolean] {
   let latLng: LngLatDict = e.lngLat;
 
-  if (e.originalEvent.ctrlKey) {
-    state.showVerticalSnapLine = false;
-    state.showHorizontalSnapLine = false;
-    return [latLng, false];
-  }
-  if (state.snapList.length == 0) {
+  if (e.originalEvent.ctrlKey || state.snapList.length == 0) {
     return [latLng, false];
   }
 
@@ -178,72 +161,15 @@ export function snap(state: State, e: MapMouseEvent): [LngLatDict | null, boolea
       snapLatLng = closestLayer.latlng;
     }
 
-    let verticalPx, horizontalPx;
-    if (state.options.guides) {
-      const nearestGuideline = getNearestGuideline(state.vertices, e.lngLat);
-      verticalPx = nearestGuideline.verticalPx;
-      horizontalPx = nearestGuideline.horizontalPx;
-
-      state.showVerticalSnapLine = verticalPx !== undefined;
-      if (state.showVerticalSnapLine) {
-        // Draw a line from top to bottom
-        state.verticalGuide.updateCoordinate("0", verticalPx, e.lngLat.lat + 10);
-        state.verticalGuide.updateCoordinate("1", verticalPx, e.lngLat.lat - 10);
-      }
-
-      state.showHorizontalSnapLine = horizontalPx !== undefined;
-      if (state.showHorizontalSnapLine) {
-        // Draw a line from left to right
-        state.horizontalGuide.updateCoordinate("0", e.lngLat.lng + 10, horizontalPx);
-        state.horizontalGuide.updateCoordinate("1", e.lngLat.lng - 10, horizontalPx);
-      }
-    }
-
     const minDistance =
       (state.options.snapOptions?.snapPx ?? 15) *
       getMetersPerPixel(snapLatLng.lat, state.map.getZoom());
     if (closestLayer.distance * 1000 < minDistance) {
       return [snapLatLng, true];
-    } else if (verticalPx || horizontalPx) {
-      // Snap to guide line(s)
-      return [{
-        lng: verticalPx ?? e.lngLat.lng,
-        lat: horizontalPx ?? e.lngLat.lat
-      }, false];
     }
   }
 
   return [latLng, false];
-}
-
-/**
- * Return the guide feature for the given guide ID.
- * @param id The guide’s ID.
- * @returns The feature.
- */
-export function getGuideFeature(id: GuideId): GeoJSON {
-  return {
-    id,
-    type: geojsonTypes.FEATURE,
-    properties: {
-      isSnapGuide: "true", // for styling
-    },
-    geometry: {
-      type: geojsonTypes.LINE_STRING,
-      coordinates: [] as Position[],
-    },
-  };
-}
-
-/**
- * Check whether the guide lines should be hidden for the given object.
- * @param state The current state.
- * @param geojson A GeoJSON object.
- * @return True if the guide lines should be hidden, false otherwise.
- */
-export function shouldHideGuide(state: State, geojson: Feature<Geometries>): boolean {
-  return geojson.properties.id === GuideId.VERTICAL && (!state.options.guides || !state.showVerticalSnapLine)
-    || geojson.properties.id === GuideId.HORIZONTAL && (!state.options.guides || !state.showHorizontalSnapLine);
 }
 
 /**
@@ -260,40 +186,6 @@ function getCurrentMapBbox(map: Map): Feature<Polygon> {
   // const cLR = map.unproject([w, h]).toArray();
   const cLL = map.unproject([0, h]).toArray();
   return bboxPolygon([cLL, cUR].flat() as [number, number, number, number]);
-}
-
-type GuidePosition = {
-  verticalPx: number | undefined;
-  horizontalPx: number | undefined;
-};
-
-/**
- * Get the guide line that is the nearest to the given coordinates.
- * Guide line coordinates are fetched in the given list of vertices.
- * @param vertices List of vertex positions to fetch guide lines in.
- * @param coords The reference coordinates.
- * @returns The vertical and horizontal pixel coordinates of the nearest guide line.
- */
-function getNearestGuideline(vertices: Position[], coords: LngLatDict): GuidePosition {
-  const verticals: number[] = [];
-  const horizontals: number[] = [];
-
-  vertices.forEach(vertex => {
-    verticals.push(vertex[0]);
-    horizontals.push(vertex[1]);
-  });
-
-  const nearbyVerticalGuide = verticals.find(
-    px => Math.abs(px - coords.lng) < 0.009
-  );
-  const nearbyHorizontalGuide = horizontals.find(
-    py => Math.abs(py - coords.lat) < 0.009
-  );
-
-  return {
-    verticalPx: nearbyVerticalGuide,
-    horizontalPx: nearbyHorizontalGuide,
-  };
 }
 
 type LayerDistance = {

@@ -12,6 +12,7 @@ import $ from "jquery";
 import GeocoderControl from "./geocoder-control";
 import OpenExternalMapControl from "./open-external-map-control";
 import initMapEditor from "./editor";
+import {IControl} from "maplibre-gl";
 
 declare global {
   interface Window {
@@ -95,15 +96,13 @@ export default function initMap() {
     })
   });
   // FIXME clickable area is too wide
-  // @ts-ignore
   map.addControl(new StylesControl({ // TODO translate
     styles: styles,
     onChange: style => onStyleChanged(style.styleUrl as any, true),
     compact: true,
-  }), "top-left");
+  }) as unknown as IControl, "top-left");
 
-  // @ts-ignore
-  map.addControl(new ZoomControl(), "top-right"); // TODO translate
+  map.addControl(new ZoomControl() as unknown as IControl, "top-right"); // TODO translate
 
   map.addControl(new OpenExternalMapControl({
     buttonTitle: window.ottm.translate("map.controls.google_maps_button.tooltip"),
@@ -149,8 +148,7 @@ export default function initMap() {
     zoomMapping: zoom => (1080657321.02457 * Math.exp(-0.693992077826686 * (zoom + 2))).toFixed(5),
   }), "top-right");
 
-  // @ts-ignore
-  map.addControl(new CompassControl(), "top-right"); // TODO translate
+  map.addControl(new CompassControl() as unknown as IControl, "top-right"); // TODO translate
 
   /*
    * Hook events

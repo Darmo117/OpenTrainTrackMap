@@ -1,4 +1,4 @@
-import {Map} from "maplibre-gl";
+import {IControl, Map} from "maplibre-gl";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import "@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css";
 import Split from "split.js";
@@ -13,7 +13,6 @@ import {SnapOptions} from "./snap/state";
  */
 export default function initMapEditor(map: Map) { // TODO disable editing if zoom level is too small
   type DrawOptions = MapboxDraw.MapboxDrawOptions & SnapOptions;
-  // @ts-ignore
   map.addControl(new MapboxDraw({ // TODO translate
     modes: {
       ...MapboxDraw.modes,
@@ -35,11 +34,10 @@ export default function initMapEditor(map: Map) { // TODO disable editing if zoo
     userProperties: true,
     snap: true,
     snapOptions: {
-      snapPx: 15, // defaults to 15
-      snapVertexPriorityDistance: 0.0025, // defaults to 1.25
+      snapPx: 5,
+      snapVertexPriorityDistance: 0.00125,
     },
-    guides: true,
-  } as DrawOptions), "top-left");
+  } as DrawOptions) as unknown as IControl, "top-left");
 
   $("#editor-panel").css({display: "block"}).addClass("split");
   $("#map").addClass("split");

@@ -1,9 +1,9 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import booleanIntersects from "@turf/boolean-intersects";
-import {Feature, Geometries, Polygon,} from "@turf/helpers";
+import {Feature, Polygon,} from "@turf/helpers";
 import * as turf from "@turf/turf";
 
-import {addPointToList, createSnapList, getGuideFeature, GuideId, shouldHideGuide, snap} from "../utils";
+import {addPointToList, createSnapList, snap} from "../utils";
 import {GeometryState, SnapOptions} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
@@ -24,8 +24,7 @@ type PolygonState = GeometryState<PolygonOptions> & {
   lastVertex?: any;
 };
 
-// @ts-ignore
-const SnapPolygonMode: DrawCustomModeWithContext<PolygonState, PolygonOptions> = {...DrawPolygon};
+const SnapPolygonMode = {...DrawPolygon} as DrawCustomModeWithContext<PolygonState, PolygonOptions>;
 
 SnapPolygonMode.onSetup = function () {
   const polygon = this.newFeature({
@@ -37,12 +36,7 @@ SnapPolygonMode.onSetup = function () {
     },
   }) as MapboxDraw.DrawPolygon;
 
-  const verticalGuide = this.newFeature(getGuideFeature(GuideId.VERTICAL));
-  const horizontalGuide = this.newFeature(getGuideFeature(GuideId.HORIZONTAL));
-
   this.addFeature(polygon);
-  this.addFeature(verticalGuide);
-  this.addFeature(horizontalGuide);
 
   const selectedFeatures = this.getSelected();
   this.clearSelectedFeatures();
@@ -58,8 +52,6 @@ SnapPolygonMode.onSetup = function () {
     vertices,
     snapList,
     selectedFeatures,
-    verticalGuide,
-    horizontalGuide,
     // Adding default options
     options: Object.assign(this._ctx.options, {overlap: true}),
     snappedTo: null,
@@ -74,13 +66,11 @@ SnapPolygonMode.onSetup = function () {
     state.vertices = vertices;
     state.snapList = snapList;
   };
-  // for removing listener later on close
   state.moveendCallback = moveendCallback;
 
   const optionsChangedCallBack = (options: PolygonOptions) => {
     state.options = options;
   };
-  // for removing listener later on close
   state.optionsChangedCallBack = optionsChangedCallBack;
 
   this.map.on("moveend", moveendCallback);
@@ -123,44 +113,13 @@ SnapPolygonMode.onMouseMove = function (state: PolygonState, e) {
   state.polygon.updateCoordinate(`0.${state.currentVertexPosition}`, lng, lat);
   state.snappedLng = lng;
   state.snappedLat = lat;
-  if (
-    state.lastVertex &&
-    state.lastVertex[0] === lng &&
-    state.lastVertex[1] === lat
-  ) {
-    this.updateUIClasses({mouse: cursors.POINTER});
-    // cursor options:
-    // ADD: "add"
-    // DRAG: "drag"
-    // MOVE: "move"
-    // NONE: "none"
-    // POINTER: "pointer"
-  } else {
-    this.updateUIClasses({mouse: cursors.ADD});
-  }
+  let cursor = state.lastVertex && state.lastVertex[0] === lng && state.lastVertex[1] === lat
+    ? cursors.POINTER
+    : cursors.ADD;
+  this.updateUIClasses({mouse: cursor});
 };
 
-// This is 'extending' DrawPolygon.toDisplayFeatures
-SnapPolygonMode.toDisplayFeatures = function (
-  state: PolygonState,
-  geojson: Feature<Geometries>,
-  display: (geojson: Feature<Geometries>) => void
-) {
-  if (shouldHideGuide(state, geojson)) {
-    return;
-  }
-
-  // This relies on the the state of SnapPolygonMode being similar to DrawPolygon
-  // @ts-ignore
-  DrawPolygon.toDisplayFeatures(state, geojson, display);
-};
-
-// This is 'extending' DrawPolygon.onStop
 SnapPolygonMode.onStop = function (state: PolygonState) {
-  this.deleteFeature(GuideId.VERTICAL, {silent: true});
-  this.deleteFeature(GuideId.HORIZONTAL, {silent: true});
-
-  // remove moveemd callback
   this.map.off("moveend", state.moveendCallback);
   this.map.off("draw.snap.options_changed", state.optionsChangedCallBack);
 
@@ -169,7 +128,7 @@ SnapPolygonMode.onStop = function (state: PolygonState) {
     DrawPolygon.onStop.call(this, state);
     return;
   }
-  // if overlap is false, mutate polygon so it doesnt overlap with existing ones
+  // If overlap is false, mutate polygon so it doesn’t overlap with existing ones
   // get all editable features to check for intersections
   const features: Feature<Polygon>[] = this._ctx.store.getAll();
 
@@ -188,17 +147,16 @@ SnapPolygonMode.onStop = function (state: PolygonState) {
     (state.polygon as any).coordinates =
       edited.coordinates || (edited as unknown as Feature<Polygon>).geometry.coordinates;
   } catch (e) {
-    // cancel this polygon if a difference cannot be calculated
+    // Cancel this polygon if a difference cannot be calculated
     DrawPolygon.onStop.call(this, state);
     this.deleteFeature(state.polygon.id as string, {silent: true});
     return;
   }
 
-  // monkeypatch so DrawPolygon.onStop doesn't error
+  // Monkeypatch so DrawPolygon.onStop doesn’t error
   const rc = state.polygon.removeCoordinate;
   state.polygon.removeCoordinate = () => {
   };
-  // This relies on the the state of SnapPolygonMode being similar to DrawPolygon
   DrawPolygon.onStop.call(this, state);
   state.polygon.removeCoordinate = rc.bind(state.polygon);
 };

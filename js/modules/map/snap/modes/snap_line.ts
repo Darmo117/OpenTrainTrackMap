@@ -1,7 +1,6 @@
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
-import {Feature, Geometries,} from "@turf/helpers";
 
-import {addPointToList, createSnapList, getGuideFeature, GuideId, shouldHideGuide, snap} from "../utils";
+import {addPointToList, createSnapList, snap} from "../utils";
 import {GeometryState, SnapOptions} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
@@ -23,8 +22,7 @@ type LineState = GeometryState & {
   lastVertex?: any;
 };
 
-// @ts-ignore
-const SnapLineMode: DrawCustomModeWithContext<LineState> = {...DrawLine};
+const SnapLineMode = {...DrawLine} as DrawCustomModeWithContext<LineState>;
 
 SnapLineMode.onSetup = function () {
   const line = this.newFeature({
@@ -36,12 +34,7 @@ SnapLineMode.onSetup = function () {
     },
   }) as MapboxDraw.DrawLineString;
 
-  const verticalGuide = this.newFeature(getGuideFeature(GuideId.VERTICAL));
-  const horizontalGuide = this.newFeature(getGuideFeature(GuideId.HORIZONTAL));
-
   this.addFeature(line);
-  this.addFeature(verticalGuide);
-  this.addFeature(horizontalGuide);
 
   const selectedFeatures = this.getSelected();
   this.clearSelectedFeatures();
@@ -57,8 +50,6 @@ SnapLineMode.onSetup = function () {
     vertices,
     snapList,
     selectedFeatures,
-    verticalGuide,
-    horizontalGuide,
     direction: "forward", // expected by DrawLineString
     options: this._ctx.options,
     snappedTo: null,
@@ -70,13 +61,11 @@ SnapLineMode.onSetup = function () {
     state.vertices = vertices;
     state.snapList = snapList;
   };
-  // for removing listener later on close
   state.moveendCallback = moveendCallback;
 
   const optionsChangedCallBack = (options: SnapOptions) => {
     state.options = options;
   };
-  // for removing listener later on close
   state.optionsChangedCallBack = optionsChangedCallBack;
 
   this.map.on("moveend", moveendCallback);
@@ -119,47 +108,15 @@ SnapLineMode.onMouseMove = function (state: LineState, e) {
   state.line.updateCoordinate(state.currentVertexPosition.toString(), lng, lat);
   state.snappedLng = lng;
   state.snappedLat = lat;
-  if (
-    state.lastVertex &&
-    state.lastVertex[0] === lng &&
-    state.lastVertex[1] === lat
-  ) {
-    this.updateUIClasses({mouse: cursors.POINTER});
-    // cursor options:
-    // ADD: "add"
-    // DRAG: "drag"
-    // MOVE: "move"
-    // NONE: "none"
-    // POINTER: "pointer"
-  } else {
-    this.updateUIClasses({mouse: cursors.ADD});
-  }
+  let cursor = state.lastVertex && state.lastVertex[0] === lng && state.lastVertex[1] === lat
+    ? cursors.POINTER
+    : cursors.ADD;
+  this.updateUIClasses({mouse: cursor});
 };
 
-// This is 'extending' DrawLine.toDisplayFeatures
-SnapLineMode.toDisplayFeatures = function (
-  state: LineState,
-  geojson: Feature<Geometries>,
-  display: (geojson: Feature<Geometries>) => void
-) {
-  if (shouldHideGuide(state, geojson)) {
-    return;
-  }
-
-  // This relies on the the state of SnapLineMode being similar to DrawLine
-  // @ts-ignore
-  DrawLine.toDisplayFeatures(state, geojson, display);
-};
-
-// This is 'extending' DrawLine.onStop
 SnapLineMode.onStop = function (state: LineState) {
-  this.deleteFeature(GuideId.VERTICAL, {silent: true});
-  this.deleteFeature(GuideId.HORIZONTAL, {silent: true});
-
-  // remove moveemd callback
   this.map.off("moveend", state.moveendCallback);
-
-  // This relies on the the state of SnapLineMode being similar to DrawLine
+  this.map.off("draw.snap.options_changed", state.optionsChangedCallBack);
   DrawLine.onStop.call(this, state);
 };
 

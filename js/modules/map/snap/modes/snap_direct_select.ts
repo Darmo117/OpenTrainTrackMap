@@ -3,7 +3,7 @@ import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import {Position} from "@turf/helpers";
 
 import {shallowCopy} from "../../../utils";
-import {createSnapList, getGuideFeature, GuideId, snap} from "../utils";
+import {createSnapList, snap} from "../utils";
 import {SnapOptions, State} from "../state";
 import {DrawCustomModeWithContext} from "./patch";
 
@@ -34,8 +34,7 @@ interface DirectSelectDrawCustomMode extends DrawCustomModeWithContext<DirectSel
   pathsToCoordinates(featureId: string, path: string[]): { coord_path: string; feature_id: string }[];
 }
 
-// @ts-ignore
-const SnapDirectSelect: DirectSelectDrawCustomMode = {...DirectSelect};
+const SnapDirectSelect = {...DirectSelect} as DirectSelectDrawCustomMode;
 
 SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Position, coordPath: string }) {
   const featureId = options.featureId;
@@ -52,12 +51,6 @@ SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Pos
   const [snapList, vertices] =
     createSnapList(this.map as any, this._ctx.api, feature as any);
 
-  const verticalGuide = this.newFeature(getGuideFeature(GuideId.VERTICAL));
-  const horizontalGuide = this.newFeature(getGuideFeature(GuideId.HORIZONTAL));
-
-  this.addFeature(verticalGuide);
-  this.addFeature(horizontalGuide);
-
   const state: DirectSelectState = {
     map: this.map as any,
     featureId,
@@ -68,8 +61,6 @@ SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Pos
     selectedCoordPaths: options.coordPath ? [options.coordPath] : [],
     vertices,
     snapList,
-    verticalGuide,
-    horizontalGuide,
     options: this._ctx.options,
     snappedTo: null,
   };
@@ -88,7 +79,7 @@ SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Pos
     state.options = options;
   };
 
-  // for removing listener later on close
+  // For removing listener later on close
   state.optionsChangedCallBack = optionsChangedCallBack;
   this.map.on("draw.snap.options_changed", optionsChangedCallBack);
 
@@ -117,17 +108,11 @@ SnapDirectSelect.stopDragging = function (state: DirectSelectState) {
     console.log("stopDragging", state.snappedTo);
     state.snappedTo = null; // Reset
   }
-  // Call default implementation
   (DirectSelect as DirectSelectDrawCustomMode).stopDragging.call(this, state);
 };
 
 SnapDirectSelect.onStop = function (state: DirectSelectState) {
-  this.deleteFeature(GuideId.VERTICAL, {silent: true});
-  this.deleteFeature(GuideId.HORIZONTAL, {silent: true});
-
   this.map.off("draw.snap.options_changed", state.optionsChangedCallBack);
-
-  // This relies on the the state of SnapPolygonMode being similar to DrawPolygon
   DirectSelect.onStop.call(this, state);
 };
 
