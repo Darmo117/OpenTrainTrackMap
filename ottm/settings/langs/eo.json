@@ -700,14 +700,12 @@
       "map": {
         "controls": {
           "layers": {
-            "base": {
+            "tooltip": "Maptipoj",
+            "value": {
               "osm": "Mapo",
               "satellite_maptiler": "Satelita (MapTiler)",
               "satellite_esri": "Satelita (Esri)",
               "satellite_google": "Satelita (Google)"
-            },
-            "overlays": {
-              "tracks": "Fervojoj"
             }
           },
           "zoom_in": {
@@ -744,6 +742,9 @@
           },
           "ign_compare_button": {
             "tooltip": "Montri la nunan lokon en la komparilo de la IGN"
+          },
+          "compass": {
+            "tooltip": "Remeti la mapon norde"
           },
           "edit": {
             "new_marker": {

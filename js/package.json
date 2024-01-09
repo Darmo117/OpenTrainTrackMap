@@ -27,10 +27,6 @@
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {
-    "@mapbox-controls/compass": "^1.1.0",
-    "@mapbox-controls/helpers": "^1.1.0",
-    "@mapbox-controls/styles": "^1.1.0",
-    "@mapbox-controls/zoom": "^1.1.0",
     "@mapbox/mapbox-gl-draw": "^1.4.3",
     "@turf/turf": "^6.5.0",
     "@types/ace": "^0.0.52",

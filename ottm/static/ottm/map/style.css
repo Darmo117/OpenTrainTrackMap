@@ -40,44 +40,8 @@
   cursor: row-resize;
 }
 
-/*
- * MapLibre controls
- */
-
-.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-search-bar {
-  display: flex;
-  align-items: center;
-}
-
-.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-search-bar > input[type="text"] {
-  border: none;
-  margin-left: 2px;
-  font-size: 1.1em;
-  display: inline;
-}
-
-.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-search-bar > button {
-  font-size: 1.5em;
-  display: inline;
-}
-
-.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-results-panel {
-  padding: 0.5em 0 0.5em 0.5em;
-  max-width: 250px;
-}
-
-.maplibre-ctrl-geocoder > .maplibre-ctrl-geocoder-results-panel > ul {
-  padding-left: 0;
-  margin-bottom: 0;
-  list-style: none;
-  padding-right: 1em; /* Leave space for the scroll-bar */
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.maplibre-ctrl-open-location > button > img {
-  max-height: 24px;
-  max-width: 24px;
+.maplibregl-ctrl button {
+  color: inherit !important; /* Use global text color */
 }
 
 /*

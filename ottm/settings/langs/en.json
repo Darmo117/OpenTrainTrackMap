@@ -693,14 +693,12 @@
       "map": {
         "controls": {
           "layers": {
-            "base": {
+            "tooltip": "Layers",
+            "value": {
               "osm": "Map",
-              "satellite_maptiler": "Satellite (MapTiler)",
               "satellite_esri": "Satellite (Esri)",
+              "satellite_maptiler": "Satellite (MapTiler)",
               "satellite_google": "Satellite (Google)"
-            },
-            "overlays": {
-              "tracks": "Tracks"
             }
           },
           "zoom_in": {
@@ -737,6 +735,9 @@
           },
           "ign_compare_button": {
             "tooltip": "Open current location in IGN’s comparing tool"
+          },
+          "compass": {
+            "tooltip": "Reset orientation"
           },
           "edit": {
             "new_marker": {

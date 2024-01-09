@@ -1,18 +1,14 @@
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {RasterSourceSpecification} from "@maplibre/maplibre-gl-style-spec";
-import ZoomControl from "@mapbox-controls/zoom";
-import "@mapbox-controls/zoom/src/index.css";
-import StylesControl, {Style} from "@mapbox-controls/styles";
-import "@mapbox-controls/styles/src/index.css";
-import CompassControl from "@mapbox-controls/compass";
-import "@mapbox-controls/compass/src/index.css";
 import $ from "jquery";
 
-import GeocoderControl from "./geocoder-control";
-import OpenExternalMapControl from "./open-external-map-control";
+import CompassControl from "./controls/compass";
+import GeocoderControl from "./controls/geocoder";
+import StylesControl, {Style} from "./controls/styles";
+import OpenExternalMapControl from "./controls/open-external-map";
+import ZoomControl from "./controls/zoom";
 import initMapEditor from "./editor";
-import {IControl} from "maplibre-gl";
 
 declare global {
   interface Window {
@@ -27,25 +23,25 @@ declare global {
 export default function initMap() {
   const mapStyles: maplibregl.StyleSpecification[] = [
     buildStyle(
-      window.ottm.translate("map.controls.layers.base.osm"),
+      window.ottm.translate("map.controls.layers.value.osm"),
       "osm",
       "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
       'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
     ),
     buildStyle(
-      window.ottm.translate("map.controls.layers.base.satellite_esri"),
+      window.ottm.translate("map.controls.layers.value.satellite_esri"),
       "arcgis",
       "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
       "Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
     ),
     buildStyle(
-      window.ottm.translate("map.controls.layers.base.satellite_maptiler"),
+      window.ottm.translate("map.controls.layers.value.satellite_maptiler"),
       "maptiler",
       "/tile?provider=maptiler&x={x}&y={y}&z={z}",
       'Tiles © <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>, Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
     ),
     buildStyle(
-      window.ottm.translate("map.controls.layers.base.satellite_google"),
+      window.ottm.translate("map.controls.layers.value.satellite_google"),
       "google",
       "http://www.google.com/maps/vt?lyrs=s@189&x={x}&y={y}&z={z}", // lyrs=s@189 -> satellite images
       "Tiles © Google",
@@ -67,11 +63,11 @@ export default function initMap() {
 
   map.addControl(new maplibregl.ScaleControl({
     maxWidth: 100,
-    unit: 'imperial'
+    unit: "imperial",
   }));
   map.addControl(new maplibregl.ScaleControl({
     maxWidth: 100,
-    unit: 'metric'
+    unit: "metric",
   }));
 
   map.addControl(new GeocoderControl({
@@ -91,64 +87,71 @@ export default function initMap() {
   mapStyles.forEach(style => {
     styles.push({
       label: style.name,
-      styleName: style.name,
-      styleUrl: style as any,
+      styleId: style.layers[0].id,
+      style: style,
     })
   });
-  // FIXME clickable area is too wide
-  map.addControl(new StylesControl({ // TODO translate
+  map.addControl(new StylesControl({
+    title: window.ottm.translate("map.controls.layers.tooltip"),
     styles: styles,
-    onChange: style => onStyleChanged(style.styleUrl as any, true),
+    onChange: style => onStyleChanged(style.style, true),
     compact: true,
-  }) as unknown as IControl, "top-left");
+  }), "top-left");
 
-  map.addControl(new ZoomControl() as unknown as IControl, "top-right"); // TODO translate
+  map.addControl(new ZoomControl({
+    zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip"),
+    zoomOutTitle: window.ottm.translate("map.controls.zoom_out.tooltip"),
+  }), "top-right");
+
+  const staticPath = window.ottm.config.get("staticPath");
 
   map.addControl(new OpenExternalMapControl({
     buttonTitle: window.ottm.translate("map.controls.google_maps_button.tooltip"),
-    iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/GoogleMaps.png`,
+    iconUrl: `${staticPath}ottm/images/icons/GoogleMaps.png`,
     urlPattern: "https://www.google.com/maps/@{lat},{lng},{zoom}z",
     zoomMapping: zoom => (zoom + 1).toFixed(2),
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
     buttonTitle: window.ottm.translate("map.controls.bing_maps_button.tooltip"),
-    iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/Bing.ico`,
+    iconUrl: `${staticPath}ottm/images/icons/Bing.ico`,
     urlPattern: "https://www.bing.com/maps/?cp={lat}~{lng}&lvl={zoom}",
     zoomMapping: zoom => (zoom + 1).toFixed(1),
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
     buttonTitle: window.ottm.translate("map.controls.osm_button.tooltip"),
-    iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/OSM.png`,
+    iconUrl: `${staticPath}ottm/images/icons/OSM.png`,
     urlPattern: "https://www.openstreetmap.org/#map={zoom}/{lat}/{lng}",
     zoomMapping: zoom => Math.round(zoom) + 1,
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
     buttonTitle: window.ottm.translate("map.controls.ohm_button.tooltip"),
-    iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/OHM.ico`,
+    iconUrl: `${staticPath}ottm/images/icons/OHM.ico`,
     urlPattern: "https://www.openhistoricalmap.org/#map={zoom}/{lat}/{lng}",
     zoomMapping: zoom => Math.round(zoom) + 1,
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
     buttonTitle: window.ottm.translate("map.controls.ign_compare_button.tooltip"),
-    iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/IGN.ico`,
+    iconUrl: `${staticPath}ottm/images/icons/IGN.ico`,
     urlPattern: "https://remonterletemps.ign.fr/comparer/basic?x={lng}&y={lat}&z={zoom}",
     zoomMapping: zoom => Math.round(zoom) + 1,
   }), "top-right");
 
   map.addControl(new OpenExternalMapControl({
     buttonTitle: window.ottm.translate("map.controls.geohack_button.tooltip"),
-    iconUrl: `${window.ottm.config.get("staticPath")}ottm/images/icons/WikimediaCloudServices.svg`,
+    iconUrl: `${staticPath}ottm/images/icons/WikimediaCloudServices.svg`,
     urlPattern: "https://geohack.toolforge.org/geohack.php?params={lat}_N_{lng}_E_scale:{zoom}",
     // Function extrapolated by an exponential trend line in LibreOffice Calc, using the values at:
     // https://wiki.openstreetmap.org/w/index.php?title=Zoom_levels&oldid=2553097
     zoomMapping: zoom => (1080657321.02457 * Math.exp(-0.693992077826686 * (zoom + 2))).toFixed(5),
   }), "top-right");
 
-  map.addControl(new CompassControl() as unknown as IControl, "top-right"); // TODO translate
+  map.addControl(new CompassControl({
+    title: window.ottm.translate("map.controls.compass.tooltip"),
+  }), "top-right");
 
   /*
    * Hook events

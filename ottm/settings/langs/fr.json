@@ -721,14 +721,12 @@
       "map": {
         "controls": {
           "layers": {
-            "base": {
+            "tooltip": "Fonds de carte",
+            "value": {
               "osm": "Carte",
               "satellite_maptiler": "Satellite (MapTiler)",
               "satellite_esri": "Satellite (Esri)",
               "satellite_google": "Satellite (Google)"
-            },
-            "overlays": {
-              "tracks": "Voies"
             }
           },
           "zoom_in": {
@@ -765,6 +763,9 @@
           },
           "ign_compare_button": {
             "tooltip": "Ouvrir l’emplacement actuel dans l’outil de comparaison de l’IGN"
+          },
+          "compass": {
+            "tooltip": "Réinitialiser l’orientation"
           },
           "edit": {
             "new_marker": {

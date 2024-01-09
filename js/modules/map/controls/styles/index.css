@@ -1,0 +1,46 @@
+.maplibregl-ctrl-styles-expanded {
+  display: flex;
+}
+
+.maplibregl-ctrl-styles-expanded button {
+  width: auto;
+  padding: 0 8px;
+}
+
+.maplibregl-ctrl-group.maplibregl-ctrl-styles-expanded button {
+  border-radius: 0;
+}
+
+.maplibregl-ctrl-group.maplibregl-ctrl-styles-expanded button:first-child {
+  border-radius: 4px 0 0 4px;
+}
+
+.maplibregl-ctrl-group.maplibregl-ctrl-styles-expanded button:last-child {
+  border-radius: 0 4px 4px 0;
+}
+
+.maplibregl-ctrl-styles-expanded button + button {
+  border: none;
+}
+
+.maplibregl-ctrl-styles-expanded button.-active {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.maplibregl-ctrl-styles-compact button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+}
+
+.maplibregl-ctrl-styles-compact select {
+  position: absolute;
+  left: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0;
+  cursor: pointer;
+}
