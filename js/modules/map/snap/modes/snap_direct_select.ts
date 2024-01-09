@@ -89,6 +89,7 @@ SnapDirectSelect.dragVertex = function (state: DirectSelectState, e: MapMouseEve
     if (snapped) {
       // Store the position and vertex we snapped to
       state.snappedTo = {
+        latLng: snapPos,
         feature: target.feature,
         path: target.path,
       };
@@ -103,7 +104,7 @@ SnapDirectSelect.dragVertex = function (state: DirectSelectState, e: MapMouseEve
 
 SnapDirectSelect.stopDragging = function (state: DirectSelectState) {
   if (state.snappedTo) {
-    // TODO merge points
+    // TODO merge vertices if path is present, create a new point on target at snap pos otherwise
     console.log("stopDragging", state.snappedTo);
     state.snappedTo = null; // Reset
   }

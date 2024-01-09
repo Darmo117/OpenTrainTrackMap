@@ -351,7 +351,7 @@ function snapToLineOrPolygon(
     [lng, lat] = C;
   }
   // Return the copy of snapping point
-  return [{lng, lat}, onPoint ? closestVertexIndex : -1];
+  return [{lng, lat}, onPoint ? closestVertexIndex : null];
 }
 
 /**
@@ -365,8 +365,8 @@ function checkPrioritySnapping(
   closestLayer: LayerDistance,
   snapOptions: SnapSubOptions | undefined,
   snapVertexPriorityDistance: number = 1.25
-): [LngLatDict, number] {
-  return !closestLayer.segment ? [closestLayer.latlng, -1] : snapToLineOrPolygon(
+): [LngLatDict, number | null] {
+  return !closestLayer.segment ? [closestLayer.latlng, null] : snapToLineOrPolygon(
     closestLayer,
     snapOptions,
     snapVertexPriorityDistance

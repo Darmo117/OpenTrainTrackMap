@@ -2,6 +2,7 @@ import {Map} from "maplibre-gl";
 import {Feature, Position} from "@turf/helpers";
 
 import {ValidGeometry} from "../editor-types";
+import {LngLatDict} from "./utils";
 
 export type SnapSubOptions = {
   snapPx?: number;
@@ -25,6 +26,7 @@ export type State<O = SnapOptions> = {
    * The vertex the one being dragged has been snapped to.
    */
   snappedTo?: {
+    latLng: LngLatDict,
     feature: Feature<ValidGeometry>,
     path: string,
   };
