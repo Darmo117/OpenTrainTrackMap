@@ -86,6 +86,7 @@ SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Pos
 };
 
 SnapDirectSelect.dragVertex = function (state: DirectSelectState, e: MapMouseEvent) {
+  // TODO remove bound features from snap list
   const {latLng: snapPos, snapped, target} = snap(state, e);
   if (snapPos) {
     if (snapped) {

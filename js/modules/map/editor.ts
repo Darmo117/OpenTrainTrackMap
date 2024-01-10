@@ -12,7 +12,7 @@ import {
   DeleteFeaturesEvent,
   FeatureUpdateEvent,
   SelectionChangedEvent,
-  ModeChangedEvent
+  ModeChangedEvent, VertexBindingManager
 } from "./editor-types";
 
 /**
@@ -50,6 +50,8 @@ export default function initMapEditor(map: Map) { // TODO disable editing if zoo
   } as DrawOptions)) as unknown as IControl, "top-left");
 
   fixMapboxDrawControls(map, mapboxDraw);
+
+  const vertexBindingManager = new VertexBindingManager(mapboxDraw);
 
   map.on("draw.create", (e: CreateFeaturesEvent) => {
     // console.log("draw.create", e.features);
