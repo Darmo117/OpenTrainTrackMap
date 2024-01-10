@@ -5,18 +5,21 @@ import Split from "split.js";
 import {Dict} from "../../types";
 import {MapFeature, Point} from "./geometry";
 
+enum EditMode {
+  SELECT = "select",
+  MOVE_FEATURES = "move_features",
+}
+
 class MapEditor {
   static readonly BASE_COLOR: string = "#00000000";
   static readonly SELECTED_COLOR: string = "#3bb2d0d0";
-  static readonly HOVERED_COLOR: string = "#fffd85d0";
+  static readonly HOVERED_COLOR: string = "#ff6d8bd0";
 
-  #map: Map;
-  #features: Dict<MapFeature> = {};
-  #selectedFeatures: Set<string> = new Set();
+  readonly #map: Map;
+  readonly #features: Dict<MapFeature> = {};
+  readonly #selectedFeatures: Set<string> = new Set();
   #draggedPoint: MapFeature<Point> = null;
-  // Needed to unbind properly in this.#onUp()
-  #mousMoveCallback: (e: MapMouseEvent | MapTouchEvent) => void;
-  #mouseUpCallback: (e: MapMouseEvent | MapTouchEvent) => void;
+  #editMode: EditMode = EditMode.SELECT;
 
   constructor(map: Map) {
     this.#map = map;
@@ -28,6 +31,15 @@ class MapEditor {
         this.#selectedFeatures.clear();
       }
     });
+    this.#map.on("mousemove", e => {
+      if (this.#draggedPoint) {
+        this.#onMovePoint(e);
+      }
+      if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
+        this.#onMoveSelected(e);
+      }
+    });
+    this.#map.on("mouseup", e => this.#onUp(e));
   }
 
   addFeature(feature: MapFeature) {
@@ -65,13 +77,17 @@ class MapEditor {
       if (!this.#selectedFeatures.has(feature.id)) {
         this.#map.setPaintProperty(feature.id, "circle-stroke-color", MapEditor.HOVERED_COLOR);
       }
-      canvas.style.cursor = "move";
+      if (!this.#draggedPoint) { // Avoids flicker
+        canvas.style.cursor = "pointer";
+      }
     });
-    this.#map.on("mouseleave", feature.id, () => {
+    this.#map.on("mouseleave", feature.id, e => {
       if (!this.#selectedFeatures.has(feature.id)) {
         this.#map.setPaintProperty(feature.id, "circle-stroke-color", MapEditor.BASE_COLOR);
       }
-      canvas.style.cursor = "";
+      if (!this.#draggedPoint) { // Avoids flicker
+        canvas.style.cursor = "";
+      }
     });
 
     // Only points are draggable without being selected
@@ -80,15 +96,10 @@ class MapEditor {
     }
 
     // Make feature draggable
-    this.#mousMoveCallback = (e: MapMouseEvent) => this.#onMovePoint(e);
-    this.#mouseUpCallback = (e: MapMouseEvent) => this.#onUp(e);
     this.#map.on("mousedown", feature.id, e => {
       // Prevent the default map drag behavior.
       e.preventDefault();
-      canvas.style.cursor = "grab";
       this.#draggedPoint = feature as MapFeature<Point>;
-      this.#map.on("mousemove", this.#mousMoveCallback);
-      this.#map.once("mouseup", this.#mouseUpCallback);
     });
     this.#map.on("touchstart", feature.id, e => {
       if (e.points.length !== 1) {
@@ -96,20 +107,19 @@ class MapEditor {
       }
       // Prevent the default map drag behavior.
       e.preventDefault();
-      this.#map.on("touchmove", this.#mousMoveCallback);
-      this.#map.once("touchend", this.#mouseUpCallback);
+      this.#draggedPoint = feature as MapFeature<Point>;
     });
   }
 
   #onMovePoint(e: MapMouseEvent | MapTouchEvent) {
-    this.#map.getCanvasContainer().style.cursor = "grabbing";
+    this.#map.getCanvasContainer().style.cursor = "crosshair";
     const feature = this.#draggedPoint;
     feature.onDrag(e);
     (this.#map.getSource(feature.id) as GeoJSONSource).setData(feature);
   }
 
   #onMoveSelected(e: MapMouseEvent | MapTouchEvent) {
-    this.#map.getCanvasContainer().style.cursor = "grabbing";
+    this.#map.getCanvasContainer().style.cursor = "crosshair";
     this.#selectedFeatures.forEach(id => {
       const feature = this.#features[id];
       feature.onDrag(e);
@@ -119,9 +129,6 @@ class MapEditor {
 
   #onUp(e: MapMouseEvent | MapTouchEvent) {
     this.#draggedPoint = null;
-    // Unbind mouse/touch events
-    this.#map.off("mousemove", this.#mousMoveCallback);
-    this.#map.off("touchmove", this.#mouseUpCallback);
   }
 }
 
