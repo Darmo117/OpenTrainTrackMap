@@ -8,6 +8,9 @@ import {MapFeature, Point} from "./geometry";
 enum EditMode {
   SELECT = "select",
   MOVE_FEATURES = "move_features",
+  DRAW_POINT = "draw_point",
+  DRAW_POLYLINE = "draw_polyline",
+  DRAW_POLYGON = "draw_polygon",
 }
 
 class MapEditor {
@@ -17,7 +20,7 @@ class MapEditor {
 
   readonly #map: Map;
   readonly #features: Dict<MapFeature> = {};
-  readonly #selectedFeatures: Set<string> = new Set();
+  readonly #selectedFeatureIds: Set<string> = new Set();
   #draggedPoint: MapFeature<Point> = null;
   #editMode: EditMode = EditMode.SELECT;
 
@@ -25,56 +28,68 @@ class MapEditor {
     this.#map = map;
     this.#map.on("click", e => {
       if (!e.originalEvent.ctrlKey) {
-        this.#map.fire("editor.selection.remove", [...this.#selectedFeatures]);
-        this.#selectedFeatures.forEach(
+        this.#map.fire("editor.selection.remove", [...this.#selectedFeatureIds]);
+        this.#selectedFeatureIds.forEach(
           id => this.#map.setPaintProperty(id, "circle-stroke-color", MapEditor.BASE_COLOR));
-        this.#selectedFeatures.clear();
+        this.#selectedFeatureIds.clear();
       }
     });
     this.#map.on("mousemove", e => {
       if (this.#draggedPoint) {
         this.#onMovePoint(e);
       }
-      if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
+      if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatureIds.size) {
         this.#onMoveSelected(e);
       }
     });
     this.#map.on("mouseup", e => this.#onUp(e));
   }
 
-  addFeature(feature: MapFeature) {
+  addFeature(feature: MapFeature) { // TODO handle polylines and polygons
     if (this.#features[feature.id]) {
       return;
     }
-    // Add feature
+
     this.#features[feature.id] = feature;
     this.#map.addSource(feature.id, {
       type: "geojson",
       data: feature,
     });
+    // FIXME adapt for other feature types
     this.#map.addLayer({
       id: feature.id,
       type: "circle",
       source: feature.id,
       paint: {
-        "circle-radius": 5,
+        "circle-radius": 4,
         "circle-color": "white",
         "circle-stroke-width": 3,
         "circle-stroke-color": MapEditor.BASE_COLOR,
       },
     } as CircleLayerSpecification);
 
-    // Make feature selectable
+    this.#makeFeatureSelectable(feature);
+    this.#makeFeatureHighlightable(feature);
+
+    if (feature.geometry.type === "Point") {
+      this.#makePointDraggableWithoutSelection(feature as MapFeature<Point>);
+    }
+  }
+
+  #makeFeatureSelectable(feature: MapFeature) {
     this.#map.on("click", feature.id, e => {
+      // FIXME adapt property name for other feature types
       this.#map.setPaintProperty(feature.id, "circle-stroke-color", MapEditor.SELECTED_COLOR);
-      this.#selectedFeatures.add(feature.id);
+      this.#selectedFeatureIds.add(feature.id);
       this.#map.fire("editor.selection.add", feature);
     });
+  }
 
-    // Highlight hovered features
+  #makeFeatureHighlightable(feature: MapFeature) {
     const canvas = this.#map.getCanvasContainer();
     this.#map.on("mouseenter", feature.id, () => {
-      if (!this.#selectedFeatures.has(feature.id)) {
+      if (!this.#selectedFeatureIds.has(feature.id)) {
+        // FIXME adapt property name for other feature types
         this.#map.setPaintProperty(feature.id, "circle-stroke-color", MapEditor.HOVERED_COLOR);
       }
       if (!this.#draggedPoint) { // Avoids flicker
@@ -82,24 +97,21 @@ class MapEditor {
       }
     });
     this.#map.on("mouseleave", feature.id, e => {
-      if (!this.#selectedFeatures.has(feature.id)) {
+      if (!this.#selectedFeatureIds.has(feature.id)) {
+        // FIXME adapt property name for other feature types
         this.#map.setPaintProperty(feature.id, "circle-stroke-color", MapEditor.BASE_COLOR);
       }
       if (!this.#draggedPoint) { // Avoids flicker
         canvas.style.cursor = "";
       }
     });
+  }
 
-    // Only points are draggable without being selected
-    if (feature.geometry.type !== "Point") {
-      return;
-    }
-
-    // Make feature draggable
+  #makePointDraggableWithoutSelection(feature: MapFeature<Point>) {
     this.#map.on("mousedown", feature.id, e => {
       // Prevent the default map drag behavior.
       e.preventDefault();
-      this.#draggedPoint = feature as MapFeature<Point>;
+      this.#draggedPoint = feature;
     });
     this.#map.on("touchstart", feature.id, e => {
       if (e.points.length !== 1) {
@@ -107,7 +119,7 @@ class MapEditor {
       }
       // Prevent the default map drag behavior.
       e.preventDefault();
-      this.#draggedPoint = feature as MapFeature<Point>;
+      this.#draggedPoint = feature;
     });
   }
 
@@ -120,7 +132,7 @@ class MapEditor {
 
   #onMoveSelected(e: MapMouseEvent | MapTouchEvent) {
     this.#map.getCanvasContainer().style.cursor = "crosshair";
-    this.#selectedFeatures.forEach(id => {
+    this.#selectedFeatureIds.forEach(id => {
       const feature = this.#features[id];
       feature.onDrag(e);
       (this.#map.getSource(feature.id) as GeoJSONSource).setData(feature);
