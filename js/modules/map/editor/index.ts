@@ -1,9 +1,9 @@
-import {CircleLayerSpecification, GeoJSONSource, LngLat, Map, MapMouseEvent, MapTouchEvent} from "maplibre-gl";
+import {GeoJSONSource, LngLat, Map, MapMouseEvent, MapTouchEvent} from "maplibre-gl";
 import $ from "jquery";
 import Split from "split.js";
 
 import {Dict} from "../../types";
-import {MapFeature, Point} from "./geometry";
+import {LinearGeometry, MapFeature, Point, Polyline} from "./geometry";
 
 enum EditMode {
   SELECT = "select",
@@ -30,7 +30,7 @@ class MapEditor {
       if (!e.originalEvent.ctrlKey) {
         this.#map.fire("editor.selection.remove", [...this.#selectedFeatureIds]);
         this.#selectedFeatureIds.forEach(
-          id => this.#map.setPaintProperty(id, "circle-stroke-color", MapEditor.BASE_COLOR));
+          id => this.#setFeatureBorderColor(this.#features[id], MapEditor.BASE_COLOR));
         this.#selectedFeatureIds.clear();
       }
     });
@@ -42,44 +42,94 @@ class MapEditor {
         this.#onMoveSelected(e);
       }
     });
-    this.#map.on("mouseup", e => this.#onUp(e));
+    this.#map.on("mouseup", () => this.#onUp());
   }
 
-  addFeature(feature: MapFeature) { // TODO handle polylines and polygons
+  addFeature(feature: MapFeature) {
     if (this.#features[feature.id]) {
       return;
     }
 
     this.#features[feature.id] = feature;
+    if (feature.geometry.type !== "Point") {
+      // Add all vertices of the polyline/polygon
+      (feature.geometry as LinearGeometry).vertices.forEach(v => this.addFeature(v));
+    }
     this.#map.addSource(feature.id, {
       type: "geojson",
       data: feature,
     });
-    // FIXME adapt for other feature types
-    this.#map.addLayer({
-      id: feature.id,
-      type: "circle",
-      source: feature.id,
-      paint: {
-        "circle-radius": 4,
-        "circle-color": "white",
-        "circle-stroke-width": 3,
-        "circle-stroke-color": MapEditor.BASE_COLOR,
-      },
-    } as CircleLayerSpecification);
-
+    this.#addLayerForFeature(feature);
     this.#makeFeatureSelectable(feature);
     this.#makeFeatureHighlightable(feature);
-
     if (feature.geometry.type === "Point") {
       this.#makePointDraggableWithoutSelection(feature as MapFeature<Point>);
     }
   }
 
+  #addLayerForFeature(feature: MapFeature) {
+    switch (feature.geometry.type) {
+      case "Point":
+        this.#map.addLayer({
+          id: feature.id,
+          type: "circle",
+          source: feature.id,
+          paint: {
+            "circle-radius": (feature.geometry as Point).radius,
+            "circle-color": feature.geometry.color,
+            "circle-stroke-width": 3,
+            "circle-stroke-color": MapEditor.BASE_COLOR,
+          },
+        });
+        break;
+      case "LineString":
+        this.#map.addLayer({
+          id: feature.id,
+          type: "line",
+          source: feature.id,
+          layout: {
+            "line-cap": "round",
+            "line-join": "round",
+          },
+          paint: {
+            "line-width": (feature.geometry as Polyline).width,
+            "line-color": feature.geometry.color,
+            // TODO find how to display a border
+            // "circle-stroke-width": 3,
+            // "circle-stroke-color": MapEditor.BASE_COLOR,
+          },
+        });
+        break;
+      case "Polygon":
+        // TODO
+        break;
+    }
+  }
+
+  removeFeature(featureId: string) {
+    // TODO update bound features
+    this.#map.removeLayer(featureId);
+    this.#map.removeSource(featureId);
+    delete this.#features[featureId];
+  }
+
+  #setFeatureBorderColor(feature: MapFeature, color: string) {
+    switch (feature.geometry.type) {
+      case "Point":
+        this.#map.setPaintProperty(feature.id, "circle-stroke-color", color);
+        break;
+      case "LineString":
+        // TODO
+        break;
+      case "Polygon":
+        // TODO
+        break;
+    }
+  }
+
   #makeFeatureSelectable(feature: MapFeature) {
-    this.#map.on("click", feature.id, e => {
-      // FIXME adapt property name for other feature types
-      this.#map.setPaintProperty(feature.id, "circle-stroke-color", MapEditor.SELECTED_COLOR);
+    this.#map.on("click", feature.id, () => {
+      this.#setFeatureBorderColor(feature, MapEditor.SELECTED_COLOR);
       this.#selectedFeatureIds.add(feature.id);
       this.#map.fire("editor.selection.add", feature);
     });
@@ -89,17 +139,15 @@ class MapEditor {
     const canvas = this.#map.getCanvasContainer();
     this.#map.on("mouseenter", feature.id, () => {
       if (!this.#selectedFeatureIds.has(feature.id)) {
-        // FIXME adapt property name for other feature types
-        this.#map.setPaintProperty(feature.id, "circle-stroke-color", MapEditor.HOVERED_COLOR);
+        this.#setFeatureBorderColor(feature, MapEditor.HOVERED_COLOR);
       }
       if (!this.#draggedPoint) { // Avoids flicker
         canvas.style.cursor = "pointer";
       }
     });
-    this.#map.on("mouseleave", feature.id, e => {
+    this.#map.on("mouseleave", feature.id, () => {
       if (!this.#selectedFeatureIds.has(feature.id)) {
-        // FIXME adapt property name for other feature types
-        this.#map.setPaintProperty(feature.id, "circle-stroke-color", MapEditor.BASE_COLOR);
+        this.#setFeatureBorderColor(feature, MapEditor.BASE_COLOR);
       }
       if (!this.#draggedPoint) { // Avoids flicker
         canvas.style.cursor = "";
@@ -139,7 +187,7 @@ class MapEditor {
     });
   }
 
-  #onUp(e: MapMouseEvent | MapTouchEvent) {
+  #onUp() {
     this.#draggedPoint = null;
   }
 }
@@ -149,11 +197,14 @@ export default function initMapEditor(map: Map) {
   const mapEditor = new MapEditor(map);
 
   // TEMP
-  const feature1 = new MapFeature("point1", new Point(new LngLat(0, 0)));
-  const feature2 = new MapFeature("point2", new Point(new LngLat(1, 0)));
+  const point1 = new MapFeature("point1", new Point(new LngLat(0, 0)));
+  const point2 = new MapFeature("point2", new Point(new LngLat(1, 0)));
+  const line1 = new MapFeature("line1", new Polyline([point1, point2, new MapFeature("point3", new Point(new LngLat(1, 1)))]));
+  line1.geometry.color = "red";
   map.on("load", () => {
-    mapEditor.addFeature(feature1);
-    mapEditor.addFeature(feature2);
+    mapEditor.addFeature(point1);
+    mapEditor.addFeature(point2);
+    mapEditor.addFeature(line1);
   });
 
   // Setup side panel
