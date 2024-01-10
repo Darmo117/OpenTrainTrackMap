@@ -8,7 +8,7 @@ import GeocoderControl from "./controls/geocoder";
 import StylesControl, {Style} from "./controls/styles";
 import OpenExternalMapControl from "./controls/open-external-map";
 import ZoomControl from "./controls/zoom";
-import initMapEditor from "./editor";
+import initMapEditor from "./editor/index";
 
 declare global {
   interface Window {
