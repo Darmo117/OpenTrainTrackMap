@@ -412,7 +412,7 @@ class PolygonNodes(_dj_models.Model):
 class PolygonHole(Polygon):
     parent = _dj_models.ForeignKey(Polygon, _dj_models.CASCADE, related_name='holes')
 
-    def validate_constraints(self, exclude=None):  # TODO keep it depending on Leaflet.js’s rendering abilities
+    def validate_constraints(self, exclude=None):  # TODO keep it depending on MapboxDraw’s rendering abilities
         super().validate_constraints(exclude=exclude)
         if (exclude is None or 'parent' not in exclude) and isinstance(self.parent, PolygonHole):
             raise _dj_exc.ValidationError(

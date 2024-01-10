@@ -20,10 +20,6 @@
  * Map controls
  */
 
-/*.geocoder-control-input {
-  color: black;
-}*/
-
 .maplibregl-ctrl-group {
   background-color: #2b2a33 !important;
 }
