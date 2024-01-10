@@ -23,7 +23,7 @@ type DirectSelectState = State & {
   selectedCoordPaths: string[];
 };
 
-// Expose implementation-only methods
+// Expose some implementation-only methods
 interface DirectSelectDrawCustomMode extends DrawCustomModeWithContext<DirectSelectState> {
   dragVertex(state: DirectSelectState, e: MapMouseEvent): void;
 
@@ -61,6 +61,8 @@ SnapDirectSelect.onSetup = function (options: { featureId: string, startPos: Pos
     snapList,
     options: this._ctx.options,
   };
+  // FIXME lost when feature is deselected
+  (feature as any).mergedVertices = {};
 
   this.setSelectedCoordinates(this.pathsToCoordinates(featureId, state.selectedCoordPaths));
   this.setSelected(featureId);
@@ -91,21 +93,52 @@ SnapDirectSelect.dragVertex = function (state: DirectSelectState, e: MapMouseEve
       state.snappedTo = {
         latLng: snapPos,
         feature: target.feature,
-        path: target.path,
+        vertexIndex: target.vertexIndex,
       };
     } else {
       state.snappedTo = null;
     }
     const {lng, lat} = snapPos;
-    state.feature.updateCoordinate(state.selectedCoordPaths[0], lng, lat);
-    // TODO update coordinates of merged vertices
+    const path = state.selectedCoordPaths[0];
+    state.feature.updateCoordinate(path, lng, lat);
+    if ((state.feature as any).mergedVertices[path]) {
+      // Update coordinates of merged vertices
+      for (const {feature, vertexIndex} of (state.feature as any).mergedVertices[path]) {
+        if (vertexIndex === null) {
+          continue;
+        }
+        if (feature.geometry.type === "Point") {
+          feature.geometry.coordinates[0] = lng;
+          feature.geometry.coordinates[1] = lat;
+        } else if (feature.geometry.type === "LineString") {
+          feature.geometry.coordinates[vertexIndex][0] = lng;
+          feature.geometry.coordinates[vertexIndex][1] = lat;
+        } else if (feature.geometry.type === "Polygon") {
+          feature.geometry.coordinates[0][vertexIndex][0] = lng;
+          feature.geometry.coordinates[0][vertexIndex][1] = lat;
+        }
+        this._ctx.api.add(feature); // Re-render feature
+      }
+    }
   }
 };
 
 SnapDirectSelect.stopDragging = function (state: DirectSelectState) {
   if (state.snappedTo) {
-    // TODO merge vertices if path is present, create a new point on target at snap pos otherwise
-    console.log("stopDragging", state.snappedTo);
+    console.log("stopDragging", state.snappedTo); // DEBUG
+    if (state.snappedTo.vertexIndex !== null || state.snappedTo.feature.geometry.type === "Point") {
+      // Merge the dragged vertex with the one(s) it snapped to
+      const path = state.selectedCoordPaths[0];
+      if (!(state.feature as any).mergedVertices[path]) {
+        (state.feature as any).mergedVertices[path] = [];
+      }
+      (state.feature as any).mergedVertices[path].push({
+        feature: state.snappedTo.feature,
+        vertexIndex: state.snappedTo.vertexIndex,
+      });
+    } else {
+      // TODO create a new point on the target feature at the snap location
+    }
     state.snappedTo = null; // Reset
   }
   (DirectSelect as DirectSelectDrawCustomMode).stopDragging.call(this, state);

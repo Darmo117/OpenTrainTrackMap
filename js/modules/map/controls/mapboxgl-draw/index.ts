@@ -41,6 +41,7 @@ export function fixMapboxDrawControls(map: Map, mapboxDraw: MapboxDraw) {
       });
     }
   }
+  // TODO invoke MapboxDraw.trash() instead
   // Add custom shortcut to delete selected features
   map.getCanvas().addEventListener("keydown", e => {
     if (e.key === "Delete") {

@@ -123,9 +123,9 @@ export type Snap = {
      */
     feature: Feature<ValidGeometry>,
     /**
-     * The path (vertex ID) the point was snapped to. Absent if the point was snapped on a segment.
+     * The vertex index the point was snapped to. Absent if the point was snapped on a segment.
      */
-    path?: string,
+    vertexIndex?: number,
   };
   /**
    * The snap position.
@@ -183,7 +183,7 @@ export function snap(state: State, e: MapMouseEvent): Snap {
         snapped: true,
         target: {
           feature: closestLayer.feature,
-          path: snapIndex?.toString(),
+          vertexIndex: snapIndex,
         },
       };
     }
@@ -366,7 +366,7 @@ function checkPrioritySnapping(
   snapOptions: SnapSubOptions | undefined,
   snapVertexPriorityDistance: number = 1.25
 ): [LngLatDict, number | null] {
-  return !closestLayer.segment ? [closestLayer.latlng, null] : snapToLineOrPolygon(
+  return !closestLayer.segment ? [closestLayer.latlng, 0] : snapToLineOrPolygon(
     closestLayer,
     snapOptions,
     snapVertexPriorityDistance

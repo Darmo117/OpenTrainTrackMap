@@ -28,7 +28,7 @@ export type State<O = SnapOptions> = {
   snappedTo?: {
     latLng: LngLatDict,
     feature: Feature<ValidGeometry>,
-    path: string,
+    vertexIndex: number | null,
   };
 };
 
