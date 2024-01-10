@@ -3,7 +3,7 @@ import $ from "jquery";
 import Split from "split.js";
 
 import {Dict} from "../../types";
-import {LinearGeometry, MapFeature, Point, Polyline} from "./geometry";
+import {LinearFeature, MapFeature, Point, Polygon, Polyline} from "./geometry";
 
 enum EditMode {
   SELECT = "select",
@@ -21,7 +21,7 @@ class MapEditor {
   readonly #map: Map;
   readonly #features: Dict<MapFeature> = {};
   readonly #selectedFeatureIds: Set<string> = new Set();
-  #draggedPoint: MapFeature<Point> = null;
+  #draggedPoint: Point = null;
   #editMode: EditMode = EditMode.SELECT;
 
   constructor(map: Map) {
@@ -53,17 +53,20 @@ class MapEditor {
     this.#features[feature.id] = feature;
     if (feature.geometry.type !== "Point") {
       // Add all vertices of the polyline/polygon
-      (feature.geometry as LinearGeometry).vertices.forEach(v => this.addFeature(v));
+      (feature as LinearFeature).vertices.forEach(v => this.addFeature(v));
     }
     this.#map.addSource(feature.id, {
       type: "geojson",
       data: feature,
     });
+    if (feature.geometry.type === "Polygon") {
+      // TODO add line to represent polygon’s border
+    }
     this.#addLayerForFeature(feature);
     this.#makeFeatureSelectable(feature);
     this.#makeFeatureHighlightable(feature);
     if (feature.geometry.type === "Point") {
-      this.#makePointDraggableWithoutSelection(feature as MapFeature<Point>);
+      this.#makePointDraggableWithoutSelection(feature as Point);
     }
   }
 
@@ -75,8 +78,8 @@ class MapEditor {
           type: "circle",
           source: feature.id,
           paint: {
-            "circle-radius": (feature.geometry as Point).radius,
-            "circle-color": feature.geometry.color,
+            "circle-radius": (feature as Point).radius,
+            "circle-color": feature.color,
             "circle-stroke-width": 3,
             "circle-stroke-color": MapEditor.BASE_COLOR,
           },
@@ -92,8 +95,8 @@ class MapEditor {
             "line-join": "round",
           },
           paint: {
-            "line-width": (feature.geometry as Polyline).width,
-            "line-color": feature.geometry.color,
+            "line-width": (feature as Polyline).width,
+            "line-color": feature.color,
             // TODO find how to display a border
             // "circle-stroke-width": 3,
             // "circle-stroke-color": MapEditor.BASE_COLOR,
@@ -101,7 +104,18 @@ class MapEditor {
         });
         break;
       case "Polygon":
-        // TODO
+        this.#map.addLayer({
+          id: feature.id,
+          type: "fill",
+          source: feature.id,
+          paint: {
+            // "line-width": (feature as Polygon).width,
+            "fill-color": (feature as Polygon).bgColor,
+            // TODO find how to display a border
+            // "circle-stroke-width": 3,
+            // "circle-stroke-color": MapEditor.BASE_COLOR,
+          },
+        });
         break;
     }
   }
@@ -155,7 +169,7 @@ class MapEditor {
     });
   }
 
-  #makePointDraggableWithoutSelection(feature: MapFeature<Point>) {
+  #makePointDraggableWithoutSelection(feature: Point) {
     this.#map.on("mousedown", feature.id, e => {
       // Prevent the default map drag behavior.
       e.preventDefault();
@@ -175,7 +189,9 @@ class MapEditor {
     this.#map.getCanvasContainer().style.cursor = "crosshair";
     const feature = this.#draggedPoint;
     feature.onDrag(e);
-    (this.#map.getSource(feature.id) as GeoJSONSource).setData(feature);
+    this.#updateFeatureData(feature);
+    feature.boundFeatures.forEach(
+      f => this.#updateFeatureData(f))
   }
 
   #onMoveSelected(e: MapMouseEvent | MapTouchEvent) {
@@ -183,28 +199,36 @@ class MapEditor {
     this.#selectedFeatureIds.forEach(id => {
       const feature = this.#features[id];
       feature.onDrag(e);
-      (this.#map.getSource(feature.id) as GeoJSONSource).setData(feature);
+      this.#updateFeatureData(feature);
     });
   }
 
   #onUp() {
     this.#draggedPoint = null;
   }
+
+  #updateFeatureData(feature: MapFeature) {
+    (this.#map.getSource(feature.id) as GeoJSONSource).setData(feature);
+  }
 }
 
 export default function initMapEditor(map: Map) {
-  // TODO
   const mapEditor = new MapEditor(map);
 
   // TEMP
-  const point1 = new MapFeature("point1", new Point(new LngLat(0, 0)));
-  const point2 = new MapFeature("point2", new Point(new LngLat(1, 0)));
-  const line1 = new MapFeature("line1", new Polyline([point1, point2, new MapFeature("point3", new Point(new LngLat(1, 1)))]));
-  line1.geometry.color = "red";
+  const point1 = new Point("point1", new LngLat(0, 0));
+  const point2 = new Point("point2", new LngLat(1, 0));
+  const point3 = new Point("point3", new LngLat(1, 1));
+  const line1 = new Polyline("line1", [point1, point2, point3]);
+  line1.color = "red";
+  const polygon1 = new Polygon("polygon1", [point3, new Point("point4", new LngLat(2, 2)), new Point("point5", new LngLat(2, 3)), new Point("point6", new LngLat(3, 3))])
+  polygon1.color = "blue";
+  polygon1.bgColor = "#000066a0";
   map.on("load", () => {
     mapEditor.addFeature(point1);
     mapEditor.addFeature(point2);
     mapEditor.addFeature(line1);
+    mapEditor.addFeature(polygon1);
   });
 
   // Setup side panel
