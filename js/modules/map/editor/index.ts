@@ -3,7 +3,7 @@ import $ from "jquery";
 import Split from "split.js";
 
 import {Dict} from "../../types";
-import {LinearFeature, MapFeature, Point, Polygon, Polyline} from "./geometry";
+import {LinearFeature, MapFeature, Point, Polygon, LineString} from "./geometry";
 
 enum EditMode {
   SELECT = "select",
@@ -14,15 +14,17 @@ enum EditMode {
 }
 
 class MapEditor {
-  static readonly BASE_COLOR: string = "#00000000";
-  static readonly SELECTED_COLOR: string = "#3bb2d0d0";
-  static readonly HOVERED_COLOR: string = "#ff6d8bd0";
+  static readonly HIGHLIGHT_BASE_COLOR: string = "#00000000";
+  static readonly HIGHLIGHT_SELECTED_COLOR: string = "#3bb2d0d0";
+  static readonly HIGHLIGHT_HOVERED_COLOR: string = "#ff6d8bd0";
+  static readonly BORDER_COLOR: string = "#101010";
 
   readonly #map: Map;
   readonly #features: Dict<MapFeature> = {};
   readonly #selectedFeatureIds: Set<string> = new Set();
   #draggedPoint: Point = null;
   #editMode: EditMode = EditMode.SELECT;
+  #lastClickTime: number = 0;
 
   constructor(map: Map) {
     this.#map = map;
@@ -30,7 +32,7 @@ class MapEditor {
       if (!e.originalEvent.ctrlKey) {
         this.#map.fire("editor.selection.remove", [...this.#selectedFeatureIds]);
         this.#selectedFeatureIds.forEach(
-            id => this.#setFeatureBorderColor(this.#features[id], MapEditor.BASE_COLOR));
+            id => this.#setFeatureBorderColor(this.#features[id], MapEditor.HIGHLIGHT_BASE_COLOR));
         this.#selectedFeatureIds.clear();
       }
     });
@@ -74,7 +76,28 @@ class MapEditor {
       this.#makePointDraggableWithoutSelection(feature as Point);
     } else {
       // Put all points above all current features
-      (feature as LinearFeature).vertices.forEach(v => this.#map.moveLayer(v.id))
+      (feature as LinearFeature).vertices.forEach(v => this.#moveLayer(v.id))
+    }
+  }
+
+  #moveLayer(featureId: string, beforeId?: string) {
+    if (beforeId) {
+      const bottomLayer = this.#getLayerIdStack(beforeId)[0];
+      this.#getLayerIdStack(featureId).forEach(id => this.#map.moveLayer(id, bottomLayer));
+    } else {
+      this.#getLayerIdStack(featureId).forEach(id => this.#map.moveLayer(id));
+    }
+  }
+
+  #getLayerIdStack(featureId: string): string[] {
+    const feature = this.#features[featureId];
+    switch (feature.geometry.type) {
+      case "Point":
+        return [feature.id + "-highlight", feature.id];
+      case "LineString":
+        return [feature.id + "-highlight", feature.id + "-border", feature.id];
+      case "Polygon":
+        return [feature.id, feature.id + "-contour"];
     }
   }
 
@@ -82,21 +105,53 @@ class MapEditor {
     switch (feature.geometry.type) {
       case "Point":
         this.#map.addLayer({
+          id: feature.id + "-highlight",
+          type: "circle",
+          source: feature.id,
+          paint: {
+            "circle-radius": ["+", ["get", "radius"], 4],
+            "circle-color": MapEditor.HIGHLIGHT_BASE_COLOR,
+          },
+        });
+        this.#map.addLayer({
           id: feature.id,
           type: "circle",
           source: feature.id,
-          layout: {
-            "circle-sort-key": ["get", "layer"],
-          },
           paint: {
             "circle-radius": ["get", "radius"],
             "circle-color": ["get", "color"],
-            "circle-stroke-width": 3,
-            "circle-stroke-color": MapEditor.BASE_COLOR,
+            "circle-stroke-width": 1,
+            "circle-stroke-color": MapEditor.BORDER_COLOR,
           },
         });
         break;
       case "LineString":
+        this.#map.addLayer({
+          id: feature.id + "-highlight",
+          type: "line",
+          source: feature.id,
+          layout: {
+            "line-cap": "round",
+            "line-join": "round",
+          },
+          paint: {
+            "line-width": ["+", ["get", "width"], 6],
+            "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
+          },
+        });
+        this.#map.addLayer({
+          id: feature.id + "-border",
+          type: "line",
+          source: feature.id,
+          layout: {
+            "line-cap": "round",
+            "line-join": "round",
+          },
+          paint: {
+            "line-width": ["+", ["get", "width"], 2],
+            "line-color": MapEditor.BORDER_COLOR,
+          },
+        });
         this.#map.addLayer({
           id: feature.id,
           type: "line",
@@ -104,12 +159,10 @@ class MapEditor {
           layout: {
             "line-cap": "round",
             "line-join": "round",
-            "line-sort-key": ["get", "layer"],
           },
           paint: {
             "line-width": ["get", "width"],
             "line-color": ["get", "color"],
-            // TODO find how to display a highlight border
           },
         });
         break;
@@ -118,27 +171,34 @@ class MapEditor {
           id: feature.id,
           type: "fill",
           source: feature.id,
-          layout: {
-            "fill-sort-key": ["get", "layer"],
-          },
           paint: {
             "fill-color": ["get", "bgColor"],
           },
         });
-        const contourId = feature.id + "-contour";
         this.#map.addLayer({
-          id: contourId,
+          id: feature.id + "-highlight",
           type: "line",
           source: feature.id,
           layout: {
             "line-cap": "round",
             "line-join": "round",
-            "line-sort-key": ["get", "layer"],
+          },
+          paint: {
+            "line-width": ["+", ["get", "width"], 4],
+            "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
+          },
+        });
+        this.#map.addLayer({
+          id: feature.id + "-contour",
+          type: "line",
+          source: feature.id,
+          layout: {
+            "line-cap": "round",
+            "line-join": "round",
           },
           paint: {
             "line-width": ["get", "width"],
             "line-color": ["get", "color"],
-            // TODO find how to display a highlight border
           },
         });
         break;
@@ -156,20 +216,27 @@ class MapEditor {
   #setFeatureBorderColor(feature: MapFeature, color: string) {
     switch (feature.geometry.type) {
       case "Point":
-        this.#map.setPaintProperty(feature.id, "circle-stroke-color", color);
+        this.#map.setPaintProperty(feature.id + "-highlight", "circle-color", color);
         break;
       case "LineString":
-        // TODO
-        break;
       case "Polygon":
-        // TODO
+        this.#map.setPaintProperty(feature.id + "-highlight", "line-color", color);
         break;
     }
   }
 
   #makeFeatureSelectable(feature: MapFeature) {
     this.#map.on("click", feature.id, () => {
-      this.#setFeatureBorderColor(feature, MapEditor.SELECTED_COLOR);
+      const ms = new Date().getTime();
+      // If several features are on top of each other, an event is fired each one of them.
+      // So we add a small cooldown so that only the first one is actually clicked.
+      if (ms - this.#lastClickTime < 10) {
+        return;
+      }
+      this.#lastClickTime = ms;
+
+      console.log(feature); // DEBUG
+      this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
       this.#selectedFeatureIds.add(feature.id);
       this.#map.fire("editor.selection.add", feature);
     });
@@ -179,7 +246,7 @@ class MapEditor {
     const canvas = this.#map.getCanvasContainer();
     this.#map.on("mouseenter", feature.id, () => {
       if (!this.#selectedFeatureIds.has(feature.id)) {
-        this.#setFeatureBorderColor(feature, MapEditor.HOVERED_COLOR);
+        this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
       }
       if (!this.#draggedPoint) { // Avoids flicker
         canvas.style.cursor = "pointer";
@@ -187,7 +254,7 @@ class MapEditor {
     });
     this.#map.on("mouseleave", feature.id, () => {
       if (!this.#selectedFeatureIds.has(feature.id)) {
-        this.#setFeatureBorderColor(feature, MapEditor.BASE_COLOR);
+        this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR);
       }
       if (!this.#draggedPoint) { // Avoids flicker
         canvas.style.cursor = "";
@@ -245,15 +312,15 @@ export default function initMapEditor(map: Map) {
   const point1 = new Point("point1", new LngLat(0, 0));
   const point2 = new Point("point2", new LngLat(1, 0));
   const point3 = new Point("point3", new LngLat(1, 1));
-  const line1 = new Polyline("line1", [point1, point2, point3]);
-  line1.color = "red";
+  const line1 = new LineString("line1", [point1, point2, point3]);
+  line1.color = "#ffe46d";
   const polygon1 = new Polygon("polygon1", [
     point3,
     new Point("point4", new LngLat(1, 2)),
     new Point("point5", new LngLat(2, 3)),
     new Point("point6", new LngLat(3, 3)),
   ]);
-  polygon1.color = "blue";
+  polygon1.color = "#f18030";
   polygon1.bgColor = "rgba(0,255,166,0.63)";
   map.on("load", () => {
     mapEditor.addFeature(point1);

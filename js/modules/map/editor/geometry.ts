@@ -191,7 +191,7 @@ export enum PolylineDirection {
   BACKWARD,
 }
 
-export class Polyline extends LinearFeature<geojson.LineString, PolylineProperties> {
+export class LineString extends LinearFeature<geojson.LineString, PolylineProperties> {
   #direction: PolylineDirection = PolylineDirection.FORWARD;
 
   constructor(id: string, vertices?: Point[]) {

@@ -51,6 +51,7 @@ export default function initMap() {
   const defaultMapStyle = window.OTTM_MAP_CONFIG.edit ? mapStyles[1] : mapStyles[0];
   const map = new maplibregl.Map({
     container: "map",
+    antialias: true,
     style: {
       name: "base",
       version: 8,
