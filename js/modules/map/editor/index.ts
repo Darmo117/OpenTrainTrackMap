@@ -3,7 +3,7 @@ import $ from "jquery";
 import Split from "split.js";
 
 import {Dict} from "../../types";
-import {LinearFeature, MapFeature, Point, Polygon, LineString} from "./geometry";
+import {LineString, MapFeature, Point, Polygon} from "./geometry";
 
 enum EditMode {
   SELECT = "select",
@@ -61,9 +61,12 @@ class MapEditor {
     }
 
     this.#features[feature.id] = feature;
-    if (feature.geometry.type !== "Point") {
-      // Add all vertices of the polyline/polygon
-      (feature as LinearFeature).vertices.forEach(v => this.addFeature(v));
+    if (feature.geometry.type === "LineString") {
+      // Add all vertices of the linestring
+      (feature as LineString).vertices.forEach(v => this.addFeature(v));
+    } else if (feature.geometry.type === "Polygon") {
+      // Add all vertices of the polygon
+      (feature as Polygon).vertices.forEach(vs => vs.forEach(v => this.addFeature(v)));
     }
     this.#map.addSource(feature.id, {
       type: "geojson",
@@ -74,9 +77,12 @@ class MapEditor {
     this.#makeFeatureHighlightable(feature);
     if (feature.geometry.type === "Point") {
       this.#makePointDraggableWithoutSelection(feature as Point);
-    } else {
+    } else if (feature.geometry.type === "LineString") {
       // Put all points above all current features
-      (feature as LinearFeature).vertices.forEach(v => this.#moveLayer(v.id))
+      (feature as LineString).vertices.forEach(v => this.#moveLayer(v.id));
+    } else if (feature.geometry.type === "Polygon") {
+      // Put all points above all current features
+      (feature as Polygon).vertices.forEach(vs => vs.forEach(v => this.#moveLayer(v.id)));
     }
   }
 
@@ -315,10 +321,17 @@ export default function initMapEditor(map: Map) {
   const line1 = new LineString("line1", [point1, point2, point3]);
   line1.color = "#ffe46d";
   const polygon1 = new Polygon("polygon1", [
-    point3,
-    new Point("point4", new LngLat(1, 2)),
-    new Point("point5", new LngLat(2, 3)),
-    new Point("point6", new LngLat(3, 3)),
+    [
+      point3,
+      new Point("point01", new LngLat(1, 2)),
+      new Point("point02", new LngLat(2, 3)),
+      new Point("point03", new LngLat(3, 3)),
+    ],
+    [
+      new Point("point11", new LngLat(1.25, 2)),
+      new Point("point12", new LngLat(1.75, 2)),
+      new Point("point13", new LngLat(1.75, 2.25)),
+    ],
   ]);
   polygon1.color = "#f18030";
   polygon1.bgColor = "rgba(0,255,166,0.63)";
