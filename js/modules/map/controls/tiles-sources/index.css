@@ -1,17 +1,9 @@
-.maplibregl-ctrl-tiles-sources button {
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #333;
+.maplibregl-ctrl-tiles-sources ul {
+  margin: 0;
+  padding: 0.5em 1em;
+  list-style: none;
 }
 
-.maplibregl-ctrl-tiles-sources select {
-  position: absolute;
-  left: 0;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  opacity: 0;
+.maplibregl-ctrl-tiles-sources li > * {
   cursor: pointer;
 }

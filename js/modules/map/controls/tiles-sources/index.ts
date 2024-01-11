@@ -1,4 +1,4 @@
-import {IControl, Map, MapLibreEvent} from "maplibre-gl";
+import {IControl, Map, MapLibreEvent, RasterTileSource} from "maplibre-gl";
 import {RasterSourceSpecification} from "@maplibre/maplibre-gl-style-spec";
 
 import {createControlButton, createControlContainer, parseSVG} from "../helpers";
@@ -26,7 +26,9 @@ export type TilesSource = {
   /**
    * A MapLibre raster tiles source specification object.
    */
-  source: RasterSourceSpecification;
+  source: RasterSourceSpecification & {
+    id: string;
+  };
 };
 
 export type TilesSourcesControlOptions = {
@@ -47,10 +49,13 @@ export default class TilesSourcesControl implements IControl {
   #map: Map;
   readonly #options: TilesSourcesControlOptions;
   readonly #container: HTMLDivElement;
+  readonly #inputsContainer: HTMLDivElement;
 
   constructor(options: TilesSourcesControlOptions) {
     this.#options = {...options};
     this.#container = createControlContainer("maplibregl-ctrl-tiles-sources");
+    this.#inputsContainer = document.createElement("div");
+    this.#inputsContainer.style.display = "none";
   }
 
   #findTilesSourceById(id: string): TilesSource {
@@ -69,35 +74,39 @@ export default class TilesSourcesControl implements IControl {
       title: this.#options.title ?? "Backgrounds",
       icon: ICON,
     });
+    this.#container.onmouseenter = () => (this.#inputsContainer.style.display = "block");
+    this.#container.onmouseleave = () => (this.#inputsContainer.style.display = "none");
     this.#container.appendChild(button);
-    // FIXME select extends outside of button
-    const select = document.createElement("select");
-    button.appendChild(select);
+    this.#container.appendChild(this.#inputsContainer);
 
-    this.#options.sources.forEach(style => {
-      const option = document.createElement("option");
-      select.appendChild(option);
-      option.textContent = style.label;
-      option.value = style.id;
+    const inputsList = document.createElement("ul");
+    this.#inputsContainer.append(inputsList);
+
+    this.#options.sources.forEach(source => {
+      const input = document.createElement("input");
+      input.type = "radio";
+      input.name = "tiles-sources";
+      input.value = source.id;
+      input.id = source.id;
+      input.onchange = e => this.#onSelectionChange(e);
+      const label = document.createElement("label");
+      label.textContent = source.label;
+      label.htmlFor = source.id;
+      const item = document.createElement("li");
+      item.append(input, " ", label);
+      inputsList.appendChild(item);
     });
 
-    select.addEventListener("change", () => {
-      if (!this.#map) {
-        throw Error("map is undefined");
-      }
-      this.#changeTilesSource(this.#findTilesSourceById(select.value));
+    this.#map.on("load", () => {
+      // "id" property is added by buildStyle()
+      const elementId = ((this.#map.getSource("tiles") as RasterTileSource)._options as any).id;
+      (document.getElementById(elementId) as HTMLInputElement).checked = true;
     });
+  }
 
-    this.#map.on("styledata", () => {
-      if (!this.#map) {
-        throw Error("map is undefined");
-      }
-      const styleName = this.#map.getStyle().name;
-      if (!styleName) {
-        throw Error("Style must have name");
-      }
-      select.value = styleName;
-    });
+  #onSelectionChange(e: Event) {
+    const id = (e.target as HTMLInputElement).value;
+    this.#changeTilesSource(this.#findTilesSourceById(id));
   }
 
   #changeTilesSource(source: TilesSource) {

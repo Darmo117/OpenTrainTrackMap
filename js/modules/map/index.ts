@@ -21,13 +21,13 @@ declare global {
 
 export default function initMap() {
   const mapStyles = [
-    buildStyle(
+    buildTilesSource(
         window.ottm.translate("map.controls.layers.value.osm"),
         "osm",
         "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
         'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
     ),
-    buildStyle(
+    buildTilesSource(
         window.ottm.translate("map.controls.layers.value.satellite_esri"),
         "arcgis",
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
@@ -39,7 +39,7 @@ export default function initMap() {
     //     "/tile?provider=maptiler&x={x}&y={y}&z={z}",
     //     'Tiles © <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>, Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
     // ),
-    buildStyle(
+    buildTilesSource(
         window.ottm.translate("map.controls.layers.value.satellite_google"),
         "google",
         "http://www.google.com/maps/vt?lyrs=s@189&x={x}&y={y}&z={z}", // lyrs=s@189 -> satellite images
@@ -48,7 +48,7 @@ export default function initMap() {
     ),
   ];
 
-  const defaultMapStyle = mapStyles[0];
+  const defaultMapStyle = window.OTTM_MAP_CONFIG.edit ? mapStyles[1] : mapStyles[0];
   const map = new maplibregl.Map({
     container: "map",
     style: {
@@ -183,15 +183,15 @@ export default function initMap() {
    */
 
   /**
-   * Create a style object with the given data.
-   * @param name Style’s readable name.
-   * @param id Style’s internal ID.
+   * Create a tiles source object with the given data.
+   * @param name Source’s readable name.
+   * @param id Source’s internal ID.
    * @param tilesUrlPattern URL pattern to get map tiles.
    * @param attribution String to display in the bottom right of the map.
    * @param maxZoom Max zoom value.
-   * @return The style object.
+   * @return The tiles source object.
    */
-  function buildStyle(
+  function buildTilesSource(
       name: string,
       id: string,
       tilesUrlPattern: string,
@@ -202,6 +202,7 @@ export default function initMap() {
       label: name,
       id: id,
       source: {
+        id: id,
         type: "raster",
         tiles: [tilesUrlPattern],
         tileSize: 256,
