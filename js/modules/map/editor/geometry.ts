@@ -239,7 +239,9 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
   }
 
   protected updateCoords() {
-    this.geometry.coordinates = [this._vertices.map(p => p.geometry.coordinates)];
+    this.geometry.coordinates = [
+      [...this._vertices.map(p => p.geometry.coordinates), this._vertices[0].geometry.coordinates]
+    ];
   }
 
   appendVertex(vertex: Point, atStart: boolean = false) {

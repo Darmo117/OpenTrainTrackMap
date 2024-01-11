@@ -46,6 +46,7 @@ class MapEditor {
   }
 
   addFeature(feature: MapFeature) {
+    // TODO handle z-order
     if (this.#features[feature.id]) {
       return;
     }
@@ -59,14 +60,14 @@ class MapEditor {
       type: "geojson",
       data: feature,
     });
-    if (feature.geometry.type === "Polygon") {
-      // TODO add line to represent polygon’s border
-    }
     this.#addLayerForFeature(feature);
     this.#makeFeatureSelectable(feature);
     this.#makeFeatureHighlightable(feature);
     if (feature.geometry.type === "Point") {
       this.#makePointDraggableWithoutSelection(feature as Point);
+    } else {
+      // Put all points above all current features
+      (feature as LinearFeature).vertices.forEach(v => this.#map.moveLayer(v.id))
     }
   }
 
@@ -78,7 +79,7 @@ class MapEditor {
           type: "circle",
           source: feature.id,
           layout: {
-            "circle-sort-key": ["get", "priority"],
+            "circle-sort-key": ["get", "layer"],
           },
           paint: {
             "circle-radius": ["get", "radius"],
@@ -96,12 +97,12 @@ class MapEditor {
           layout: {
             "line-cap": "round",
             "line-join": "round",
-            "line-sort-key": ["get", "priority"],
+            "line-sort-key": ["get", "layer"],
           },
           paint: {
             "line-width": ["get", "width"],
             "line-color": ["get", "color"],
-            // TODO find how to display a border
+            // TODO find how to display a highlight border
           },
         });
         break;
@@ -111,11 +112,25 @@ class MapEditor {
           type: "fill",
           source: feature.id,
           layout: {
-            "fill-sort-key": ["get", "priority"],
+            "fill-sort-key": ["get", "layer"],
           },
           paint: {
             "fill-color": ["get", "bgColor"],
-            // TODO find how to display a border
+          },
+        });
+        this.#map.addLayer({
+          id: feature.id + "-contour",
+          type: "line",
+          source: feature.id,
+          layout: {
+            "line-cap": "round",
+            "line-join": "round",
+            "line-sort-key": ["get", "layer"],
+          },
+          paint: {
+            "line-width": ["get", "width"],
+            "line-color": ["get", "color"],
+            // TODO find how to display a highlight border
           },
         });
         break;
@@ -225,7 +240,7 @@ export default function initMapEditor(map: Map) {
   line1.color = "red";
   const polygon1 = new Polygon("polygon1", [point3, new Point("point4", new LngLat(1, 2)), new Point("point5", new LngLat(2, 3)), new Point("point6", new LngLat(3, 3))])
   polygon1.color = "blue";
-  polygon1.bgColor = "#000066a0";
+  polygon1.bgColor = "rgba(0,255,166,0.63)";
   map.on("load", () => {
     mapEditor.addFeature(point1);
     mapEditor.addFeature(point2);
