@@ -30,7 +30,7 @@ class MapEditor {
       if (!e.originalEvent.ctrlKey) {
         this.#map.fire("editor.selection.remove", [...this.#selectedFeatureIds]);
         this.#selectedFeatureIds.forEach(
-          id => this.#setFeatureBorderColor(this.#features[id], MapEditor.BASE_COLOR));
+            id => this.#setFeatureBorderColor(this.#features[id], MapEditor.BASE_COLOR));
         this.#selectedFeatureIds.clear();
       }
     });
@@ -77,9 +77,12 @@ class MapEditor {
           id: feature.id,
           type: "circle",
           source: feature.id,
+          layout: {
+            "circle-sort-key": ["get", "priority"],
+          },
           paint: {
-            "circle-radius": (feature as Point).radius,
-            "circle-color": feature.color,
+            "circle-radius": ["get", "radius"],
+            "circle-color": ["get", "color"],
             "circle-stroke-width": 3,
             "circle-stroke-color": MapEditor.BASE_COLOR,
           },
@@ -93,13 +96,12 @@ class MapEditor {
           layout: {
             "line-cap": "round",
             "line-join": "round",
+            "line-sort-key": ["get", "priority"],
           },
           paint: {
-            "line-width": (feature as Polyline).width,
-            "line-color": feature.color,
+            "line-width": ["get", "width"],
+            "line-color": ["get", "color"],
             // TODO find how to display a border
-            // "circle-stroke-width": 3,
-            // "circle-stroke-color": MapEditor.BASE_COLOR,
           },
         });
         break;
@@ -108,12 +110,12 @@ class MapEditor {
           id: feature.id,
           type: "fill",
           source: feature.id,
+          layout: {
+            "fill-sort-key": ["get", "priority"],
+          },
           paint: {
-            // "line-width": (feature as Polygon).width,
-            "fill-color": (feature as Polygon).bgColor,
+            "fill-color": ["get", "bgColor"],
             // TODO find how to display a border
-            // "circle-stroke-width": 3,
-            // "circle-stroke-color": MapEditor.BASE_COLOR,
           },
         });
         break;
@@ -191,7 +193,7 @@ class MapEditor {
     feature.onDrag(e);
     this.#updateFeatureData(feature);
     feature.boundFeatures.forEach(
-      f => this.#updateFeatureData(f))
+        f => this.#updateFeatureData(f))
   }
 
   #onMoveSelected(e: MapMouseEvent | MapTouchEvent) {
@@ -221,7 +223,7 @@ export default function initMapEditor(map: Map) {
   const point3 = new Point("point3", new LngLat(1, 1));
   const line1 = new Polyline("line1", [point1, point2, point3]);
   line1.color = "red";
-  const polygon1 = new Polygon("polygon1", [point3, new Point("point4", new LngLat(2, 2)), new Point("point5", new LngLat(2, 3)), new Point("point6", new LngLat(3, 3))])
+  const polygon1 = new Polygon("polygon1", [point3, new Point("point4", new LngLat(1, 2)), new Point("point5", new LngLat(2, 3)), new Point("point6", new LngLat(3, 3))])
   polygon1.color = "blue";
   polygon1.bgColor = "#000066a0";
   map.on("load", () => {

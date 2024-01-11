@@ -6,45 +6,83 @@ import {copyLngLat} from "./utils";
 
 export type Geometry = geojson.Point | geojson.LineString | geojson.Polygon;
 
-export abstract class MapFeature<T extends Geometry = Geometry> implements geojson.Feature<T> {
+export type MapFeatureProperties = {
+  color: string;
+  layer: number;
+};
+export type PointProperties = MapFeatureProperties & {
+  radius: number;
+};
+export type LinearProperties = MapFeatureProperties & {
+  width: number;
+}
+export type PolylineProperties = LinearProperties;
+export type PolygonProperties = LinearProperties & {
+  bgColor: string;
+};
+
+export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFeatureProperties = MapFeatureProperties>
+    implements geojson.Feature<G, P> {
   // Fields required by geojson.Feature
   readonly type = "Feature";
-  readonly geometry: T;
-  readonly properties: Dict = {};
+  readonly geometry: G;
+  readonly properties: P;
   readonly id: string;
-  // Custom fields
-  private color_: string = "#ffffff";
 
-  protected constructor(id: string, geometry: T) {
+  protected constructor(id: string, geometry: G, properties: Dict = {}) {
     this.id = id;
     this.geometry = geometry;
+    this.properties = Object.assign({
+      color: "#ffffff",
+      layer: 0,
+    }, properties) as P;
+    this.layer = 0;
   }
 
   get color(): string {
-    return this.color_;
+    return this.properties.color;
   }
 
   set color(color: string) {
     if (!color) {
       throw new Error("Missing color");
     }
-    this.color_ = color;
+    this.properties.color = color;
+  }
+
+  get layer(): number {
+    return this.properties.layer;
+  }
+
+  set layer(layer: number) {
+    this.properties.layer = layer;
   }
 
   abstract onDrag(e: MapMouseEvent | MapTouchEvent): void;
 }
 
-export class Point extends MapFeature<geojson.Point> {
+export class Point extends MapFeature<geojson.Point, PointProperties> {
   #lngLat: LngLat;
-  #radius: number = 4;
   #boundFeatures: Set<LinearFeature> = new Set();
 
   constructor(id: string, coords: LngLat) {
     super(id, {
       type: "Point",
       coordinates: null,
+    }, {
+      radius: 4,
     });
     this.updateCoordinates(coords);
+  }
+
+  // We need to redefined the getter as we override the setter
+  // Cf. https://stackoverflow.com/questions/28950760/override-a-setter-and-the-getter-must-also-be-overridden
+  get layer(): number {
+    return this.properties.layer;
+  }
+
+  set layer(layer: number) {
+    this.properties.layer = layer + 0.5;
   }
 
   get lngLat(): LngLat {
@@ -52,14 +90,14 @@ export class Point extends MapFeature<geojson.Point> {
   }
 
   get radius(): number {
-    return this.#radius;
+    return this.properties.radius;
   }
 
   set radius(radius: number) {
     if (radius < 1) {
       throw new Error(`Point radius is too small: ${radius}`);
     }
-    this.#radius = radius;
+    this.properties.radius = radius;
   }
 
   get boundFeatures(): LinearFeature[] {
@@ -87,30 +125,30 @@ export class Point extends MapFeature<geojson.Point> {
 
 export type LinearGeometry = geojson.LineString | geojson.Polygon;
 
-export abstract class LinearFeature<T extends LinearGeometry = LinearGeometry> extends MapFeature<T> {
-  protected drawing: boolean = false;
-  protected readonly vertices_: Point[] = [];
-  private readonly minVerticesNumber_: number;
-  private width_: number = 4;
+export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P extends LinearProperties = LinearProperties>
+    extends MapFeature<G, P> {
+  protected _drawing: boolean = false;
+  protected readonly _vertices: Point[] = [];
+  private readonly _minVerticesNumber: number;
 
-  protected constructor(id: string, geometry: T, minVerticesNumber: number) {
-    super(id, geometry);
-    this.minVerticesNumber_ = minVerticesNumber;
+  protected constructor(id: string, geometry: G, properties: Dict, minVerticesNumber: number) {
+    super(id, geometry, {width: 4, ...properties});
+    this._minVerticesNumber = minVerticesNumber;
   }
 
   get vertices() {
-    return [...this.vertices_];
+    return [...this._vertices];
   }
 
   get width(): number {
-    return this.width_;
+    return this.properties.width;
   }
 
   set width(width: number) {
     if (width < 1) {
       throw new Error(`Line width is too small: ${width}`);
     }
-    this.width_ = width;
+    this.properties.width = width;
   }
 
   protected abstract updateCoords(): void;
@@ -119,24 +157,24 @@ export abstract class LinearFeature<T extends LinearGeometry = LinearGeometry> e
   appendVertex(vertex: Point, atStart: boolean = false) {
     vertex.bindFeature(this);
     if (atStart) {
-      this.vertices_.unshift(vertex);
+      this._vertices.unshift(vertex);
     } else {
-      this.vertices_.push(vertex);
+      this._vertices.push(vertex);
     }
     this.updateCoords();
   }
 
   // TODO prevent adding the same point twice consecutively
   addVertexAt(vertex: Point, index: number) {
-    this.vertices_.splice(index, 0, vertex);
+    this._vertices.splice(index, 0, vertex);
     this.updateCoords();
   }
 
   removeVertex(vertex: Point) {
-    if (this.vertices_.length === this.minVerticesNumber_) {
+    if (this._vertices.length === this._minVerticesNumber) {
       throw new Error("Cannot remove anymore point");
     }
-    const deleted = this.vertices_.splice(this.vertices_.indexOf(vertex), 1);
+    const deleted = this._vertices.splice(this._vertices.indexOf(vertex), 1);
     deleted.forEach(v => v.unbindFeature(this));
     this.updateCoords();
   }
@@ -153,19 +191,19 @@ export enum PolylineDirection {
   BACKWARD,
 }
 
-export class Polyline extends LinearFeature<geojson.LineString> {
+export class Polyline extends LinearFeature<geojson.LineString, PolylineProperties> {
   #direction: PolylineDirection = PolylineDirection.FORWARD;
 
   constructor(id: string, vertices?: Point[]) {
     super(id, {
       type: "LineString",
       coordinates: [],
-    }, 2);
+    }, {}, 2);
     vertices?.forEach(v => this.appendVertex(v));
   }
 
   protected updateCoords() {
-    this.geometry.coordinates = this.vertices_.map(p => p.geometry.coordinates);
+    this.geometry.coordinates = this._vertices.map(p => p.geometry.coordinates);
   }
 
   get direction(): PolylineDirection {
@@ -177,7 +215,7 @@ export class Polyline extends LinearFeature<geojson.LineString> {
   }
 
   onVertexDrag(vertex: Point) {
-    const i = this.vertices_.indexOf(vertex);
+    const i = this._vertices.indexOf(vertex);
     if (i >= 0) {
       const thisCoord = this.geometry.coordinates[i];
       const vCoord = vertex.geometry.coordinates;
@@ -187,43 +225,43 @@ export class Polyline extends LinearFeature<geojson.LineString> {
   }
 }
 
-export class Polygon extends LinearFeature<geojson.Polygon> {
-  #bgColor: string = "#ffffff80";
-
+export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
   constructor(id: string, vertices?: Point[]) {
     super(id, {
       type: "Polygon",
       coordinates: [[]],
+    }, {
+      bgColor: "#ffffff80",
     }, 3);
-    this.drawing = true;
+    this._drawing = true;
     vertices?.forEach(v => this.appendVertex(v));
-    this.drawing = false;
+    this._drawing = false;
   }
 
   protected updateCoords() {
-    this.geometry.coordinates = [this.vertices_.map(p => p.geometry.coordinates)];
+    this.geometry.coordinates = [this._vertices.map(p => p.geometry.coordinates)];
   }
 
   appendVertex(vertex: Point, atStart: boolean = false) {
-    if (!this.drawing) {
+    if (!this._drawing) {
       throw new Error("Cannot append points to already drawn polygon");
     }
     super.appendVertex(vertex, atStart);
   }
 
   get bgColor(): string {
-    return this.#bgColor;
+    return this.properties.bgColor;
   }
 
   set bgColor(color: string) {
     if (!color) {
       throw new Error("Missing color");
     }
-    this.#bgColor = color;
+    this.properties.bgColor = color;
   }
 
   onVertexDrag(vertex: Point) {
-    const i = this.vertices_.indexOf(vertex);
+    const i = this._vertices.indexOf(vertex);
     if (i >= 0) {
       const thisCoord = this.geometry.coordinates[0][i];
       const vCoord = vertex.geometry.coordinates;
