@@ -1,11 +1,10 @@
 import * as maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import {RasterSourceSpecification} from "@maplibre/maplibre-gl-style-spec";
 import $ from "jquery";
 
 import CompassControl from "./controls/compass";
 import GeocoderControl from "./controls/geocoder";
-import StylesControl, {Style} from "./controls/styles";
+import TilesSourcesControl, {TilesSource, TilesChangedEvent} from "./controls/tiles-sources";
 import OpenExternalMapControl from "./controls/open-external-map";
 import ZoomControl from "./controls/zoom";
 import initMapEditor from "./editor/index";
@@ -21,38 +20,51 @@ declare global {
 }
 
 export default function initMap() {
-  const mapStyles: maplibregl.StyleSpecification[] = [
+  const mapStyles = [
     buildStyle(
-      window.ottm.translate("map.controls.layers.value.osm"),
-      "osm",
-      "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+        window.ottm.translate("map.controls.layers.value.osm"),
+        "osm",
+        "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
     ),
     buildStyle(
-      window.ottm.translate("map.controls.layers.value.satellite_esri"),
-      "arcgis",
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      "Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
+        window.ottm.translate("map.controls.layers.value.satellite_esri"),
+        "arcgis",
+        "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+        "Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community"
     ),
+    // buildStyle(
+    //     window.ottm.translate("map.controls.layers.value.satellite_maptiler"),
+    //     "maptiler",
+    //     "/tile?provider=maptiler&x={x}&y={y}&z={z}",
+    //     'Tiles © <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>, Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+    // ),
     buildStyle(
-      window.ottm.translate("map.controls.layers.value.satellite_maptiler"),
-      "maptiler",
-      "/tile?provider=maptiler&x={x}&y={y}&z={z}",
-      'Tiles © <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>, Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
-    ),
-    buildStyle(
-      window.ottm.translate("map.controls.layers.value.satellite_google"),
-      "google",
-      "http://www.google.com/maps/vt?lyrs=s@189&x={x}&y={y}&z={z}", // lyrs=s@189 -> satellite images
-      "Tiles © Google",
-      18
+        window.ottm.translate("map.controls.layers.value.satellite_google"),
+        "google",
+        "http://www.google.com/maps/vt?lyrs=s@189&x={x}&y={y}&z={z}", // lyrs=s@189 -> satellite images
+        "Tiles © Google",
+        18
     ),
   ];
 
   const defaultMapStyle = mapStyles[0];
   const map = new maplibregl.Map({
     container: "map",
-    style: defaultMapStyle,
+    style: {
+      name: "base",
+      version: 8,
+      sources: {
+        tiles: defaultMapStyle.source,
+      },
+      layers: [
+        {
+          id: "tiles",
+          type: "raster",
+          source: "tiles",
+        }
+      ],
+    },
     center: [0, 0],
     zoom: 1
   });
@@ -83,20 +95,12 @@ export default function initMap() {
     initMapEditor(map);
   }
 
-  const styles: Style[] = [];
-  mapStyles.forEach(style => {
-    styles.push({
-      label: style.name,
-      styleId: style.layers[0].id,
-      style: style,
-    })
-  });
-  map.addControl(new StylesControl({
+  map.addControl(new TilesSourcesControl({
     title: window.ottm.translate("map.controls.layers.tooltip"),
-    styles: styles,
-    onChange: style => onStyleChanged(style.style, true),
-    compact: true,
+    sources: mapStyles,
   }), "top-left");
+  map.on("controls.styles.tiles_changed",
+      (e: TilesChangedEvent) => onTilesSourceChanged(e.source, true));
 
   map.addControl(new ZoomControl({
     zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip") + " [+]",
@@ -162,8 +166,8 @@ export default function initMap() {
   map.on("moveend", () => updateUrlHash());
   map.on("resize", () => updateUrlHash());
   map.on("load", () => {
-    patchCssClasses();
-    onStyleChanged(defaultMapStyle);
+    // patchCssClasses();
+    onTilesSourceChanged(defaultMapStyle);
     if (getPositionFromURL().found) {
       centerViewFromUrl();
     } else {
@@ -188,37 +192,27 @@ export default function initMap() {
    * @return The style object.
    */
   function buildStyle(
-    name: string,
-    id: string,
-    tilesUrlPattern: string,
-    attribution: string,
-    maxZoom: number = 19
-  ): maplibregl.StyleSpecification {
-    const type = "raster";
+      name: string,
+      id: string,
+      tilesUrlPattern: string,
+      attribution: string,
+      maxZoom: number = 19
+  ): TilesSource {
     return {
-      name: name,
-      version: 8,
-      sources: {
-        tiles: {
-          type: type,
-          tiles: [tilesUrlPattern],
-          tileSize: 256,
-          attribution: attribution,
-          maxzoom: maxZoom,
-        },
-      },
-      layers: [
-        {
-          id: id,
-          type: type,
-          source: "tiles",
-        }
-      ],
+      label: name,
+      id: id,
+      source: {
+        type: "raster",
+        tiles: [tilesUrlPattern],
+        tileSize: 256,
+        attribution: attribution,
+        maxzoom: maxZoom,
+      }
     };
   }
 
   /**
-   * Patch "maplibregl-ctrl*" classes.
+   * Patch-in "maplibregl-ctrl*" classes.
    * @see https://github.com/mapbox/mapbox-gl-draw/issues/1182#issuecomment-1659480858
    */
   function patchCssClasses() {
@@ -234,12 +228,12 @@ export default function initMap() {
   }
 
   /**
-   * Called when the map style has changed.
-   * @param style The new style.
+   * Called when the map tiles source has changed.
+   * @param source The new tiles source.
    * @param shouldUpdateUrlHash Whether to update the URL hash.
    */
-  function onStyleChanged(style: maplibregl.StyleSpecification, shouldUpdateUrlHash: boolean = false) {
-    map.setMaxZoom((style.sources.tiles as RasterSourceSpecification).maxzoom);
+  function onTilesSourceChanged(source: TilesSource, shouldUpdateUrlHash: boolean = false) {
+    map.setMaxZoom(source.source.maxzoom);
     if (shouldUpdateUrlHash) {
       updateUrlHash(); // In case the new max zoom is less than the current one
     }
@@ -261,34 +255,34 @@ export default function initMap() {
    */
   function centerViewToUserLocation() {
     navigator.permissions
-      .query({name: "geolocation"})
-      .then(result => {
-        switch (result.state) {
-          case "granted":
-          case "prompt":
-            navigator.geolocation.getCurrentPosition(
-              p => {
-                map.setZoom(13);
-                map.setCenter({lat: p.coords.latitude, lng: p.coords.longitude});
-              },
-              e => {
-                console.log(e.message);
-                updateUrlHash();
-              },
-              {
-                enableHighAccuracy: false,
-                maximumAge: 30000,
-                timeout: 20000,
-              }
-            );
-            break;
-          default:
-          case "denied":
-            console.log("User does not allow geolocation");
-            updateUrlHash();
-            break;
-        }
-      });
+        .query({name: "geolocation"})
+        .then(result => {
+          switch (result.state) {
+            case "granted":
+            case "prompt":
+              navigator.geolocation.getCurrentPosition(
+                  p => {
+                    map.setZoom(13);
+                    map.setCenter({lat: p.coords.latitude, lng: p.coords.longitude});
+                  },
+                  e => {
+                    console.log(e.message);
+                    updateUrlHash();
+                  },
+                  {
+                    enableHighAccuracy: false,
+                    maximumAge: 30000,
+                    timeout: 20000,
+                  }
+              );
+              break;
+            default:
+            case "denied":
+              console.log("User does not allow geolocation");
+              updateUrlHash();
+              break;
+          }
+        });
   }
 
   /**
@@ -299,7 +293,7 @@ export default function initMap() {
    */
   function getPositionFromURL(): { pos: [number, number, number], found: boolean } {
     const match = /^#map=(\d+\.?\d*)\/(-?\d+\.?\d*)\/(-?\d+\.?\d*)$/
-      .exec(window.location.hash);
+        .exec(window.location.hash);
     if (match) {
       const minZoom = map.getMinZoom();
       const maxZoom = map.getMaxZoom();

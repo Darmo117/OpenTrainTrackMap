@@ -700,7 +700,7 @@
       "map": {
         "controls": {
           "layers": {
-            "tooltip": "Maptipoj",
+            "tooltip": "Mapfonoj",
             "value": {
               "osm": "Mapo",
               "satellite_maptiler": "Satelita (MapTiler)",

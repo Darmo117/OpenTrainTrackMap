@@ -693,7 +693,7 @@
       "map": {
         "controls": {
           "layers": {
-            "tooltip": "Layers",
+            "tooltip": "Map Backgrounds",
             "value": {
               "osm": "Map",
               "satellite_esri": "Satellite (Esri)",

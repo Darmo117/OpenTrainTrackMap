@@ -43,6 +43,13 @@ class MapEditor {
       }
     });
     this.#map.on("mouseup", () => this.#onUp());
+
+    this.#map.on("controls.styles.tiles_changed", () => {
+      if (this.#map.getLayersOrder().length) {
+        // Put tiles layer beneath every other feature (i.e. the lowest one)
+        this.#map.moveLayer("tiles", this.#map.getLayersOrder()[0]);
+      }
+    });
   }
 
   addFeature(feature: MapFeature) {
@@ -118,8 +125,9 @@ class MapEditor {
             "fill-color": ["get", "bgColor"],
           },
         });
+        const contourId = feature.id + "-contour";
         this.#map.addLayer({
-          id: feature.id + "-contour",
+          id: contourId,
           type: "line",
           source: feature.id,
           layout: {
@@ -142,6 +150,7 @@ class MapEditor {
     this.#map.removeLayer(featureId);
     this.#map.removeSource(featureId);
     delete this.#features[featureId];
+    this.#selectedFeatureIds.delete(featureId);
   }
 
   #setFeatureBorderColor(feature: MapFeature, color: string) {
