@@ -66,7 +66,7 @@ export default function initMap() {
       ],
     },
     center: [0, 0],
-    zoom: 1
+    zoom: 1,
   });
 
   /*

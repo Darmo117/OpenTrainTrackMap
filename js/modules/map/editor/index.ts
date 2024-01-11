@@ -247,7 +247,12 @@ export default function initMapEditor(map: Map) {
   const point3 = new Point("point3", new LngLat(1, 1));
   const line1 = new Polyline("line1", [point1, point2, point3]);
   line1.color = "red";
-  const polygon1 = new Polygon("polygon1", [point3, new Point("point4", new LngLat(1, 2)), new Point("point5", new LngLat(2, 3)), new Point("point6", new LngLat(3, 3))])
+  const polygon1 = new Polygon("polygon1", [
+    point3,
+    new Point("point4", new LngLat(1, 2)),
+    new Point("point5", new LngLat(2, 3)),
+    new Point("point6", new LngLat(3, 3)),
+  ]);
   polygon1.color = "blue";
   polygon1.bgColor = "rgba(0,255,166,0.63)";
   map.on("load", () => {
