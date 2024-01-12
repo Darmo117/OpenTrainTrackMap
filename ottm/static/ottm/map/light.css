@@ -2,14 +2,6 @@
  * Editor panel
  */
 
-#editor-panel {
-  background-color: #cbcbcb;
-}
-
-#editor-panel-title {
-  background-color: #dcdcdc;
-}
-
 .gutter {
   background-color: #eee;
 }

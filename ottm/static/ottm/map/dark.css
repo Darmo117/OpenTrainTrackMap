@@ -2,23 +2,17 @@
  * Editor panel
  */
 
-/* TODO find darker color */
-
-#editor-panel {
-  background-color: #cbcbcb;
-}
-
-#editor-panel-title {
-  background-color: #dcdcdc;
-}
-
 .gutter {
-  background-color: #eee;
+  background-color: #555;
 }
 
 /*
  * Map controls
  */
+
+.maplibregl-ctrl-attrib-inner {
+  color: rgb(33, 37, 41); /* Light-mode color */
+}
 
 .maplibregl-ctrl-group {
   background-color: #2b2a33 !important;

@@ -5,6 +5,7 @@ import Split from "split.js";
 
 import {Dict} from "../../types";
 import {LineString, MapFeature, Point, Polygon} from "./geometry";
+import {FeatureHoverEvent, FeatureSelectionEvent} from "./events";
 
 enum EditMode {
   SELECT = "select",
@@ -12,6 +13,33 @@ enum EditMode {
   DRAW_POINT = "draw_point",
   DRAW_POLYLINE = "draw_polyline",
   DRAW_POLYGON = "draw_polygon",
+}
+
+class EditorPanel {
+  readonly #$sidePanel: JQuery;
+  readonly #$featureType: JQuery;
+  readonly #selectedFeatures: Set<MapFeature> = new Set;
+
+  constructor(map: Map) {
+    this.#$sidePanel = $("#editor-panel").show().addClass("split");
+    this.#$sidePanel.append(this.#$featureType = $('<h1 id="feature-type"></h1>'));
+    map.on(FeatureSelectionEvent.TYPE, (e: FeatureSelectionEvent) => {
+      this.#selectedFeatures.clear();
+      e.features.forEach(f => this.#selectedFeatures.add(f));
+      // TEMP
+      this.#$featureType.text(e.features.map(f => f.id).join(", "));
+    });
+    map.on(FeatureHoverEvent.TYPE, (e: FeatureHoverEvent) => {
+      if (!this.#selectedFeatures.size) {
+        // TEMP
+        this.#$featureType.text(e.feature?.id ?? "");
+      }
+    });
+  }
+
+  getContainer(): HTMLElement {
+    return this.#$sidePanel[0];
+  }
 }
 
 class MapEditor {
@@ -35,6 +63,7 @@ class MapEditor {
 
   readonly #map: Map;
   readonly #$canvas: JQuery;
+  readonly #sidePanel: EditorPanel;
   readonly #features: Dict<MapFeature> = {};
   readonly #selectedFeatures: Set<MapFeature> = new Set();
   #hoveredFeature: MapFeature;
@@ -48,7 +77,10 @@ class MapEditor {
   constructor(map: Map) {
     this.#map = map;
     this.#$canvas = $(this.#map.getCanvasContainer());
+    console.log(this.#$canvas);
+    this.#sidePanel = new EditorPanel(this.#map);
 
+    // Setup map callbacks
     this.#map.on("click", e => this.#onClick(e));
     this.#map.on("mousemove", e => this.#onMouseMouve(e));
     this.#map.on("touchmove", e => {
@@ -76,6 +108,15 @@ class MapEditor {
         // Put tiles layer beneath every other feature (i.e. the lowest one)
         this.#map.moveLayer("tiles", this.#map.getLayersOrder()[0]);
       }
+    });
+
+    // Setup splitter
+    const parent = this.#$canvas.parent();
+    parent.addClass("split");
+    Split([this.#sidePanel.getContainer(), parent[0]], {
+      sizes: [20, 80],
+      minSize: [0, 100],
+      gutterSize: 5,
     });
   }
 
@@ -337,13 +378,13 @@ class MapEditor {
       if (!this.#draggedPoint && !this.#selectedFeatures.has(this.#hoveredFeature)) {
         this.#setFeatureBorderColor(hoveredFeature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
       }
-      this.#map.fire("editor.feature.hovered", {feature: this.#hoveredFeature});
+      this.#map.fire(new FeatureHoverEvent(this.#hoveredFeature));
     } else {
       if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
         this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
       }
       this.#hoveredFeature = null;
-      this.#map.fire("editor.feature.hovered", {feature: null});
+      this.#map.fire(new FeatureHoverEvent());
     }
 
     if (!this.#draggedPoint) {
@@ -411,7 +452,7 @@ class MapEditor {
       this.#selectedFeatures.add(this.#hoveredFeature);
       this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
     }
-    this.#map.fire("editor.selection.update", {features: [...this.#selectedFeatures]});
+    this.#map.fire(new FeatureSelectionEvent([...this.#selectedFeatures]));
   }
 
   /**
@@ -452,14 +493,5 @@ export default function initMapEditor(map: Map) {
     mapEditor.addFeature(point2);
     mapEditor.addFeature(line1);
     mapEditor.addFeature(polygon1);
-  });
-
-  // Setup side panel
-  $("#editor-panel").css({display: "block"}).addClass("split");
-  $("#map").addClass("split");
-  Split(["#editor-panel", "#map"], {
-    sizes: [20, 80],
-    minSize: [0, 100],
-    gutterSize: 5,
   });
 }
