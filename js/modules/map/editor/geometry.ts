@@ -58,7 +58,7 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
     this.properties.layer = layer;
   }
 
-  abstract onDrag(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void;
+  abstract onDrag(pos: mgl.LngLat): void;
 }
 
 export class Point extends MapFeature<geojson.Point, PointProperties> {
@@ -72,7 +72,7 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
     }, {
       radius: 4,
     });
-    this.updateCoordinates(coords);
+    this.#updateGeometry(coords);
   }
 
   // We need to redefined the getter as we override the setter
@@ -104,9 +104,11 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
     return [...this.#boundFeatures];
   }
 
-  updateCoordinates(lngLat: mgl.LngLat) {
+  #updateGeometry(lngLat: mgl.LngLat) {
     this.#lngLat = utils.copyLngLat(lngLat);
     this.geometry.coordinates = lngLat.toArray();
+    const {lng, lat} = lngLat;
+    this.geometry.bbox = [lng, lat, lng, lat];
   }
 
   bindFeature(feature: LinearFeature) {
@@ -117,9 +119,9 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
     this.#boundFeatures.delete(feature);
   }
 
-  onDrag(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
-    this.updateCoordinates(e.lngLat);
-    this.#boundFeatures.forEach(f => f.onVertexDrag(this));
+  onDrag(pos: mgl.LngLat) {
+    this.#updateGeometry(pos);
+    this.#boundFeatures.forEach(f => f.onVertexDrag());
   }
 }
 
@@ -132,7 +134,11 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
     super(id, geometry, properties);
   }
 
-  abstract onVertexDrag(vertex: Point): void;
+  abstract onVertexDrag(): void;
+
+  abstract replaceVertex(newVertex: Point, oldVertex: Point): void;
+
+  abstract insertVertex(vertex: Point, paths: [string, string]): void;
 }
 
 export enum PolylineDirection {
@@ -182,10 +188,6 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     this.#direction = d ?? PolylineDirection.FORWARD;
   }
 
-  protected updateCoords() {
-    this.geometry.coordinates = this.#vertices.map(p => p.geometry.coordinates);
-  }
-
   // TODO prevent adding the same point twice consecutively
   appendVertex(vertex: Point, atStart: boolean = false) {
     vertex.bindFeature(this);
@@ -194,14 +196,14 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     } else {
       this.#vertices.push(vertex);
     }
-    this.updateCoords();
+    this.#updateGeometry();
   }
 
   // TODO prevent adding the same point twice consecutively
   addVertexAt(vertex: Point, index: number) {
     vertex.bindFeature(this);
     this.#vertices.splice(index, 0, vertex);
-    this.updateCoords();
+    this.#updateGeometry();
   }
 
   removeVertex(vertex: Point) {
@@ -211,21 +213,37 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     // FIXME vertex may appear several times
     const deleted = this.#vertices.splice(this.#vertices.indexOf(vertex), 1);
     deleted.forEach(v => v.unbindFeature(this));
-    this.updateCoords();
+    this.#updateGeometry();
   }
 
-  onVertexDrag(vertex: Point) {
-    const i = this.#vertices.indexOf(vertex);
-    if (i >= 0) {
-      const thisCoord = this.geometry.coordinates[i];
-      const vCoord = vertex.geometry.coordinates;
-      thisCoord[0] = vCoord[0];
-      thisCoord[1] = vCoord[1];
-    }
+  onVertexDrag() {
+    this.#updateGeometry();
   }
 
-  onDrag(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
+  onDrag(pos: mgl.LngLat) {
     // TODO
+  }
+
+  insertVertex(vertex: Point, paths: [string, string]): void {
+    // TODO
+  }
+
+  replaceVertex(newVertex: Point, oldVertex: Point): void {
+    // TODO
+  }
+
+  #updateGeometry() {
+    this.geometry.coordinates = [];
+    let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
+    for (const vertex of this.#vertices) {
+      const {lng, lat} = vertex.lngLat;
+      this.geometry.coordinates.push([lng, lat]);
+      west = Math.min(lng, west);
+      south = Math.min(lat, south);
+      east = Math.max(lng, east);
+      north = Math.max(lat, north);
+    }
+    this.geometry.bbox = [west, south, east, north];
   }
 }
 
@@ -275,14 +293,6 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     this.properties.width = width;
   }
 
-  protected updateCoords() {
-    const toArray = (vertices: Point[]) => [
-      ...vertices.map(v => v.geometry.coordinates),
-      vertices[0].geometry.coordinates
-    ];
-    this.geometry.coordinates = [...this.#vertices.map(vs => toArray(vs))];
-  }
-
   // TODO prevent adding the same point twice consecutively
   appendVertex(vertex: Point, lineIndex: number) {
     if (!this.#drawing) {
@@ -296,14 +306,14 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
     vertex.bindFeature(this);
     this.#vertices[lineIndex].push(vertex);
-    this.updateCoords();
+    this.#updateGeometry();
   }
 
   // TODO prevent adding the same point twice consecutively
   addVertexAt(vertex: Point, index: number, lineIndex: number) {
     vertex.bindFeature(this);
     this.#vertices[lineIndex].splice(index, 0, vertex);
-    this.updateCoords();
+    this.#updateGeometry();
   }
 
   removeVertex(vertex: Point) {
@@ -322,23 +332,42 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
       const deleted = line.splice(line.indexOf(vertex), 1);
       deleted.forEach(v => v.unbindFeature(this));
     });
-    this.updateCoords();
+    this.#updateGeometry();
   }
 
-  onVertexDrag(vertex: Point) {
-    for (let lineI = 0; lineI < this.#vertices.length; lineI++) {
-      const vertexI = this.#vertices[lineI].indexOf(vertex);
-      if (vertexI >= 0) {
-        const thisCoord = this.geometry.coordinates[lineI][vertexI];
-        const vCoord = vertex.geometry.coordinates;
-        thisCoord[0] = vCoord[0];
-        thisCoord[1] = vCoord[1];
-        break;
-      }
-    }
+  onVertexDrag() {
+    this.#updateGeometry();
   }
 
-  onDrag(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
+  onDrag(pos: mgl.LngLat) {
     // TODO
+  }
+
+  replaceVertex(newVertex: Point, oldVertex: Point): void {
+    // TODO
+  }
+
+  insertVertex(vertex: Point, paths: [string, string]): void {
+    // TODO
+  }
+
+  #updateGeometry() {
+    this.geometry.coordinates = [];
+    let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
+    for (const ring of this.#vertices) {
+      const points: [number, number][] = [];
+      for (const vertex of ring) {
+        const {lng, lat} = vertex.lngLat;
+        points.push([lng, lat]);
+        west = Math.min(lng, west);
+        south = Math.min(lat, south);
+        east = Math.max(lng, east);
+        north = Math.max(lat, north);
+      }
+      // Add first point at the end as GeoJSON requires
+      points.push(ring[0].lngLat.toArray());
+      this.geometry.coordinates.push(points);
+    }
+    this.geometry.bbox = [west, south, east, north];
   }
 }

@@ -48,6 +48,23 @@ class EditorPanel {
   }
 }
 
+type SnapResult = SnapPoint | SnapVertex | SnapSegment;
+type SnapPoint = {
+  type: "point";
+  point: geom.Point;
+};
+type SnapVertex = {
+  type: "vertex";
+  vertex: geom.Point;
+  feature: geom.LinearFeature;
+};
+type SnapSegment = {
+  type: "segment";
+  feature: geom.LinearFeature;
+  paths: [string, string];
+  lngLat: mgl.LngLat;
+};
+
 class MapEditor {
   static readonly HIGHLIGHT_BASE_COLOR: string = "#00000000";
   static readonly HIGHLIGHT_SELECTED_COLOR: string = "#3bb2d0d0";
@@ -74,6 +91,7 @@ class MapEditor {
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();
   #hoveredFeature: geom.MapFeature;
   #draggedPoint: geom.Point = null;
+  #snapResult: SnapResult | null;
   #editMode: EditMode = EditMode.SELECT;
 
   /**
@@ -411,7 +429,28 @@ class MapEditor {
    */
   #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     this.#setCanvasCursor("draw");
-    this.#draggedPoint.onDrag(e);
+    this.#snapResult = this.#trySnapPoint(e.lngLat);
+    if (this.#snapResult) {
+      if (this.#snapResult.type === "point") {
+        const {point} = this.#snapResult;
+        // Move dragged point to the snap position
+        this.#draggedPoint.onDrag(point.lngLat);
+        // TODO show "point" in side panel and highlight it
+      } else if (this.#snapResult.type === "vertex") {
+        const {vertex} = this.#snapResult;
+        // Move dragged point to the snap position
+        this.#draggedPoint.onDrag(vertex.lngLat);
+        // TODO show "vertex" in side panel and highlight it
+      } else { // segment
+        const {feature, paths, lngLat} = this.#snapResult;
+        const [path1, path2] = paths;
+        // Move dragged point to the snap position
+        this.#draggedPoint.onDrag(lngLat);
+        // TODO insert "#draggedPoint" between points at "path1" and "path2" of "feature"
+      }
+    } else {
+      this.#draggedPoint.onDrag(e.lngLat);
+    }
     this.#updateFeatureData(this.#draggedPoint);
     this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
   }
@@ -422,7 +461,7 @@ class MapEditor {
   #onDragSelectedFeatures(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     this.#setCanvasCursor("grabbing");
     this.#selectedFeatures.forEach(feature => {
-      feature.onDrag(e);
+      feature.onDrag(e.lngLat);
       this.#updateFeatureData(feature);
     });
   }
@@ -441,6 +480,20 @@ class MapEditor {
    * Called when the mouse is released on the map.
    */
   #onMouseUp() {
+    if (this.#snapResult) {
+      if (this.#snapResult.type === "point") {
+        const {point} = this.#snapResult;
+        // TODO replace "point" by "#draggedPoint"
+      } else if (this.#snapResult.type === "vertex") {
+        const {vertex, feature} = this.#snapResult;
+        feature.replaceVertex(this.#draggedPoint, vertex);
+      } else { // segment
+        const {feature, paths} = this.#snapResult;
+        feature.insertVertex(this.#draggedPoint, paths);
+      }
+      this.#updateFeatureData(this.#draggedPoint);
+      this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
+    }
     this.#draggedPoint = null;
   }
 
@@ -466,6 +519,16 @@ class MapEditor {
    */
   #updateFeatureData(feature: geom.MapFeature) {
     (this.#map.getSource(feature.id) as mgl.GeoJSONSource).setData(feature);
+  }
+
+  /**
+   * Try to snap the given position to a nearby feature.
+   * @param pos The position to try to snap.
+   * @returns The snap position if one was found, the argument otherwise.
+   */
+  #trySnapPoint(pos: mgl.LngLat): SnapResult | null {
+    // TODO
+    return null;
   }
 }
 
