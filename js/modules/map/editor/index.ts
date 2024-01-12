@@ -113,9 +113,9 @@ class MapEditor {
   }
 
   #onMouseDown(e: MapMouseEvent | MapTouchEvent) {
-    if (this.#hoveredFeature && this.#hoveredFeature.geometry.type === "Point") {
+    if (this.#hoveredFeature && this.#hoveredFeature instanceof Point) {
       e.preventDefault();
-      this.#draggedPoint = this.#hoveredFeature as Point;
+      this.#draggedPoint = this.#hoveredFeature;
     }
   }
 
@@ -131,24 +131,24 @@ class MapEditor {
     const featureIds = new Set(this.#map.queryRenderedFeatures(mousePos)
         .map(f => f.source));
     const layersOrder = this.#map.getLayersOrder();
-    let priorityIndex = Infinity;
-    let priorityFeature: MapFeature = null;
+    let selectedIndex = Infinity;
+    let selectedFeature: MapFeature = null;
     for (const featureId of featureIds) {
       const currentIndex = layersOrder.indexOf(featureId);
       if (currentIndex === -1) {
         continue;
       }
       const feature = this.#features[featureId];
-      const currentIsPoint = feature.geometry.type === "Point";
-      const lowestIsNotPoint = !priorityFeature || priorityFeature.geometry.type !== "Point";
-      if (!priorityFeature
-          || currentIsPoint && (lowestIsNotPoint || currentIndex > priorityIndex)
-          || !currentIsPoint && lowestIsNotPoint && currentIndex < priorityIndex) {
-        priorityIndex = currentIndex;
-        priorityFeature = feature;
+      const currentIsPoint = feature instanceof Point;
+      const selectedIsNotPoint = !(selectedFeature instanceof Point);
+      if (!selectedFeature
+          || currentIsPoint && (selectedIsNotPoint || currentIndex > selectedIndex)
+          || !currentIsPoint && selectedIsNotPoint && currentIndex < selectedIndex) {
+        selectedIndex = currentIndex;
+        selectedFeature = feature;
       }
     }
-    return priorityFeature;
+    return selectedFeature;
   }
 
   addFeature(feature: MapFeature) {
@@ -158,24 +158,22 @@ class MapEditor {
     }
 
     this.#features[feature.id] = feature;
-    if (feature.geometry.type === "LineString") {
-      // Add all vertices of the linestring
-      (feature as LineString).vertices.forEach(v => this.addFeature(v));
-    } else if (feature.geometry.type === "Polygon") {
-      // Add all vertices of the polygon
-      (feature as Polygon).vertices.forEach(vs => vs.forEach(v => this.addFeature(v)));
+    // Add all vertices
+    if (feature instanceof LineString) {
+      feature.vertices.forEach(v => this.addFeature(v));
+    } else if (feature instanceof Polygon) {
+      feature.vertices.forEach(vs => vs.forEach(v => this.addFeature(v)));
     }
     this.#map.addSource(feature.id, {
       type: "geojson",
       data: feature,
     });
     this.#addLayersForFeature(feature);
-    if (feature.geometry.type === "LineString") {
-      // Put all points above all current features
-      (feature as LineString).vertices.forEach(v => this.#moveLayer(v.id));
-    } else if (feature.geometry.type === "Polygon") {
-      // Put all points above all current features
-      (feature as Polygon).vertices.forEach(vs => vs.forEach(v => this.#moveLayer(v.id)));
+    // Put all points above all current features
+    if (feature instanceof LineString) {
+      feature.vertices.forEach(v => this.#moveLayer(v.id));
+    } else if (feature instanceof Polygon) {
+      feature.vertices.forEach(vs => vs.forEach(v => this.#moveLayer(v.id)));
     }
   }
 
@@ -190,116 +188,115 @@ class MapEditor {
 
   #getLayerIdStack(featureId: string): string[] {
     const feature = this.#features[featureId];
-    switch (feature.geometry.type) {
-      case "Point":
-        return [feature.id + "-highlight", feature.id];
-      case "LineString":
-        return [feature.id + "-highlight", feature.id + "-border", feature.id];
-      case "Polygon":
-        return [feature.id, feature.id + "-highlight", feature.id + "-border"];
+    if (feature instanceof Point) {
+      return [feature.id + "-highlight", feature.id];
+    } else if (feature instanceof LineString) {
+      return [feature.id + "-highlight", feature.id + "-border", feature.id];
+    } else if (feature instanceof Polygon) {
+      return [feature.id, feature.id + "-highlight", feature.id + "-border"];
+    } else {
+      throw TypeError(`Unexpected type: ${feature}`);
     }
   }
 
   #addLayersForFeature(feature: MapFeature) {
-    switch (feature.geometry.type) {
-      case "Point":
-        this.#map.addLayer({
-          id: feature.id + "-highlight",
-          type: "circle",
-          source: feature.id,
-          paint: {
-            "circle-radius": ["+", ["get", "radius"], 4],
-            "circle-color": MapEditor.HIGHLIGHT_BASE_COLOR,
-          },
-        });
-        this.#map.addLayer({
-          id: feature.id,
-          type: "circle",
-          source: feature.id,
-          paint: {
-            "circle-radius": ["get", "radius"],
-            "circle-color": ["get", "color"],
-            "circle-stroke-width": 1,
-            "circle-stroke-color": MapEditor.BORDER_COLOR,
-          },
-        });
-        break;
-      case "LineString":
-        this.#map.addLayer({
-          id: feature.id + "-highlight",
-          type: "line",
-          source: feature.id,
-          layout: {
-            "line-cap": "round",
-            "line-join": "round",
-          },
-          paint: {
-            "line-width": ["+", ["get", "width"], 8],
-            "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
-          },
-        });
-        this.#map.addLayer({
-          id: feature.id + "-border",
-          type: "line",
-          source: feature.id,
-          layout: {
-            "line-cap": "round",
-            "line-join": "round",
-          },
-          paint: {
-            "line-width": ["+", ["get", "width"], 2],
-            "line-color": MapEditor.BORDER_COLOR,
-          },
-        });
-        this.#map.addLayer({
-          id: feature.id,
-          type: "line",
-          source: feature.id,
-          layout: {
-            "line-cap": "round",
-            "line-join": "round",
-          },
-          paint: {
-            "line-width": ["get", "width"],
-            "line-color": ["get", "color"],
-          },
-        });
-        break;
-      case "Polygon":
-        this.#map.addLayer({
-          id: feature.id,
-          type: "fill",
-          source: feature.id,
-          paint: {
-            "fill-color": ["concat", ["get", "color"], "30"], // Add transparency
-          },
-        });
-        this.#map.addLayer({
-          id: feature.id + "-highlight",
-          type: "line",
-          source: feature.id,
-          layout: {
-            "line-cap": "round",
-            "line-join": "round",
-          },
-          paint: {
-            "line-width": 8,
-            "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
-          },
-        });
-        this.#map.addLayer({
-          id: feature.id + "-border",
-          type: "line",
-          source: feature.id,
-          layout: {
-            "line-cap": "round",
-            "line-join": "round",
-          },
-          paint: {
-            "line-color": ["get", "color"],
-          },
-        });
-        break;
+    if (feature instanceof Point) {
+      this.#map.addLayer({
+        id: feature.id + "-highlight",
+        type: "circle",
+        source: feature.id,
+        paint: {
+          "circle-radius": ["+", ["get", "radius"], 4],
+          "circle-color": MapEditor.HIGHLIGHT_BASE_COLOR,
+        },
+      });
+      this.#map.addLayer({
+        id: feature.id,
+        type: "circle",
+        source: feature.id,
+        paint: {
+          "circle-radius": ["get", "radius"],
+          "circle-color": ["get", "color"],
+          "circle-stroke-width": 1,
+          "circle-stroke-color": MapEditor.BORDER_COLOR,
+        },
+      });
+    } else if (feature instanceof LineString) {
+      this.#map.addLayer({
+        id: feature.id + "-highlight",
+        type: "line",
+        source: feature.id,
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-width": ["+", ["get", "width"], 8],
+          "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
+        },
+      });
+      this.#map.addLayer({
+        id: feature.id + "-border",
+        type: "line",
+        source: feature.id,
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-width": ["+", ["get", "width"], 2],
+          "line-color": MapEditor.BORDER_COLOR,
+        },
+      });
+      this.#map.addLayer({
+        id: feature.id,
+        type: "line",
+        source: feature.id,
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-width": ["get", "width"],
+          "line-color": ["get", "color"],
+        },
+      });
+    } else if (feature instanceof Polygon) {
+      this.#map.addLayer({
+        id: feature.id,
+        type: "fill",
+        source: feature.id,
+        paint: {
+          "fill-color": ["concat", ["get", "color"], "30"], // Add transparency
+        },
+      });
+      this.#map.addLayer({
+        id: feature.id + "-highlight",
+        type: "line",
+        source: feature.id,
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-width": 8,
+          "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
+        },
+      });
+      this.#map.addLayer({
+        id: feature.id + "-border",
+        type: "line",
+        source: feature.id,
+        layout: {
+          "line-cap": "round",
+          "line-join": "round",
+        },
+        paint: {
+          "line-color": ["get", "color"],
+        },
+      });
+    } else {
+      throw TypeError(`Unexpected type: ${feature}`);
     }
   }
 
@@ -315,14 +312,10 @@ class MapEditor {
   }
 
   #setFeatureBorderColor(feature: MapFeature, color: string) {
-    switch (feature.geometry.type) {
-      case "Point":
-        this.#map.setPaintProperty(feature.id + "-highlight", "circle-color", color);
-        break;
-      case "LineString":
-      case "Polygon":
-        this.#map.setPaintProperty(feature.id + "-highlight", "line-color", color);
-        break;
+    if (feature instanceof Point) {
+      this.#map.setPaintProperty(feature.id + "-highlight", "circle-color", color);
+    } else {
+      this.#map.setPaintProperty(feature.id + "-highlight", "line-color", color);
     }
   }
 
@@ -333,10 +326,9 @@ class MapEditor {
 
   #onMovePoint(e: MapMouseEvent | MapTouchEvent) {
     this.#setCanvasCursor("cursor-draw");
-    const feature = this.#draggedPoint;
-    feature.onDrag(e);
-    this.#updateFeatureData(feature);
-    feature.boundFeatures.forEach(f => this.#updateFeatureData(f));
+    this.#draggedPoint.onDrag(e);
+    this.#updateFeatureData(this.#draggedPoint);
+    this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
   }
 
   #onMoveSelected(e: MapMouseEvent | MapTouchEvent) {
