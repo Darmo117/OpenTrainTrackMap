@@ -317,17 +317,18 @@ export default function initMapEditor(map: Map) {
   const point1 = new Point("point1", new LngLat(0, 0));
   const point2 = new Point("point2", new LngLat(1, 0));
   const point3 = new Point("point3", new LngLat(1, 1));
-  const line1 = new LineString("line1", [point1, point2, point3]);
+  const point4 = new Point("point4", new LngLat(1.25, 2));
+  const line1 = new LineString("line1", [point1, point2, point3, point4]);
   line1.color = "#ffe46d";
   const polygon1 = new Polygon("polygon1", [
     [
       point3,
-      new Point("point01", new LngLat(1, 2)),
-      new Point("point02", new LngLat(2, 3)),
-      new Point("point03", new LngLat(3, 3)),
+      new Point("point02", new LngLat(1, 2)),
+      new Point("point03", new LngLat(2, 3)),
+      new Point("point04", new LngLat(3, 3)),
     ],
     [
-      new Point("point11", new LngLat(1.25, 2)),
+      point4,
       new Point("point12", new LngLat(1.75, 2)),
       new Point("point13", new LngLat(1.75, 2.25)),
     ],
