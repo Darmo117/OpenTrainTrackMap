@@ -42,52 +42,8 @@ class MapEditor {
     this.#map = map;
     this.#$canvas = $(this.#map.getCanvasContainer());
 
-    this.#map.on("click", e => {
-      if (!e.originalEvent.ctrlKey) {
-        this.#selectedFeatures.forEach(
-            feature => this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR));
-        this.#selectedFeatures.clear();
-      }
-      if (this.#hoveredFeature) {
-        this.#selectedFeatures.add(this.#hoveredFeature);
-        this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
-      }
-      this.#map.fire("editor.selection.update", {features: [...this.#selectedFeatures]});
-    });
-
-    this.#map.on("mousemove", e => {
-      const hoveredFeature: MapFeature = this.#getFeatureUnderMouse(e.point);
-      if (hoveredFeature) {
-        if (this.#hoveredFeature && this.#hoveredFeature !== hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
-          this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
-        }
-        this.#hoveredFeature = hoveredFeature;
-        if (!this.#draggedPoint && !this.#selectedFeatures.has(this.#hoveredFeature)) {
-          this.#setFeatureBorderColor(hoveredFeature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
-        }
-        this.#map.fire("editor.feature.hovered", {feature: this.#hoveredFeature});
-      } else {
-        if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
-          this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
-        }
-        this.#hoveredFeature = null;
-        this.#map.fire("editor.feature.hovered", {feature: null});
-      }
-
-      if (!this.#draggedPoint) {
-        if (this.#hoveredFeature) {
-          this.#setCanvasCursor(("cursor-" + this.#hoveredFeature.geometry.type.toLowerCase()) as any);
-        } else {
-          this.#setCanvasCursor("cursor-grab");
-        }
-        if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
-          this.#onMoveSelected(e);
-        }
-      } else {
-        this.#onMovePoint(e);
-      }
-    });
-
+    this.#map.on("click", e => this.#onMouseClick(e));
+    this.#map.on("mousemove", e => this.#onMouseMouve(e));
     this.#map.on("mousedown", e => this.#onMouseDown(e));
     this.#map.on("touchstart", e => {
       if (e.points.length !== 1) {
@@ -95,7 +51,6 @@ class MapEditor {
       }
       this.#onMouseDown(e);
     });
-
     this.#map.on("mouseup", () => this.#onMouseUp());
     this.#map.on("touchend", e => {
       if (e.points.length !== 1) {
@@ -103,20 +58,12 @@ class MapEditor {
       }
       this.#onMouseUp();
     });
-
     this.#map.on("controls.styles.tiles_changed", () => {
       if (this.#map.getLayersOrder().length) {
         // Put tiles layer beneath every other feature (i.e. the lowest one)
         this.#map.moveLayer("tiles", this.#map.getLayersOrder()[0]);
       }
     });
-  }
-
-  #onMouseDown(e: MapMouseEvent | MapTouchEvent) {
-    if (this.#hoveredFeature && this.#hoveredFeature instanceof Point) {
-      e.preventDefault();
-      this.#draggedPoint = this.#hoveredFeature;
-    }
   }
 
   /**
@@ -324,6 +271,39 @@ class MapEditor {
     this.#$canvas.removeClass(MapEditor.CURSORS.filter(s => s !== id));
   }
 
+  #onMouseMouve(e: MapMouseEvent) {
+    const hoveredFeature: MapFeature = this.#getFeatureUnderMouse(e.point);
+    if (hoveredFeature) {
+      if (this.#hoveredFeature && this.#hoveredFeature !== hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
+        this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
+      }
+      this.#hoveredFeature = hoveredFeature;
+      if (!this.#draggedPoint && !this.#selectedFeatures.has(this.#hoveredFeature)) {
+        this.#setFeatureBorderColor(hoveredFeature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
+      }
+      this.#map.fire("editor.feature.hovered", {feature: this.#hoveredFeature});
+    } else {
+      if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
+        this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
+      }
+      this.#hoveredFeature = null;
+      this.#map.fire("editor.feature.hovered", {feature: null});
+    }
+
+    if (!this.#draggedPoint) {
+      if (this.#hoveredFeature) {
+        this.#setCanvasCursor(("cursor-" + this.#hoveredFeature.geometry.type.toLowerCase()) as any);
+      } else {
+        this.#setCanvasCursor("cursor-grab");
+      }
+      if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
+        this.#onMoveSelected(e);
+      }
+    } else {
+      this.#onMovePoint(e);
+    }
+  }
+
   #onMovePoint(e: MapMouseEvent | MapTouchEvent) {
     this.#setCanvasCursor("cursor-draw");
     this.#draggedPoint.onDrag(e);
@@ -337,6 +317,26 @@ class MapEditor {
       feature.onDrag(e);
       this.#updateFeatureData(feature);
     });
+  }
+
+  #onMouseDown(e: MapMouseEvent | MapTouchEvent) {
+    if (this.#hoveredFeature && this.#hoveredFeature instanceof Point) {
+      e.preventDefault();
+      this.#draggedPoint = this.#hoveredFeature;
+    }
+  }
+
+  #onMouseClick(e: MapMouseEvent) {
+    if (!e.originalEvent.ctrlKey) {
+      this.#selectedFeatures.forEach(
+          feature => this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR));
+      this.#selectedFeatures.clear();
+    }
+    if (this.#hoveredFeature) {
+      this.#selectedFeatures.add(this.#hoveredFeature);
+      this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
+    }
+    this.#map.fire("editor.selection.update", {features: [...this.#selectedFeatures]});
   }
 
   #onMouseUp() {
