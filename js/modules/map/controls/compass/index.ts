@@ -1,8 +1,8 @@
-import {IControl, Map} from "maplibre-gl";
+import * as mgl from "maplibre-gl";
 
-import {createControlButton, createControlContainer, parseSVG} from "../helpers";
+import * as helpers from "../helpers";
 
-const ICON = parseSVG(`
+const ICON = helpers.parseSVG(`
 <svg viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
   <g fill="none" fill-rule="evenodd">
     <path d="M0 0h24v24H0z"/>
@@ -27,8 +27,8 @@ export type CompassControlOptions = {
  * A control that indicates the current bearing when the map is rotated.
  * Clicking this control will reset both the bearing and pitch to 0°.
  */
-export default class CompassControl implements IControl {
-  #map: Map;
+export default class CompassControl implements mgl.IControl {
+  #map: mgl.Map;
   readonly #options: CompassControlOptions;
   readonly #container: HTMLDivElement;
   readonly #button: HTMLButtonElement;
@@ -36,9 +36,9 @@ export default class CompassControl implements IControl {
 
   constructor(options: CompassControlOptions = {}) {
     this.#options = {...options};
-    this.#container = createControlContainer("maplibregl-ctrl-compass");
+    this.#container = helpers.createControlContainer("maplibregl-ctrl-compass");
     this.#icon = ICON;
-    this.#button = createControlButton({
+    this.#button = helpers.createControlButton({
       title: this.#options.title ?? "Compass",
       icon: ICON,
       onClick: () => this.#onControlButtonClick(),
@@ -63,7 +63,7 @@ export default class CompassControl implements IControl {
     this.#icon.style.transform = `rotate(${angle}deg)`;
   }
 
-  onAdd(map: Map): HTMLElement {
+  onAdd(map: mgl.Map): HTMLElement {
     this.#map = map;
     if (!this.#options.instant) {
       this.#container.hidden = true;

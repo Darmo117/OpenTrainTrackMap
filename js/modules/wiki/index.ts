@@ -1,4 +1,4 @@
-import {Dict} from "../types";
+import * as types from "../types";
 import initEditor from "./editor";
 
 type GadgetCode = {
@@ -54,7 +54,7 @@ export class WikiGadget {
  */
 export class WikiGadgetManager {
   /** Mapping of all successfully loaded gadgets. */
-  readonly #gadgets: Dict<WikiGadget> = {};
+  readonly #gadgets: types.Dict<WikiGadget> = {};
   /** Number of gadgets still loading. */
   #gadgetsQueueSize: number = 0;
   /** Whether all gadgets have been registered. */

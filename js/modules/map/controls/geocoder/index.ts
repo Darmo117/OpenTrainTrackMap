@@ -1,7 +1,7 @@
-import {IControl, LngLatBoundsLike, Map, Marker} from "maplibre-gl";
+import * as mgl from "maplibre-gl";
 
-import {capitalize} from "../../../utils";
-import {createControlButton, createControlContainer} from "../helpers";
+import * as utils from "../../../utils";
+import * as helpers from "../helpers";
 import "./index.css";
 
 export type GeocoderControlOptions = {
@@ -36,12 +36,12 @@ type SearchResult = {
  * @see https://wiki.openstreetmap.org/wiki/Nominatim/FAQ#Where_are_the_translations_of_features%3f
  * @see https://github.com/openstreetmap/openstreetmap-website/tree/master/config/locales
  */
-export default class GeocoderControl implements IControl {
+export default class GeocoderControl implements mgl.IControl {
   static readonly #BASE_URL: string =
-    "https://nominatim.openstreetmap.org/search?q={query}&format=jsonv2&accept-language={lang}";
+      "https://nominatim.openstreetmap.org/search?q={query}&format=jsonv2&accept-language={lang}";
 
-  #map: Map;
-  #marker: Marker;
+  #map: mgl.Map;
+  #marker: mgl.Marker;
   readonly #language: string;
   readonly #noResultsMessage: string;
   readonly #errorMessage: string;
@@ -56,7 +56,7 @@ export default class GeocoderControl implements IControl {
     this.#noResultsMessage = options.noResultsMessage ?? "No results.";
     this.#errorMessage = options.errorMessage ?? "An error occured.";
 
-    this.#container = createControlContainer("maplibregl-ctrl-geocoder");
+    this.#container = helpers.createControlContainer("maplibregl-ctrl-geocoder");
 
     this.#textField = document.createElement("input");
     this.#textField.type = "text";
@@ -75,7 +75,7 @@ export default class GeocoderControl implements IControl {
 
     const eraseIcon = document.createElement("span");
     eraseIcon.className = "mdi mdi-close";
-    this.#eraseButton = createControlButton({
+    this.#eraseButton = helpers.createControlButton({
       title: options.eraseButtonTitle ?? "Erase",
       icon: eraseIcon,
       onClick: () => this.#onErase(),
@@ -83,7 +83,7 @@ export default class GeocoderControl implements IControl {
 
     const searchIcon = document.createElement("span");
     searchIcon.className = "mdi mdi-magnify";
-    this.#searchButton = createControlButton({
+    this.#searchButton = helpers.createControlButton({
       title: options.searchButtonTitle ?? "Go",
       icon: searchIcon,
       onClick: () => this.#onInputSubmit(),
@@ -104,11 +104,11 @@ export default class GeocoderControl implements IControl {
     const query = (this.#textField.value ?? "").trim();
     if (query) {
       const url = GeocoderControl.#BASE_URL
-        .replace("{query}", encodeURIComponent(query))
-        .replace("{lang}", encodeURIComponent(this.#language));
+          .replace("{query}", encodeURIComponent(query))
+          .replace("{lang}", encodeURIComponent(this.#language));
       $.get(url)
-        .done(data => this.#onResult(data))
-        .fail(() => this.#onFailure());
+          .done(data => this.#onResult(data))
+          .fail(() => this.#onFailure());
     }
   }
 
@@ -129,17 +129,17 @@ export default class GeocoderControl implements IControl {
         // Prefix name translation algorithm from
         // https://github.com/openstreetmap/openstreetmap-website/blob/master/app/controllers/geocoder_controller.rb#L109
         let prefixName = window.ottm.translate(
-          `osm_feature_type.prefix.${category}.${type}`,
-          () => noTranslationsMark + capitalize(type.replace("_", " "))
+            `osm_feature_type.prefix.${category}.${type}`,
+            () => noTranslationsMark + utils.capitalize(type.replace("_", " "))
         );
         if (category === "boundary" && type === "administrative") {
           // Check if a better translation exists
           prefixName = window.ottm.translate(
-            `osm_feature_type.prefix.place.${result.addresstype}`,
-            () => window.ottm.translate(
-              `osm_feature_type.admin_levels.level${Math.floor((result.place_rank + 1) / 2)}`,
-              prefixName
-            )
+              `osm_feature_type.prefix.place.${result.addresstype}`,
+              () => window.ottm.translate(
+                  `osm_feature_type.admin_levels.level${Math.floor((result.place_rank + 1) / 2)}`,
+                  prefixName
+              )
           );
         }
 
@@ -157,7 +157,7 @@ export default class GeocoderControl implements IControl {
         link.textContent = result.display_name;
         link.href = "#";
         const boundingBox = result.boundingbox;
-        const bb: LngLatBoundsLike = [{
+        const bb: mgl.LngLatBoundsLike = [{
           lat: boundingBox[0],
           lng: boundingBox[2]
         }, {
@@ -188,10 +188,10 @@ export default class GeocoderControl implements IControl {
    * @param lng Result’s longitude.
    * @param boundingBox Result’s bounding box.
    */
-  #onResultClick(lat: number, lng: number, boundingBox: LngLatBoundsLike) {
+  #onResultClick(lat: number, lng: number, boundingBox: mgl.LngLatBoundsLike) {
     this.#marker?.remove();
     this.#map.fitBounds(boundingBox);
-    this.#marker = new Marker({});
+    this.#marker = new mgl.Marker({});
     this.#marker.setLngLat({lat: lat, lng: lng});
     this.#marker.addTo(this.#map);
   }
@@ -206,7 +206,7 @@ export default class GeocoderControl implements IControl {
     this.#resultsPanel.replaceChildren(); // Clear
   }
 
-  onAdd(map: Map): HTMLElement {
+  onAdd(map: mgl.Map): HTMLElement {
     this.#map = map;
     const inputContainer = document.createElement("div");
     inputContainer.className = "maplibregl-ctrl-geocoder-search-bar";

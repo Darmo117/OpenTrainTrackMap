@@ -1,8 +1,8 @@
-import {LngLat, MapMouseEvent, MapTouchEvent} from "maplibre-gl";
+import * as mgl from "maplibre-gl";
 import * as geojson from "geojson";
 
-import {Dict} from "../../types";
-import {copyLngLat} from "./utils";
+import * as types from "../../types";
+import * as utils from "./utils";
 
 export type Geometry = geojson.Point | geojson.LineString | geojson.Polygon;
 
@@ -29,7 +29,7 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
   readonly properties: P;
   readonly id: string;
 
-  protected constructor(id: string, geometry: G, properties: Dict = {}) {
+  protected constructor(id: string, geometry: G, properties: types.Dict = {}) {
     this.id = id;
     this.geometry = geometry;
     this.properties = Object.assign({
@@ -58,14 +58,14 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
     this.properties.layer = layer;
   }
 
-  abstract onDrag(e: MapMouseEvent | MapTouchEvent): void;
+  abstract onDrag(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void;
 }
 
 export class Point extends MapFeature<geojson.Point, PointProperties> {
-  #lngLat: LngLat;
+  #lngLat: mgl.LngLat;
   #boundFeatures: Set<LinearFeature> = new Set();
 
-  constructor(id: string, coords: LngLat) {
+  constructor(id: string, coords: mgl.LngLat) {
     super(id, {
       type: "Point",
       coordinates: null,
@@ -85,8 +85,8 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
     this.properties.layer = layer + 0.5;
   }
 
-  get lngLat(): LngLat {
-    return copyLngLat(this.#lngLat);
+  get lngLat(): mgl.LngLat {
+    return utils.copyLngLat(this.#lngLat);
   }
 
   get radius(): number {
@@ -104,8 +104,8 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
     return [...this.#boundFeatures];
   }
 
-  updateCoordinates(lngLat: LngLat) {
-    this.#lngLat = copyLngLat(lngLat);
+  updateCoordinates(lngLat: mgl.LngLat) {
+    this.#lngLat = utils.copyLngLat(lngLat);
     this.geometry.coordinates = lngLat.toArray();
   }
 
@@ -117,7 +117,7 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
     this.#boundFeatures.delete(feature);
   }
 
-  onDrag(e: MapMouseEvent | MapTouchEvent) {
+  onDrag(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     this.updateCoordinates(e.lngLat);
     this.#boundFeatures.forEach(f => f.onVertexDrag(this));
   }
@@ -128,7 +128,7 @@ export type LinearGeometry = geojson.LineString | geojson.Polygon;
 export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P extends LinearProperties = LinearProperties>
     extends MapFeature<G, P> {
 
-  protected constructor(id: string, geometry: G, properties: Dict) {
+  protected constructor(id: string, geometry: G, properties: types.Dict) {
     super(id, geometry, properties);
   }
 
@@ -224,7 +224,7 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     }
   }
 
-  onDrag(e: MapMouseEvent | MapTouchEvent) {
+  onDrag(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     // TODO
   }
 }
@@ -338,7 +338,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  onDrag(e: MapMouseEvent | MapTouchEvent) {
+  onDrag(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     // TODO
   }
 }

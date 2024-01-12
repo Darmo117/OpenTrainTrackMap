@@ -1,10 +1,10 @@
-import * as maplibregl from "maplibre-gl";
+import * as mgl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import $ from "jquery";
 
 import CompassControl from "./controls/compass";
 import GeocoderControl from "./controls/geocoder";
-import TilesSourcesControl, {TilesSource, TilesChangedEvent} from "./controls/tiles-sources";
+import TilesSourcesControl, * as cts from "./controls/tiles-sources";
 import OpenExternalMapControl from "./controls/open-external-map";
 import ZoomControl from "./controls/zoom";
 import initMapEditor from "./editor/index";
@@ -49,7 +49,7 @@ export default function initMap() {
   ];
 
   const defaultMapStyle = window.OTTM_MAP_CONFIG.edit ? mapStyles[1] : mapStyles[0];
-  const map = new maplibregl.Map({
+  const map = new mgl.Map({
     container: "map",
     antialias: true,
     style: {
@@ -77,11 +77,11 @@ export default function initMap() {
    * Add controls
    */
 
-  map.addControl(new maplibregl.ScaleControl({
+  map.addControl(new mgl.ScaleControl({
     maxWidth: 100,
     unit: "imperial",
   }));
-  map.addControl(new maplibregl.ScaleControl({
+  map.addControl(new mgl.ScaleControl({
     maxWidth: 100,
     unit: "metric",
   }));
@@ -104,7 +104,7 @@ export default function initMap() {
     sources: mapStyles,
   }), "top-left");
   map.on("controls.styles.tiles_changed",
-      (e: TilesChangedEvent) => onTilesSourceChanged(e.source, true));
+      (e: cts.TilesChangedEvent) => onTilesSourceChanged(e.source, true));
 
   map.addControl(new ZoomControl({
     zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip") + " [+]",
@@ -170,7 +170,6 @@ export default function initMap() {
   map.on("moveend", () => updateUrlHash());
   map.on("resize", () => updateUrlHash());
   map.on("load", () => {
-    // patchCssClasses();
     onTilesSourceChanged(defaultMapStyle);
     if (getPositionFromURL().found) {
       centerViewFromUrl();
@@ -201,7 +200,7 @@ export default function initMap() {
       tilesUrlPattern: string,
       attribution: string,
       maxZoom: number = 19
-  ): TilesSource {
+  ): cts.TilesSource {
     return {
       label: name,
       id: id,
@@ -217,27 +216,11 @@ export default function initMap() {
   }
 
   /**
-   * Patch-in "maplibregl-ctrl*" classes.
-   * @see https://github.com/mapbox/mapbox-gl-draw/issues/1182#issuecomment-1659480858
-   */
-  function patchCssClasses() {
-    const classMappings = {
-      "mapboxgl-ctrl": "maplibregl-ctrl",
-      "mapboxgl-ctrl-group": "maplibregl-ctrl-group",
-    };
-    for (const [fromClass, toClass] of Object.entries(classMappings)) {
-      $(`.${fromClass}:not(.${toClass})`).each((_, e) => {
-        $(e).addClass(toClass);
-      });
-    }
-  }
-
-  /**
    * Called when the map tiles source has changed.
    * @param source The new tiles source.
    * @param shouldUpdateUrlHash Whether to update the URL hash.
    */
-  function onTilesSourceChanged(source: TilesSource, shouldUpdateUrlHash: boolean = false) {
+  function onTilesSourceChanged(source: cts.TilesSource, shouldUpdateUrlHash: boolean = false) {
     map.setMaxZoom(source.source.maxzoom);
     if (shouldUpdateUrlHash) {
       updateUrlHash(); // In case the new max zoom is less than the current one

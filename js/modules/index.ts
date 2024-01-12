@@ -1,14 +1,14 @@
 /**
- * Base script for the each page of the site.
+ * Base script for each page of the site.
  */
 import $ from "jquery";
 import Cookies from "js-cookie";
 
-import {OTTM} from "./types";
+import * as types from "./types";
 import hookExitConfirm from "./confirm-form-exit";
 // `<IMPORTS_PLACEHOLDER>`
 
-window.ottm = new OTTM();
+window.ottm = new types.OTTM();
 
 hookSettingsDropdownBehavior();
 hookDarkModeCallback();

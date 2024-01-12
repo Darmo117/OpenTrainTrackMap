@@ -1,16 +1,15 @@
-import {IControl, Map, MapLibreEvent, RasterTileSource} from "maplibre-gl";
-import {RasterSourceSpecification} from "@maplibre/maplibre-gl-style-spec";
+import * as mgl from "maplibre-gl";
 
-import {createControlButton, createControlContainer, parseSVG} from "../helpers";
+import * as helpers from "../helpers";
 import "./index.css";
 
-const ICON = parseSVG(`
+const ICON = helpers.parseSVG(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="22" height="22" fill="currentColor">
   <path d="m24 41.5-18-14 2.5-1.85L24 37.7l15.5-12.05L42 27.5Zm0-7.6-18-14 18-14 18 14Zm0-15.05Zm0 11.25 13.1-10.2L24 9.7 10.9 19.9Z"/>
 </svg>
 `);
 
-export type TilesChangedEvent = MapLibreEvent & {
+export type TilesChangedEvent = mgl.MapLibreEvent & {
   source: TilesSource;
 };
 
@@ -26,7 +25,7 @@ export type TilesSource = {
   /**
    * A MapLibre raster tiles source specification object.
    */
-  source: RasterSourceSpecification & {
+  source: mgl.RasterSourceSpecification & {
     id: string;
   };
 };
@@ -45,15 +44,15 @@ export type TilesSourcesControlOptions = {
 /**
  * A control that allows switching between multiple tiles sources.
  */
-export default class TilesSourcesControl implements IControl {
-  #map: Map;
+export default class TilesSourcesControl implements mgl.IControl {
+  #map: mgl.Map;
   readonly #options: TilesSourcesControlOptions;
   readonly #container: HTMLDivElement;
   readonly #inputsContainer: HTMLDivElement;
 
   constructor(options: TilesSourcesControlOptions) {
     this.#options = {...options};
-    this.#container = createControlContainer("maplibregl-ctrl-tiles-sources");
+    this.#container = helpers.createControlContainer("maplibregl-ctrl-tiles-sources");
     this.#inputsContainer = document.createElement("div");
     this.#inputsContainer.style.display = "none";
   }
@@ -70,7 +69,7 @@ export default class TilesSourcesControl implements IControl {
     if (!this.#map) {
       throw Error("map is undefined");
     }
-    const button = createControlButton({
+    const button = helpers.createControlButton({
       title: this.#options.title ?? "Backgrounds",
       icon: ICON,
     });
@@ -99,7 +98,7 @@ export default class TilesSourcesControl implements IControl {
 
     this.#map.on("load", () => {
       // "id" property is added by buildStyle()
-      const elementId = ((this.#map.getSource("tiles") as RasterTileSource)._options as any).id;
+      const elementId = ((this.#map.getSource("tiles") as mgl.RasterTileSource)._options as any).id;
       (document.getElementById(elementId) as HTMLInputElement).checked = true;
     });
   }
@@ -126,7 +125,7 @@ export default class TilesSourcesControl implements IControl {
     });
   }
 
-  onAdd(map: Map): HTMLElement {
+  onAdd(map: mgl.Map): HTMLElement {
     this.#map = map;
     this.#setup();
     return this.#container;

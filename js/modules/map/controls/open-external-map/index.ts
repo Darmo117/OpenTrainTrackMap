@@ -1,6 +1,6 @@
-import {IControl, Map} from "maplibre-gl";
+import * as mgl from "maplibre-gl";
 
-import {createControlButton, createControlContainer} from "../helpers";
+import * as helpers from "../helpers";
 import "./index.css";
 
 /**
@@ -21,20 +21,20 @@ export type OpenExternalMapControlOptions = {
 /**
  * A control that opens the map’s current location in the specified external map.
  */
-export default class OpenExternalMapControl implements IControl {
-  #map: Map;
+export default class OpenExternalMapControl implements mgl.IControl {
+  #map: mgl.Map;
   readonly #container: HTMLElement;
   readonly #urlPattern: string;
   readonly #zoomTransformer: ZoomTransformer;
   readonly #button: HTMLButtonElement;
 
   constructor(options?: OpenExternalMapControlOptions) {
-    this.#container = createControlContainer("maplibregl-ctrl-open-location");
+    this.#container = helpers.createControlContainer("maplibregl-ctrl-open-location");
     this.#urlPattern = options.urlPattern;
     this.#zoomTransformer = options.zoomMapping ?? ((z: number) => z);
     const icon = document.createElement("img");
     icon.src = options.iconUrl;
-    this.#button = createControlButton({
+    this.#button = helpers.createControlButton({
       title: options.buttonTitle,
       icon: icon,
       onClick: () => this.#onButtonClick(),
@@ -51,7 +51,7 @@ export default class OpenExternalMapControl implements IControl {
     );
   }
 
-  onAdd(map: Map): HTMLElement {
+  onAdd(map: mgl.Map): HTMLElement {
     this.#map = map;
     this.#container.appendChild(this.#button);
     return this.#container;

@@ -1,4 +1,4 @@
-import {MapFeature} from "./geometry";
+import * as geom from "./geometry";
 
 export abstract class MapEditorEvent {
   readonly type: string;
@@ -11,9 +11,9 @@ export abstract class MapEditorEvent {
 export class FeatureSelectionEvent extends MapEditorEvent {
   static readonly TYPE = "editor.selection";
 
-  readonly features: MapFeature[];
+  readonly features: geom.MapFeature[];
 
-  constructor(features: MapFeature[]) {
+  constructor(features: geom.MapFeature[]) {
     super(FeatureSelectionEvent.TYPE);
     this.features = features;
   }
@@ -22,9 +22,9 @@ export class FeatureSelectionEvent extends MapEditorEvent {
 export class FeatureHoverEvent extends MapEditorEvent {
   static readonly TYPE = "editor.hover";
 
-  readonly feature: MapFeature | undefined;
+  readonly feature: geom.MapFeature | undefined;
 
-  constructor(feature?: MapFeature) {
+  constructor(feature?: geom.MapFeature) {
     super(FeatureHoverEvent.TYPE);
     this.feature = feature;
   }
