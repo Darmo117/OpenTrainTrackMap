@@ -116,7 +116,7 @@ class MapEditor {
       case "LineString":
         return [feature.id + "-highlight", feature.id + "-border", feature.id];
       case "Polygon":
-        return [feature.id, feature.id + "-border"];
+        return [feature.id, feature.id + "-highlight", feature.id + "-border"];
     }
   }
 
