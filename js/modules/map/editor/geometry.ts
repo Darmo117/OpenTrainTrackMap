@@ -129,18 +129,7 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
     extends MapFeature<G, P> {
 
   protected constructor(id: string, geometry: G, properties: Dict) {
-    super(id, geometry, {width: 4, ...properties});
-  }
-
-  get width(): number {
-    return this.properties.width;
-  }
-
-  set width(width: number) {
-    if (width < 1) {
-      throw new Error(`Line width is too small: ${width}`);
-    }
-    this.properties.width = width;
+    super(id, geometry, properties);
   }
 
   abstract onVertexDrag(vertex: Point): void;
@@ -159,10 +148,12 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     super(id, {
       type: "LineString",
       coordinates: [],
-    }, {});
+    }, {
+      width: 4,
+    });
     if (vertices) {
       if (vertices.length < 2) {
-          throw new Error(`Expected at least 2 points, got ${vertices.length} in linestring ${id}`);
+        throw new Error(`Expected at least 2 points, got ${vertices.length} in linestring ${id}`);
       }
       vertices.forEach(v => this.appendVertex(v));
     }
@@ -170,6 +161,17 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
 
   get vertices(): Point[] {
     return [...this.#vertices];
+  }
+
+  get width(): number {
+    return this.properties.width;
+  }
+
+  set width(width: number) {
+    if (width < 1) {
+      throw new Error(`Line width is too small: ${width}`);
+    }
+    this.properties.width = width;
   }
 
   get direction(): PolylineDirection {
@@ -235,9 +237,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     super(id, {
       type: "Polygon",
       coordinates: [[]],
-    }, {
-      bgColor: "#ffffff80",
-    });
+    }, {});
     this.#drawing = true;
     if (vertices) {
       for (const vs of vertices) {
@@ -273,17 +273,6 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
       throw new Error(`Line width is too small: ${width}`);
     }
     this.properties.width = width;
-  }
-
-  get bgColor(): string {
-    return this.properties.bgColor;
-  }
-
-  set bgColor(color: string) {
-    if (!color) {
-      throw new Error("Missing color");
-    }
-    this.properties.bgColor = color;
   }
 
   protected updateCoords() {

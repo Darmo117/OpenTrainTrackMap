@@ -65,6 +65,9 @@ export default function initMap() {
           source: "tiles",
         }
       ],
+      transition: {
+        duration: 0,
+      }
     },
     center: [0, 0],
     zoom: 1,

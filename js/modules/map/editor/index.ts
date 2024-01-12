@@ -141,7 +141,7 @@ class MapEditor {
             "line-join": "round",
           },
           paint: {
-            "line-width": ["+", ["get", "width"], 6],
+            "line-width": ["+", ["get", "width"], 8],
             "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
           },
         });
@@ -178,7 +178,7 @@ class MapEditor {
           type: "fill",
           source: feature.id,
           paint: {
-            "fill-color": ["get", "bgColor"],
+            "fill-color": ["concat", ["get", "color"], "30"], // Add transparency
           },
         });
         this.#map.addLayer({
@@ -190,7 +190,7 @@ class MapEditor {
             "line-join": "round",
           },
           paint: {
-            "line-width": ["+", ["get", "width"], 4],
+            "line-width": 8,
             "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
           },
         });
@@ -203,7 +203,6 @@ class MapEditor {
             "line-join": "round",
           },
           paint: {
-            "line-width": ["get", "width"],
             "line-color": ["get", "color"],
           },
         });
@@ -333,8 +332,7 @@ export default function initMapEditor(map: Map) {
       new Point("point13", new LngLat(1.75, 2.25)),
     ],
   ]);
-  polygon1.color = "#f18030";
-  polygon1.bgColor = "rgba(0,255,166,0.63)";
+  polygon1.color = "#00FFA6";
   map.on("load", () => {
     mapEditor.addFeature(point1);
     mapEditor.addFeature(point2);
