@@ -261,7 +261,6 @@ class MapEditor {
   }
 
   #makeFeatureHighlightable(feature: MapFeature) {
-    // const canvas = this.#map.getCanvasContainer();
     this.#map.on("mouseenter", feature.id, () => {
       if (!this.#selectedFeatureIds.has(feature.id) && !this.#draggedPoint) {
         this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
