@@ -116,7 +116,7 @@ class MapEditor {
       case "LineString":
         return [feature.id + "-highlight", feature.id + "-border", feature.id];
       case "Polygon":
-        return [feature.id, feature.id + "-contour"];
+        return [feature.id, feature.id + "-border"];
     }
   }
 
@@ -208,7 +208,7 @@ class MapEditor {
           },
         });
         this.#map.addLayer({
-          id: feature.id + "-contour",
+          id: feature.id + "-border",
           type: "line",
           source: feature.id,
           layout: {
