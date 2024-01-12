@@ -268,7 +268,6 @@ class MapEditor {
       }
       if (!this.#draggedPoint) { // Avoids flicker
         this.#setCanvasCursor(("cursor-" + feature.geometry.type.toLowerCase()) as any);
-        // canvas.style.cursor = "pointer";
       }
     });
     this.#map.on("mouseleave", feature.id, () => {
@@ -277,7 +276,6 @@ class MapEditor {
       }
       if (!this.#draggedPoint) { // Avoids flicker
         this.#setCanvasCursor("cursor-grab");
-        // canvas.style.cursor = "";
       }
     });
   }
@@ -305,7 +303,6 @@ class MapEditor {
 
   #onMovePoint(e: MapMouseEvent | MapTouchEvent) {
     this.#setCanvasCursor("cursor-drag");
-    // this.#map.getCanvasContainer().style.cursor = "crosshair";
     const feature = this.#draggedPoint;
     feature.onDrag(e);
     this.#updateFeatureData(feature);
@@ -314,7 +311,6 @@ class MapEditor {
 
   #onMoveSelected(e: MapMouseEvent | MapTouchEvent) {
     this.#setCanvasCursor("cursor-grabbing");
-    // this.#map.getCanvasContainer().style.cursor = "crosshair";
     this.#selectedFeatureIds.forEach(id => {
       const feature = this.#features[id];
       feature.onDrag(e);
