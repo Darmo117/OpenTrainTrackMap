@@ -21,13 +21,16 @@ class MapEditor {
 
   static readonly BORDER_COLOR: string = "#101010";
 
+  /**
+   * List of available map cursors.
+   */
   static readonly CURSORS = [
-    "cursor-point",
-    "cursor-linestring",
-    "cursor-polygon",
-    "cursor-draw",
-    "cursor-grab",
-    "cursor-grabbing",
+    "point",
+    "linestring",
+    "polygon",
+    "draw",
+    "grab",
+    "grabbing",
   ] as const;
 
   readonly #map: Map;
@@ -38,12 +41,22 @@ class MapEditor {
   #draggedPoint: Point = null;
   #editMode: EditMode = EditMode.SELECT;
 
+  /**
+   * Create a new editor for the given map.
+   * @param map A map.
+   */
   constructor(map: Map) {
     this.#map = map;
     this.#$canvas = $(this.#map.getCanvasContainer());
 
-    this.#map.on("click", e => this.#onMouseClick(e));
+    this.#map.on("click", e => this.#onClick(e));
     this.#map.on("mousemove", e => this.#onMouseMouve(e));
+    this.#map.on("touchmove", e => {
+      if (e.points.length !== 1) {
+        return;
+      }
+      this.#onMouseMouve(e);
+    });
     this.#map.on("mousedown", e => this.#onMouseDown(e));
     this.#map.on("touchstart", e => {
       if (e.points.length !== 1) {
@@ -66,6 +79,10 @@ class MapEditor {
     });
   }
 
+  /**
+   * Add the given feature to the map.
+   * @param feature The feature to add.
+   */
   addFeature(feature: MapFeature) {
     // TODO handle z-order
     if (this.#features[feature.id]) {
@@ -86,12 +103,17 @@ class MapEditor {
     this.#addLayersForFeature(feature);
     // Put all points above all current features
     if (feature instanceof LineString) {
-      feature.vertices.forEach(v => this.#moveLayer(v.id));
+      feature.vertices.forEach(v => this.#moveLayers(v.id));
     } else if (feature instanceof Polygon) {
-      feature.vertices.forEach(vs => vs.forEach(v => this.#moveLayer(v.id)));
+      feature.vertices.forEach(vs => vs.forEach(v => this.#moveLayers(v.id)));
     }
   }
 
+  /**
+   * Delete the feature with the given ID.
+   * Bound features are updated.
+   * @param featureId The ID of the feature to delete.
+   */
   removeFeature(featureId: string) {
     // TODO update bound features
     this.#map.removeLayer(featureId);
@@ -135,7 +157,16 @@ class MapEditor {
     return selectedFeature;
   }
 
-  #moveLayer(featureId: string, beforeId?: string) {
+  /**
+   * Moves a feature’s layers to a different z-position.
+   * @param featureId The ID of the feature to move the layer’s of.
+   * @param beforeId The ID of an existing feature to insert the layers before.
+   * When viewing the map, the `featureId`’s layers will appear beneath the `beforeId`’s layers.
+   * If `beforeId` is omitted, the layers will be appended to the end of the layers
+   * array and appear above all other layers on the map.
+   * @see Map.moveLayer
+   */
+  #moveLayers(featureId: string, beforeId?: string) {
     if (beforeId) {
       const bottomLayer = this.#getLayerIdStack(beforeId)[0];
       this.#getLayerIdStack(featureId).forEach(id => this.#map.moveLayer(id, bottomLayer));
@@ -144,7 +175,12 @@ class MapEditor {
     }
   }
 
-  #getLayerIdStack(featureId: string): string[] {
+  /**
+   * Return the stack of layer IDs for the given feature ID.
+   * @param featureId A feature’s ID.
+   * @returns The IDs stack as a string array or null if the feature was not found.
+   */
+  #getLayerIdStack(featureId: string): string[] | null {
     const feature = this.#features[featureId];
     if (feature instanceof Point) {
       return [feature.id + "-highlight", feature.id];
@@ -153,10 +189,14 @@ class MapEditor {
     } else if (feature instanceof Polygon) {
       return [feature.id, feature.id + "-highlight", feature.id + "-border"];
     } else {
-      throw TypeError(`Unexpected type: ${feature}`);
+      return null;
     }
   }
 
+  /**
+   * Create the layers for the given feature and add them to the map.
+   * @param feature A feature.
+   */
   #addLayersForFeature(feature: MapFeature) {
     if (feature instanceof Point) {
       this.#map.addLayer({
@@ -258,6 +298,11 @@ class MapEditor {
     }
   }
 
+  /**
+   * Set the border color of the given feature.
+   * @param feature A feature.
+   * @param color The border’s color.
+   */
   #setFeatureBorderColor(feature: MapFeature, color: string) {
     if (feature instanceof Point) {
       this.#map.setPaintProperty(feature.id + "-highlight", "circle-color", color);
@@ -266,12 +311,23 @@ class MapEditor {
     }
   }
 
-  #setCanvasCursor(id: typeof MapEditor.CURSORS[number]) {
-    this.#$canvas.addClass(id);
-    this.#$canvas.removeClass(MapEditor.CURSORS.filter(s => s !== id));
+  /**
+   * Set the cursor for the map’s canvas.
+   * @param cursor The cursor type. Must be one of {@link MapEditor.CURSORS}.
+   */
+  #setCanvasCursor(cursor: typeof MapEditor.CURSORS[number]) {
+    this.#$canvas.addClass("cursor-" + cursor);
+    this.#$canvas.removeClass(
+        MapEditor.CURSORS
+            .filter(s => s !== cursor)
+            .map(s => "cursor-" + s)
+    );
   }
 
-  #onMouseMouve(e: MapMouseEvent) {
+  /**
+   * Called when the mouse moves over the map.
+   */
+  #onMouseMouve(e: MapMouseEvent | MapTouchEvent) {
     const hoveredFeature: MapFeature = this.#getFeatureUnderMouse(e.point);
     if (hoveredFeature) {
       if (this.#hoveredFeature && this.#hoveredFeature !== hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
@@ -292,33 +348,42 @@ class MapEditor {
 
     if (!this.#draggedPoint) {
       if (this.#hoveredFeature) {
-        this.#setCanvasCursor(("cursor-" + this.#hoveredFeature.geometry.type.toLowerCase()) as any);
+        this.#setCanvasCursor(this.#hoveredFeature.geometry.type.toLowerCase() as any);
       } else {
-        this.#setCanvasCursor("cursor-grab");
+        this.#setCanvasCursor("grab");
       }
       if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
-        this.#onMoveSelected(e);
+        this.#onDragSelectedFeatures(e);
       }
     } else {
-      this.#onMovePoint(e);
+      this.#onDragPoint(e);
     }
   }
 
-  #onMovePoint(e: MapMouseEvent | MapTouchEvent) {
-    this.#setCanvasCursor("cursor-draw");
+  /**
+   * Called when a {@link Point} is dragged.
+   */
+  #onDragPoint(e: MapMouseEvent | MapTouchEvent) {
+    this.#setCanvasCursor("draw");
     this.#draggedPoint.onDrag(e);
     this.#updateFeatureData(this.#draggedPoint);
     this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
   }
 
-  #onMoveSelected(e: MapMouseEvent | MapTouchEvent) {
-    this.#setCanvasCursor("cursor-grabbing");
+  /**
+   * Called when a {@link MapFeature} is dragged.
+   */
+  #onDragSelectedFeatures(e: MapMouseEvent | MapTouchEvent) {
+    this.#setCanvasCursor("grabbing");
     this.#selectedFeatures.forEach(feature => {
       feature.onDrag(e);
       this.#updateFeatureData(feature);
     });
   }
 
+  /**
+   * Called when the mouse is pressed down on the map.
+   */
   #onMouseDown(e: MapMouseEvent | MapTouchEvent) {
     if (this.#hoveredFeature && this.#hoveredFeature instanceof Point) {
       e.preventDefault();
@@ -326,7 +391,17 @@ class MapEditor {
     }
   }
 
-  #onMouseClick(e: MapMouseEvent) {
+  /**
+   * Called when the mouse is released on the map.
+   */
+  #onMouseUp() {
+    this.#draggedPoint = null;
+  }
+
+  /**
+   * Called when the mouse is clicked on the map.
+   */
+  #onClick(e: MapMouseEvent) {
     if (!e.originalEvent.ctrlKey) {
       this.#selectedFeatures.forEach(
           feature => this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR));
@@ -339,10 +414,10 @@ class MapEditor {
     this.#map.fire("editor.selection.update", {features: [...this.#selectedFeatures]});
   }
 
-  #onMouseUp() {
-    this.#draggedPoint = null;
-  }
-
+  /**
+   * Update the given feature’s map data.
+   * @param feature A feature.
+   */
   #updateFeatureData(feature: MapFeature) {
     (this.#map.getSource(feature.id) as GeoJSONSource).setData(feature);
   }
