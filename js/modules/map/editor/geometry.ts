@@ -142,6 +142,10 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
   abstract insertVertexAfter(vertex: Point, path: string): void;
 
   abstract getVertex(path: string): Point | null;
+
+  abstract getSegmentVertices(path: string): [mgl.LngLat, mgl.LngLat];
+
+  abstract incrementPath(path: string): string;
 }
 
 export enum PolylineDirection {
@@ -243,14 +247,36 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     }
   }
 
-  #getVertexIndex(path: string): number | null {
-    const m = LineString.#PATH_PATTERN.exec(path);
-    return m ? +m[1] : null;
+  incrementPath(path: string): string {
+    const index = this.#getVertexIndex(path);
+    if (index !== null) {
+      return "" + (index + 1) % this.#vertices.length;
+    } else {
+      return null;
+    }
   }
 
   getVertex(path: string): Point | null {
     const index = this.#getVertexIndex(path);
-    return index !== null && index < this.#vertices.length ? this.#vertices[index] : null;
+    if (index !== null && index < this.#vertices.length) {
+      return this.#vertices[index];
+    } else {
+      return null;
+    }
+  }
+
+  getSegmentVertices(path: string): [mgl.LngLat, mgl.LngLat] {
+    const index = this.#getVertexIndex(path);
+    if (index !== null && index < this.#vertices.length) {
+      return [this.#vertices[index].lngLat, this.#vertices[index + 1].lngLat];
+    } else {
+      return null;
+    }
+  }
+
+  #getVertexIndex(path: string): number | null {
+    const m = LineString.#PATH_PATTERN.exec(path);
+    return m ? +m[1] : null;
   }
 
   #updateGeometry() {
@@ -374,22 +400,48 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
   // TODO prevent adding the same point twice consecutively
   insertVertexAfter(vertex: Point, path: string) {
     const indices = this.#getVertexIndex(path);
-    // Cannot add after last vertex
-    if (indices !== null && indices[0] < this.#vertices.length && indices[1] < this.#vertices[indices[0]].length - 1) {
+    if (indices !== null && indices[0] < this.#vertices.length && indices[1] < this.#vertices[indices[0]].length) {
       vertex.bindFeature(this);
-      this.#vertices[indices[0]].splice(indices[1] + 1, 0, vertex);
+      if (indices[1] === this.#vertices[indices[0]].length - 1) {
+        this.#vertices[indices[0]].push(vertex);
+      } else {
+        this.#vertices[indices[0]].splice(indices[1] + 1, 0, vertex);
+      }
       this.#updateGeometry();
+    }
+  }
+
+  incrementPath(path: string): string {
+    const indices = this.#getVertexIndex(path);
+    if (indices !== null && indices[0] < this.#vertices.length) {
+      return `${indices[0]}.${(indices[1] + 1) % this.#vertices[indices[0]].length}`;
+    } else {
+      return null;
+    }
+  }
+
+  getVertex(path: string): Point | null {
+    const indices = this.#getVertexIndex(path);
+    if (indices !== null && indices[0] < this.#vertices.length && indices[1] < this.#vertices[indices[0]].length) {
+      return this.#vertices[indices[0]][indices[1]];
+    } else {
+      return null;
+    }
+  }
+
+  getSegmentVertices(path: string): [mgl.LngLat, mgl.LngLat] {
+    const indices = this.#getVertexIndex(path);
+    if (indices !== null && indices[0] < this.#vertices.length && indices[1] < this.#vertices[indices[0]].length) {
+      const ring = this.#vertices[indices[0]];
+      return [ring[indices[1]].lngLat, ring[(indices[1] + 1) % ring.length].lngLat];
+    } else {
+      return null;
     }
   }
 
   #getVertexIndex(path: string): [number, number] | null {
     const m = Polygon.#PATH_PATTERN.exec(path);
     return m ? [+m[1], +m[2]] : null;
-  }
-
-  getVertex(path: string): Point | null {
-    const indices = this.#getVertexIndex(path);
-    return indices !== null ? this.#vertices[indices[0]][indices[1]] : null;
   }
 
   #updateGeometry() {

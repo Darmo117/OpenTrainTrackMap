@@ -5,6 +5,7 @@ import Split from "split.js";
 import * as types from "../../types";
 import * as events from "./events";
 import * as geom from "./geometry";
+import * as snap from "./snap";
 
 enum EditMode {
   SELECT = "select",
@@ -48,23 +49,6 @@ class EditorPanel {
   }
 }
 
-type SnapResult = SnapPoint | SnapVertex | SnapSegment;
-type SnapPoint = {
-  type: "point";
-  point: geom.Point;
-};
-type SnapVertex = {
-  type: "vertex";
-  vertex: geom.Point;
-  feature: geom.LinearFeature;
-};
-type SnapSegment = {
-  type: "segment";
-  feature: geom.LinearFeature;
-  path: string;
-  lngLat: mgl.LngLat;
-};
-
 class MapEditor {
   static readonly HIGHLIGHT_BASE_COLOR: string = "#00000000";
   static readonly HIGHLIGHT_SELECTED_COLOR: string = "#3bb2d0d0";
@@ -91,7 +75,7 @@ class MapEditor {
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();
   #hoveredFeature: geom.MapFeature;
   #draggedPoint: geom.Point = null;
-  #snapResult: SnapResult | null;
+  #snapResult: snap.SnapResult | null;
   #editMode: EditMode = EditMode.SELECT;
 
   /**
@@ -179,10 +163,15 @@ class MapEditor {
    * @param featureId The ID of the feature to delete.
    */
   removeFeature(featureId: string) {
+    const feature = this.#features[featureId];
     // TODO update bound features
+    this.#map.removeLayer(featureId + "-highlight");
+    if (feature instanceof geom.LinearFeature) {
+      this.#map.removeLayer(featureId + "-border");
+    }
     this.#map.removeLayer(featureId);
     this.#map.removeSource(featureId);
-    this.#selectedFeatures.delete(this.#features[featureId]);
+    this.#selectedFeatures.delete(feature);
     delete this.#features[featureId];
     if (this.#hoveredFeature?.id === featureId) {
       this.#hoveredFeature = null;
@@ -198,12 +187,10 @@ class MapEditor {
    * @returns The feature or null if none are at the given mouses position.
    */
   #getFeatureUnderMouse(mousePos: mgl.PointLike): geom.MapFeature | null {
-    const featureIds = new Set(this.#map.queryRenderedFeatures(mousePos)
-        .map(f => f.source));
     const layersOrder = this.#map.getLayersOrder();
     let selectedIndex = Infinity;
     let selectedFeature: geom.MapFeature = null;
-    for (const featureId of featureIds) {
+    for (const featureId of this.#getFeatureIds(mousePos)) {
       const currentIndex = layersOrder.indexOf(featureId);
       if (currentIndex === -1) {
         continue;
@@ -219,6 +206,18 @@ class MapEditor {
       }
     }
     return selectedFeature;
+  }
+
+  /**
+   * Return the list of feature IDs that are currently visible.
+   * @param at If specified, only the IDs of features under the given pixel position will be returned.
+   * @param exclude List of feature IDs to exclude from the results.
+   * @returns The set of feature IDs that correspond to the criteria.
+   */
+  #getFeatureIds(at?: mgl.PointLike, exclude?: string[]): Set<string> {
+    return new Set(this.#map.queryRenderedFeatures(at)
+        .filter(f => !exclude?.includes(f.source))
+        .map(f => f.source));
   }
 
   /**
@@ -429,18 +428,28 @@ class MapEditor {
    */
   #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     this.#setCanvasCursor("draw");
-    this.#snapResult = this.#trySnapPoint(e.lngLat);
+    // Exclude features the dragged point is bound to
+    // TODO allow snapping on bound features
+    const excludedIds = this.#draggedPoint.boundFeatures.map(f => f.id);
+    // Exclude point itself
+    excludedIds.push(this.#draggedPoint.id);
+    this.#snapResult = snap.trySnapPoint(
+        e.lngLat,
+        Array.from(this.#getFeatureIds(null, excludedIds)).map(id => this.#features[id]),
+        this.#map.getZoom(),
+    );
     if (this.#snapResult) {
-      if (this.#snapResult.type === "point") {
-        const {point} = this.#snapResult;
+      if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
+        let point: geom.Point;
+        if (this.#snapResult.type === "point") {
+          point = this.#snapResult.point;
+        } else {
+          const {feature, path} = this.#snapResult;
+          point = feature.getVertex(path);
+        }
         // Move dragged point to the snap position
         this.#draggedPoint.onDrag(point.lngLat);
         // TODO show "point" in side panel and highlight it
-      } else if (this.#snapResult.type === "vertex") {
-        const {vertex} = this.#snapResult;
-        // Move dragged point to the snap position
-        this.#draggedPoint.onDrag(vertex.lngLat);
-        // TODO show "vertex" in side panel and highlight it
       } else { // segment
         const {feature, lngLat} = this.#snapResult;
         // Move dragged point to the snap position
@@ -480,22 +489,31 @@ class MapEditor {
    */
   #onMouseUp() {
     if (this.#snapResult) {
-      if (this.#snapResult.type === "point") {
-        const {point} = this.#snapResult;
+      if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
+        let point: geom.Point;
+        if (this.#snapResult.type === "point") {
+          point = this.#snapResult.point;
+        } else {
+          const {feature, path} = this.#snapResult;
+          point = feature.getVertex(path);
+        }
         this.#draggedPoint.onDrag(point.lngLat);
         // TODO copy data from "point" to "this.#draggedPoint" if "this.#draggedPoint" is just a point with no data
+        if (point.boundFeatures.length) {
+          // Replace point in all bound features
+          point.boundFeatures.forEach(f => f.replaceVertex(this.#draggedPoint, point))
+        }
         this.removeFeature(point.id);
-      } else if (this.#snapResult.type === "vertex") {
-        const {vertex, feature} = this.#snapResult;
-        this.#draggedPoint.onDrag(vertex.lngLat);
-        feature.replaceVertex(this.#draggedPoint, vertex);
       } else { // segment
         const {feature, path, lngLat} = this.#snapResult;
         this.#draggedPoint.onDrag(lngLat);
         feature.insertVertexAfter(this.#draggedPoint, path);
+        // TODO insert vertex to all features that have the exact same two points as a segment
       }
       this.#updateFeatureData(this.#draggedPoint);
       this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
+      this.#moveLayers(this.#draggedPoint.id); // Put point on top
+      this.#snapResult = null;
     }
     this.#draggedPoint = null;
   }
@@ -523,39 +541,29 @@ class MapEditor {
   #updateFeatureData(feature: geom.MapFeature) {
     (this.#map.getSource(feature.id) as mgl.GeoJSONSource).setData(feature);
   }
-
-  /**
-   * Try to snap the given position to a nearby feature.
-   * @param pos The position to try to snap.
-   * @returns The snap position if one was found, the argument otherwise.
-   */
-  #trySnapPoint(pos: mgl.LngLat): SnapResult | null {
-    // TODO
-    return null;
-  }
 }
 
 export default function initMapEditor(map: mgl.Map) {
   const mapEditor = new MapEditor(map);
 
   // TEMP
-  const point1 = new geom.Point("point1", new mgl.LngLat(0, 0));
-  const point2 = new geom.Point("point2", new mgl.LngLat(1, 0));
-  const point3 = new geom.Point("point3", new mgl.LngLat(1, 1));
-  const point4 = new geom.Point("point4", new mgl.LngLat(1.25, 2));
+  const point1 = new geom.Point("point1", new mgl.LngLat(1.4500, 43.6000));
+  const point2 = new geom.Point("point2", new mgl.LngLat(1.4505, 43.6000));
+  const point3 = new geom.Point("point3", new mgl.LngLat(1.4505, 43.6005));
+  const point4 = new geom.Point("point4", new mgl.LngLat(1.4506, 43.6010));
   const line1 = new geom.LineString("line1", [point1, point2, point3, point4]);
   line1.color = "#ffe46d";
   const polygon1 = new geom.Polygon("polygon1", [
     [
       point3,
-      new geom.Point("point02", new mgl.LngLat(1, 2)),
-      new geom.Point("point03", new mgl.LngLat(2, 3)),
-      new geom.Point("point04", new mgl.LngLat(3, 3)),
+      new geom.Point("point02", new mgl.LngLat(1.4505, 43.6010)),
+      new geom.Point("point03", new mgl.LngLat(1.4510, 43.6015)),
+      new geom.Point("point04", new mgl.LngLat(1.4515, 43.6015)),
     ],
     [
       point4,
-      new geom.Point("point12", new mgl.LngLat(1.75, 2)),
-      new geom.Point("point13", new mgl.LngLat(1.75, 2.25)),
+      new geom.Point("point12", new mgl.LngLat(1.4508, 43.6010)),
+      new geom.Point("point13", new mgl.LngLat(1.4510, 43.6013)),
     ],
   ]);
   polygon1.color = "#00FFA6";
