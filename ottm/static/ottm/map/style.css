@@ -73,7 +73,7 @@
   cursor: url("/static/ottm/images/cursors/cursor-select-area.png"), default !important;
 }
 
-.cursor-drag {
+.cursor-draw {
   /*noinspection CssUnknownTarget*/
   cursor: url("/static/ottm/images/cursors/cursor-draw.png") 10 10, crosshair !important;
 }

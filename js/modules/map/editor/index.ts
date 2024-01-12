@@ -1,4 +1,5 @@
 import {GeoJSONSource, LngLat, Map, MapMouseEvent, MapTouchEvent} from "maplibre-gl";
+import MLPoint from "mapbox__point-geometry";
 import $ from "jquery";
 import Split from "split.js";
 
@@ -24,7 +25,7 @@ class MapEditor {
     "cursor-point",
     "cursor-linestring",
     "cursor-polygon",
-    "cursor-drag",
+    "cursor-draw",
     "cursor-grab",
     "cursor-grabbing",
   ] as const;
@@ -32,10 +33,10 @@ class MapEditor {
   readonly #map: Map;
   readonly #$canvas: JQuery;
   readonly #features: Dict<MapFeature> = {};
-  readonly #selectedFeatureIds: Set<string> = new Set();
+  readonly #selectedFeatures: Set<MapFeature> = new Set();
+  #hoveredFeature: MapFeature;
   #draggedPoint: Point = null;
   #editMode: EditMode = EditMode.SELECT;
-  #lastClickTime: number = 0;
 
   constructor(map: Map) {
     this.#map = map;
@@ -43,21 +44,65 @@ class MapEditor {
 
     this.#map.on("click", e => {
       if (!e.originalEvent.ctrlKey) {
-        this.#map.fire("editor.selection.remove", [...this.#selectedFeatureIds]);
-        this.#selectedFeatureIds.forEach(
-            id => this.#setFeatureBorderColor(this.#features[id], MapEditor.HIGHLIGHT_BASE_COLOR));
-        this.#selectedFeatureIds.clear();
+        this.#selectedFeatures.forEach(
+            feature => this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR));
+        this.#selectedFeatures.clear();
       }
+      if (this.#hoveredFeature) {
+        this.#selectedFeatures.add(this.#hoveredFeature);
+        this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
+      }
+      this.#map.fire("editor.selection.update", {features: [...this.#selectedFeatures]});
     });
+
     this.#map.on("mousemove", e => {
-      if (this.#draggedPoint) {
+      const hoveredFeature: MapFeature = this.#getFeatureUnderMouse(e.point);
+      if (hoveredFeature) {
+        if (this.#hoveredFeature && this.#hoveredFeature !== hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
+          this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
+        }
+        this.#hoveredFeature = hoveredFeature;
+        if (!this.#draggedPoint && !this.#selectedFeatures.has(this.#hoveredFeature)) {
+          this.#setFeatureBorderColor(hoveredFeature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
+        }
+        this.#map.fire("editor.feature.hovered", {feature: this.#hoveredFeature});
+      } else {
+        if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
+          this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
+        }
+        this.#hoveredFeature = null;
+        this.#map.fire("editor.feature.hovered", {feature: null});
+      }
+
+      if (!this.#draggedPoint) {
+        if (this.#hoveredFeature) {
+          this.#setCanvasCursor(("cursor-" + this.#hoveredFeature.geometry.type.toLowerCase()) as any);
+        } else {
+          this.#setCanvasCursor("cursor-grab");
+        }
+        if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
+          this.#onMoveSelected(e);
+        }
+      } else {
         this.#onMovePoint(e);
       }
-      if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatureIds.size) {
-        this.#onMoveSelected(e);
-      }
     });
-    this.#map.on("mouseup", () => this.#onUp());
+
+    this.#map.on("mousedown", e => this.#onMouseDown(e));
+    this.#map.on("touchstart", e => {
+      if (e.points.length !== 1) {
+        return;
+      }
+      this.#onMouseDown(e);
+    });
+
+    this.#map.on("mouseup", () => this.#onMouseUp());
+    this.#map.on("touchend", e => {
+      if (e.points.length !== 1) {
+        return;
+      }
+      this.#onMouseUp();
+    });
 
     this.#map.on("controls.styles.tiles_changed", () => {
       if (this.#map.getLayersOrder().length) {
@@ -65,6 +110,45 @@ class MapEditor {
         this.#map.moveLayer("tiles", this.#map.getLayersOrder()[0]);
       }
     });
+  }
+
+  #onMouseDown(e: MapMouseEvent | MapTouchEvent) {
+    if (this.#hoveredFeature && this.#hoveredFeature.geometry.type === "Point") {
+      e.preventDefault();
+      this.#draggedPoint = this.#hoveredFeature as Point;
+    }
+  }
+
+  /**
+   * Return the feature currently under the mouse according to the following conditions:
+   * * If there are any points, the highest one is returned.
+   * * If there are no points, the lowest feature is returned.
+   * * If there are no features, null is returned.
+   * @param mousePos Mouse position.
+   * @returns The feature or null if none are at the given mouses position.
+   */
+  #getFeatureUnderMouse(mousePos: MLPoint): MapFeature | null {
+    const featureIds = new Set(this.#map.queryRenderedFeatures(mousePos)
+        .map(f => f.source));
+    const layersOrder = this.#map.getLayersOrder();
+    let priorityIndex = Infinity;
+    let priorityFeature: MapFeature = null;
+    for (const featureId of featureIds) {
+      const currentIndex = layersOrder.indexOf(featureId);
+      if (currentIndex === -1) {
+        continue;
+      }
+      const feature = this.#features[featureId];
+      const currentIsPoint = feature.geometry.type === "Point";
+      const lowestIsNotPoint = !priorityFeature || priorityFeature.geometry.type !== "Point";
+      if (!priorityFeature
+          || currentIsPoint && (lowestIsNotPoint || currentIndex > priorityIndex)
+          || !currentIsPoint && lowestIsNotPoint && currentIndex < priorityIndex) {
+        priorityIndex = currentIndex;
+        priorityFeature = feature;
+      }
+    }
+    return priorityFeature;
   }
 
   addFeature(feature: MapFeature) {
@@ -85,12 +169,8 @@ class MapEditor {
       type: "geojson",
       data: feature,
     });
-    this.#addLayerForFeature(feature);
-    this.#makeFeatureSelectable(feature);
-    this.#makeFeatureHighlightable(feature);
-    if (feature.geometry.type === "Point") {
-      this.#makePointDraggableWithoutSelection(feature as Point);
-    } else if (feature.geometry.type === "LineString") {
+    this.#addLayersForFeature(feature);
+    if (feature.geometry.type === "LineString") {
       // Put all points above all current features
       (feature as LineString).vertices.forEach(v => this.#moveLayer(v.id));
     } else if (feature.geometry.type === "Polygon") {
@@ -120,7 +200,7 @@ class MapEditor {
     }
   }
 
-  #addLayerForFeature(feature: MapFeature) {
+  #addLayersForFeature(feature: MapFeature) {
     switch (feature.geometry.type) {
       case "Point":
         this.#map.addLayer({
@@ -227,8 +307,11 @@ class MapEditor {
     // TODO update bound features
     this.#map.removeLayer(featureId);
     this.#map.removeSource(featureId);
+    this.#selectedFeatures.delete(this.#features[featureId]);
     delete this.#features[featureId];
-    this.#selectedFeatureIds.delete(featureId);
+    if (this.#hoveredFeature?.id === featureId) {
+      this.#hoveredFeature = null;
+    }
   }
 
   #setFeatureBorderColor(feature: MapFeature, color: string) {
@@ -243,65 +326,13 @@ class MapEditor {
     }
   }
 
-  #makeFeatureSelectable(feature: MapFeature) {
-    this.#map.on("click", feature.id, () => {
-      const ms = new Date().getTime();
-      // If several features are on top of each other, an event is fired each one of them.
-      // So we add a small cooldown so that only the first one is actually clicked.
-      if (ms - this.#lastClickTime < 10) {
-        return;
-      }
-      this.#lastClickTime = ms;
-
-      console.log(feature); // DEBUG
-      this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
-      this.#selectedFeatureIds.add(feature.id);
-      this.#map.fire("editor.selection.add", feature);
-    });
-  }
-
-  #makeFeatureHighlightable(feature: MapFeature) {
-    this.#map.on("mouseenter", feature.id, () => {
-      if (!this.#selectedFeatureIds.has(feature.id) && !this.#draggedPoint) {
-        this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
-      }
-      if (!this.#draggedPoint) { // Avoids flicker
-        this.#setCanvasCursor(("cursor-" + feature.geometry.type.toLowerCase()) as any);
-      }
-    });
-    this.#map.on("mouseleave", feature.id, () => {
-      if (!this.#selectedFeatureIds.has(feature.id)) {
-        this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR);
-      }
-      if (!this.#draggedPoint) { // Avoids flicker
-        this.#setCanvasCursor("cursor-grab");
-      }
-    });
-  }
-
   #setCanvasCursor(id: typeof MapEditor.CURSORS[number]) {
     this.#$canvas.addClass(id);
     this.#$canvas.removeClass(MapEditor.CURSORS.filter(s => s !== id));
   }
 
-  #makePointDraggableWithoutSelection(feature: Point) {
-    this.#map.on("mousedown", feature.id, e => {
-      // Prevent the default map drag behavior.
-      e.preventDefault();
-      this.#draggedPoint = feature;
-    });
-    this.#map.on("touchstart", feature.id, e => {
-      if (e.points.length !== 1) {
-        return;
-      }
-      // Prevent the default map drag behavior.
-      e.preventDefault();
-      this.#draggedPoint = feature;
-    });
-  }
-
   #onMovePoint(e: MapMouseEvent | MapTouchEvent) {
-    this.#setCanvasCursor("cursor-drag");
+    this.#setCanvasCursor("cursor-draw");
     const feature = this.#draggedPoint;
     feature.onDrag(e);
     this.#updateFeatureData(feature);
@@ -310,14 +341,13 @@ class MapEditor {
 
   #onMoveSelected(e: MapMouseEvent | MapTouchEvent) {
     this.#setCanvasCursor("cursor-grabbing");
-    this.#selectedFeatureIds.forEach(id => {
-      const feature = this.#features[id];
+    this.#selectedFeatures.forEach(feature => {
       feature.onDrag(e);
       this.#updateFeatureData(feature);
     });
   }
 
-  #onUp() {
+  #onMouseUp() {
     this.#draggedPoint = null;
   }
 
