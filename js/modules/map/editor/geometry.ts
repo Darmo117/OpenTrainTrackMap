@@ -17,9 +17,7 @@ export type LinearProperties = MapFeatureProperties & {
   width: number;
 }
 export type PolylineProperties = LinearProperties;
-export type PolygonProperties = LinearProperties & {
-  bgColor: string;
-};
+export type PolygonProperties = LinearProperties;
 
 export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFeatureProperties = MapFeatureProperties>
     implements geojson.Feature<G, P> {
@@ -134,11 +132,16 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
     super(id, geometry, properties);
   }
 
+  abstract removeVertex(vertex: Point): void;
+
   abstract onVertexDrag(): void;
 
+  // TODO copy data from oldVertex to newVertex if newVertex is just a point with no data
   abstract replaceVertex(newVertex: Point, oldVertex: Point): void;
 
-  abstract insertVertex(vertex: Point, paths: [string, string]): void;
+  abstract insertVertexAfter(vertex: Point, path: string): void;
+
+  abstract getVertex(path: string): Point | null;
 }
 
 export enum PolylineDirection {
@@ -147,6 +150,8 @@ export enum PolylineDirection {
 }
 
 export class LineString extends LinearFeature<geojson.LineString, PolylineProperties> {
+  static readonly #PATH_PATTERN = /^(\d+)$/;
+
   readonly #vertices: Point[] = [];
   #direction: PolylineDirection = PolylineDirection.FORWARD;
 
@@ -199,13 +204,6 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     this.#updateGeometry();
   }
 
-  // TODO prevent adding the same point twice consecutively
-  addVertexAt(vertex: Point, index: number) {
-    vertex.bindFeature(this);
-    this.#vertices.splice(index, 0, vertex);
-    this.#updateGeometry();
-  }
-
   removeVertex(vertex: Point) {
     if (this.#vertices.length === 2) {
       throw new Error("Cannot remove anymore point");
@@ -224,12 +222,35 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     // TODO
   }
 
-  insertVertex(vertex: Point, paths: [string, string]): void {
-    // TODO
+  // TODO prevent adding the same point twice consecutively
+  replaceVertex(newVertex: Point, oldVertex: Point): void {
+    const i = this.#vertices.indexOf(oldVertex);
+    if (i !== -1) {
+      this.#vertices[i] = newVertex;
+      newVertex.bindFeature(this);
+      oldVertex.unbindFeature(this);
+    }
   }
 
-  replaceVertex(newVertex: Point, oldVertex: Point): void {
-    // TODO
+  // TODO prevent adding the same point twice consecutively
+  insertVertexAfter(vertex: Point, path: string) {
+    const index = this.#getVertexIndex(path);
+    // Cannot add after last vertex
+    if (index !== null && index < this.#vertices.length - 1) {
+      vertex.bindFeature(this);
+      this.#vertices.splice(index + 1, 0, vertex);
+      this.#updateGeometry();
+    }
+  }
+
+  #getVertexIndex(path: string): number | null {
+    const m = LineString.#PATH_PATTERN.exec(path);
+    return m ? +m[1] : null;
+  }
+
+  getVertex(path: string): Point | null {
+    const index = this.#getVertexIndex(path);
+    return index !== null && index < this.#vertices.length ? this.#vertices[index] : null;
   }
 
   #updateGeometry() {
@@ -248,6 +269,8 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
 }
 
 export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
+  static readonly #PATH_PATTERN = /^(\d+)\.(\d+)$/;
+
   readonly #vertices: Point[][] = [];
   #drawing: boolean = false;
 
@@ -294,25 +317,18 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
   }
 
   // TODO prevent adding the same point twice consecutively
-  appendVertex(vertex: Point, lineIndex: number) {
+  appendVertex(vertex: Point, ringIndex: number) {
     if (!this.#drawing) {
       throw new Error("Cannot append points to already drawn polygon");
     }
-    if (lineIndex > this.#vertices.length) {
-      throw new Error(`Line #${lineIndex} does not exist in polygon ${this.id}`)
+    if (ringIndex > this.#vertices.length) {
+      throw new Error(`Ring #${ringIndex} does not exist in polygon ${this.id}`)
     }
-    if (lineIndex === this.#vertices.length) {
+    if (ringIndex === this.#vertices.length) {
       this.#vertices.push([]);
     }
     vertex.bindFeature(this);
-    this.#vertices[lineIndex].push(vertex);
-    this.#updateGeometry();
-  }
-
-  // TODO prevent adding the same point twice consecutively
-  addVertexAt(vertex: Point, index: number, lineIndex: number) {
-    vertex.bindFeature(this);
-    this.#vertices[lineIndex].splice(index, 0, vertex);
+    this.#vertices[ringIndex].push(vertex);
     this.#updateGeometry();
   }
 
@@ -343,12 +359,37 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     // TODO
   }
 
+  // TODO prevent adding the same point twice consecutively
   replaceVertex(newVertex: Point, oldVertex: Point): void {
-    // TODO
+    for (const ring of this.#vertices) {
+      const i = ring.indexOf(oldVertex);
+      if (i !== -1) {
+        ring[i] = newVertex;
+        newVertex.bindFeature(this);
+        oldVertex.unbindFeature(this);
+      }
+    }
   }
 
-  insertVertex(vertex: Point, paths: [string, string]): void {
-    // TODO
+  // TODO prevent adding the same point twice consecutively
+  insertVertexAfter(vertex: Point, path: string) {
+    const indices = this.#getVertexIndex(path);
+    // Cannot add after last vertex
+    if (indices !== null && indices[0] < this.#vertices.length && indices[1] < this.#vertices[indices[0]].length - 1) {
+      vertex.bindFeature(this);
+      this.#vertices[indices[0]].splice(indices[1] + 1, 0, vertex);
+      this.#updateGeometry();
+    }
+  }
+
+  #getVertexIndex(path: string): [number, number] | null {
+    const m = Polygon.#PATH_PATTERN.exec(path);
+    return m ? [+m[1], +m[2]] : null;
+  }
+
+  getVertex(path: string): Point | null {
+    const indices = this.#getVertexIndex(path);
+    return indices !== null ? this.#vertices[indices[0]][indices[1]] : null;
   }
 
   #updateGeometry() {

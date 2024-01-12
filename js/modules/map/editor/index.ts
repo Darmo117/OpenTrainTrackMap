@@ -61,7 +61,7 @@ type SnapVertex = {
 type SnapSegment = {
   type: "segment";
   feature: geom.LinearFeature;
-  paths: [string, string];
+  path: string;
   lngLat: mgl.LngLat;
 };
 
@@ -442,11 +442,10 @@ class MapEditor {
         this.#draggedPoint.onDrag(vertex.lngLat);
         // TODO show "vertex" in side panel and highlight it
       } else { // segment
-        const {feature, paths, lngLat} = this.#snapResult;
-        const [path1, path2] = paths;
+        const {feature, lngLat} = this.#snapResult;
         // Move dragged point to the snap position
         this.#draggedPoint.onDrag(lngLat);
-        // TODO insert "#draggedPoint" between points at "path1" and "path2" of "feature"
+        // TODO show "feature" in side panel and highlight it
       }
     } else {
       this.#draggedPoint.onDrag(e.lngLat);
@@ -483,13 +482,17 @@ class MapEditor {
     if (this.#snapResult) {
       if (this.#snapResult.type === "point") {
         const {point} = this.#snapResult;
-        // TODO replace "point" by "#draggedPoint"
+        this.#draggedPoint.onDrag(point.lngLat);
+        // TODO copy data from "point" to "this.#draggedPoint" if "this.#draggedPoint" is just a point with no data
+        this.removeFeature(point.id);
       } else if (this.#snapResult.type === "vertex") {
         const {vertex, feature} = this.#snapResult;
+        this.#draggedPoint.onDrag(vertex.lngLat);
         feature.replaceVertex(this.#draggedPoint, vertex);
       } else { // segment
-        const {feature, paths} = this.#snapResult;
-        feature.insertVertex(this.#draggedPoint, paths);
+        const {feature, path, lngLat} = this.#snapResult;
+        this.#draggedPoint.onDrag(lngLat);
+        feature.insertVertexAfter(this.#draggedPoint, path);
       }
       this.#updateFeatureData(this.#draggedPoint);
       this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
