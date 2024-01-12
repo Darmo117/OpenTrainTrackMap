@@ -66,6 +66,43 @@ class MapEditor {
     });
   }
 
+  addFeature(feature: MapFeature) {
+    // TODO handle z-order
+    if (this.#features[feature.id]) {
+      return;
+    }
+
+    this.#features[feature.id] = feature;
+    // Add all vertices
+    if (feature instanceof LineString) {
+      feature.vertices.forEach(v => this.addFeature(v));
+    } else if (feature instanceof Polygon) {
+      feature.vertices.forEach(vs => vs.forEach(v => this.addFeature(v)));
+    }
+    this.#map.addSource(feature.id, {
+      type: "geojson",
+      data: feature,
+    });
+    this.#addLayersForFeature(feature);
+    // Put all points above all current features
+    if (feature instanceof LineString) {
+      feature.vertices.forEach(v => this.#moveLayer(v.id));
+    } else if (feature instanceof Polygon) {
+      feature.vertices.forEach(vs => vs.forEach(v => this.#moveLayer(v.id)));
+    }
+  }
+
+  removeFeature(featureId: string) {
+    // TODO update bound features
+    this.#map.removeLayer(featureId);
+    this.#map.removeSource(featureId);
+    this.#selectedFeatures.delete(this.#features[featureId]);
+    delete this.#features[featureId];
+    if (this.#hoveredFeature?.id === featureId) {
+      this.#hoveredFeature = null;
+    }
+  }
+
   /**
    * Return the feature currently under the mouse according to the following conditions:
    * * If there are any points, the highest one is returned.
@@ -96,32 +133,6 @@ class MapEditor {
       }
     }
     return selectedFeature;
-  }
-
-  addFeature(feature: MapFeature) {
-    // TODO handle z-order
-    if (this.#features[feature.id]) {
-      return;
-    }
-
-    this.#features[feature.id] = feature;
-    // Add all vertices
-    if (feature instanceof LineString) {
-      feature.vertices.forEach(v => this.addFeature(v));
-    } else if (feature instanceof Polygon) {
-      feature.vertices.forEach(vs => vs.forEach(v => this.addFeature(v)));
-    }
-    this.#map.addSource(feature.id, {
-      type: "geojson",
-      data: feature,
-    });
-    this.#addLayersForFeature(feature);
-    // Put all points above all current features
-    if (feature instanceof LineString) {
-      feature.vertices.forEach(v => this.#moveLayer(v.id));
-    } else if (feature instanceof Polygon) {
-      feature.vertices.forEach(vs => vs.forEach(v => this.#moveLayer(v.id)));
-    }
   }
 
   #moveLayer(featureId: string, beforeId?: string) {
@@ -244,17 +255,6 @@ class MapEditor {
       });
     } else {
       throw TypeError(`Unexpected type: ${feature}`);
-    }
-  }
-
-  removeFeature(featureId: string) {
-    // TODO update bound features
-    this.#map.removeLayer(featureId);
-    this.#map.removeSource(featureId);
-    this.#selectedFeatures.delete(this.#features[featureId]);
-    delete this.#features[featureId];
-    if (this.#hoveredFeature?.id === featureId) {
-      this.#hoveredFeature = null;
     }
   }
 
