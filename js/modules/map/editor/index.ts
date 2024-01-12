@@ -25,15 +25,22 @@ class EditorPanel {
     map.on(events.FeatureSelectionEvent.TYPE, (e: events.FeatureSelectionEvent) => {
       this.#selectedFeatures.clear();
       e.features.forEach(f => this.#selectedFeatures.add(f));
-      // TEMP
-      this.#$featureType.text(e.features.map(f => f.id).join(", "));
+      this.#setupForm(e.features, true);
     });
     map.on(events.FeatureHoverEvent.TYPE, (e: events.FeatureHoverEvent) => {
       if (!this.#selectedFeatures.size) {
-        // TEMP
-        this.#$featureType.text(e.feature?.id ?? "");
+        this.#setupForm(e.feature ? [e.feature] : [], false);
       }
     });
+  }
+
+  #setupForm(features: geom.MapFeature[], editable: boolean) {
+    if (!features.length) {
+      this.#$featureType.text("");
+    } else {
+      this.#$featureType.text(features.map(f => f.id).join(", ")); // TEMP
+      // TODO setup edit form
+    }
   }
 
   getContainer(): HTMLElement {
