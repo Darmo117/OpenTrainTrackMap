@@ -17,9 +17,20 @@ class MapEditor {
   static readonly HIGHLIGHT_BASE_COLOR: string = "#00000000";
   static readonly HIGHLIGHT_SELECTED_COLOR: string = "#3bb2d0d0";
   static readonly HIGHLIGHT_HOVERED_COLOR: string = "#ff6d8bd0";
+
   static readonly BORDER_COLOR: string = "#101010";
 
+  static readonly CURSORS = [
+    "cursor-point",
+    "cursor-linestring",
+    "cursor-polygon",
+    "cursor-drag",
+    "cursor-grab",
+    "cursor-grabbing",
+  ] as const;
+
   readonly #map: Map;
+  readonly #$canvas: JQuery;
   readonly #features: Dict<MapFeature> = {};
   readonly #selectedFeatureIds: Set<string> = new Set();
   #draggedPoint: Point = null;
@@ -28,6 +39,8 @@ class MapEditor {
 
   constructor(map: Map) {
     this.#map = map;
+    this.#$canvas = $(this.#map.getCanvasContainer());
+
     this.#map.on("click", e => {
       if (!e.originalEvent.ctrlKey) {
         this.#map.fire("editor.selection.remove", [...this.#selectedFeatureIds]);
@@ -248,13 +261,14 @@ class MapEditor {
   }
 
   #makeFeatureHighlightable(feature: MapFeature) {
-    const canvas = this.#map.getCanvasContainer();
+    // const canvas = this.#map.getCanvasContainer();
     this.#map.on("mouseenter", feature.id, () => {
       if (!this.#selectedFeatureIds.has(feature.id) && !this.#draggedPoint) {
         this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
       }
       if (!this.#draggedPoint) { // Avoids flicker
-        canvas.style.cursor = "pointer";
+        this.#setCanvasCursor(("cursor-" + feature.geometry.type.toLowerCase()) as any);
+        // canvas.style.cursor = "pointer";
       }
     });
     this.#map.on("mouseleave", feature.id, () => {
@@ -262,9 +276,15 @@ class MapEditor {
         this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR);
       }
       if (!this.#draggedPoint) { // Avoids flicker
-        canvas.style.cursor = "";
+        this.#setCanvasCursor("cursor-grab");
+        // canvas.style.cursor = "";
       }
     });
+  }
+
+  #setCanvasCursor(id: typeof MapEditor.CURSORS[number]) {
+    this.#$canvas.addClass(id);
+    this.#$canvas.removeClass(MapEditor.CURSORS.filter(s => s !== id));
   }
 
   #makePointDraggableWithoutSelection(feature: Point) {
@@ -284,16 +304,17 @@ class MapEditor {
   }
 
   #onMovePoint(e: MapMouseEvent | MapTouchEvent) {
-    this.#map.getCanvasContainer().style.cursor = "crosshair";
+    this.#setCanvasCursor("cursor-drag");
+    // this.#map.getCanvasContainer().style.cursor = "crosshair";
     const feature = this.#draggedPoint;
     feature.onDrag(e);
     this.#updateFeatureData(feature);
-    feature.boundFeatures.forEach(
-        f => this.#updateFeatureData(f))
+    feature.boundFeatures.forEach(f => this.#updateFeatureData(f));
   }
 
   #onMoveSelected(e: MapMouseEvent | MapTouchEvent) {
-    this.#map.getCanvasContainer().style.cursor = "crosshair";
+    this.#setCanvasCursor("cursor-grabbing");
+    // this.#map.getCanvasContainer().style.cursor = "crosshair";
     this.#selectedFeatureIds.forEach(id => {
       const feature = this.#features[id];
       feature.onDrag(e);

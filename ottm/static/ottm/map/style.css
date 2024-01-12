@@ -55,6 +55,40 @@
 }
 
 /*
+ * Map editor
+ */
+
+.cursor-point {
+  /*noinspection CssUnknownTarget*/
+  cursor: url("/static/ottm/images/cursors/cursor-select-vertex.png"), default !important;
+}
+
+.cursor-linestring {
+  /*noinspection CssUnknownTarget*/
+  cursor: url("/static/ottm/images/cursors/cursor-select-line.png"), default !important;
+}
+
+.cursor-polygon {
+  /*noinspection CssUnknownTarget*/
+  cursor: url("/static/ottm/images/cursors/cursor-select-area.png"), default !important;
+}
+
+.cursor-drag {
+  /*noinspection CssUnknownTarget*/
+  cursor: url("/static/ottm/images/cursors/cursor-draw.png") 10 10, crosshair !important;
+}
+
+.cursor-grab {
+  /*noinspection CssUnknownTarget*/
+  cursor: url("/static/ottm/images/cursors/cursor-grab.png") 10 10, grab !important;
+}
+
+.cursor-grabbing {
+  /*noinspection CssUnknownTarget*/
+  cursor: url("/static/ottm/images/cursors/cursor-grabbing.png") 10 10, grabbing !important;
+}
+
+/*
  * Geometry selection
  */
 
