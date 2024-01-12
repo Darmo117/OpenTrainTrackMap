@@ -18,7 +18,7 @@ enum EditMode {
 class EditorPanel {
   readonly #$sidePanel: JQuery;
   readonly #$featureType: JQuery;
-  readonly #selectedFeatures: Set<MapFeature> = new Set;
+  readonly #selectedFeatures: Set<MapFeature> = new Set();
 
   constructor(map: Map) {
     this.#$sidePanel = $("#editor-panel").show().addClass("split");
