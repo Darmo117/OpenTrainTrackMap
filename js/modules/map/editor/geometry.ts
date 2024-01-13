@@ -144,8 +144,19 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
     super(id, geometry, properties);
   }
 
+  /**
+   * Check whether the given vertex can be appended in this feature at the given path.
+   * @param vertex The vertex to check.
+   * @param path The path.
+   * @returns True if the vertex can be appended at the given path, false otherwise.
+   */
   abstract canAppendVertex(vertex: Point, path: string): boolean;
 
+  /**
+   * Append a vertex to this feature at the given path.
+   * @param vertex The vertex to append.
+   * @param path The path.
+   */
   abstract appendVertex(vertex: Point, path: string): void;
 
   /**
@@ -404,7 +415,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     this.#drawing = true;
     if (vertices) {
       // Separate loop to avoid binding vertices unnecessarily
-      for (let i = 0; i < vertices.length; i++){
+      for (let i = 0; i < vertices.length; i++) {
         const ring = vertices[i];
         if (ring.length < 3) {
           throw new Error(`Expected at least 3 points, got ${ring.length} in ring ${i} of polygon ${id}`);
