@@ -63,7 +63,7 @@ export type SnapSegment = {
  * @param features The list of available features.
  * @param zoom The current map zoom lever.
  * @param snapDistancePx Optional. Maximum snap distance in pixels.
- * @returns The snap position if one was found, the argument otherwise.
+ * @returns Information for the snap position or null if nothing was snapped.
  */
 export function trySnapPoint(
     pos: mgl.LngLat,
@@ -181,7 +181,8 @@ type ClosestFeature = {
 };
 
 /**
- * Return the closest feature border to the given point.
+ * Return the closest point or feature border to the given point.
+ * A feature border is either a {@link geom.LineString} or a {@link geom.Polygon}’s ring.
  * @param pos Position of the point.
  * @param features List of features to search into.
  * @returns A ClosestFeature object or null if the list is empty.
