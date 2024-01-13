@@ -218,10 +218,17 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
 
     } else if (feature instanceof geom.Polygon) {
       const lines = polygonToLine(feature) as geojson.Feature<geojson.LineString | geojson.MultiLineString>;
+      let coords: geojson.Position[][];
       if (lines.geometry.type === "LineString") { // Polygon without holes
-        const nearestPoint = nearestPointOnLine(lines, pos.toArray());
+        coords = [lines.geometry.coordinates];
+      } else if (lines.geometry.type === "MultiLineString") { // Polygon with holes
+        coords = lines.geometry.coordinates;
+      }
+      for (let i = 0; i < coords.length; i++) {
+        const lineCoords = coords[i];
+        const nearestPoint = nearestPointOnLine(turfh.lineString(lineCoords), pos.toArray());
         if (!closestFeature || nearestPoint.properties.dist < closestFeature.dist) {
-          const path = "0." + nearestPoint.properties.index;
+          const path = `${i}.${nearestPoint.properties.index}`;
           closestFeature = {
             lngLat: mgl.LngLat.convert(nearestPoint.geometry.coordinates as [number, number]),
             dist: nearestPoint.properties.dist,
@@ -229,21 +236,6 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
             path: path,
             segment: feature.getSegmentVertices(path),
           };
-        }
-      } else if (lines.geometry.type === "MultiLineString") { // Polygon with holes
-        for (let i = 0; i < lines.geometry.coordinates.length; i++) {
-          const lineCoords = lines.geometry.coordinates[i];
-          const nearestPoint = nearestPointOnLine(turfh.lineString(lineCoords), pos.toArray());
-          if (!closestFeature || nearestPoint.properties.dist < closestFeature.dist) {
-            const path = `${i}.${nearestPoint.properties.index}`;
-            closestFeature = {
-              lngLat: mgl.LngLat.convert(nearestPoint.geometry.coordinates as [number, number]),
-              dist: nearestPoint.properties.dist,
-              feature: feature,
-              path: path,
-              segment: feature.getSegmentVertices(path),
-            };
-          }
         }
       }
     }
