@@ -29,7 +29,7 @@ export type ButtonOptions = {
   /**
    * Optional. A callback to invoke whenever the button is clicked.
    */
-  onClick?: (() => void);
+  onClick?: ((button: HTMLButtonElement) => void);
 };
 
 /**
@@ -69,7 +69,7 @@ export function createControlButton(options: ButtonOptions = {}): HTMLButtonElem
     button.classList.add(options.className);
   }
   if (options.onClick) {
-    button.addEventListener("click", () => options.onClick());
+    button.addEventListener("click", () => options.onClick(button));
   }
   return button;
 }

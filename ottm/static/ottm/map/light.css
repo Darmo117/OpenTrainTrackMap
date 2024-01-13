@@ -5,3 +5,12 @@
 .gutter {
   background-color: #eee;
 }
+
+/*
+ * Map controls
+ */
+
+.maplibregl-ctrl-draw button.active,
+.maplibregl-ctrl button:not(:disabled):hover {
+  background-color: rgb(0 0 0 / 10%) !important;
+}

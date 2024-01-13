@@ -49,11 +49,6 @@
   color: inherit !important;
 }
 
-.mapbox-gl-draw_ctrl-draw-btn {
-  /* Remove default background images from mapbox-draw buttons, we replace them by script */
-  background-image: none !important;
-}
-
 /*
  * Map editor
  */
@@ -86,36 +81,4 @@
 .cursor-grabbing {
   /*noinspection CssUnknownTarget*/
   cursor: url("/static/ottm/images/cursors/cursor-grabbing.png") 10 10, grabbing !important;
-}
-
-/*
- * Geometry selection
- */
-
-.marker-snapped {
-  animation: 1s infinite alternate ease-in-out border-blink-snap;
-}
-
-.layer-selected {
-  animation: 1s infinite alternate ease-in-out border-blink-selection;
-}
-
-@keyframes border-blink-snap {
-  from {
-    filter: drop-shadow(2px 2px 0 #ffe251ff) drop-shadow(-2px -2px 0 #ffe251ff) drop-shadow(2px -2px 0 #ffe251ff) drop-shadow(-2px 2px 0 #ffe251ff);
-  }
-
-  to {
-    filter: drop-shadow(2px 2px 0 #ffe25100) drop-shadow(-2px -2px 0 #ffe25100) drop-shadow(2px -2px 0 #ffe25100) drop-shadow(-2px 2px 0 #ffe25100);
-  }
-}
-
-@keyframes border-blink-selection {
-  from {
-    filter: drop-shadow(2px 2px 0 #ff5151ff) drop-shadow(-2px -2px 0 #ff5151ff) drop-shadow(2px -2px 0 #ff5151ff) drop-shadow(-2px 2px 0 #ff5151ff);
-  }
-
-  to {
-    filter: drop-shadow(2px 2px 0 #ff515100) drop-shadow(-2px -2px 0 #ff515100) drop-shadow(2px -2px 0 #ff515100) drop-shadow(-2px 2px 0 #ff515100);
-  }
 }

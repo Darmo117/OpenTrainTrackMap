@@ -107,6 +107,9 @@ class MapEditor {
       onDrawPoint: () => this.#enableDrawPointMode(),
       onDrawLine: () => this.#enableDrawLineMode(),
       onDrawPolygon: () => this.#enableDrawPolygonMode(),
+      drawPointButtonTitle: window.ottm.translate(`map.controls.edit.draw_point.tooltip`),
+      drawLineButtonTitle: window.ottm.translate(`map.controls.edit.draw_line.tooltip`),
+      drawPolygonButtonTitle: window.ottm.translate(`map.controls.edit.draw_polygon.tooltip`),
     });
     this.#map.addControl(this.#drawPointControl, "top-left");
 
@@ -278,7 +281,6 @@ class MapEditor {
     this.#enableSelectMode();
     this.#editMode = EditMode.DRAW_POINT;
     this.#setCanvasCursor("draw");
-    // TODO select button
   }
 
   #disableDrawPointMode(mousePos?: mgl.PointLike) {
@@ -288,14 +290,13 @@ class MapEditor {
 
   #quitDrawPointMode(mousePos?: mgl.PointLike) {
     this.#refreshCursor(mousePos);
-    // TODO deselect button
+    this.#drawPointControl.deactivateButton(0);
   }
 
   #enableDrawLineMode() {
     this.#enableSelectMode();
     this.#editMode = EditMode.DRAW_LINE;
     this.#setCanvasCursor("draw");
-    // TODO select button
   }
 
   #disableDrawLineMode(mousePos?: mgl.PointLike) {
@@ -305,14 +306,13 @@ class MapEditor {
 
   #quitDrawLineMode(mousePos?: mgl.PointLike) {
     this.#refreshCursor(mousePos);
-    // TODO deselect button
+    this.#drawPointControl.deactivateButton(1);
   }
 
   #enableDrawPolygonMode() {
     this.#enableSelectMode();
     this.#editMode = EditMode.DRAW_POLYGON;
     this.#setCanvasCursor("draw");
-    // TODO select button
   }
 
   #disableDrawPolygonMode(mousePos?: mgl.PointLike) {
@@ -322,7 +322,7 @@ class MapEditor {
 
   #quitDrawPolygonMode(mousePos?: mgl.PointLike) {
     this.#refreshCursor(mousePos);
-    // TODO deselect button
+    this.#drawPointControl.deactivateButton(2);
   }
 
   /**
