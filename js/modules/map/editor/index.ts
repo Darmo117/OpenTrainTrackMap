@@ -103,6 +103,7 @@ class MapEditor {
 
     // Setup map callbacks
     this.#map.on("click", e => this.#onClick(e));
+    this.#map.on("dblclick", e => this.#onDoubleClick(e));
     this.#map.on("mousemove", e => this.#onMouseMouve(e));
     this.#map.on("touchmove", e => {
       if (e.points.length !== 1) {
@@ -637,7 +638,6 @@ class MapEditor {
       this.#snapResult = null;
     }
     this.#draggedPoint = null;
-    console.log(this.#features); // DEBUG
   }
 
   /**
@@ -654,6 +654,56 @@ class MapEditor {
       this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
     }
     this.#map.fire(new events.FeatureSelectionEvent([...this.#selectedFeatures]));
+  }
+
+  /**
+   * Called when the mouse is double-clicked on the map.
+   */
+  #onDoubleClick(e: mgl.MapMouseEvent) {
+    if (this.#hoveredFeature) {
+      // Prevent default action (zoom)
+      e.preventDefault();
+      if (this.#hoveredFeature instanceof geom.LinearFeature) {
+        // Search which linear feature was clicked
+        const features: geom.LinearFeature[] = [];
+        for (const id of this.#getFeatureIds(e.point)) {
+          const feature = this.#features[id];
+          if (feature instanceof geom.LinearFeature) {
+            features.push(feature);
+          }
+        }
+
+        const snapResult = snap.trySnapPoint(e.lngLat, features, this.#map.getZoom());
+        // User clicked near a line, add a new point to it
+        if (snapResult?.type === "segment") {
+          const {feature, path, lngLat} = snapResult;
+
+          let newPoint: geom.Point;
+          let id: string;
+          do { // TODO keep global ID counter
+            id = `point-${Math.random()}`;
+          } while (this.#features[id]);
+          newPoint = new geom.Point(id, lngLat);
+          this.addFeature(newPoint);
+
+          const [p1, p2] = feature.getSegmentVertices(path);
+          const update = (feature: geom.LinearFeature, path: string) => {
+            feature.insertVertexAfter(newPoint, path);
+            this.#updateFeatureData(feature);
+          };
+          update(feature, path);
+          // Update all features that share the same segment
+          features.forEach(f => {
+            if (f instanceof geom.LinearFeature && f !== feature) {
+              const path = f.getSegmentPath(p1, p2);
+              if (path) {
+                update(f, path);
+              }
+            }
+          });
+        }
+      }
+    }
   }
 
   /**
