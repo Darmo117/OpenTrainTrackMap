@@ -125,6 +125,18 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
 
 export type LinearGeometry = geojson.LineString | geojson.Polygon;
 
+export type Action = DoNothingAction | DeleteFeatureAction | DeleteRingAction;
+export type DoNothingAction = {
+  type: "do_nothing";
+};
+export type DeleteFeatureAction = {
+  type: "delete_feature";
+};
+export type DeleteRingAction = {
+  type: "delete_ring";
+  points: Point[];
+}
+
 export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P extends LinearProperties = LinearProperties>
     extends MapFeature<G, P> {
 
@@ -132,20 +144,27 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
     super(id, geometry, properties);
   }
 
-  abstract removeVertex(vertex: Point): void;
-
-  abstract onVertexDrag(): void;
+  abstract removeVertex(vertex: Point): Action;
 
   // TODO copy data from oldVertex to newVertex if newVertex is just a point with no data
-  abstract replaceVertex(newVertex: Point, oldVertex: Point): void;
+  /**
+   * Replace a vertex of this feature by the specified one.
+   * @param newVertex The vertex to put in place of the second one.
+   * @param oldVertex The vertex to replace.
+   * @returns True if the vertex was replaced, false if it could not.
+   * In the latter case, it means that the feature has to be deleted.
+   */
+  abstract replaceVertex(newVertex: Point, oldVertex: Point): Action;
 
   abstract insertVertexAfter(vertex: Point, path: string): void;
 
   abstract getVertex(path: string): Point | null;
 
-  abstract getSegmentVertices(path: string): [mgl.LngLat, mgl.LngLat];
+  abstract getSegmentVertices(path: string): [Point, Point];
 
   abstract incrementPath(path: string): string;
+
+  abstract onVertexDrag(): void;
 }
 
 export enum PolylineDirection {
@@ -197,7 +216,7 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     this.#direction = d ?? PolylineDirection.FORWARD;
   }
 
-  // TODO prevent adding the same point twice consecutively
+  // TODO prevent adding the same point twice
   appendVertex(vertex: Point, atStart: boolean = false) {
     vertex.bindFeature(this);
     if (atStart) {
@@ -208,35 +227,43 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     this.#updateGeometry();
   }
 
-  removeVertex(vertex: Point) {
-    if (this.#vertices.length === 2) {
-      throw new Error("Cannot remove anymore point");
+  removeVertex(vertex: Point): Action {
+    if (this.#vertices.length === 2 && this.#vertices.includes(vertex)) {
+      return {type: "delete_feature"};
     }
-    // FIXME vertex may appear several times
-    const deleted = this.#vertices.splice(this.#vertices.indexOf(vertex), 1);
-    deleted.forEach(v => v.unbindFeature(this));
-    this.#updateGeometry();
-  }
-
-  onVertexDrag() {
-    this.#updateGeometry();
-  }
-
-  onDrag(pos: mgl.LngLat) {
-    // TODO
-  }
-
-  // TODO prevent adding the same point twice consecutively
-  replaceVertex(newVertex: Point, oldVertex: Point): void {
-    const i = this.#vertices.indexOf(oldVertex);
-    if (i !== -1) {
-      this.#vertices[i] = newVertex;
-      newVertex.bindFeature(this);
-      oldVertex.unbindFeature(this);
+    let i: number;
+    // Vertex may be present more than one if line snapped on itself
+    while ((i = this.#vertices.indexOf(vertex)) !== -1) {
+      this.#vertices.splice(i, 1);
     }
+    vertex.unbindFeature(this);
+    this.#updateGeometry();
+    return {type: "do_nothing"};
   }
 
-  // TODO prevent adding the same point twice consecutively
+  // TODO prevent adding the same point twice
+  replaceVertex(newVertex: Point, oldVertex: Point): Action {
+    if (this.#vertices.length === 2 && this.#vertices.includes(newVertex) && this.#vertices.includes(oldVertex)) {
+      return {type: "delete_feature"};
+    }
+    let i: number;
+    // Vertex may be present more than one if line snapped on itself
+    while ((i = this.#vertices.indexOf(oldVertex)) !== -1) {
+      if (i > 0 && this.#vertices[i - 1] === newVertex
+          || i < this.#vertices.length - 1 && this.#vertices[i + 1] === newVertex) {
+        // A neighboring point was dragged onto "oldVertex", remove the latter
+        this.#vertices.splice(i, 1);
+      } else {
+        this.#vertices[i] = newVertex;
+      }
+    }
+    newVertex.bindFeature(this);
+    oldVertex.unbindFeature(this);
+    this.#updateGeometry();
+    return {type: "do_nothing"};
+  }
+
+  // TODO prevent adding the same point twice
   insertVertexAfter(vertex: Point, path: string) {
     const index = this.#getVertexIndex(path);
     // Cannot add after last vertex
@@ -265,13 +292,21 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     }
   }
 
-  getSegmentVertices(path: string): [mgl.LngLat, mgl.LngLat] {
+  getSegmentVertices(path: string): [Point, Point] {
     const index = this.#getVertexIndex(path);
-    if (index !== null && index < this.#vertices.length) {
-      return [this.#vertices[index].lngLat, this.#vertices[index + 1].lngLat];
+    if (index !== null && index < this.#vertices.length - 1) {
+      return [this.#vertices[index], this.#vertices[index + 1]];
     } else {
       return null;
     }
+  }
+
+  onVertexDrag() {
+    this.#updateGeometry();
+  }
+
+  onDrag(pos: mgl.LngLat) {
+    // TODO
   }
 
   #getVertexIndex(path: string): number | null {
@@ -342,7 +377,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     this.properties.width = width;
   }
 
-  // TODO prevent adding the same point twice consecutively
+  // TODO prevent adding the same point twice
   appendVertex(vertex: Point, ringIndex: number) {
     if (!this.#drawing) {
       throw new Error("Cannot append points to already drawn polygon");
@@ -358,46 +393,91 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     this.#updateGeometry();
   }
 
-  removeVertex(vertex: Point) {
-    const indices: number[] = [];
-    for (let i = 0; i < this.#vertices.length; i++) {
-      if (this.#vertices[i].indexOf(vertex) > -1) {
-        if (this.#vertices[i].length <= 3) {
-          throw new Error("Cannot remove anymore point");
-        }
-        indices.push(i);
+  removeVertex(vertex: Point): Action {
+    if (this.#vertices[0].length === 3 && this.#vertices[0].includes(vertex)) {
+      return {type: "delete_feature"};
+    }
+    // Find the indices of the ring the vertex is in
+    let ring: Point[];
+    let ringI: number;
+    let vertexI: number;
+    for (ringI = 0; ringI < this.#vertices.length; ringI++) {
+      ring = this.#vertices[ringI];
+      vertexI = ring.indexOf(vertex);
+      if (vertexI !== -1) {
+        break;
       }
     }
-    indices.forEach(i => {
-      const line = this.#vertices[i];
-      // FIXME vertex may appear several times
-      const deleted = line.splice(line.indexOf(vertex), 1);
-      deleted.forEach(v => v.unbindFeature(this));
-    });
+    if (vertexI === -1) {
+      return {type: "do_nothing"};
+    }
+
+    // Remove the point from each ring and mark for deletion all rings that would end up with only 2 points
+    const pointsToDelete: Point[] = [];
+    if (ring.length === 3) {
+      // Delete the ring
+      this.#vertices.splice(ringI, 1);
+      ring.forEach(v => pointsToDelete.push(v));
+    } else {
+      // No need to loop, polygons cannot snap to themselves
+      this.#vertices.splice(ring.indexOf(vertex), 1);
+    }
+    vertex.unbindFeature(this);
     this.#updateGeometry();
-  }
-
-  onVertexDrag() {
-    this.#updateGeometry();
-  }
-
-  onDrag(pos: mgl.LngLat) {
-    // TODO
-  }
-
-  // TODO prevent adding the same point twice consecutively
-  replaceVertex(newVertex: Point, oldVertex: Point): void {
-    for (const ring of this.#vertices) {
-      const i = ring.indexOf(oldVertex);
-      if (i !== -1) {
-        ring[i] = newVertex;
-        newVertex.bindFeature(this);
-        oldVertex.unbindFeature(this);
-      }
+    if (pointsToDelete.length) {
+      return {type: "delete_ring", points: pointsToDelete};
+    } else {
+      return {type: "do_nothing"};
     }
   }
 
-  // TODO prevent adding the same point twice consecutively
+  // TODO prevent adding the same point twice
+  replaceVertex(newVertex: Point, oldVertex: Point): Action {
+    if (this.#vertices[0].length === 3 && this.#vertices[0].includes(newVertex) && this.#vertices[0].includes(oldVertex)) {
+      return {type: "delete_feature"};
+    }
+    // Find the indices of the ring the vertex is in
+    let ring: Point[];
+    let ringI: number;
+    let vertexI: number;
+    for (ringI = 0; ringI < this.#vertices.length; ringI++) {
+      ring = this.#vertices[ringI];
+      vertexI = ring.indexOf(oldVertex);
+      if (vertexI !== -1) {
+        break;
+      }
+    }
+    if (vertexI === -1) {
+      return {type: "do_nothing"};
+    }
+
+    const pointsToDelete: Point[] = [];
+    if (vertexI > 0 && ring[vertexI - 1] === newVertex
+        || vertexI < ring.length - 1 && ring[vertexI + 1] === newVertex) {
+      if (ring.length === 3) {
+        // Delete the ring
+        this.#vertices.splice(ringI, 1);
+        ring.forEach(v => pointsToDelete.push(v));
+      } else {
+        // A neighboring point was dragged onto "oldVertex", remove the latter
+        // No need to loop, polygons cannot snap to themselves
+        ring.splice(vertexI, 1);
+      }
+    } else {
+      // No need to loop, polygons cannot snap to themselves
+      ring[vertexI] = newVertex;
+    }
+    newVertex.bindFeature(this);
+    oldVertex.unbindFeature(this);
+    this.#updateGeometry();
+    if (pointsToDelete.length) {
+      return {type: "delete_ring", points: pointsToDelete};
+    } else {
+      return {type: "do_nothing"};
+    }
+  }
+
+  // TODO prevent adding the same point twice
   insertVertexAfter(vertex: Point, path: string) {
     const indices = this.#getVertexIndex(path);
     if (indices !== null && indices[0] < this.#vertices.length && indices[1] < this.#vertices[indices[0]].length) {
@@ -429,14 +509,22 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  getSegmentVertices(path: string): [mgl.LngLat, mgl.LngLat] {
+  getSegmentVertices(path: string): [Point, Point] {
     const indices = this.#getVertexIndex(path);
     if (indices !== null && indices[0] < this.#vertices.length && indices[1] < this.#vertices[indices[0]].length) {
       const ring = this.#vertices[indices[0]];
-      return [ring[indices[1]].lngLat, ring[(indices[1] + 1) % ring.length].lngLat];
+      return [ring[indices[1]], ring[(indices[1] + 1) % ring.length]];
     } else {
       return null;
     }
+  }
+
+  onVertexDrag() {
+    this.#updateGeometry();
+  }
+
+  onDrag(pos: mgl.LngLat) {
+    // TODO
   }
 
   #getVertexIndex(path: string): [number, number] | null {

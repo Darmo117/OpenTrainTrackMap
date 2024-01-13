@@ -164,7 +164,52 @@ class MapEditor {
    */
   removeFeature(featureId: string) {
     const feature = this.#features[featureId];
-    // TODO update bound features
+    if (!feature) {
+      return;
+    }
+    // Remove now to avoid potential infinite recursions
+    delete this.#features[featureId];
+
+    if (feature instanceof geom.Point) {
+      // Remove bound features
+      for (const boundFeature of feature.boundFeatures) {
+        feature.unbindFeature(boundFeature);
+        const actionResult = boundFeature.removeVertex(feature);
+        if (actionResult.type === "delete_feature") {
+          this.removeFeature(boundFeature.id);
+        } else if (actionResult.type === "delete_ring") {
+          // Delete vertices that were only bound to the feature
+          actionResult.points.forEach(p => {
+            if (p.boundFeatures.length === 1 && p.boundFeatures[0] === boundFeature) {
+              this.removeFeature(p.id);
+            } else {
+              p.unbindFeature(boundFeature);
+            }
+          });
+        }
+      }
+    } else if (feature instanceof geom.LineString) {
+      // Delete vertices that were only bound to the feature
+      for (const vertex of feature.vertices) {
+        const boundFeatures = vertex.boundFeatures;
+        vertex.unbindFeature(feature);
+        if (boundFeatures.length === 1 && boundFeatures[0] === feature) {
+          this.removeFeature(vertex.id);
+        }
+      }
+    } else if (feature instanceof geom.Polygon) {
+      // Delete vertices that were only bound to the feature
+      for (const ring of feature.vertices) {
+        for (const vertex of ring) {
+          const boundFeatures = vertex.boundFeatures;
+          vertex.unbindFeature(feature);
+          if (boundFeatures.length === 1 && boundFeatures[0] === feature) {
+            this.removeFeature(vertex.id);
+          }
+        }
+      }
+    }
+
     this.#map.removeLayer(featureId + "-highlight");
     if (feature instanceof geom.LinearFeature) {
       this.#map.removeLayer(featureId + "-border");
@@ -172,7 +217,6 @@ class MapEditor {
     this.#map.removeLayer(featureId);
     this.#map.removeSource(featureId);
     this.#selectedFeatures.delete(feature);
-    delete this.#features[featureId];
     if (this.#hoveredFeature?.id === featureId) {
       this.#hoveredFeature = null;
     }
@@ -214,9 +258,9 @@ class MapEditor {
    * @param exclude List of feature IDs to exclude from the results.
    * @returns The set of feature IDs that correspond to the criteria.
    */
-  #getFeatureIds(at?: mgl.PointLike, exclude?: string[]): Set<string> {
+  #getFeatureIds(at?: mgl.PointLike, exclude?: Set<string>): Set<string> {
     return new Set(this.#map.queryRenderedFeatures(at)
-        .filter(f => !exclude?.includes(f.source))
+        .filter(f => !exclude?.has(f.source))
         .map(f => f.source));
   }
 
@@ -428,11 +472,22 @@ class MapEditor {
    */
   #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     this.#setCanvasCursor("draw");
-    // Exclude features the dragged point is bound to
-    // TODO allow snapping on bound features
-    const excludedIds = this.#draggedPoint.boundFeatures.map(f => f.id);
+    // Prevent linear features from connecting to themselves
+    // -> exclude points bound to the bound features of the dragged point
+    const excludedIds: Set<string> = new Set();
+    this.#draggedPoint.boundFeatures.forEach(f => {
+      excludedIds.add(f.id);
+      if (f instanceof geom.LineString) {
+        f.vertices.forEach(v => excludedIds.add(v.id));
+      } else if (f instanceof geom.Polygon) {
+        f.vertices.forEach(ring => {
+          ring.forEach(v => excludedIds.add(v.id));
+        });
+      }
+    });
     // Exclude point itself
-    excludedIds.push(this.#draggedPoint.id);
+    excludedIds.add(this.#draggedPoint.id);
+    console.log(excludedIds); // DEBUG
     this.#snapResult = snap.trySnapPoint(
         e.lngLat,
         Array.from(this.#getFeatureIds(null, excludedIds)).map(id => this.#features[id]),
@@ -481,6 +536,7 @@ class MapEditor {
     if (this.#hoveredFeature && this.#hoveredFeature instanceof geom.Point) {
       e.preventDefault();
       this.#draggedPoint = this.#hoveredFeature;
+      this.#moveLayers(this.#draggedPoint.id); // Put on top
     }
   }
 
@@ -497,25 +553,55 @@ class MapEditor {
           const {feature, path} = this.#snapResult;
           point = feature.getVertex(path);
         }
+
         this.#draggedPoint.onDrag(point.lngLat);
+
         // TODO copy data from "point" to "this.#draggedPoint" if "this.#draggedPoint" is just a point with no data
+
         if (point.boundFeatures.length) {
+          const idsToRemove: string[] = [];
           // Replace point in all bound features
-          point.boundFeatures.forEach(f => f.replaceVertex(this.#draggedPoint, point))
+          for (const feature of point.boundFeatures) {
+            const actionResult = feature.replaceVertex(this.#draggedPoint, point);
+            if (actionResult.type === "delete_feature") {
+              idsToRemove.push(feature.id);
+            } else if (actionResult.type === "delete_ring") {
+              // Delete vertices that were only bound to the feature
+              actionResult.points.forEach(p => {
+                if (p.boundFeatures.length === 1 && p.boundFeatures[0] === feature) {
+                  this.removeFeature(p.id);
+                } else {
+                  p.unbindFeature(feature);
+                }
+              });
+            }
+          }
+          // Delete feature that no longer have enough points
+          idsToRemove.forEach(id => this.removeFeature(id));
         }
         this.removeFeature(point.id);
+
       } else { // segment
         const {feature, path, lngLat} = this.#snapResult;
         this.#draggedPoint.onDrag(lngLat);
         feature.insertVertexAfter(this.#draggedPoint, path);
         // TODO insert vertex to all features that have the exact same two points as a segment
       }
-      this.#updateFeatureData(this.#draggedPoint);
-      this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
-      this.#moveLayers(this.#draggedPoint.id); // Put point on top
+      this.#draggedPoint.boundFeatures.forEach(f => {
+        // Feature may have been deleted
+        if (this.#features[f.id]) {
+          this.#updateFeatureData(f);
+        }
+      });
+      // Dragged point may have been deleted when the linear feature it was attached to was deleted
+      if (this.#features[this.#draggedPoint.id]) {
+        this.#updateFeatureData(this.#draggedPoint);
+        this.#moveLayers(this.#draggedPoint.id); // Put point on top
+      }
       this.#snapResult = null;
     }
     this.#draggedPoint = null;
+    console.log(this.#features); // DEBUG
   }
 
   /**
@@ -547,6 +633,7 @@ export default function initMapEditor(map: mgl.Map) {
   const mapEditor = new MapEditor(map);
 
   // TEMP
+  const point0 = new geom.Point("point0", new mgl.LngLat(1.4500, 43.6005));
   const point1 = new geom.Point("point1", new mgl.LngLat(1.4500, 43.6000));
   const point2 = new geom.Point("point2", new mgl.LngLat(1.4505, 43.6000));
   const point3 = new geom.Point("point3", new mgl.LngLat(1.4505, 43.6005));
@@ -568,6 +655,7 @@ export default function initMapEditor(map: mgl.Map) {
   ]);
   polygon1.color = "#00FFA6";
   map.on("load", () => {
+    mapEditor.addFeature(point0);
     mapEditor.addFeature(point1);
     mapEditor.addFeature(point2);
     mapEditor.addFeature(line1);

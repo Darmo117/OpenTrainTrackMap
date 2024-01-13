@@ -52,7 +52,7 @@ export function trySnapPoint(
       point: res.feature,
     };
   } else if (res.feature instanceof geom.LinearFeature) {
-    const vertexPath = checkSnapToSegmentVertex(res, 0.0025);
+    const vertexPath = checkSnapToSegmentVertex(res, features, 0.0025);
     if (vertexPath) {
       return {
         type: "segment_vertex",
@@ -73,23 +73,39 @@ export function trySnapPoint(
 /**
  * Given a non-point feature, check if we should snap to one of the vertices of the specified segment.
  * @param feature The feature to check.
+ * @param features List of allowed features.
+ * If a vertex of the feature segment is not in this list, it cannot be snapped to.
  * @param snapVertexPriorityDistance The distance that needs to be undercut to trigger priority to vertices.
  * @returns The path of the selected segment vertex or null if the point is too far from a vertex.
  */
-function checkSnapToSegmentVertex(feature: ClosestFeature, snapVertexPriorityDistance: number): string | null {
+function checkSnapToSegmentVertex(
+    feature: ClosestFeature,
+    features: geom.MapFeature[],
+    snapVertexPriorityDistance: number
+): string | null {
   const [A, B] = feature.segment;
-  const C = [feature.lngLat.lng, feature.lngLat.lat];
-  const distanceAC = distance(A.toArray(), C);
-  const distanceBC = distance(B.toArray(), C);
-  let closestVertexPath: string;
-  if (distanceAC < distanceBC) {
-    closestVertexPath = feature.path;
-  } else {
-    // Get next vertex
-    closestVertexPath = (feature.feature as geom.LinearFeature).incrementPath(feature.path);
+  const aIncluded = features.includes(A);
+  const bIncluded = features.includes(B);
+
+  if (!aIncluded && !bIncluded) {
+    return null;
   }
-  const shortestDistance = distanceAC < distanceBC ? distanceAC : distanceBC;
-  return shortestDistance < snapVertexPriorityDistance ? closestVertexPath : null;
+
+  const C = [feature.lngLat.lng, feature.lngLat.lat];
+  const distanceAC = distance(A.lngLat.toArray(), C);
+  const distanceBC = distance(B.lngLat.toArray(), C);
+
+  if (aIncluded && !bIncluded || aIncluded && bIncluded && distanceAC < distanceBC) {
+    return distanceAC < snapVertexPriorityDistance
+        ? feature.path
+        : null;
+  } else if (!aIncluded && bIncluded || aIncluded && bIncluded && distanceBC < distanceAC) {
+    return distanceBC < snapVertexPriorityDistance
+        ? (feature.feature as geom.LinearFeature).incrementPath(feature.path)
+        : null;
+  } else {
+    return null;
+  }
 }
 
 /**
@@ -128,7 +144,7 @@ type ClosestFeature = {
   /**
    * Optional. If the feature is not a point, the vertices of segment on which the point was projected.
    */
-  segment?: [mgl.LngLat, mgl.LngLat],
+  segment?: [geom.Point, geom.Point],
 };
 
 /**
@@ -153,7 +169,9 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
 
     } else if (feature instanceof geom.LineString) {
       const nearestPoint = nearestPointOnLine(feature, pos.toArray());
-      if (!closestFeature || nearestPoint.properties.dist < closestFeature.dist) {
+      if ((!closestFeature || nearestPoint.properties.dist < closestFeature.dist)
+          // Segment index may be > than actual number of segments on line feature
+          && nearestPoint.properties.index < feature.vertices.length - 1) {
         const path = "" + nearestPoint.properties.index;
         closestFeature = {
           lngLat: mgl.LngLat.convert(nearestPoint.geometry.coordinates as [number, number]),
