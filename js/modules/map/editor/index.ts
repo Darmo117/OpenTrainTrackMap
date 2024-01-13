@@ -73,11 +73,23 @@ class MapEditor {
   readonly #sidePanel: EditorPanel;
   readonly #features: types.Dict<geom.MapFeature> = {};
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();
-  #hoveredFeature: geom.MapFeature;
+  #hoveredFeature: geom.MapFeature = null;
   #draggedPoint: geom.Point = null;
   #snapResult: snap.SnapResult & {
-    featuresWithSameSegment?: { feature: geom.LinearFeature, path: string }[];
-  } | null;
+    /**
+     * The list of features that have the same segment as the snapped one.
+     */
+    featuresWithSameSegment?: {
+      /**
+       * The feature.
+       */
+      feature: geom.LinearFeature,
+      /**
+       * The path to the segment on the feature.
+       */
+      path: string
+    }[];
+  } | null = null;
   #editMode: EditMode = EditMode.SELECT;
 
   /**
