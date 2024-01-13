@@ -7,20 +7,53 @@ import nearestPointOnLine from "@turf/nearest-point-on-line";
 
 import * as geom from "./geometry";
 
+/**
+ * Union of the object types returned by {@link trySnapPoint}.
+ */
 export type SnapResult = SnapPoint | SnapSegmentVertex | SnapSegment;
+
+/**
+ * Object returned by {@link trySnapPoint} when the point was snapped to an isolated point.
+ */
 export type SnapPoint = {
   type: "point";
+  /**
+   * The snapped point.
+   */
   point: geom.Point;
 };
+
+/**
+ * Object returned by {@link trySnapPoint} when the point was snapped to segment’s vertex.
+ */
 export type SnapSegmentVertex = {
   type: "segment_vertex";
+  /**
+   * The feature the snapped vertex belongs to.
+   */
   feature: geom.LinearFeature;
+  /**
+   * The path to the snapped vertex in the feature.
+   */
   path: string;
 }
+
+/**
+ * Object returned by {@link trySnapPoint} when the point was snapped to segment.
+ */
 export type SnapSegment = {
   type: "segment";
+  /**
+   * The feature the snapped segment belongs to.
+   */
   feature: geom.LinearFeature;
+  /**
+   * The path to the snapped segment in the feature.
+   */
   path: string;
+  /**
+   * The snap position on the segment.
+   */
   lngLat: mgl.LngLat;
 };
 
