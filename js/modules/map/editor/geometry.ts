@@ -534,12 +534,18 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
  * As such, paths must respect the following format:
  * * `"<ring>.<vertex>"`, where `<ring>` is the index of a ring
  *   and `<vertex>` is the index of the vertex/segment to target in that ring.
+ *
+ * Unlike {@link LineString}s, vertices cannot be added to a polygon’s rings after they have been locked.
+ * A ring usually becomes locked whenever a user finished drawing it.
  */
 export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
   static readonly #PATH_PATTERN = /^(\d+)\.(\d+)$/;
 
   readonly #vertices: Point[][] = [];
-  #drawing: boolean = false; // TODO One for each ring
+  /**
+   * Indicates for each ring whether it is locked (true) or not (false).
+   */
+  readonly #lockStatus: boolean[] = [];
 
   /**
    * Create a polygon.
@@ -553,7 +559,6 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
       type: "Polygon",
       coordinates: [[]],
     }, {});
-    this.#drawing = true;
     if (vertices) {
       // Separate loop to avoid binding vertices unnecessarily
       for (let i = 0; i < vertices.length; i++) {
@@ -572,9 +577,12 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
           }
           this.appendVertex(vertex, path);
         }
+        this.lockRing(ringI);
       }
+    } else {
+      // Unlock exterior ring for later drawing
+      this.#lockStatus.push(false);
     }
-    this.#drawing = false;
   }
 
   /**
@@ -585,22 +593,33 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     return [...this.#vertices.map(vs => [...vs])];
   }
 
-  get drawing(): boolean {
-    return this.#drawing;
+  /**
+   * Indicate whether the given ring is locked.
+   * @param index Index of the ring to check.
+   * @returns True if the ring can no longer be modified, false if it still can or does not exist.
+   */
+  isRingLocked(index: number): boolean {
+    return this.#lockStatus[index] ?? false;
   }
 
-  set drawing(drawing: boolean) {
-    this.#drawing = drawing;
+  /**
+   * Lock the ring at the given index, rendering it permanently non-editable.
+   * Does nothing if the ring does not exist.
+   * @param index Index of the ring to lock.
+   */
+  lockRing(index: number) {
+    if (this.#lockStatus[index] !== undefined) {
+      this.#lockStatus[index] = true;
+    }
   }
 
   canAppendVertex(vertex: Point, path: string): boolean {
-    if (!this.canAcceptVertex(vertex) || !this.#drawing) {
+    const indices = this.#getVertexIndex(path);
+    if (!this.canAcceptVertex(vertex) || indices === null || this.isRingLocked(indices[0])) {
       return false;
     }
-    const indices = this.#getVertexIndex(path);
-    return indices !== null
-        && (indices[0] < this.#vertices.length && (indices[1] === 0 || indices[1] === this.#vertices[indices[0]].length)
-            || indices[0] === this.#vertices.length && indices[1] === 0);
+    return indices[0] < this.#vertices.length && (indices[1] === 0 || indices[1] === this.#vertices[indices[0]].length)
+        || indices[0] === this.#vertices.length && indices[1] === 0;
   }
 
   appendVertex(vertex: Point, path: string) {
@@ -611,6 +630,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     let ring: Point[];
     if (ringI === this.#vertices.length) {
       this.#vertices.push(ring = []);
+      this.#lockStatus.push(false); // Make new ring drawable
     } else {
       ring = this.#vertices[ringI];
     }
