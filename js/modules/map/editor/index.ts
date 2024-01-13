@@ -472,6 +472,7 @@ class MapEditor {
    */
   #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     this.#setCanvasCursor("draw");
+
     // Prevent linear features from connecting to themselves
     // -> exclude points bound to the bound features of the dragged point
     const excludedIds: Set<string> = new Set();
@@ -487,33 +488,45 @@ class MapEditor {
     });
     // Exclude point itself
     excludedIds.add(this.#draggedPoint.id);
-    console.log(excludedIds); // DEBUG
-    this.#snapResult = snap.trySnapPoint(
+    const snapResult = snap.trySnapPoint(
         e.lngLat,
         Array.from(this.#getFeatureIds(null, excludedIds)).map(id => this.#features[id]),
         this.#map.getZoom(),
     );
-    if (this.#snapResult) {
-      if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
+    this.#snapResult = null;
+
+    if (snapResult) {
+      if (snapResult.type === "point" || snapResult.type === "segment_vertex") {
         let point: geom.Point;
-        if (this.#snapResult.type === "point") {
-          point = this.#snapResult.point;
+        if (snapResult.type === "point") {
+          point = snapResult.point;
         } else {
-          const {feature, path} = this.#snapResult;
+          const {feature, path} = snapResult;
           point = feature.getVertex(path);
         }
-        // Move dragged point to the snap position
-        this.#draggedPoint.onDrag(point.lngLat);
-        // TODO show "point" in side panel and highlight it
+        const canSnap = point.boundFeatures.every(
+            f => f.canAcceptVertex(this.#draggedPoint));
+        if (canSnap) {
+          this.#snapResult = snapResult;
+          // Move dragged point to the snap position
+          this.#draggedPoint.onDrag(point.lngLat);
+          // TODO show "point" in side panel and highlight it
+        }
       } else { // segment
-        const {feature, lngLat} = this.#snapResult;
-        // Move dragged point to the snap position
-        this.#draggedPoint.onDrag(lngLat);
-        // TODO show "feature" in side panel and highlight it
+        const {feature, path, lngLat} = snapResult;
+        const canSnap = feature.canInsertVertex(this.#draggedPoint, path);
+        if (canSnap) {
+          this.#snapResult = snapResult;
+          // Move dragged point to the snap position
+          this.#draggedPoint.onDrag(lngLat);
+          // TODO show "feature" in side panel and highlight it
+        }
       }
+
     } else {
       this.#draggedPoint.onDrag(e.lngLat);
     }
+
     this.#updateFeatureData(this.#draggedPoint);
     this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
   }
@@ -558,27 +571,8 @@ class MapEditor {
 
         // TODO copy data from "point" to "this.#draggedPoint" if "this.#draggedPoint" is just a point with no data
 
-        if (point.boundFeatures.length) {
-          const idsToRemove: string[] = [];
-          // Replace point in all bound features
-          for (const feature of point.boundFeatures) {
-            const actionResult = feature.replaceVertex(this.#draggedPoint, point);
-            if (actionResult.type === "delete_feature") {
-              idsToRemove.push(feature.id);
-            } else if (actionResult.type === "delete_ring") {
-              // Delete vertices that were only bound to the feature
-              actionResult.points.forEach(p => {
-                if (p.boundFeatures.length === 1 && p.boundFeatures[0] === feature) {
-                  this.removeFeature(p.id);
-                } else {
-                  p.unbindFeature(feature);
-                }
-              });
-            }
-          }
-          // Delete feature that no longer have enough points
-          idsToRemove.forEach(id => this.removeFeature(id));
-        }
+        point.boundFeatures.forEach(
+            f => f.replaceVertex(this.#draggedPoint, point));
         this.removeFeature(point.id);
 
       } else { // segment
@@ -587,17 +581,9 @@ class MapEditor {
         feature.insertVertexAfter(this.#draggedPoint, path);
         // TODO insert vertex to all features that have the exact same two points as a segment
       }
-      this.#draggedPoint.boundFeatures.forEach(f => {
-        // Feature may have been deleted
-        if (this.#features[f.id]) {
-          this.#updateFeatureData(f);
-        }
-      });
-      // Dragged point may have been deleted when the linear feature it was attached to was deleted
-      if (this.#features[this.#draggedPoint.id]) {
-        this.#updateFeatureData(this.#draggedPoint);
-        this.#moveLayers(this.#draggedPoint.id); // Put point on top
-      }
+      this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
+      this.#updateFeatureData(this.#draggedPoint);
+      this.#moveLayers(this.#draggedPoint.id); // Put point on top
       this.#snapResult = null;
     }
     this.#draggedPoint = null;

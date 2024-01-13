@@ -144,7 +144,27 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
     super(id, geometry, properties);
   }
 
+  /**
+   * Remove the given vertex from this feature.
+   * @param vertex The vertex to remove.
+   * @returns The action to perform.
+   */
   abstract removeVertex(vertex: Point): Action;
+
+  /**
+   * Check whether this feature can accept the given vertex anywhere.
+   * @param vertex The vertex to check.
+   * @returns True if this feature is accepted, false otherwise.
+   */
+  abstract canAcceptVertex(vertex: Point): boolean
+
+  /**
+   * Check whether the given vertex can be inserted in this feature at the given path.
+   * @param vertex The vertex to check.
+   * @param path The path.
+   * @returns True if the vertex can be inserted at the given path, false otherwise.
+   */
+  abstract canInsertVertex(vertex: Point, path: string): boolean
 
   // TODO copy data from oldVertex to newVertex if newVertex is just a point with no data
   /**
@@ -152,18 +172,40 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
    * @param newVertex The vertex to put in place of the second one.
    * @param oldVertex The vertex to replace.
    * @returns True if the vertex was replaced, false if it could not.
-   * In the latter case, it means that the feature has to be deleted.
    */
-  abstract replaceVertex(newVertex: Point, oldVertex: Point): Action;
+  abstract replaceVertex(newVertex: Point, oldVertex: Point): void;
 
+  /**
+   * Insert the given vertex after the specified path.
+   * @param vertex The vertex to insert.
+   * @param path The path to insert the vertex after.
+   */
   abstract insertVertexAfter(vertex: Point, path: string): void;
 
+  /**
+   * Get the vertex at the given path.
+   * @param path The path to the point.
+   * @returns The vertex for the path or null if none matched.
+   */
   abstract getVertex(path: string): Point | null;
 
-  abstract getSegmentVertices(path: string): [Point, Point];
+  /**
+   * Get the vertices of the segment at the given path.
+   * @param path The path to the segment.
+   * @returns The vertices for the path or null if none matched.
+   */
+  abstract getSegmentVertices(path: string): [Point, Point] | null;
 
+  /**
+   * Increment the point index in the given path.
+   * @param path The path.
+   * @returns The incremented path.
+   */
   abstract incrementPath(path: string): string;
 
+  /**
+   * Called when one of the vertices of this feature is being dragged.
+   */
   abstract onVertexDrag(): void;
 }
 
@@ -241,37 +283,35 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     return {type: "do_nothing"};
   }
 
-  // TODO prevent adding the same point twice
-  replaceVertex(newVertex: Point, oldVertex: Point): Action {
-    if (this.#vertices.length === 2 && this.#vertices.includes(newVertex) && this.#vertices.includes(oldVertex)) {
-      return {type: "delete_feature"};
+  canAcceptVertex(vertex: Point): boolean {
+    return !this.#vertices.includes(vertex);
+  }
+
+  canInsertVertex(vertex: Point, path: string): boolean {
+    const i = this.#getVertexIndex(path);
+    // Cannot add after last vertex
+    return i !== null
+        && i < this.#vertices.length - 1
+        && !this.#vertices.includes(vertex);
+  }
+
+  replaceVertex(newVertex: Point, oldVertex: Point) {
+    if (!this.canAcceptVertex(newVertex)) {
+      return;
     }
-    let i: number;
-    // Vertex may be present more than one if line snapped on itself
-    while ((i = this.#vertices.indexOf(oldVertex)) !== -1) {
-      if (i > 0 && this.#vertices[i - 1] === newVertex
-          || i < this.#vertices.length - 1 && this.#vertices[i + 1] === newVertex) {
-        // A neighboring point was dragged onto "oldVertex", remove the latter
-        this.#vertices.splice(i, 1);
-      } else {
-        this.#vertices[i] = newVertex;
-      }
-    }
+    this.#vertices[this.#vertices.indexOf(oldVertex)] = newVertex;
     newVertex.bindFeature(this);
     oldVertex.unbindFeature(this);
     this.#updateGeometry();
-    return {type: "do_nothing"};
   }
 
-  // TODO prevent adding the same point twice
   insertVertexAfter(vertex: Point, path: string) {
-    const index = this.#getVertexIndex(path);
-    // Cannot add after last vertex
-    if (index !== null && index < this.#vertices.length - 1) {
-      vertex.bindFeature(this);
-      this.#vertices.splice(index + 1, 0, vertex);
-      this.#updateGeometry();
+    if (!this.canInsertVertex(vertex, path)) {
+      return;
     }
+    vertex.bindFeature(this);
+    this.#vertices.splice(this.#getVertexIndex(path) + 1, 0, vertex);
+    this.#updateGeometry();
   }
 
   incrementPath(path: string): string {
@@ -292,7 +332,7 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     }
   }
 
-  getSegmentVertices(path: string): [Point, Point] {
+  getSegmentVertices(path: string): [Point, Point] | null {
     const index = this.#getVertexIndex(path);
     if (index !== null && index < this.#vertices.length - 1) {
       return [this.#vertices[index], this.#vertices[index + 1]];
@@ -431,64 +471,47 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  // TODO prevent adding the same point twice
-  replaceVertex(newVertex: Point, oldVertex: Point): Action {
-    if (this.#vertices[0].length === 3 && this.#vertices[0].includes(newVertex) && this.#vertices[0].includes(oldVertex)) {
-      return {type: "delete_feature"};
+  canAcceptVertex(vertex: Point): boolean {
+    return this.#vertices.every(ring => !ring.includes(vertex));
+  }
+
+  canInsertVertex(vertex: Point, path: string): boolean {
+    const indices = this.#getVertexIndex(path);
+    return indices !== null
+        && indices[0] < this.#vertices.length
+        && indices[1] < this.#vertices[indices[0]].length
+        && this.#vertices.every(ring => !ring.includes(vertex));
+  }
+
+  replaceVertex(newVertex: Point, oldVertex: Point) {
+    if (!this.canAcceptVertex(newVertex)) {
+      return;
     }
-    // Find the indices of the ring the vertex is in
-    let ring: Point[];
-    let ringI: number;
-    let vertexI: number;
-    for (ringI = 0; ringI < this.#vertices.length; ringI++) {
-      ring = this.#vertices[ringI];
-      vertexI = ring.indexOf(oldVertex);
-      if (vertexI !== -1) {
+    for (const ring of this.#vertices) {
+      const i = ring.indexOf(oldVertex);
+      if (i !== -1) {
+        ring[i] = newVertex;
+        newVertex.bindFeature(this);
+        oldVertex.unbindFeature(this);
+        this.#updateGeometry();
         break;
       }
     }
-    if (vertexI === -1) {
-      return {type: "do_nothing"};
-    }
-
-    const pointsToDelete: Point[] = [];
-    if (vertexI > 0 && ring[vertexI - 1] === newVertex
-        || vertexI < ring.length - 1 && ring[vertexI + 1] === newVertex) {
-      if (ring.length === 3) {
-        // Delete the ring
-        this.#vertices.splice(ringI, 1);
-        ring.forEach(v => pointsToDelete.push(v));
-      } else {
-        // A neighboring point was dragged onto "oldVertex", remove the latter
-        // No need to loop, polygons cannot snap to themselves
-        ring.splice(vertexI, 1);
-      }
-    } else {
-      // No need to loop, polygons cannot snap to themselves
-      ring[vertexI] = newVertex;
-    }
-    newVertex.bindFeature(this);
-    oldVertex.unbindFeature(this);
-    this.#updateGeometry();
-    if (pointsToDelete.length) {
-      return {type: "delete_ring", points: pointsToDelete};
-    } else {
-      return {type: "do_nothing"};
-    }
   }
 
-  // TODO prevent adding the same point twice
   insertVertexAfter(vertex: Point, path: string) {
-    const indices = this.#getVertexIndex(path);
-    if (indices !== null && indices[0] < this.#vertices.length && indices[1] < this.#vertices[indices[0]].length) {
-      vertex.bindFeature(this);
-      if (indices[1] === this.#vertices[indices[0]].length - 1) {
-        this.#vertices[indices[0]].push(vertex);
-      } else {
-        this.#vertices[indices[0]].splice(indices[1] + 1, 0, vertex);
-      }
-      this.#updateGeometry();
+    if (!this.canInsertVertex(vertex, path)) {
+      return;
     }
+    const [ringI, vertexI] = this.#getVertexIndex(path);
+    vertex.bindFeature(this);
+    const ring = this.#vertices[ringI];
+    if (vertexI === ring.length - 1) {
+      ring.push(vertex);
+    } else {
+      ring.splice(vertexI + 1, 0, vertex);
+    }
+    this.#updateGeometry();
   }
 
   incrementPath(path: string): string {
@@ -509,7 +532,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  getSegmentVertices(path: string): [Point, Point] {
+  getSegmentVertices(path: string): [Point, Point] | null {
     const indices = this.#getVertexIndex(path);
     if (indices !== null && indices[0] < this.#vertices.length && indices[1] < this.#vertices[indices[0]].length) {
       const ring = this.#vertices[indices[0]];
