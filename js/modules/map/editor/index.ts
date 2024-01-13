@@ -724,26 +724,74 @@ class MapEditor {
    */
   #onClick(e: mgl.MapMouseEvent) {
     if (this.#hoveredFeature) {
-      if (this.#editMode === EditMode.DRAW_POINT) {
-        let feature: geom.MapFeature;
-        if (this.#hoveredFeature instanceof Point) {
-          // Select existing point instead of creating a new one
-          feature = this.#hoveredFeature;
-        } else if (!(feature = this.#createNewPointOnHoveredSegment(e))) {
-          feature = this.#createNewPoint(e.lngLat);
-        }
-        this.#selectFeature(feature, false);
-        this.#disableDrawPointMode(e.point);
-      } else {
-        const keepSelection = e.originalEvent.ctrlKey && this.#editMode === EditMode.SELECT;
-        this.#selectFeature(this.#hoveredFeature, keepSelection);
+      switch (this.#editMode) {
+        case EditMode.SELECT:
+          const keepSelection = e.originalEvent.ctrlKey && this.#editMode === EditMode.SELECT;
+          this.#selectFeature(this.#hoveredFeature, keepSelection);
+          break;
+        case EditMode.DRAW_POINT:
+          this.#drawPointOnFeature(e);
+          break;
+        case EditMode.DRAW_LINE:
+          this.#drawLineVertexOnFeature(e);
+          break;
+        case EditMode.DRAW_POLYGON:
+          this.#drawPolygonVertexOnFeature(e);
+          break;
+        case EditMode.MOVE_FEATURES:
+          break; // TODO
       }
-    } else if (this.#editMode === EditMode.DRAW_POINT) {
-      this.#selectFeature(this.#createNewPoint(e.lngLat), false);
-      this.#disableDrawPointMode(e.point);
     } else {
-      this.#clearSelection();
+      switch (this.#editMode) {
+        case EditMode.SELECT:
+          this.#clearSelection();
+          break;
+        case EditMode.DRAW_POINT:
+          this.#drawPoint(e);
+          break;
+        case EditMode.DRAW_LINE:
+          this.#drawLineVertex(e);
+          break;
+        case EditMode.DRAW_POLYGON:
+          this.#drawPolygonVertex(e);
+          break;
+        case EditMode.MOVE_FEATURES:
+          break; // TODO
+      }
     }
+  }
+
+  #drawPoint(e: mgl.MapMouseEvent) {
+    this.#selectFeature(this.#createNewPoint(e.lngLat), false);
+    this.#disableDrawPointMode(e.point);
+  }
+
+  #drawLineVertex(e: mgl.MapMouseEvent) {
+    // TODO
+  }
+
+  #drawPolygonVertex(e: mgl.MapMouseEvent) {
+    // TODO
+  }
+
+  #drawPointOnFeature(e: mgl.MapMouseEvent) {
+    let feature: geom.MapFeature;
+    if (this.#hoveredFeature instanceof Point) {
+      // Select existing point instead of creating a new one
+      feature = this.#hoveredFeature;
+    } else if (!(feature = this.#createNewPointOnHoveredSegment(e))) {
+      feature = this.#createNewPoint(e.lngLat);
+    }
+    this.#selectFeature(feature, false);
+    this.#disableDrawPointMode(e.point);
+  }
+
+  #drawLineVertexOnFeature(e: mgl.MapMouseEvent) {
+    // TODO
+  }
+
+  #drawPolygonVertexOnFeature(e: mgl.MapMouseEvent) {
+    // TODO
   }
 
   /**
