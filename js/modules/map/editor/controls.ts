@@ -35,8 +35,12 @@ export type DrawControlOptions = {
 };
 
 /**
- * A control that indicates the current bearing when the map is rotated.
- * Clicking this control will reset both the bearing and pitch to 0°.
+ * A control that shows 3 buttons to draw points, lines and polygons.
+ * When a button is clicked, it remains active until the {@link deactivateButton} method is called
+ * for that button’s index. Indices are the following:
+ * * 0: draw point button
+ * * 1: draw line button
+ * * 2: draw polygon button
  */
 export default class DrawControl implements mgl.IControl {
   readonly #container: HTMLDivElement;
@@ -82,6 +86,10 @@ export default class DrawControl implements mgl.IControl {
     });
   }
 
+  /**
+   * Deactivate the button at the given index.
+   * @param index The button’s index. Should be between 0 and 3 inclusive.
+   */
   deactivateButton(index: number) {
     this.#buttons[index]?.classList.remove("active");
   }
