@@ -83,11 +83,11 @@ class MapEditor {
       /**
        * The feature.
        */
-      feature: geom.LinearFeature,
+      feature: geom.LinearFeature;
       /**
        * The path to the segment on the feature.
        */
-      path: string
+      path: string;
     }[];
   } | null = null;
   #editMode: EditMode = EditMode.SELECT;
