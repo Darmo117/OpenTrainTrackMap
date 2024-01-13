@@ -295,25 +295,11 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
   abstract getSegmentVertices(path: string): [Point, Point] | null;
 
   /**
-   * Return the path for the given vertex.
-   * @param vertex The vertex to get the path of.
-   * @returns The vertex’ path or null if it is not in this feature.
-   */
-  abstract getVertexPath(vertex: Point): string | null;
-
-  /**
    * Increment the point index in the given path.
    * @param path The path.
    * @returns The incremented path.
    */
   abstract incrementPath(path: string): string;
-
-  /**
-   * Return the path with the lowest indices.
-   * @param paths A list of paths.
-   * @returns The path with the lowest indices or null if the list is empty or all paths were invalid.
-   */
-  abstract getFirstPath(paths: string[]): string | null;
 
   abstract getSegmentPath(v1: Point, v2: Point): string | null;
 
@@ -505,11 +491,6 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     }
   }
 
-  getVertexPath(vertex: Point): string | null {
-    const i = this.#vertices.indexOf(vertex);
-    return i !== -1 ? "" + i : null;
-  }
-
   incrementPath(path: string): string {
     const index = this.#getVertexIndex(path);
     if (index !== null) {
@@ -517,17 +498,6 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     } else {
       return null;
     }
-  }
-
-  getFirstPath(paths: string[]): string | null {
-    const sortedPaths = paths
-        .map((p): [string, number] => [p, this.#getVertexIndex(p)])
-        .filter(([_, i]) => i !== null)
-        .sort();
-    if (sortedPaths.length) {
-      return sortedPaths[0][0];
-    }
-    return null;
   }
 
   getSegmentPath(v1: Point, v2: Point): string | null {
@@ -771,16 +741,6 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  getVertexPath(vertex: Point): string | null {
-    for (let ringI = 0; ringI < this.#vertices.length; ringI++) {
-      const i = this.#vertices[ringI].indexOf(vertex);
-      if (i !== -1) {
-        return `${ringI}.${i}`;
-      }
-    }
-    return null;
-  }
-
   incrementPath(path: string): string {
     const indices = this.#getVertexIndex(path);
     if (indices !== null && indices[0] < this.#vertices.length) {
@@ -788,18 +748,6 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     } else {
       return null;
     }
-  }
-
-  getFirstPath(paths: string[]): string | null {
-    const sortedPaths = paths
-        .map((p): [string, [number, number]] => [p, this.#getVertexIndex(p)])
-        .filter(([_, i]) => i !== null)
-        .sort(([_1, i1], [_2, i2]) =>
-            i1[0] !== i2[0] ? i1[0] - i2[0] : i1[1] - i2[1]);
-    if (sortedPaths.length) {
-      return sortedPaths[0][0];
-    }
-    return null;
   }
 
   getSegmentPath(v1: Point, v2: Point): string | null {
