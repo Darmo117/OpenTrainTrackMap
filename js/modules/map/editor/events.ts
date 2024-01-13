@@ -36,7 +36,7 @@ export class FeatureSelectionEvent extends MapEditorEvent {
    * Create a new event.
    * @param features The selected features.
    */
-  constructor(features: geom.MapFeature[]) {
+  constructor(features: geom.MapFeature[] = []) {
     super(FeatureSelectionEvent.TYPE);
     this.features = features;
   }

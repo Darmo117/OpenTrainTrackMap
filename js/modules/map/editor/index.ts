@@ -5,14 +5,16 @@ import Split from "split.js";
 import * as types from "../../types";
 import * as events from "./events";
 import * as geom from "./geometry";
+import {Point} from "./geometry";
 import * as snap from "./snap";
+import DrawControl from "./controls";
 
 enum EditMode {
   SELECT = "select",
-  MOVE_FEATURES = "move_features",
   DRAW_POINT = "draw_point",
-  DRAW_POLYLINE = "draw_polyline",
+  DRAW_LINE = "draw_line",
   DRAW_POLYGON = "draw_polygon",
+  MOVE_FEATURES = "move_features",
 }
 
 class EditorPanel {
@@ -71,6 +73,7 @@ class MapEditor {
   readonly #map: mgl.Map;
   readonly #$canvas: JQuery;
   readonly #sidePanel: EditorPanel;
+  readonly #drawPointControl: DrawControl;
   readonly #features: types.Dict<geom.MapFeature> = {};
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();
   #hoveredFeature: geom.MapFeature = null;
@@ -100,6 +103,12 @@ class MapEditor {
     this.#map = map;
     this.#$canvas = $(this.#map.getCanvasContainer());
     this.#sidePanel = new EditorPanel(this.#map);
+    this.#drawPointControl = new DrawControl({
+      onDrawPoint: () => this.#onDrawPoint(),
+      onDrawLine: () => this.#onDrawLine(),
+      onDrawPolygon: () => this.#onDrawPolygon(),
+    });
+    this.#map.addControl(this.#drawPointControl, "top-left");
 
     // Setup map callbacks
     this.#map.on("click", e => this.#onClick(e));
@@ -236,6 +245,39 @@ class MapEditor {
     if (this.#hoveredFeature?.id === featureId) {
       this.#hoveredFeature = null;
     }
+  }
+
+  #onDrawPoint() {
+    this.#editMode = EditMode.DRAW_POINT;
+    this.#setCanvasCursor("draw");
+    // TODO select button
+  }
+
+  #disableDrawPoint() {
+    this.#editMode = EditMode.SELECT;
+    // TODO deselect button
+  }
+
+  #onDrawLine() {
+    this.#editMode = EditMode.DRAW_LINE;
+    this.#setCanvasCursor("draw");
+    // TODO select button
+  }
+
+  #disableDrawLine() {
+    this.#editMode = EditMode.SELECT;
+    // TODO deselect button
+  }
+
+  #onDrawPolygon() {
+    this.#editMode = EditMode.DRAW_POLYGON;
+    this.#setCanvasCursor("draw");
+    // TODO select button
+  }
+
+  #disableDrawPolygon() {
+    this.#editMode = EditMode.SELECT;
+    // TODO deselect button
   }
 
   /**
@@ -453,33 +495,25 @@ class MapEditor {
   #onMouseMouve(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     const hoveredFeature: geom.MapFeature = this.#getFeatureUnderMouse(e.point);
     if (hoveredFeature) {
-      if (this.#hoveredFeature && this.#hoveredFeature !== hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
-        this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
+      if (!this.#draggedPoint) {
+        this.#setHover(hoveredFeature);
       }
-      this.#hoveredFeature = hoveredFeature;
-      if (!this.#draggedPoint && !this.#selectedFeatures.has(this.#hoveredFeature)) {
-        this.#setFeatureBorderColor(hoveredFeature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
-      }
-      this.#map.fire(new events.FeatureHoverEvent(this.#hoveredFeature));
     } else {
-      if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
-        this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
-      }
-      this.#hoveredFeature = null;
-      this.#map.fire(new events.FeatureHoverEvent());
+      this.#clearHover();
     }
 
-    if (!this.#draggedPoint) {
-      if (this.#hoveredFeature) {
-        this.#setCanvasCursor(this.#hoveredFeature.geometry.type.toLowerCase() as any);
-      } else {
-        this.#setCanvasCursor("grab");
-      }
-      if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
+    if (this.#draggedPoint) {
+      this.#onDragPoint(e);
+    } else {
+      if (this.#editMode === EditMode.SELECT) {
+        if (this.#hoveredFeature) {
+          this.#setCanvasCursor(this.#hoveredFeature.geometry.type.toLowerCase() as any);
+        } else {
+          this.#setCanvasCursor("grab");
+        }
+      } else if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
         this.#onDragSelectedFeatures(e);
       }
-    } else {
-      this.#onDragPoint(e);
     }
   }
 
@@ -487,6 +521,7 @@ class MapEditor {
    * Called when a {@link Point} is dragged.
    */
   #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
+    this.#clearSelection();
     this.#setCanvasCursor("draw");
 
     // Prevent linear features from connecting to themselves
@@ -525,7 +560,7 @@ class MapEditor {
           this.#snapResult = snapResult;
           // Move dragged point to the snap position
           this.#draggedPoint.onDrag(point.lngLat);
-          // TODO show "point" in side panel and highlight it
+          this.#setHover(point);
         }
       } else { // segment
         const {feature, path, lngLat} = snapResult;
@@ -567,12 +602,13 @@ class MapEditor {
           }
           // Move dragged point to the snap position
           this.#draggedPoint.onDrag(lngLat);
-          // TODO show "feature" in side panel and highlight it
+          this.#setHover(feature);
         }
       }
     }
 
     if (!this.#snapResult) {
+      this.#clearHover();
       this.#draggedPoint.onDrag(e.lngLat);
     }
 
@@ -595,7 +631,7 @@ class MapEditor {
    * Called when the mouse is pressed down on the map.
    */
   #onMouseDown(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
-    if (this.#hoveredFeature && this.#hoveredFeature instanceof geom.Point) {
+    if (this.#editMode === EditMode.SELECT && this.#hoveredFeature instanceof geom.Point) {
       e.preventDefault();
       this.#draggedPoint = this.#hoveredFeature;
       this.#moveLayers(this.#draggedPoint.id); // Put on top
@@ -644,16 +680,27 @@ class MapEditor {
    * Called when the mouse is clicked on the map.
    */
   #onClick(e: mgl.MapMouseEvent) {
-    if (!e.originalEvent.ctrlKey) {
-      this.#selectedFeatures.forEach(
-          feature => this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR));
-      this.#selectedFeatures.clear();
-    }
     if (this.#hoveredFeature) {
-      this.#selectedFeatures.add(this.#hoveredFeature);
-      this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
+      if (this.#editMode === EditMode.DRAW_POINT) {
+        let feature: geom.MapFeature;
+        if (this.#hoveredFeature instanceof Point) {
+          // Select existing point instead of creating a new one
+          feature = this.#hoveredFeature;
+        } else if (!(feature = this.#createNewPointOnHoveredSegment(e))) {
+          feature = this.#createNewPoint(e.lngLat);
+        }
+        this.#selectFeature(feature, false);
+        this.#disableDrawPoint();
+      } else {
+        const keepSelection = e.originalEvent.ctrlKey && this.#editMode === EditMode.SELECT;
+        this.#selectFeature(this.#hoveredFeature, keepSelection);
+      }
+    } else if (this.#editMode === EditMode.DRAW_POINT) {
+      this.#selectFeature(this.#createNewPoint(e.lngLat), false);
+      this.#disableDrawPoint();
+    } else {
+      this.#clearSelection();
     }
-    this.#map.fire(new events.FeatureSelectionEvent([...this.#selectedFeatures]));
   }
 
   /**
@@ -663,47 +710,144 @@ class MapEditor {
     if (this.#hoveredFeature) {
       // Prevent default action (zoom)
       e.preventDefault();
-      if (this.#hoveredFeature instanceof geom.LinearFeature) {
-        // Search which linear feature was clicked
-        const features: geom.LinearFeature[] = [];
-        for (const id of this.#getFeatureIds(e.point)) {
-          const feature = this.#features[id];
-          if (feature instanceof geom.LinearFeature) {
-            features.push(feature);
-          }
-        }
+      this.#createNewPointOnHoveredSegment(e);
+    }
+  }
 
-        const snapResult = snap.trySnapPoint(e.lngLat, features, this.#map.getZoom());
-        // User clicked near a line, add a new point to it
-        if (snapResult?.type === "segment") {
-          const {feature, path, lngLat} = snapResult;
-
-          let newPoint: geom.Point;
-          let id: string;
-          do { // TODO keep global ID counter
-            id = `point-${Math.random()}`;
-          } while (this.#features[id]);
-          newPoint = new geom.Point(id, lngLat);
-          this.addFeature(newPoint);
-
-          const [p1, p2] = feature.getSegmentVertices(path);
-          const update = (feature: geom.LinearFeature, path: string) => {
-            feature.insertVertexAfter(newPoint, path);
-            this.#updateFeatureData(feature);
-          };
-          update(feature, path);
-          // Update all features that share the same segment
-          features.forEach(f => {
-            if (f instanceof geom.LinearFeature && f !== feature) {
-              const path = f.getSegmentPath(p1, p2);
-              if (path) {
-                update(f, path);
-              }
-            }
-          });
+  /**
+   * Create a point at the given position on the currently hovered segment.
+   * The current selection set is not changed.
+   * @param e The mouse event.
+   * @returns The newly created point or null if none were.
+   */
+  #createNewPointOnHoveredSegment(e: mgl.MapMouseEvent): geom.Point | null {
+    if (this.#hoveredFeature instanceof geom.LinearFeature) {
+      // Search which linear feature was clicked
+      const features: geom.LinearFeature[] = [];
+      for (const id of this.#getFeatureIds(e.point)) {
+        const feature = this.#features[id];
+        if (feature instanceof geom.LinearFeature) {
+          features.push(feature);
         }
       }
+
+      const snapResult = snap.trySnapPoint(e.lngLat, features, this.#map.getZoom());
+      // User clicked near a line, add a new point to it
+      if (snapResult?.type === "segment") {
+        const {feature, path, lngLat} = snapResult;
+
+        const newPoint: geom.Point = this.#createNewPoint(lngLat);
+        const [p1, p2] = feature.getSegmentVertices(path);
+        const update = (feature: geom.LinearFeature, path: string) => {
+          feature.insertVertexAfter(newPoint, path);
+          this.#updateFeatureData(feature);
+        };
+        update(feature, path);
+        // Update all features that share the same segment
+        features.forEach(f => {
+          if (f instanceof geom.LinearFeature && f !== feature) {
+            const path = f.getSegmentPath(p1, p2);
+            if (path) {
+              update(f, path);
+            }
+          }
+        });
+        return newPoint;
+      }
     }
+    return null;
+  }
+
+  /**
+   * Set the hovered feature. If a feature was already hovered and is not selected, its highlight is removed.
+   * If the feature is selected, its highlight color is not changed.
+   * @param feature The feature to set as being hovered.
+   * @throws {Error} If the feature is null.
+   */
+  #setHover(feature: geom.MapFeature) {
+    if (!feature) {
+      throw new Error("Missing feature");
+    }
+    if (this.#hoveredFeature === feature) {
+      return;
+    }
+    if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
+      this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
+    }
+    this.#hoveredFeature = feature;
+    if (!this.#selectedFeatures.has(this.#hoveredFeature)) {
+      this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
+    }
+    this.#map.fire(new events.FeatureHoverEvent(this.#hoveredFeature));
+  }
+
+  /**
+   * Clear the currently hovered feature.
+   */
+  #clearHover() {
+    if (this.#hoveredFeature) {
+      if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
+        this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
+      }
+      this.#hoveredFeature = null;
+      this.#map.fire(new events.FeatureHoverEvent());
+    }
+  }
+
+  /**
+   * Select the given feature.
+   * @param feature The feature to select.
+   * @param keepSelection If true, the feature will be added to the current selection list,
+   * otherwise the list is cleared beforehand.
+   * @throws {Error} If the feature is null.
+   */
+  #selectFeature(feature: geom.MapFeature, keepSelection: boolean) {
+    if (!feature) {
+      throw new Error("Missing feature");
+    }
+    let changed = false;
+    if (this.#selectedFeatures.size && !keepSelection) {
+      this.#clearSelection(false);
+      changed = true;
+    }
+    if (!this.#selectedFeatures.has(feature)) {
+      this.#selectedFeatures.add(feature);
+      this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
+      changed = true;
+    }
+    if (changed) { // Only fire if the selection set changed
+      this.#map.fire(new events.FeatureSelectionEvent([...this.#selectedFeatures]));
+    }
+  }
+
+  /**
+   * Clear the current selection.
+   * @param fire If true and the selection set changed, an event is fired; otherwise an event is never fired.
+   */
+  #clearSelection(fire: boolean = true) {
+    if (this.#selectedFeatures.size) {
+      this.#selectedFeatures.forEach(feature =>
+          this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR));
+      this.#selectedFeatures.clear();
+      if (fire) {
+        this.#map.fire(new events.FeatureSelectionEvent());
+      }
+    }
+  }
+
+  /**
+   * Create a new point at the given position.
+   * @param lngLat The point’s position.
+   * @returns The newly created point.
+   */
+  #createNewPoint(lngLat: mgl.LngLat) {
+    let id: string;
+    do { // TODO keep global ID counter
+      id = `point-${Math.random()}`;
+    } while (this.#features[id]);
+    const newPoint = new geom.Point(id, lngLat);
+    this.addFeature(newPoint);
+    return newPoint;
   }
 
   /**
