@@ -653,6 +653,10 @@ class MapEditor {
   }
 }
 
+/**
+ * Hook a feature editor to the given map.
+ * @param map The map.
+ */
 export default function initMapEditor(map: mgl.Map) {
   const mapEditor = new MapEditor(map);
 

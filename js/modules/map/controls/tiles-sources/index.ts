@@ -9,34 +9,54 @@ const ICON = helpers.parseSVG(`
 </svg>
 `);
 
+/**
+ * Type of the event fired whenever the user selects a tiles source.
+ */
 export type TilesChangedEvent = mgl.MapLibreEvent & {
+  /**
+   * The selected tiles source.
+   */
   source: TilesSource;
 };
 
+/**
+ * This type adds an ID to MapLibre’s {@link mgl.RasterSourceSpecification} type.
+ */
+export type RasterSourceSpecification = mgl.RasterSourceSpecification & {
+  /**
+   * The internal ID of the tiles source.
+   */
+  id: string;
+};
+
+/**
+ * This type represents a tiles source.
+ */
 export type TilesSource = {
   /**
    * Display-name of the tiles source.
    */
   label: string;
   /**
-   * Internal ID of the style.
+   * The internal ID of the tiles source.
    */
   id: string;
   /**
    * A MapLibre raster tiles source specification object.
    */
-  source: mgl.RasterSourceSpecification & {
-    id: string;
-  };
+  source: RasterSourceSpecification;
 };
 
+/**
+ * Options for the {@link TilesSourcesControl} class.
+ */
 export type TilesSourcesControlOptions = {
   /**
-   * List of styles to show in the control.
+   * List of tile sources to show in the control.
    */
   sources: TilesSource[];
   /**
-   * Title of the control. Ignored if `compact` is `false`.
+   * Optional. Title of the control.
    */
   title?: string;
 };
@@ -98,7 +118,7 @@ export default class TilesSourcesControl implements mgl.IControl {
 
     this.#map.on("load", () => {
       // "id" property is added by buildStyle()
-      const elementId = ((this.#map.getSource("tiles") as mgl.RasterTileSource)._options as any).id;
+      const elementId = ((this.#map.getSource("tiles") as mgl.RasterTileSource)._options as RasterSourceSpecification).id;
       (document.getElementById(elementId) as HTMLInputElement).checked = true;
     });
   }

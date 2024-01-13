@@ -1,10 +1,34 @@
+/**
+ * Options for the {@link createControlButton} function.
+ */
 export type ButtonOptions = {
+  /**
+   * Optional. The button’s title.
+   */
   title?: string;
+  /**
+   * Optional. The button’s icon element.
+   */
   icon?: Node;
+  /**
+   * Optional. The button’s text content.
+   */
   textContent?: string;
+  /**
+   * Optional. Whether to disable the button.
+   */
   disabled?: boolean;
+  /**
+   * Optional. Whether to hide the button.
+   */
   hidden?: boolean;
+  /**
+   * Optional. Name of a CSS class to add to the button.
+   */
   className?: string;
+  /**
+   * Optional. A callback to invoke whenever the button is clicked.
+   */
   onClick?: (() => void);
 };
 

@@ -11,10 +11,25 @@ import "./index.css";
  */
 export type ZoomTransformer = (zoom: number) => any;
 
+/**
+ * Options for the {@link OpenExternalMapControl} class.
+ */
 export type OpenExternalMapControlOptions = {
+  /**
+   * Title of the control’s button.
+   */
   buttonTitle: string;
+  /**
+   * URL to the icon image to show.
+   */
   iconUrl: string;
+  /**
+   * URL pattern for the target website.
+   */
   urlPattern: string;
+  /**
+   * Optional. A function that transforms the current zoom level before it is passed to the URL pattern.
+   */
   zoomMapping?: ZoomTransformer;
 };
 
@@ -28,7 +43,7 @@ export default class OpenExternalMapControl implements mgl.IControl {
   readonly #zoomTransformer: ZoomTransformer;
   readonly #button: HTMLButtonElement;
 
-  constructor(options?: OpenExternalMapControlOptions) {
+  constructor(options: OpenExternalMapControlOptions) {
     this.#container = helpers.createControlContainer("maplibregl-ctrl-open-location");
     this.#urlPattern = options.urlPattern;
     this.#zoomTransformer = options.zoomMapping ?? ((z: number) => z);

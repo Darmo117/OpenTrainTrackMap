@@ -15,13 +15,16 @@ const MINUS_ICON = helpers.parseSVG(`
 </svg>
 `);
 
+/**
+ * Options for the {@link ZoomControl} class.
+ */
 export type ZoomControlOptions = {
   /**
-   * Title of the "Zoom In" button.
+   * Optional. Title of the "Zoom In" button.
    */
   zoomInTitle?: string;
   /**
-   * Title of the "Zoom Out" button.
+   * Optional. Title of the "Zoom Out" button.
    */
   zoomOutTitle?: string;
 };

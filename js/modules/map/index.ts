@@ -19,6 +19,9 @@ declare global {
   }
 }
 
+/**
+ * Initalize the map view.
+ */
 export default function initMap() {
   const mapStyles = [
     buildTilesSource(

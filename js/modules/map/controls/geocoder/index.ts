@@ -4,15 +4,39 @@ import * as utils from "../../../utils";
 import * as helpers from "../helpers";
 import "./index.css";
 
+/**
+ * Options for the {@link GeocoderControl} class.
+ */
 export type GeocoderControlOptions = {
+  /**
+   * A language code. Used to translate the search results.
+   */
   language: string;
+  /**
+   * Optional. Title of the search button.
+   */
   searchButtonTitle?: string;
+  /**
+   * Optional. Title of the button to erase queries.
+   */
   eraseButtonTitle?: string;
+  /**
+   * Optional. Placeholder for the search field.
+   */
   placeholderText?: string;
+  /**
+   * Optional. Message to show when there are no search results.
+   */
   noResultsMessage?: string;
+  /**
+   * Optional. Message to show when an error occurs.
+   */
   errorMessage?: string;
 };
 
+/**
+ * Structure of objects returned by Nominatim.
+ */
 type SearchResult = {
   addresstype: string;
   boundingbox: [number, number, number, number];
@@ -51,7 +75,7 @@ export default class GeocoderControl implements mgl.IControl {
   readonly #searchButton: HTMLButtonElement;
   readonly #resultsPanel: HTMLDivElement;
 
-  constructor(options?: GeocoderControlOptions) {
+  constructor(options: GeocoderControlOptions) {
     this.#language = options.language;
     this.#noResultsMessage = options.noResultsMessage ?? "No results.";
     this.#errorMessage = options.errorMessage ?? "An error occured.";
@@ -126,6 +150,7 @@ export default class GeocoderControl implements mgl.IControl {
       for (const result of results) {
         const type = result.type;
         const category = result.category;
+        // TODO decouple from window.ottm
         // Prefix name translation algorithm from
         // https://github.com/openstreetmap/openstreetmap-website/blob/master/app/controllers/geocoder_controller.rb#L109
         let prefixName = window.ottm.translate(

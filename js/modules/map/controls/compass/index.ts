@@ -12,6 +12,9 @@ const ICON = helpers.parseSVG(`
 </svg>
 `);
 
+/**
+ * Options for the {@link CompassControl} class.
+ */
 export type CompassControlOptions = {
   /**
    * The control’s title.
