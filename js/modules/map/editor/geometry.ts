@@ -301,6 +301,12 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
    */
   abstract incrementPath(path: string): string;
 
+  /**
+   * Return the path of the segment formed by the two given points.
+   * @param v1 One vertex of the segment.
+   * @param v2 The other vertex of the segment.
+   * @returns The segment’s path or null if there is no segment for the two points.
+   */
   abstract getSegmentPath(v1: Point, v2: Point): string | null;
 
   /**
