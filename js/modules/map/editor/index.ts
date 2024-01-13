@@ -133,6 +133,7 @@ class MapEditor {
    */
   addFeature(feature: geom.MapFeature) {
     // TODO handle z-order
+    // TODO put linestrings over polygons with the same z-order
     if (this.#features[feature.id]) {
       return;
     }
