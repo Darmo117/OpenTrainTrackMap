@@ -24,7 +24,7 @@ export type SnapPoint = {
 };
 
 /**
- * Object returned by {@link trySnapPoint} when the point was snapped to segment’s vertex.
+ * Object returned by {@link trySnapPoint} when the point was snapped to a segment’s vertex.
  */
 export type SnapSegmentVertex = {
   type: "segment_vertex";
