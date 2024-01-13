@@ -75,7 +75,9 @@ class MapEditor {
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();
   #hoveredFeature: geom.MapFeature;
   #draggedPoint: geom.Point = null;
-  #snapResult: snap.SnapResult | null;
+  #snapResult: snap.SnapResult & {
+    featuresWithSameSegment?: { feature: geom.LinearFeature, path: string }[];
+  } | null;
   #editMode: EditMode = EditMode.SELECT;
 
   /**
@@ -479,6 +481,7 @@ class MapEditor {
     const excludedIds: Set<string> = new Set();
     this.#draggedPoint.boundFeatures.forEach(f => {
       excludedIds.add(f.id);
+      // Exclude all the feature’s points
       if (f instanceof geom.LineString) {
         f.vertices.forEach(v => excludedIds.add(v.id));
       } else if (f instanceof geom.Polygon) {
@@ -489,11 +492,9 @@ class MapEditor {
     });
     // Exclude point itself
     excludedIds.add(this.#draggedPoint.id);
-    const snapResult = snap.trySnapPoint(
-        e.lngLat,
-        Array.from(this.#getFeatureIds(null, excludedIds)).map(id => this.#features[id]),
-        this.#map.getZoom(),
-    );
+    const features = Array.from(this.#getFeatureIds(null, excludedIds))
+        .map(id => this.#features[id]);
+    const snapResult = snap.trySnapPoint(e.lngLat, features, this.#map.getZoom());
     this.#snapResult = null;
 
     if (snapResult) {
@@ -515,16 +516,50 @@ class MapEditor {
         }
       } else { // segment
         const {feature, path, lngLat} = snapResult;
-        const canSnap = feature.canInsertVertex(this.#draggedPoint, path);
+        let canSnap = feature.canInsertVertex(this.#draggedPoint, path);
+
+        let p1: geom.Point, p2: geom.Point;
         if (canSnap) {
+          [p1, p2] = feature.getSegmentVertices(path);
+          // Check if any excluded feature shares the same segment
+          for (const id of excludedIds) {
+            const f = this.#features[id];
+            if (f instanceof geom.LinearFeature && f.getSegmentPath(p1, p2)) {
+              // An excluded feature shares the segment, cancel snapping
+              canSnap = false;
+              break
+            }
+          }
+        }
+
+        if (canSnap) {
+          const otherFeatures: { feature: geom.LinearFeature, path: string }[] = [];
+          // Get all non-excluded features that share the same segment
+          features.forEach(f => {
+            if (f instanceof geom.LinearFeature && f !== feature) {
+              const path = f.getSegmentPath(p1, p2);
+              if (path) {
+                otherFeatures.push({
+                  feature: f,
+                  path: path,
+                });
+              }
+            }
+          });
+
           this.#snapResult = snapResult;
+          if (otherFeatures.length) {
+            // Add all features that share the same segment
+            this.#snapResult.featuresWithSameSegment = otherFeatures;
+          }
           // Move dragged point to the snap position
           this.#draggedPoint.onDrag(lngLat);
           // TODO show "feature" in side panel and highlight it
         }
       }
+    }
 
-    } else {
+    if (!this.#snapResult) {
       this.#draggedPoint.onDrag(e.lngLat);
     }
 
@@ -580,7 +615,9 @@ class MapEditor {
         const {feature, path, lngLat} = this.#snapResult;
         this.#draggedPoint.onDrag(lngLat);
         feature.insertVertexAfter(this.#draggedPoint, path);
-        // TODO insert vertex to all features that have the exact same two points as a segment
+        // Insert vertex to all features that share the same segment
+        this.#snapResult.featuresWithSameSegment?.forEach(
+            ({feature, path}) => feature.insertVertexAfter(this.#draggedPoint, path));
       }
       this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
       this.#updateFeatureData(this.#draggedPoint);
