@@ -104,9 +104,9 @@ class MapEditor {
     this.#$canvas = $(this.#map.getCanvasContainer());
     this.#sidePanel = new EditorPanel(this.#map);
     this.#drawPointControl = new DrawControl({
-      onDrawPoint: () => this.#onDrawPoint(),
-      onDrawLine: () => this.#onDrawLine(),
-      onDrawPolygon: () => this.#onDrawPolygon(),
+      onDrawPoint: () => this.#enableDrawPointMode(),
+      onDrawLine: () => this.#enableDrawLineMode(),
+      onDrawPolygon: () => this.#enableDrawPolygonMode(),
     });
     this.#map.addControl(this.#drawPointControl, "top-left");
 
@@ -127,12 +127,12 @@ class MapEditor {
       }
       this.#onMouseDown(e);
     });
-    this.#map.on("mouseup", () => this.#onMouseUp());
+    this.#map.on("mouseup", e => this.#onMouseUp(e));
     this.#map.on("touchend", e => {
       if (e.points.length !== 1) {
         return;
       }
-      this.#onMouseUp();
+      this.#onMouseUp(e);
     });
     this.#map.on("controls.styles.tiles_changed", () => {
       if (this.#map.getLayersOrder().length) {
@@ -140,6 +140,7 @@ class MapEditor {
         this.#map.moveLayer("tiles", this.#map.getLayersOrder()[0]);
       }
     });
+    $("body").on("keydown", e => this.#onKeyDown(e.originalEvent));
 
     // Setup splitter
     const parent = this.#$canvas.parent();
@@ -247,36 +248,80 @@ class MapEditor {
     }
   }
 
-  #onDrawPoint() {
+  /**
+   * Quit the current edit mode and go to "select" mode.
+   * Any ongoing drawing is interrupted.
+   * @param mousePos The current mouse position. Used to refresh the cursor.
+   */
+  #enableSelectMode(mousePos?: mgl.PointLike) {
+    const editMode = this.#editMode;
+    this.#editMode = EditMode.SELECT;
+    switch (editMode) {
+      case EditMode.SELECT:
+        this.#refreshCursor(mousePos);
+        break;
+      case EditMode.DRAW_POINT:
+        this.#quitDrawPointMode(mousePos);
+        break;
+      case EditMode.DRAW_LINE:
+        this.#quitDrawLineMode(mousePos);
+        break;
+      case EditMode.DRAW_POLYGON:
+        this.#quitDrawPolygonMode(mousePos);
+        break;
+      case EditMode.MOVE_FEATURES:
+        break; // TODO
+    }
+  }
+
+  #enableDrawPointMode() {
+    this.#enableSelectMode();
     this.#editMode = EditMode.DRAW_POINT;
     this.#setCanvasCursor("draw");
     // TODO select button
   }
 
-  #disableDrawPoint() {
+  #disableDrawPointMode(mousePos?: mgl.PointLike) {
     this.#editMode = EditMode.SELECT;
+    this.#quitDrawPointMode(mousePos);
+  }
+
+  #quitDrawPointMode(mousePos?: mgl.PointLike) {
+    this.#refreshCursor(mousePos);
     // TODO deselect button
   }
 
-  #onDrawLine() {
+  #enableDrawLineMode() {
+    this.#enableSelectMode();
     this.#editMode = EditMode.DRAW_LINE;
     this.#setCanvasCursor("draw");
     // TODO select button
   }
 
-  #disableDrawLine() {
+  #disableDrawLineMode(mousePos?: mgl.PointLike) {
     this.#editMode = EditMode.SELECT;
+    this.#quitDrawLineMode(mousePos);
+  }
+
+  #quitDrawLineMode(mousePos?: mgl.PointLike) {
+    this.#refreshCursor(mousePos);
     // TODO deselect button
   }
 
-  #onDrawPolygon() {
+  #enableDrawPolygonMode() {
+    this.#enableSelectMode();
     this.#editMode = EditMode.DRAW_POLYGON;
     this.#setCanvasCursor("draw");
     // TODO select button
   }
 
-  #disableDrawPolygon() {
+  #disableDrawPolygonMode(mousePos?: mgl.PointLike) {
     this.#editMode = EditMode.SELECT;
+    this.#quitDrawPolygonMode(mousePos);
+  }
+
+  #quitDrawPolygonMode(mousePos?: mgl.PointLike) {
+    this.#refreshCursor(mousePos);
     // TODO deselect button
   }
 
@@ -505,13 +550,8 @@ class MapEditor {
     if (this.#draggedPoint) {
       this.#onDragPoint(e);
     } else {
-      if (this.#editMode === EditMode.SELECT) {
-        if (this.#hoveredFeature) {
-          this.#setCanvasCursor(this.#hoveredFeature.geometry.type.toLowerCase() as any);
-        } else {
-          this.#setCanvasCursor("grab");
-        }
-      } else if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
+      this.#refreshCursor();
+      if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
         this.#onDragSelectedFeatures(e);
       }
     }
@@ -641,7 +681,7 @@ class MapEditor {
   /**
    * Called when the mouse is released on the map.
    */
-  #onMouseUp() {
+  #onMouseUp(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
     if (this.#snapResult) {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
         let point: geom.Point;
@@ -673,7 +713,10 @@ class MapEditor {
       this.#moveLayers(this.#draggedPoint.id); // Put point on top
       this.#snapResult = null;
     }
-    this.#draggedPoint = null;
+    if (this.#draggedPoint) {
+      this.#draggedPoint = null;
+      this.#refreshCursor(e.point);
+    }
   }
 
   /**
@@ -690,14 +733,14 @@ class MapEditor {
           feature = this.#createNewPoint(e.lngLat);
         }
         this.#selectFeature(feature, false);
-        this.#disableDrawPoint();
+        this.#disableDrawPointMode(e.point);
       } else {
         const keepSelection = e.originalEvent.ctrlKey && this.#editMode === EditMode.SELECT;
         this.#selectFeature(this.#hoveredFeature, keepSelection);
       }
     } else if (this.#editMode === EditMode.DRAW_POINT) {
       this.#selectFeature(this.#createNewPoint(e.lngLat), false);
-      this.#disableDrawPoint();
+      this.#disableDrawPointMode(e.point);
     } else {
       this.#clearSelection();
     }
@@ -711,6 +754,17 @@ class MapEditor {
       // Prevent default action (zoom)
       e.preventDefault();
       this.#createNewPointOnHoveredSegment(e);
+      this.#refreshCursor(e.point);
+    }
+  }
+
+  /**
+   * Called when a key is pressed.
+   */
+  #onKeyDown(e: KeyboardEvent) {
+    if (e.key === "Escape" && this.#editMode !== EditMode.SELECT) {
+      // Interrupt any ongoing drawings
+      this.#enableSelectMode();
     }
   }
 
@@ -831,6 +885,28 @@ class MapEditor {
       this.#selectedFeatures.clear();
       if (fire) {
         this.#map.fire(new events.FeatureSelectionEvent());
+      }
+    }
+  }
+
+  /**
+   * In "select" mode, refresh the mouse cursor based on the currently hovered feature.
+   * If the edit mode is something else, nothing happens.
+   *
+   * @param mousePos The mouse position. If specified, the feature under the mouse position will be used instead.
+   */
+  #refreshCursor(mousePos?: mgl.PointLike) {
+    if (this.#editMode === EditMode.SELECT) {
+      let feature: geom.MapFeature;
+      if (mousePos) {
+        feature = this.#getFeatureUnderMouse(mousePos);
+      } else {
+        feature = this.#hoveredFeature;
+      }
+      if (feature) {
+        this.#setCanvasCursor(feature.geometry.type.toLowerCase() as any);
+      } else {
+        this.#setCanvasCursor("grab");
       }
     }
   }
