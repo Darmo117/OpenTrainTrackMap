@@ -9,9 +9,14 @@ import "./index.css";
  */
 export type GeocoderControlOptions = {
   /**
-   * A language code. Used to translate the search results.
+   * The code of the language to use for translating the search results.
    */
   language: string;
+  /**
+   * A function that translates the given key.
+   * The default value may be a string or a function that provides a string.
+   */
+  translator: (key: string, defaultValue?: string | (() => string)) => string;
   /**
    * Optional. Title of the search button.
    */
@@ -66,9 +71,7 @@ export default class GeocoderControl implements mgl.IControl {
 
   #map: mgl.Map;
   #marker: mgl.Marker;
-  readonly #language: string;
-  readonly #noResultsMessage: string;
-  readonly #errorMessage: string;
+  readonly #options: GeocoderControlOptions;
   readonly #container: HTMLDivElement;
   readonly #textField: HTMLInputElement;
   readonly #eraseButton: HTMLButtonElement;
@@ -76,15 +79,13 @@ export default class GeocoderControl implements mgl.IControl {
   readonly #resultsPanel: HTMLDivElement;
 
   constructor(options: GeocoderControlOptions) {
-    this.#language = options.language;
-    this.#noResultsMessage = options.noResultsMessage ?? "No results.";
-    this.#errorMessage = options.errorMessage ?? "An error occured.";
+    this.#options = {...options};
 
     this.#container = helpers.createControlContainer("maplibregl-ctrl-geocoder");
 
     this.#textField = document.createElement("input");
     this.#textField.type = "text";
-    this.#textField.placeholder = options.placeholderText ?? "Search";
+    this.#textField.placeholder = this.#options.placeholderText ?? "Search";
     this.#textField.accessKey = "f";
     // Submit on enter key pressed
     this.#textField.onkeyup = e => {
@@ -100,7 +101,7 @@ export default class GeocoderControl implements mgl.IControl {
     const eraseIcon = document.createElement("span");
     eraseIcon.className = "mdi mdi-close";
     this.#eraseButton = helpers.createControlButton({
-      title: options.eraseButtonTitle ?? "Erase",
+      title: this.#options.eraseButtonTitle ?? "Erase",
       icon: eraseIcon,
       onClick: () => this.#onErase(),
     });
@@ -108,7 +109,7 @@ export default class GeocoderControl implements mgl.IControl {
     const searchIcon = document.createElement("span");
     searchIcon.className = "mdi mdi-magnify";
     this.#searchButton = helpers.createControlButton({
-      title: options.searchButtonTitle ?? "Go",
+      title: this.#options.searchButtonTitle ?? "Go",
       icon: searchIcon,
       onClick: () => this.#onInputSubmit(),
     });
@@ -129,7 +130,7 @@ export default class GeocoderControl implements mgl.IControl {
     if (query) {
       const url = GeocoderControl.#BASE_URL
           .replace("{query}", encodeURIComponent(query))
-          .replace("{lang}", encodeURIComponent(this.#language));
+          .replace("{lang}", encodeURIComponent(this.#options.language));
       $.get(url)
           .done(data => this.#onResult(data))
           .fail(() => this.#onFailure());
@@ -143,26 +144,29 @@ export default class GeocoderControl implements mgl.IControl {
   #onResult(results: SearchResult[]) {
     this.#resultsPanel.replaceChildren(); // Clear
     if (results.length === 0) {
-      this.#resultsPanel.textContent = this.#noResultsMessage;
+      this.#resultsPanel.textContent = this.#options.noResultsMessage ?? "No results.";
     } else {
       const list = document.createElement("ul");
       const noTranslationsMark = "```";
       for (const result of results) {
         const type = result.type;
         const category = result.category;
-        // TODO decouple from window.ottm
         // Prefix name translation algorithm from
         // https://github.com/openstreetmap/openstreetmap-website/blob/master/app/controllers/geocoder_controller.rb#L109
-        let prefixName = window.ottm.translate(
+        // Search for a translation for the category and type
+        let prefixName = this.#options.translator(
             `osm_feature_type.prefix.${category}.${type}`,
+            // Fallback by formatting the untranslated value and mark it as such
             () => noTranslationsMark + utils.capitalize(type.replace("_", " "))
         );
         if (category === "boundary" && type === "administrative") {
-          // Check if a better translation exists
-          prefixName = window.ottm.translate(
+          // Check if a more precise translation exists for the specific address type
+          prefixName = this.#options.translator(
               `osm_feature_type.prefix.place.${result.addresstype}`,
-              () => window.ottm.translate(
+              // Fallback on a generic administrative name
+              () => this.#options.translator(
                   `osm_feature_type.admin_levels.level${Math.floor((result.place_rank + 1) / 2)}`,
+                  // Fallback on the initial translation
                   prefixName
               )
           );
@@ -203,7 +207,7 @@ export default class GeocoderControl implements mgl.IControl {
    */
   #onFailure() {
     this.#resultsPanel.replaceChildren(); // Clear
-    this.#resultsPanel.textContent = this.#errorMessage;
+    this.#resultsPanel.textContent = this.#options.errorMessage ?? "An error occured.";
     this.#showResultsPanel();
   }
 

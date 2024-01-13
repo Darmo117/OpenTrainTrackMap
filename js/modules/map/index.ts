@@ -91,6 +91,7 @@ export default function initMap() {
 
   map.addControl(new GeocoderControl({
     language: window.ottm.getPageLanguage().code,
+    translator: (key, defaultValue) => window.ottm.translate(key, defaultValue),
     searchButtonTitle: window.ottm.translate("map.controls.search.search_button.title"),
     eraseButtonTitle: window.ottm.translate("map.controls.search.erase_button.title"),
     placeholderText: window.ottm.translate("map.controls.search.placeholder"),
