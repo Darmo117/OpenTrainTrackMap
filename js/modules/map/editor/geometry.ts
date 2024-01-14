@@ -391,7 +391,7 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
       type: "LineString",
       coordinates: [],
     }, {
-      width: 4,
+      width: 2,
     });
     if (vertices) {
       if (vertices.length < 2) {

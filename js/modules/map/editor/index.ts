@@ -1317,6 +1317,7 @@ export default function initMapEditor(map: mgl.Map): void {
   const point4 = new geom.Point("point4", new mgl.LngLat(1.4506, 43.6010));
   const line1 = new geom.LineString("line1", [point1, point2, point3, point4]);
   line1.color = "#ffe46d";
+  line1.width = 4;
   const polygon1 = new geom.Polygon("polygon1", [
     [
       point3,
