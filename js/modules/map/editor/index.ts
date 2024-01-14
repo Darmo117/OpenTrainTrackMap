@@ -106,6 +106,7 @@ class MapEditor {
   #drawnPolygon: geom.Polygon = null;
   /**
    * The points that were created when drawing the last linear feature.
+   * This list is used for deleting all points that were drawn when the current drawing is cancelled.
    */
   #drawnPoints: geom.Point[] = [];
 
@@ -321,6 +322,11 @@ class MapEditor {
     this.#setCanvasCursor("draw");
   }
 
+  /**
+   * Disable the "draw_point" mode and go back to "select" mode.
+   * Any ongoing drawing is interrupted.
+   * @param mousePos The current mouse position.
+   */
   #disableDrawPointMode(mousePos?: mgl.PointLike) {
     this.#editMode = EditMode.SELECT;
     this.#refreshCursor(mousePos);
@@ -342,8 +348,12 @@ class MapEditor {
     this.#setCanvasCursor("draw");
   }
 
+  /**
+   * Disable the "draw_line" mode and go back to "select" mode.
+   * Any ongoing drawing is interrupted.
+   * @param mousePos The current mouse position.
+   */
   #disableDrawLineMode(mousePos?: mgl.PointLike) {
-    this.#editMode = EditMode.SELECT;
     this.#quitLinearDrawing(this.#drawnLineString, 1, mousePos);
     this.#drawnLineString = null;
   }
@@ -363,18 +373,30 @@ class MapEditor {
     this.#setCanvasCursor("draw");
   }
 
+  /**
+   * Disable the "draw_polygon" mode and go back to "select" mode.
+   * Any ongoing drawing is interrupted.
+   * @param mousePos The current mouse position.
+   */
   #disableDrawPolygonMode(mousePos?: mgl.PointLike) {
-    this.#editMode = EditMode.SELECT;
     this.#quitLinearDrawing(this.#drawnPolygon, 2, mousePos, () => this.#drawnPolygon.lockRing(0));
     this.#drawnPolygon = null;
   }
 
+  /**
+   * Quit the current "draw_line" or "draw_polygon" mode and go back to "select" mode.
+   * @param feature The feature currently being drawn.
+   * @param buttonIndex The index of the draw control button to deactivate.
+   * @param mousePos The current mouse position.
+   * @param onValidDrawing Callback called when the current drawing finishes normally.
+   */
   #quitLinearDrawing(
       feature: geom.LinearFeature,
       buttonIndex: number,
       mousePos?: mgl.PointLike,
       onValidDrawing?: (() => void)
   ) {
+    this.#editMode = EditMode.SELECT;
     if (feature) {
       let action: geom.Action = null;
       if (this.#draggedPoint) {
