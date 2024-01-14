@@ -52,15 +52,13 @@ class EditorPanel {
   }
 }
 
-// TODO use camera expressions to hide less important features when zoom is too small
-//  and to draw all features in black when edit mode is "view_only"
-//  cf. https://maplibre.org/maplibre-style-spec/expressions/#camera-expressions
 class MapEditor {
   static readonly HIGHLIGHT_BASE_COLOR: string = "#00000000";
   static readonly HIGHLIGHT_SELECTED_COLOR: string = "#3bb2d0d0";
   static readonly HIGHLIGHT_HOVERED_COLOR: string = "#ff6d8bd0";
 
   static readonly BORDER_COLOR: string = "#101010";
+  static readonly NON_EDITABLE_COLOR: string = "#202020";
 
   /**
    * The minimal allowed zoom to edit features.
@@ -554,8 +552,15 @@ class MapEditor {
   /**
    * Create the layers for the given feature and add them to the map.
    * @param feature A feature.
+   * @see https://maplibre.org/maplibre-style-spec/expressions/
    */
   #addLayersForFeature(feature: geom.MapFeature): void {
+    // Hide associated layers for zoom < MapEditor.EDIT_MIN_ZOOM
+    const hideBelowZoomThresholdFilter: mgl.FilterSpecification = [
+      "step", ["zoom"],
+      false,
+      MapEditor.EDIT_MIN_ZOOM, true
+    ];
     if (feature instanceof geom.Point) {
       this.#map.addLayer({
         id: feature.id + "-highlight",
@@ -565,6 +570,7 @@ class MapEditor {
           "circle-radius": ["+", ["get", "radius"], 4],
           "circle-color": MapEditor.HIGHLIGHT_BASE_COLOR,
         },
+        filter: hideBelowZoomThresholdFilter,
       });
       this.#map.addLayer({
         id: feature.id,
@@ -576,6 +582,7 @@ class MapEditor {
           "circle-stroke-width": 1,
           "circle-stroke-color": MapEditor.BORDER_COLOR,
         },
+        filter: hideBelowZoomThresholdFilter,
       });
     } else if (feature instanceof geom.LineString) {
       this.#map.addLayer({
@@ -590,6 +597,7 @@ class MapEditor {
           "line-width": ["+", ["get", "width"], 8],
           "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
         },
+        filter: hideBelowZoomThresholdFilter,
       });
       this.#map.addLayer({
         id: feature.id + "-border",
@@ -603,6 +611,7 @@ class MapEditor {
           "line-width": ["+", ["get", "width"], 2],
           "line-color": MapEditor.BORDER_COLOR,
         },
+        filter: hideBelowZoomThresholdFilter,
       });
       this.#map.addLayer({
         id: feature.id,
@@ -614,7 +623,10 @@ class MapEditor {
         },
         paint: {
           "line-width": ["get", "width"],
-          "line-color": ["get", "color"],
+          "line-color": ["step", ["zoom"],
+            MapEditor.NON_EDITABLE_COLOR, // If 0 < zoom < MapEditor.EDIT_MIN_ZOOM
+            MapEditor.EDIT_MIN_ZOOM, ["get", "color"] // If zoom >= MapEditor.EDIT_MIN_ZOOM
+          ],
         },
       });
     } else if (feature instanceof geom.Polygon) {
@@ -625,6 +637,7 @@ class MapEditor {
         paint: {
           "fill-color": ["concat", ["get", "color"], "30"], // Add transparency
         },
+        filter: hideBelowZoomThresholdFilter,
       });
       this.#map.addLayer({
         id: feature.id + "-highlight",
@@ -638,6 +651,7 @@ class MapEditor {
           "line-width": 8,
           "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
         },
+        filter: hideBelowZoomThresholdFilter,
       });
       this.#map.addLayer({
         id: feature.id + "-border",
@@ -650,6 +664,7 @@ class MapEditor {
         paint: {
           "line-color": ["get", "color"],
         },
+        filter: hideBelowZoomThresholdFilter,
       });
     } else {
       throw TypeError(`Unexpected type: ${feature}`);
