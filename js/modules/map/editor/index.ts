@@ -73,7 +73,7 @@ class MapEditor {
   static readonly #HIGHLIGHT_HOVERED_COLOR: string = "#ff6d8bd0";
 
   static readonly #BORDER_COLOR: string = "#101010";
-  static readonly #NON_EDITABLE_COLOR: string = "#202020";
+  static readonly #NON_EDITABLE_COLOR: string = "#e0e0e0";
 
   /**
    * The minimal allowed zoom to edit features.
