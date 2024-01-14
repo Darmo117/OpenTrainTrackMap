@@ -186,8 +186,9 @@ class MapEditor {
         this.#map.moveLayer("tiles", this.#map.getLayersOrder()[0]);
       }
     });
-    this.#map.on("zoomend", () => this.#onZoomChanged());
-    this.#map.on("load", () => this.#onZoomChanged());
+    this.#map.on("zoomstart", () => this.#onZoomChangeStart());
+    this.#map.on("zoomend", () => this.#onZoomChangeEnd());
+    this.#map.on("load", () => this.#onZoomChangeEnd());
     $("body").on("keydown", e => this.#onKeyDown(e.originalEvent));
 
     // Setup splitter
@@ -1064,9 +1065,21 @@ class MapEditor {
   }
 
   /**
-   * Called when the map zoom has changed.
+   * Called right before the map’s zoom level changes.
    */
-  #onZoomChanged(): void { // TODO prevent unzooming past threshold if a point is being dragged
+  #onZoomChangeStart(): void {
+    if (this.#draggedPoint) {
+      // Prevent unzooming past threshold if a point is being dragged
+      this.#map.setMinZoom(MapEditor.EDIT_MIN_ZOOM);
+    } else {
+      this.#map.setMinZoom(0);
+    }
+  }
+
+  /**
+   * Called right after the map’s zoom level has changed.
+   */
+  #onZoomChangeEnd(): void {
     const zoom = this.#map.getZoom();
     if (zoom < MapEditor.EDIT_MIN_ZOOM && this.#editMode !== EditMode.VIEW_ONLY) {
       this.#disableCurrentEditMode(); // Interrupt any action
