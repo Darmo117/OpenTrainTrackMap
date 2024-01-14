@@ -751,6 +751,7 @@
             }
           }
         },
+        "edit_zoom_notice": "Zoom in to edit",
         "editor_panel": {
           "title": {
             "edit_feature": "Edit feature",

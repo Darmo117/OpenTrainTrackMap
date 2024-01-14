@@ -779,6 +779,7 @@
             }
           }
         },
+        "edit_zoom_notice": "Zoomez pour modifier",
         "editor_panel": {
           "title": {
             "edit_feature": "Modifier l’élément",

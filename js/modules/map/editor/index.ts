@@ -8,7 +8,7 @@ import * as geom from "./geometry";
 import {Point} from "./geometry";
 import * as snap from "./snap";
 import DrawControl from "./controls";
-import {ColorSpecification, DataDrivenPropertyValueSpecification} from "@maplibre/maplibre-gl-style-spec";
+import "./index.css";
 
 enum EditMode {
   VIEW_ONLY = "view_only",
@@ -81,8 +81,9 @@ class MapEditor {
   static readonly #EDIT_MIN_ZOOM: number = 15;
 
   readonly #map: mgl.Map;
-  readonly #$canvas: JQuery;
+  readonly #$canvasContainer: JQuery;
   readonly #sidePanel: EditorPanel;
+  readonly #$editZoomNoticePanel: JQuery;
   readonly #drawPointControl: DrawControl;
   readonly #features: types.Dict<geom.MapFeature> = {};
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();
@@ -126,7 +127,7 @@ class MapEditor {
    */
   constructor(map: mgl.Map) {
     this.#map = map;
-    this.#$canvas = $(this.#map.getCanvasContainer());
+    this.#$canvasContainer = $(this.#map.getCanvasContainer());
     this.#sidePanel = new EditorPanel(this.#map);
     this.#drawPointControl = new DrawControl({
       onDrawPoint: () => {
@@ -193,13 +194,24 @@ class MapEditor {
     $("body").on("keydown", e => this.#onKeyDown(e.originalEvent));
 
     // Setup splitter
-    const parent = this.#$canvas.parent();
-    parent.addClass("split");
-    Split([this.#sidePanel.getContainer(), parent[0]], {
+    const canvasContainerParent = this.#$canvasContainer.parent();
+    canvasContainerParent.addClass("split");
+    Split([this.#sidePanel.getContainer(), canvasContainerParent[0]], {
       sizes: [20, 80],
       minSize: [0, 100],
       gutterSize: 5,
     });
+
+    // Setup edit zoom notice panel
+    const message = window.ottm.translate("map.edit_zoom_notice");
+    this.#$editZoomNoticePanel = $(`
+<div id="edit-zoom-notice-panel">
+  <span class="mdi mdi-plus"></span> ${message}
+</div>
+`);
+    this.#$editZoomNoticePanel.on("click",
+        () => this.#map.easeTo({zoom: MapEditor.#EDIT_MIN_ZOOM}));
+    canvasContainerParent.append(this.#$editZoomNoticePanel);
   }
 
   /**
@@ -561,7 +573,7 @@ class MapEditor {
   /**
    * Select a color depending on the feature’s "selectionMode" property.
    */
-  static readonly #CHOOSE_COLOR_FOR_SELECTION_MODE: DataDrivenPropertyValueSpecification<ColorSpecification> = [
+  static readonly #CHOOSE_COLOR_FOR_SELECTION_MODE: mgl.DataDrivenPropertyValueSpecification<mgl.ColorSpecification> = [
     "match", ["get", "selectionMode"],
     geom.SelectionMode.SELECTED, MapEditor.#HIGHLIGHT_SELECTED_COLOR, // Case 1
     geom.SelectionMode.HOVERED, MapEditor.#HIGHLIGHT_HOVERED_COLOR, // Case 2
@@ -689,10 +701,10 @@ class MapEditor {
    * @param cursor The cursor type.
    */
   #setCanvasCursor(cursor: Cursor): void {
-    this.#$canvas.addClass(`cursor-${cursor}`);
+    this.#$canvasContainer.addClass(`cursor-${cursor}`);
     for (const c of Object.values(Cursor)) {
       if (c !== cursor) {
-        this.#$canvas.removeClass(`cursor-${c}`);
+        this.#$canvasContainer.removeClass(`cursor-${c}`);
       }
     }
   }
@@ -1106,11 +1118,13 @@ class MapEditor {
       for (let i = 0; i < 3; i++) {
         this.#drawPointControl.setButtonDisabled(i, true);
       }
+      this.#$editZoomNoticePanel.show();
     } else if (zoom >= MapEditor.#EDIT_MIN_ZOOM && this.#editMode === EditMode.VIEW_ONLY) {
       this.#editMode = EditMode.SELECT;
       for (let i = 0; i < 3; i++) {
         this.#drawPointControl.setButtonDisabled(i, false);
       }
+      this.#$editZoomNoticePanel.hide();
     }
   }
 
