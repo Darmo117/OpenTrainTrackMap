@@ -469,7 +469,7 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
   removeVertex(vertex: Point): Action {
     const i = this.#vertices.indexOf(vertex);
     if (i !== -1) {
-      if (this.#vertices.length === 2) {
+      if (this.#vertices.length <= 2) {
         return {type: "delete_feature"};
       }
       this.#vertices.splice(i, 1);
@@ -714,7 +714,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
       const ring = this.#vertices[ringI];
       const i = ring.indexOf(vertex);
       if (i !== -1) {
-        if (ring.length === 3) {
+        if (ring.length <= 3) {
           if (ringI === 0) {
             return {type: "delete_feature"};
           }
