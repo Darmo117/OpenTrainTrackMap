@@ -821,29 +821,14 @@ class MapEditor {
     }
     if (this.#snapResult) {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
-        let point: geom.Point;
-        if (this.#snapResult.type === "point") {
-          point = this.#snapResult.point;
-        } else {
-          const {feature, path} = this.#snapResult;
-          point = feature.getVertex(path);
-        }
-
+        const point = this.#getSnappedPoint();
         this.#draggedPoint.onDrag(point.lngLat);
-
         // TODO copy data from "point" to "this.#draggedPoint" if "this.#draggedPoint" is just a point with no data
-
         point.boundFeatures.forEach(
             f => f.replaceVertex(this.#draggedPoint, point));
         this.removeFeature(point.id);
-
       } else { // segment
-        const {feature, path, lngLat} = this.#snapResult;
-        this.#draggedPoint.onDrag(lngLat);
-        feature.insertVertexAfter(this.#draggedPoint, path);
-        // Insert vertex to all features that share the same segment
-        this.#snapResult.featuresWithSameSegment?.forEach(
-            ({feature, path}) => feature.insertVertexAfter(this.#draggedPoint, path));
+        this.#addSnappedPointToSegment();
       }
       this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
       this.#updateFeatureData(this.#draggedPoint);
@@ -889,14 +874,7 @@ class MapEditor {
    * @param e The mouse event.
    */
   #drawPoint(e: mgl.MapMouseEvent) {
-    let point: geom.Point;
-    if (this.#hoveredFeature instanceof Point) {
-      // Select existing point instead of creating a new one
-      point = this.#hoveredFeature;
-    } else if (!(point = this.#createNewPointOnHoveredSegment(e))) {
-      point = this.#createNewPoint(e.lngLat);
-    }
-    this.#selectFeature(point, false);
+    this.#selectFeature(this.#drawNewPoint(e), false);
     this.#disableDrawPointMode(e.point);
   }
 
@@ -908,29 +886,16 @@ class MapEditor {
   #drawLinearFeatureVertex(feature: geom.LinearFeature, e: mgl.MapMouseEvent) {
     if (this.#snapResult) {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
-        let point: geom.Point;
-        if (this.#snapResult.type === "point") {
-          point = this.#snapResult.point;
-        } else {
-          const {feature, path} = this.#snapResult;
-          point = feature.getVertex(path);
-        }
+        const point = this.#getSnappedPoint();
+        // Keep already existing point
         feature.replaceVertex(point, this.#draggedPoint);
         this.removeFeature(this.#draggedPoint.id);
         this.#moveLayers(point.id); // Put point on top
-
       } else { // segment
-        const {feature, path, lngLat} = this.#snapResult;
-        this.#draggedPoint.onDrag(lngLat);
-        feature.insertVertexAfter(this.#draggedPoint, path);
-        // Insert vertex to all features that share the same segment
-        this.#snapResult.featuresWithSameSegment?.forEach(
-            ({feature, path}) => feature.insertVertexAfter(this.#draggedPoint, path));
-        this.#moveLayers(this.#draggedPoint.id); // Put point on top
+        this.#addSnappedPointToSegment();
         this.#drawnPoints.push(this.#draggedPoint);
       }
       this.#snapResult = null;
-
     } else {
       const [canFinish, lastVertex] = feature instanceof geom.LineString
           ? this.#canFinishLineDrawing(e.point)
@@ -945,14 +910,7 @@ class MapEditor {
         }
         return;
       }
-      let point: geom.Point;
-      if (this.#hoveredFeature instanceof Point) {
-        // Select existing point instead of creating a new one
-        point = this.#hoveredFeature;
-      } else if (!(point = this.#createNewPointOnHoveredSegment(e))) {
-        point = this.#createNewPoint(e.lngLat);
-      }
-      this.#moveLayers(point.id); // Put point on top
+      const point = this.#drawNewPoint(e);
       if (!this.#draggedPoint) {
         if (point !== this.#hoveredFeature) {
           this.#drawnPoints.push(point);
@@ -971,6 +929,56 @@ class MapEditor {
     if (feature instanceof geom.LineString && feature.vertices.length > 2
         || feature instanceof geom.Polygon && feature.vertices[0].length > 3) {
       this.#setCanvasCursor("draw-connect-vertex");
+    }
+  }
+
+  /**
+   * Draw a new point feature at the mouse cursor’s position.
+   * If the point falls on a pre-existing one, the latter is returned.
+   * If the point falls on a pre-existing segment, it is added to it before being returned.
+   * Otherwise the point is created as is then returned.
+   * @param e The mouse event.
+   * @returns The newly created point or a pre-existing one.
+   */
+  #drawNewPoint(e: mgl.MapMouseEvent): geom.Point {
+    let point: geom.Point;
+    if (this.#hoveredFeature instanceof Point) {
+      // Select existing point instead of creating a new one
+      point = this.#hoveredFeature;
+    } else if (!(point = this.#createNewPointOnHoveredSegment(e))) {
+      point = this.#createNewPoint(e.lngLat);
+    }
+    this.#moveLayers(point.id); // Put point on top
+    return point;
+  }
+
+  /**
+   * If the current snap result has type "point" or "segment vertex", returns the point matching the result.
+   * Otherwise null is returned.
+   */
+  #getSnappedPoint(): geom.Point | null {
+    if (this.#snapResult.type === "point") {
+      return this.#snapResult.point;
+    } else if (this.#snapResult.type === "segment_vertex") {
+      const {feature, path} = this.#snapResult;
+      return feature.getVertex(path);
+    }
+    return null;
+  }
+
+  /**
+   * If the current snap result has type "segment", adds the dragged point to the snapped segment.
+   * All features that share that same segment are updated.
+   */
+  #addSnappedPointToSegment() {
+    if (this.#snapResult.type === "segment") {
+      const {feature, path, lngLat} = this.#snapResult;
+      this.#draggedPoint.onDrag(lngLat);
+      feature.insertVertexAfter(this.#draggedPoint, path);
+      // Insert vertex to all features that share the same segment
+      this.#snapResult.featuresWithSameSegment?.forEach(
+          ({feature, path}) => feature.insertVertexAfter(this.#draggedPoint, path));
+      this.#moveLayers(this.#draggedPoint.id); // Put point on top
     }
   }
 
