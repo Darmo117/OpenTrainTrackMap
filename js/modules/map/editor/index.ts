@@ -5,7 +5,6 @@ import Split from "split.js";
 import * as types from "../../types";
 import * as events from "./events";
 import * as geom from "./geometry";
-import {Point} from "./geometry";
 import * as snap from "./snap";
 import DrawControl from "./controls";
 import "./index.css";
@@ -1025,7 +1024,7 @@ class MapEditor {
    */
   #drawNewPoint(e: mgl.MapMouseEvent): geom.Point {
     let point: geom.Point;
-    if (this.#hoveredFeature instanceof Point) {
+    if (this.#hoveredFeature instanceof geom.Point) {
       // Select existing point instead of creating a new one
       point = this.#hoveredFeature;
     } else if (!(point = this.#createNewPointOnHoveredSegment(e))) {
