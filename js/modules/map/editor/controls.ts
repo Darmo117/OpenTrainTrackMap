@@ -94,6 +94,17 @@ export default class DrawControl implements mgl.IControl {
     this.#buttons[index]?.classList.remove("active");
   }
 
+  /**
+   * Disable/Enable the button at the given index.
+   * @param index The button’s index. Should be between 0 and 3 inclusive.
+   * @param disabled True to disable the button, false to enable it.
+   */
+  setButtonDisabled(index: number, disabled: boolean) {
+    if (this.#buttons[index]) {
+      this.#buttons[index].disabled = disabled;
+    }
+  }
+
   onAdd(_: mgl.Map): HTMLElement {
     this.#container.append(...this.#buttons);
     return this.#container;

@@ -10,6 +10,7 @@ import * as snap from "./snap";
 import DrawControl from "./controls";
 
 enum EditMode {
+  VIEW_ONLY = "view_only",
   SELECT = "select",
   DRAW_POINT = "draw_point",
   DRAW_LINE = "draw_line",
@@ -59,6 +60,11 @@ class MapEditor {
   static readonly HIGHLIGHT_HOVERED_COLOR: string = "#ff6d8bd0";
 
   static readonly BORDER_COLOR: string = "#101010";
+
+  /**
+   * The minimal allowed zoom to edit features.
+   */
+  static readonly EDIT_MIN_ZOOM: number = 15;
 
   /**
    * List of available map cursors.
@@ -180,6 +186,8 @@ class MapEditor {
         this.#map.moveLayer("tiles", this.#map.getLayersOrder()[0]);
       }
     });
+    this.#map.on("zoomend", () => this.#onZoomChanged());
+    this.#map.on("load", () => this.#onZoomChanged());
     $("body").on("keydown", e => this.#onKeyDown(e.originalEvent));
 
     // Setup splitter
@@ -318,13 +326,12 @@ class MapEditor {
   }
 
   /**
-   * Quit the current edit mode and go to "select" mode.
-   * Any ongoing drawing is interrupted.
+   * Quit the current edit mode. Any ongoing drawing is interrupted.
    * @param mousePos The current mouse position. Used to refresh the cursor.
    */
-  #enableSelectMode(mousePos?: mgl.PointLike) {
-    const editMode = this.#editMode;
-    switch (editMode) {
+  #disableCurrentEditMode(mousePos?: mgl.PointLike) {
+    switch (this.#editMode) {
+      case EditMode.VIEW_ONLY:
       case EditMode.SELECT:
         this.#refreshCursor(mousePos);
         break;
@@ -348,7 +355,10 @@ class MapEditor {
    * Enable the "draw_point" mode.
    */
   #enableDrawPointMode() {
-    this.#enableSelectMode();
+    if (this.#editMode === EditMode.VIEW_ONLY) {
+      return;
+    }
+    this.#disableCurrentEditMode();
     this.#editMode = EditMode.DRAW_POINT;
     this.#setCanvasCursor("draw");
   }
@@ -368,7 +378,10 @@ class MapEditor {
    * Enable the "draw_line" mode.
    */
   #enableDrawLineMode() {
-    this.#enableSelectMode();
+    if (this.#editMode === EditMode.VIEW_ONLY) {
+      return;
+    }
+    this.#disableCurrentEditMode();
     this.#editMode = EditMode.DRAW_LINE;
     let id: string;
     do { // TODO keep global ID counter
@@ -393,7 +406,10 @@ class MapEditor {
    * Enable the "draw_polygon" mode.
    */
   #enableDrawPolygonMode() {
-    this.#enableSelectMode();
+    if (this.#editMode === EditMode.VIEW_ONLY) {
+      return;
+    }
+    this.#disableCurrentEditMode();
     this.#editMode = EditMode.DRAW_POLYGON;
     let id: string;
     do { // TODO keep global ID counter
@@ -667,6 +683,9 @@ class MapEditor {
    * Called when the mouse moves over the map.
    */
   #onMouseMouve(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
+    if (this.#editMode === EditMode.VIEW_ONLY) {
+      return;
+    }
     const hoveredFeature: geom.MapFeature = this.#getFeatureUnderMouse(e.point);
     if (hoveredFeature) {
       if (!this.#draggedPoint) {
@@ -897,6 +916,9 @@ class MapEditor {
           this.#clearSelection();
         }
         break;
+      case EditMode.VIEW_ONLY:
+        this.#clearSelection();
+        break;
     }
   }
 
@@ -1036,7 +1058,28 @@ class MapEditor {
     } else {
       if (e.key === "Escape") {
         // Interrupt any ongoing drawings
-        this.#enableSelectMode();
+        this.#disableCurrentEditMode();
+      }
+    }
+  }
+
+  /**
+   * Called when the map zoom has changed.
+   */
+  #onZoomChanged() { // TODO prevent unzooming past threshold if a point is being dragged
+    const zoom = this.#map.getZoom();
+    if (zoom < MapEditor.EDIT_MIN_ZOOM && this.#editMode !== EditMode.VIEW_ONLY) {
+      this.#disableCurrentEditMode(); // Interrupt any action
+      this.#editMode = EditMode.VIEW_ONLY;
+      this.#clearHover();
+      this.#setCanvasCursor("grab");
+      for (let i = 0; i < 3; i++) {
+        this.#drawPointControl.setButtonDisabled(i, true);
+      }
+    } else if (zoom >= MapEditor.EDIT_MIN_ZOOM && this.#editMode === EditMode.VIEW_ONLY) {
+      this.#editMode = EditMode.SELECT;
+      for (let i = 0; i < 3; i++) {
+        this.#drawPointControl.setButtonDisabled(i, false);
       }
     }
   }

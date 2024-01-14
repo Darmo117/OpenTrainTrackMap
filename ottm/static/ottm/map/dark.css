@@ -23,6 +23,10 @@
   background-color: rgb(255 255 255 / 10%) !important;
 }
 
+.maplibregl-ctrl button:disabled {
+  background-color: rgb(255 255 255 / 20%) !important;
+}
+
 .maplibregl-ctrl-group button + button {
   border-top-color: #515151 !important;
 }
