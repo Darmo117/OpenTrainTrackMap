@@ -311,6 +311,9 @@ class MapEditor {
     }
   }
 
+  /**
+   * Enable the "draw_point" mode.
+   */
   #enableDrawPointMode() {
     this.#enableSelectMode();
     this.#editMode = EditMode.DRAW_POINT;
@@ -327,6 +330,9 @@ class MapEditor {
     this.#drawPointControl.deactivateButton(0);
   }
 
+  /**
+   * Enable the "draw_line" mode.
+   */
   #enableDrawLineMode() {
     this.#enableSelectMode();
     this.#editMode = EditMode.DRAW_LINE;
@@ -349,6 +355,9 @@ class MapEditor {
     this.#drawnLineString = null;
   }
 
+  /**
+   * Enable the "draw_polygon" mode.
+   */
   #enableDrawPolygonMode() {
     this.#enableSelectMode();
     this.#editMode = EditMode.DRAW_POLYGON;
@@ -730,8 +739,8 @@ class MapEditor {
     if (!this.#snapResult) {
       this.#clearHover();
       this.#draggedPoint.onDrag(e.lngLat);
-      if (this.#editMode === EditMode.DRAW_LINE && this.#canFinishLineDrawing(e)[0]
-          || this.#editMode === EditMode.DRAW_POLYGON && this.#canFinishPolygonDrawing(e)[0]) {
+      if (this.#editMode === EditMode.DRAW_LINE && this.#canFinishLineDrawing(e.point)[0]
+          || this.#editMode === EditMode.DRAW_POLYGON && this.#canFinishPolygonDrawing(e.point)[0]) {
         this.#setCanvasCursor("draw-connect-vertex");
       }
     }
@@ -740,20 +749,32 @@ class MapEditor {
     this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
   }
 
-  #canFinishLineDrawing(e: mgl.MapMouseEvent | mgl.MapTouchEvent): [boolean, geom.Point | null] {
+  /**
+   * Check whether the line feature currently being drawn can be finished.
+   * @param p The current mouse cursor position.
+   * @returns A tuple with a boolean indicating whether the drawing can be finished,
+   * and the last drawn vertex of the feature.
+   */
+  #canFinishLineDrawing(p: mgl.PointLike): [boolean, geom.Point | null] {
     if (this.#drawnLineString.vertices.length <= 2) {
       return [false, null];
     }
-    const features = this.#getFeatureIds(e.point);
+    const features = this.#getFeatureIds(p);
     const lastVertex = this.#drawnLineString.getVertex("" + (this.#drawnLineString.vertices.length - 2));
     return [features.has(lastVertex.id), lastVertex];
   }
 
-  #canFinishPolygonDrawing(e: mgl.MapMouseEvent | mgl.MapTouchEvent): [boolean, geom.Point | null] {
+  /**
+   * Check whether the polygon feature currently being drawn can be finished.
+   * @param p The current mouse cursor position.
+   * @returns A tuple with a boolean indicating whether the drawing can be finished,
+   * and the last drawn vertex of the feature.
+   */
+  #canFinishPolygonDrawing(p: mgl.PointLike): [boolean, geom.Point | null] {
     if (!this.#drawnPolygon.vertices[0] || this.#drawnPolygon.vertices[0].length <= 3) {
       return [false, null];
     }
-    const features = this.#getFeatureIds(e.point);
+    const features = this.#getFeatureIds(p);
     const lastVertex = this.#drawnPolygon.getVertex("0." + (this.#drawnPolygon.vertices[0].length - 2));
     return [features.has(lastVertex.id), lastVertex];
   }
@@ -852,6 +873,10 @@ class MapEditor {
     }
   }
 
+  /**
+   * Draw a point feature at the mouse cursor’s position.
+   * @param e The mouse event.
+   */
   #drawPoint(e: mgl.MapMouseEvent) {
     let point: geom.Point;
     if (this.#hoveredFeature instanceof Point) {
@@ -864,6 +889,11 @@ class MapEditor {
     this.#disableDrawPointMode(e.point);
   }
 
+  /**
+   * Draw a vertex of the currently drawn feature at the mouse cursor’s position.
+   * @param feature The feature to draw the point for.
+   * @param e The mouse event.
+   */
   #drawLinearFeatureVertex(feature: geom.LinearFeature, e: mgl.MapMouseEvent) {
     if (this.#snapResult) {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
@@ -892,8 +922,8 @@ class MapEditor {
 
     } else {
       const [canFinish, lastVertex] = feature instanceof geom.LineString
-          ? this.#canFinishLineDrawing(e)
-          : this.#canFinishPolygonDrawing(e);
+          ? this.#canFinishLineDrawing(e.point)
+          : this.#canFinishPolygonDrawing(e.point);
       if (canFinish) {
         this.#setHover(lastVertex);
         this.#setCanvasCursor("point");
