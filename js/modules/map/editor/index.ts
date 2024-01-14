@@ -51,6 +51,8 @@ class EditorPanel {
   }
 }
 
+// TODO use camera expressions to hide less important features when zoom is too small
+//  cf. https://maplibre.org/maplibre-style-spec/expressions/#camera-expressions
 class MapEditor {
   static readonly HIGHLIGHT_BASE_COLOR: string = "#00000000";
   static readonly HIGHLIGHT_SELECTED_COLOR: string = "#3bb2d0d0";
@@ -327,7 +329,7 @@ class MapEditor {
         this.#refreshCursor(mousePos);
         break;
       case EditMode.DRAW_POINT:
-        this.#disableDrawLineMode(mousePos);
+        this.#disableDrawPointMode(mousePos);
         break;
       case EditMode.DRAW_LINE:
         this.#disableDrawLineMode(mousePos);
