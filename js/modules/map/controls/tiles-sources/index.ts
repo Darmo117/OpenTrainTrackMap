@@ -92,9 +92,15 @@ export default class TilesSourcesControl implements mgl.IControl {
     const button = helpers.createControlButton({
       title: this.#options.title ?? "Backgrounds",
       icon: ICON,
+      onClick: () => {
+        if (this.#inputsContainer.style.display === "none") {
+          this.#inputsContainer.style.display = "block";
+        } else {
+          this.#inputsContainer.style.display = "none";
+        }
+      },
     });
-    this.#container.onmouseenter = () => (this.#inputsContainer.style.display = "block");
-    this.#container.onmouseleave = () => (this.#inputsContainer.style.display = "none");
+    this.#map.on("click", () => this.#inputsContainer.style.display = "none");
     this.#container.appendChild(button);
     this.#container.appendChild(this.#inputsContainer);
 
