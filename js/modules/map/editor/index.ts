@@ -834,10 +834,10 @@ class MapEditor {
         this.#drawPoint(e);
         break;
       case EditMode.DRAW_LINE:
-        this.#drawLineVertex(e);
+        this.#drawLinearFeatureVertex(this.#drawnLineString, e);
         break;
       case EditMode.DRAW_POLYGON:
-        this.#drawPolygonVertex(e);
+        this.#drawLinearFeatureVertex(this.#drawnPolygon, e);
         break;
       case EditMode.MOVE_FEATURES:
         break; // TODO
@@ -862,14 +862,6 @@ class MapEditor {
     }
     this.#selectFeature(point, false);
     this.#disableDrawPointMode(e.point);
-  }
-
-  #drawLineVertex(e: mgl.MapMouseEvent) {
-    this.#drawLinearFeatureVertex(this.#drawnLineString, e);
-  }
-
-  #drawPolygonVertex(e: mgl.MapMouseEvent) {
-    this.#drawLinearFeatureVertex(this.#drawnPolygon, e);
   }
 
   #drawLinearFeatureVertex(feature: geom.LinearFeature, e: mgl.MapMouseEvent) {
