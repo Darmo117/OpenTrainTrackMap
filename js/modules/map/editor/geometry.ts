@@ -208,6 +208,7 @@ export type DeleteFeatureAction = {
 };
 export type DeleteRingAction = {
   type: "delete_ring";
+  ringIndex: number;
   points: Point[];
 }
 
@@ -740,7 +741,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
           if (ringI === 0) {
             return {type: "delete_feature"};
           }
-          return {type: "delete_ring", points: ring};
+          return {type: "delete_ring", ringIndex: ringI, points: ring};
         }
         ring.splice(i, 1);
         vertex.unbindFeature(this);
@@ -800,6 +801,20 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
 
   getNextVertexPath(): string {
     return "0." + (this.#vertices[0]?.length ?? 0);
+  }
+
+  /**
+   * Delete the ring with the given index.
+   * All points of the specified rings will be unbound from this feature.
+   * If the index is 0 or ≥ to the number of rings, nothing happens.
+   * @param index The index of the ring to delete.
+   */
+  deleteRing(index: number) {
+    if (0 < index && index < this.#vertices.length) {
+      this.#vertices[index].forEach(v => v.unbindFeature(this));
+      this.#vertices.splice(index, 1);
+      this.updateGeometry();
+    }
   }
 
   onDrag(pos: mgl.LngLat) {

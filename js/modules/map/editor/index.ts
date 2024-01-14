@@ -235,43 +235,11 @@ class MapEditor {
     delete this.#features[featureId];
 
     if (feature instanceof geom.Point) {
-      // Remove bound features
-      for (const boundFeature of feature.boundFeatures) {
-        feature.unbindFeature(boundFeature);
-        const actionResult = boundFeature.removeVertex(feature);
-        if (actionResult.type === "delete_feature") {
-          this.removeFeature(boundFeature.id);
-        } else if (actionResult.type === "delete_ring") {
-          // Delete vertices that were only bound to the feature
-          actionResult.points.forEach(p => {
-            if (p.boundFeatures.length === 1 && p.boundFeatures[0] === boundFeature) {
-              this.removeFeature(p.id);
-            } else {
-              p.unbindFeature(boundFeature);
-            }
-          });
-        }
-      }
+      this.#updateBoundFeaturesOfDeletedPoint(feature);
     } else if (feature instanceof geom.LineString) {
-      // Delete vertices that were only bound to the feature
-      for (const vertex of feature.vertices) {
-        const boundFeatures = vertex.boundFeatures;
-        vertex.unbindFeature(feature);
-        if (boundFeatures.length === 1 && boundFeatures[0] === feature) {
-          this.removeFeature(vertex.id);
-        }
-      }
+      this.#deleteVerticesOfDeletedLineString(feature);
     } else if (feature instanceof geom.Polygon) {
-      // Delete vertices that were only bound to the feature
-      for (const ring of feature.vertices) {
-        for (const vertex of ring) {
-          const boundFeatures = vertex.boundFeatures;
-          vertex.unbindFeature(feature);
-          if (boundFeatures.length === 1 && boundFeatures[0] === feature) {
-            this.removeFeature(vertex.id);
-          }
-        }
-      }
+      this.#deleteVerticesOfDeletedPolygon(feature);
     }
 
     this.#map.removeLayer(featureId + "-highlight");
@@ -283,6 +251,67 @@ class MapEditor {
     this.#selectedFeatures.delete(feature);
     if (this.#hoveredFeature?.id === featureId) {
       this.#hoveredFeature = null;
+    }
+  }
+
+  /**
+   * Update the bound features of the specified deleted point.
+   * @param point The point that is being deleted.
+   */
+  #updateBoundFeaturesOfDeletedPoint(point: geom.Point) {
+    for (const boundFeature of point.boundFeatures) {
+      point.unbindFeature(boundFeature);
+      const action = boundFeature.removeVertex(point);
+      let deletedBound = false;
+      if (action.type === "delete_feature") {
+        this.removeFeature(boundFeature.id);
+        deletedBound = true;
+      } else if (action.type === "delete_ring") {
+        (boundFeature as geom.Polygon).deleteRing(action.ringIndex);
+        // Delete vertices that were only bound to the feature
+        action.points.forEach(p => {
+          const bound = p.boundFeatures;
+          if (bound.length === 0 || bound.length === 1 && bound[0] === boundFeature) {
+            this.removeFeature(p.id);
+          }
+        });
+      }
+      if (!deletedBound) {
+        this.#updateFeatureData(boundFeature);
+      }
+    }
+  }
+
+  /**
+   * Delete the vertices that were only bound to the given deleted line.
+   * @param line The line being deleted.
+   */
+  #deleteVerticesOfDeletedLineString(line: geom.LineString) {
+    this.#deleteVerticesOfDeletedLinearFeature(line, line.vertices);
+  }
+
+  /**
+   * Delete the vertices that were only bound to the given deleted polygon.
+   * @param polygon The polygon being deleted.
+   */
+  #deleteVerticesOfDeletedPolygon(polygon: geom.Polygon) {
+    for (const ring of polygon.vertices) {
+      this.#deleteVerticesOfDeletedLinearFeature(polygon, ring);
+    }
+  }
+
+  /**
+   * Delete the vertices that were only bound to the given deleted linear feature.
+   * @param feature The feature being deleted.
+   * @param vertices The list of vertices to check for deletion.
+   */
+  #deleteVerticesOfDeletedLinearFeature(feature: geom.LinearFeature, vertices: geom.Point[]) {
+    for (const vertex of vertices) {
+      const bound = vertex.boundFeatures;
+      vertex.unbindFeature(feature);
+      if (bound.length === 0 || bound.length === 1 && bound[0] === feature) {
+        this.removeFeature(vertex.id);
+      }
     }
   }
 
@@ -998,9 +1027,15 @@ class MapEditor {
    * Called when a key is pressed.
    */
   #onKeyDown(e: KeyboardEvent) {
-    if (e.key === "Escape" && this.#editMode !== EditMode.SELECT) {
-      // Interrupt any ongoing drawings
-      this.#enableSelectMode();
+    if (this.#editMode === EditMode.SELECT) {
+      if (e.key === "Delete") {
+        this.#deleteSelectedFeatures();
+      }
+    } else {
+      if (e.key === "Escape") {
+        // Interrupt any ongoing drawings
+        this.#enableSelectMode();
+      }
     }
   }
 
@@ -1160,6 +1195,16 @@ class MapEditor {
     const newPoint = new geom.Point(id, lngLat);
     this.addFeature(newPoint);
     return newPoint;
+  }
+
+  /**
+   * If in "select" mode, delete the currently selected features and clear the selection set.
+   */
+  #deleteSelectedFeatures() {
+    if (this.#editMode === EditMode.SELECT) {
+      this.#selectedFeatures.forEach(f => this.removeFeature(f.id));
+      this.#selectedFeatures.clear();
+    }
   }
 
   /**
