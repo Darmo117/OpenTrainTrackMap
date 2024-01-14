@@ -292,22 +292,23 @@ class MapEditor {
    */
   #enableSelectMode(mousePos?: mgl.PointLike) {
     const editMode = this.#editMode;
-    this.#editMode = EditMode.SELECT;
     switch (editMode) {
       case EditMode.SELECT:
         this.#refreshCursor(mousePos);
         break;
       case EditMode.DRAW_POINT:
-        this.#quitDrawPointMode(mousePos);
+        this.#disableDrawLineMode(mousePos);
         break;
       case EditMode.DRAW_LINE:
-        this.#quitDrawLineMode(mousePos);
+        this.#disableDrawLineMode(mousePos);
         break;
       case EditMode.DRAW_POLYGON:
-        this.#quitDrawPolygonMode(mousePos);
+        this.#disableDrawPolygonMode(mousePos);
         break;
       case EditMode.MOVE_FEATURES:
-        break; // TODO
+        this.#editMode = EditMode.SELECT;
+        // TODO
+        break;
     }
   }
 
@@ -322,10 +323,6 @@ class MapEditor {
 
   #disableDrawPointMode(mousePos?: mgl.PointLike) {
     this.#editMode = EditMode.SELECT;
-    this.#quitDrawPointMode(mousePos);
-  }
-
-  #quitDrawPointMode(mousePos?: mgl.PointLike) {
     this.#refreshCursor(mousePos);
     this.#drawPointControl.deactivateButton(0);
   }
@@ -347,10 +344,6 @@ class MapEditor {
 
   #disableDrawLineMode(mousePos?: mgl.PointLike) {
     this.#editMode = EditMode.SELECT;
-    this.#quitDrawLineMode(mousePos);
-  }
-
-  #quitDrawLineMode(mousePos?: mgl.PointLike) {
     this.#quitLinearDrawing(this.#drawnLineString, 1, mousePos);
     this.#drawnLineString = null;
   }
@@ -372,10 +365,6 @@ class MapEditor {
 
   #disableDrawPolygonMode(mousePos?: mgl.PointLike) {
     this.#editMode = EditMode.SELECT;
-    this.#quitDrawPolygonMode(mousePos);
-  }
-
-  #quitDrawPolygonMode(mousePos?: mgl.PointLike) {
     this.#quitLinearDrawing(this.#drawnPolygon, 2, mousePos, () => this.#drawnPolygon.lockRing(0));
     this.#drawnPolygon = null;
   }
