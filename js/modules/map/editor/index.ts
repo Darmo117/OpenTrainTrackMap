@@ -53,32 +53,32 @@ class EditorPanel {
   }
 }
 
-class MapEditor {
-  static readonly HIGHLIGHT_BASE_COLOR: string = "#00000000";
-  static readonly HIGHLIGHT_SELECTED_COLOR: string = "#3bb2d0d0";
-  static readonly HIGHLIGHT_HOVERED_COLOR: string = "#ff6d8bd0";
+/**
+ * Enumeration of available map cursors.
+ */
+enum Cursor {
+  POINT = "point",
+  LINE = "linestring",
+  POLYGON = "polygon",
+  DRAW = "draw",
+  GRAB = "grab",
+  GRABBING = "grabbing",
+  CONNECT_VERTEX = "draw-connect-vertex",
+  CONNECT_LINE = "draw-connect-line",
+}
 
-  static readonly BORDER_COLOR: string = "#101010";
-  static readonly NON_EDITABLE_COLOR: string = "#202020";
+class MapEditor {
+  static readonly #HIGHLIGHT_BASE_COLOR: string = "#00000000";
+  static readonly #HIGHLIGHT_SELECTED_COLOR: string = "#3bb2d0d0";
+  static readonly #HIGHLIGHT_HOVERED_COLOR: string = "#ff6d8bd0";
+
+  static readonly #BORDER_COLOR: string = "#101010";
+  static readonly #NON_EDITABLE_COLOR: string = "#202020";
 
   /**
    * The minimal allowed zoom to edit features.
    */
-  static readonly EDIT_MIN_ZOOM: number = 15;
-
-  /**
-   * List of available map cursors.
-   */
-  static readonly CURSORS = [
-    "point",
-    "linestring",
-    "polygon",
-    "draw",
-    "grab",
-    "grabbing",
-    "draw-connect-vertex",
-    "draw-connect-line",
-  ] as const;
+  static readonly #EDIT_MIN_ZOOM: number = 15;
 
   readonly #map: mgl.Map;
   readonly #$canvas: JQuery;
@@ -362,7 +362,7 @@ class MapEditor {
     }
     this.#disableCurrentEditMode();
     this.#editMode = EditMode.DRAW_POINT;
-    this.#setCanvasCursor("draw");
+    this.#setCanvasCursor(Cursor.DRAW);
   }
 
   /**
@@ -391,7 +391,7 @@ class MapEditor {
     } while (this.#features[id]);
     this.#drawnLineString = new geom.LineString(id);
     this.addFeature(this.#drawnLineString);
-    this.#setCanvasCursor("draw");
+    this.#setCanvasCursor(Cursor.DRAW);
   }
 
   /**
@@ -419,7 +419,7 @@ class MapEditor {
     } while (this.#features[id]);
     this.#drawnPolygon = new geom.Polygon(id);
     this.addFeature(this.#drawnPolygon);
-    this.#setCanvasCursor("draw");
+    this.#setCanvasCursor(Cursor.DRAW);
   }
 
   /**
@@ -556,16 +556,16 @@ class MapEditor {
   static readonly #FILTER_TOGGLE_VISIBILITY_FOR_ZOOM: mgl.FilterSpecification = [
     "step", ["zoom"],
     false, // If 0 <= zoom < MapEditor.EDIT_MIN_ZOOM
-    MapEditor.EDIT_MIN_ZOOM, true // If MapEditor.EDIT_MIN_ZOOM <= zoom
+    MapEditor.#EDIT_MIN_ZOOM, true // If MapEditor.EDIT_MIN_ZOOM <= zoom
   ];
   /**
    * Select a color depending on the feature’s "selectionMode" property.
    */
   static readonly #CHOOSE_COLOR_FOR_SELECTION_MODE: DataDrivenPropertyValueSpecification<ColorSpecification> = [
     "match", ["get", "selectionMode"],
-    geom.SelectionMode.SELECTED, MapEditor.HIGHLIGHT_SELECTED_COLOR, // Case 1
-    geom.SelectionMode.HOVERED, MapEditor.HIGHLIGHT_HOVERED_COLOR, // Case 2
-    MapEditor.HIGHLIGHT_BASE_COLOR, // Default
+    geom.SelectionMode.SELECTED, MapEditor.#HIGHLIGHT_SELECTED_COLOR, // Case 1
+    geom.SelectionMode.HOVERED, MapEditor.#HIGHLIGHT_HOVERED_COLOR, // Case 2
+    MapEditor.#HIGHLIGHT_BASE_COLOR, // Default
   ];
 
   /**
@@ -593,7 +593,7 @@ class MapEditor {
           "circle-radius": ["get", "radius"],
           "circle-color": ["get", "color"],
           "circle-stroke-width": 1,
-          "circle-stroke-color": MapEditor.BORDER_COLOR,
+          "circle-stroke-color": MapEditor.#BORDER_COLOR,
         },
         filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
@@ -622,7 +622,7 @@ class MapEditor {
         },
         paint: {
           "line-width": ["+", ["get", "width"], 2],
-          "line-color": MapEditor.BORDER_COLOR,
+          "line-color": MapEditor.#BORDER_COLOR,
         },
         filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
@@ -637,8 +637,8 @@ class MapEditor {
         paint: {
           "line-width": ["get", "width"],
           "line-color": ["step", ["zoom"],
-            MapEditor.NON_EDITABLE_COLOR, // If 0 < zoom < MapEditor.EDIT_MIN_ZOOM
-            MapEditor.EDIT_MIN_ZOOM, ["get", "color"] // If zoom >= MapEditor.EDIT_MIN_ZOOM
+            MapEditor.#NON_EDITABLE_COLOR, // If 0 < zoom < MapEditor.EDIT_MIN_ZOOM
+            MapEditor.#EDIT_MIN_ZOOM, ["get", "color"] // If zoom >= MapEditor.EDIT_MIN_ZOOM
           ],
         },
       });
@@ -686,15 +686,15 @@ class MapEditor {
 
   /**
    * Set the cursor for the map’s canvas.
-   * @param cursor The cursor type. Must be one of {@link MapEditor.CURSORS}.
+   * @param cursor The cursor type.
    */
-  #setCanvasCursor(cursor: typeof MapEditor.CURSORS[number]): void {
-    this.#$canvas.addClass("cursor-" + cursor);
-    this.#$canvas.removeClass(
-        MapEditor.CURSORS
-            .filter(s => s !== cursor)
-            .map(s => "cursor-" + s)
-    );
+  #setCanvasCursor(cursor: Cursor): void {
+    this.#$canvas.addClass(`cursor-${cursor}`);
+    for (const c of Object.values(Cursor)) {
+      if (c !== cursor) {
+        this.#$canvas.removeClass(`cursor-${c}`);
+      }
+    }
   }
 
   /**
@@ -728,7 +728,7 @@ class MapEditor {
    */
   #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     this.#clearSelection();
-    this.#setCanvasCursor("draw");
+    this.#setCanvasCursor(Cursor.DRAW);
 
     // Prevent linear features from connecting to themselves
     // -> exclude points bound to the bound features of the dragged point
@@ -767,7 +767,7 @@ class MapEditor {
           // Move dragged point to the snap position
           this.#draggedPoint.onDrag(point.lngLat);
           this.#setHover(point);
-          this.#setCanvasCursor("draw-connect-vertex");
+          this.#setCanvasCursor(Cursor.CONNECT_VERTEX);
         }
       } else { // segment
         const {feature, path, lngLat} = snapResult;
@@ -810,7 +810,7 @@ class MapEditor {
           // Move dragged point to the snap position
           this.#draggedPoint.onDrag(lngLat);
           this.#setHover(feature);
-          this.#setCanvasCursor("draw-connect-line");
+          this.#setCanvasCursor(Cursor.CONNECT_LINE);
         }
       }
     }
@@ -820,7 +820,7 @@ class MapEditor {
       this.#draggedPoint.onDrag(e.lngLat);
       if (this.#editMode === EditMode.DRAW_LINE && this.#canFinishLineDrawing(e.point)[0]
           || this.#editMode === EditMode.DRAW_POLYGON && this.#canFinishPolygonDrawing(e.point)[0]) {
-        this.#setCanvasCursor("draw-connect-vertex");
+        this.#setCanvasCursor(Cursor.CONNECT_VERTEX);
       }
     }
 
@@ -862,7 +862,7 @@ class MapEditor {
    * Called when a {@link MapFeature} is dragged.
    */
   #onDragSelectedFeatures(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
-    this.#setCanvasCursor("grabbing");
+    this.#setCanvasCursor(Cursor.GRABBING);
     this.#selectedFeatures.forEach(feature => {
       feature.onDrag(e.lngLat);
       this.#updateFeatureData(feature);
@@ -973,7 +973,7 @@ class MapEditor {
           : this.#canFinishPolygonDrawing(e.point);
       if (canFinish) {
         this.#setHover(lastVertex);
-        this.#setCanvasCursor("point");
+        this.#setCanvasCursor(Cursor.POINT);
         if (feature instanceof geom.LineString) {
           this.#disableDrawLineMode(e.point);
         } else {
@@ -999,7 +999,7 @@ class MapEditor {
     this.#updateFeatureData(feature);
     if (feature instanceof geom.LineString && feature.vertices.length > 2
         || feature instanceof geom.Polygon && feature.vertices[0].length > 3) {
-      this.#setCanvasCursor("draw-connect-vertex");
+      this.#setCanvasCursor(Cursor.CONNECT_VERTEX);
     }
   }
 
@@ -1087,7 +1087,7 @@ class MapEditor {
   #onZoomChangeStart(): void {
     if (this.#draggedPoint) {
       // Prevent unzooming past threshold if a point is being dragged
-      this.#map.setMinZoom(MapEditor.EDIT_MIN_ZOOM);
+      this.#map.setMinZoom(MapEditor.#EDIT_MIN_ZOOM);
     } else {
       this.#map.setMinZoom(0);
     }
@@ -1098,15 +1098,15 @@ class MapEditor {
    */
   #onZoomChangeEnd(): void {
     const zoom = this.#map.getZoom();
-    if (zoom < MapEditor.EDIT_MIN_ZOOM && this.#editMode !== EditMode.VIEW_ONLY) {
+    if (zoom < MapEditor.#EDIT_MIN_ZOOM && this.#editMode !== EditMode.VIEW_ONLY) {
       this.#disableCurrentEditMode(); // Interrupt any action
       this.#editMode = EditMode.VIEW_ONLY;
       this.#clearHover();
-      this.#setCanvasCursor("grab");
+      this.#setCanvasCursor(Cursor.GRAB);
       for (let i = 0; i < 3; i++) {
         this.#drawPointControl.setButtonDisabled(i, true);
       }
-    } else if (zoom >= MapEditor.EDIT_MIN_ZOOM && this.#editMode === EditMode.VIEW_ONLY) {
+    } else if (zoom >= MapEditor.#EDIT_MIN_ZOOM && this.#editMode === EditMode.VIEW_ONLY) {
       this.#editMode = EditMode.SELECT;
       for (let i = 0; i < 3; i++) {
         this.#drawPointControl.setButtonDisabled(i, false);
@@ -1256,9 +1256,14 @@ class MapEditor {
         feature = this.#hoveredFeature;
       }
       if (feature) {
-        this.#setCanvasCursor(feature.geometry.type.toLowerCase() as any);
+        const cursor = {
+          "Point": Cursor.POINT,
+          "LineString": Cursor.LINE,
+          "Polygon": Cursor.POLYGON,
+        }[feature.geometry.type];
+        this.#setCanvasCursor(cursor);
       } else {
-        this.#setCanvasCursor("grab");
+        this.#setCanvasCursor(Cursor.GRAB);
       }
     }
   }
