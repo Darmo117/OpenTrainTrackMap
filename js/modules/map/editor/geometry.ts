@@ -255,7 +255,6 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
    */
   abstract canAcceptVertex(vertex: Point): boolean
 
-  // TODO copy data from oldVertex to newVertex if newVertex is just a point with no data
   /**
    * Replace a vertex of this feature by the specified one.
    * @param newVertex The vertex to put in place of the second one.
