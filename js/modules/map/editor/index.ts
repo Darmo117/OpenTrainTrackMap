@@ -8,6 +8,7 @@ import * as geom from "./geometry";
 import {Point} from "./geometry";
 import * as snap from "./snap";
 import DrawControl from "./controls";
+import {ColorSpecification, DataDrivenPropertyValueSpecification} from "@maplibre/maplibre-gl-style-spec";
 
 enum EditMode {
   VIEW_ONLY = "view_only",
@@ -550,17 +551,29 @@ class MapEditor {
   }
 
   /**
+   * Hide associated layers for zoom < MapEditor.EDIT_MIN_ZOOM.
+   */
+  static readonly #FILTER_TOGGLE_VISIBILITY_FOR_ZOOM: mgl.FilterSpecification = [
+    "step", ["zoom"],
+    false, // If 0 <= zoom < MapEditor.EDIT_MIN_ZOOM
+    MapEditor.EDIT_MIN_ZOOM, true // If MapEditor.EDIT_MIN_ZOOM <= zoom
+  ];
+  /**
+   * Select a color depending on the feature’s "selectionMode" property.
+   */
+  static readonly #CHOOSE_COLOR_FOR_SELECTION_MODE: DataDrivenPropertyValueSpecification<ColorSpecification> = [
+    "match", ["get", "selectionMode"],
+    geom.SelectionMode.SELECTED, MapEditor.HIGHLIGHT_SELECTED_COLOR, // Case 1
+    geom.SelectionMode.HOVERED, MapEditor.HIGHLIGHT_HOVERED_COLOR, // Case 2
+    MapEditor.HIGHLIGHT_BASE_COLOR, // Default
+  ];
+
+  /**
    * Create the layers for the given feature and add them to the map.
    * @param feature A feature.
    * @see https://maplibre.org/maplibre-style-spec/expressions/
    */
   #addLayersForFeature(feature: geom.MapFeature): void {
-    // Hide associated layers for zoom < MapEditor.EDIT_MIN_ZOOM
-    const hideBelowZoomThresholdFilter: mgl.FilterSpecification = [
-      "step", ["zoom"],
-      false,
-      MapEditor.EDIT_MIN_ZOOM, true
-    ];
     if (feature instanceof geom.Point) {
       this.#map.addLayer({
         id: feature.id + "-highlight",
@@ -568,9 +581,9 @@ class MapEditor {
         source: feature.id,
         paint: {
           "circle-radius": ["+", ["get", "radius"], 4],
-          "circle-color": MapEditor.HIGHLIGHT_BASE_COLOR,
+          "circle-color": MapEditor.#CHOOSE_COLOR_FOR_SELECTION_MODE,
         },
-        filter: hideBelowZoomThresholdFilter,
+        filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
       this.#map.addLayer({
         id: feature.id,
@@ -582,7 +595,7 @@ class MapEditor {
           "circle-stroke-width": 1,
           "circle-stroke-color": MapEditor.BORDER_COLOR,
         },
-        filter: hideBelowZoomThresholdFilter,
+        filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
     } else if (feature instanceof geom.LineString) {
       this.#map.addLayer({
@@ -595,9 +608,9 @@ class MapEditor {
         },
         paint: {
           "line-width": ["+", ["get", "width"], 8],
-          "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
+          "line-color": MapEditor.#CHOOSE_COLOR_FOR_SELECTION_MODE,
         },
-        filter: hideBelowZoomThresholdFilter,
+        filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
       this.#map.addLayer({
         id: feature.id + "-border",
@@ -611,7 +624,7 @@ class MapEditor {
           "line-width": ["+", ["get", "width"], 2],
           "line-color": MapEditor.BORDER_COLOR,
         },
-        filter: hideBelowZoomThresholdFilter,
+        filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
       this.#map.addLayer({
         id: feature.id,
@@ -637,7 +650,7 @@ class MapEditor {
         paint: {
           "fill-color": ["concat", ["get", "color"], "30"], // Add transparency
         },
-        filter: hideBelowZoomThresholdFilter,
+        filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
       this.#map.addLayer({
         id: feature.id + "-highlight",
@@ -649,9 +662,9 @@ class MapEditor {
         },
         paint: {
           "line-width": 8,
-          "line-color": MapEditor.HIGHLIGHT_BASE_COLOR,
+          "line-color": MapEditor.#CHOOSE_COLOR_FOR_SELECTION_MODE,
         },
-        filter: hideBelowZoomThresholdFilter,
+        filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
       this.#map.addLayer({
         id: feature.id + "-border",
@@ -664,23 +677,10 @@ class MapEditor {
         paint: {
           "line-color": ["get", "color"],
         },
-        filter: hideBelowZoomThresholdFilter,
+        filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
     } else {
       throw TypeError(`Unexpected type: ${feature}`);
-    }
-  }
-
-  /**
-   * Set the border color of the given feature.
-   * @param feature A feature.
-   * @param color The border’s color.
-   */
-  #setFeatureBorderColor(feature: geom.MapFeature, color: string): void {
-    if (feature instanceof geom.Point) {
-      this.#map.setPaintProperty(feature.id + "-highlight", "circle-color", color);
-    } else {
-      this.#map.setPaintProperty(feature.id + "-highlight", "line-color", color);
     }
   }
 
@@ -1172,11 +1172,13 @@ class MapEditor {
       return;
     }
     if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
-      this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
+      this.#hoveredFeature.selectionMode = geom.SelectionMode.NONE;
+      this.#updateFeatureData(this.#hoveredFeature);
     }
     this.#hoveredFeature = feature;
     if (!this.#selectedFeatures.has(this.#hoveredFeature)) {
-      this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_HOVERED_COLOR);
+      this.#hoveredFeature.selectionMode = geom.SelectionMode.HOVERED;
+      this.#updateFeatureData(this.#hoveredFeature);
     }
     this.#map.fire(new events.FeatureHoverEvent(this.#hoveredFeature));
   }
@@ -1186,8 +1188,9 @@ class MapEditor {
    */
   #clearHover(): void {
     if (this.#hoveredFeature) {
-      if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
-        this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
+      if (!this.#selectedFeatures.has(this.#hoveredFeature)) {
+        this.#hoveredFeature.selectionMode = geom.SelectionMode.NONE;
+        this.#updateFeatureData(this.#hoveredFeature);
       }
       this.#hoveredFeature = null;
       this.#map.fire(new events.FeatureHoverEvent());
@@ -1212,7 +1215,8 @@ class MapEditor {
     }
     if (!this.#selectedFeatures.has(feature)) {
       this.#selectedFeatures.add(feature);
-      this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_SELECTED_COLOR);
+      feature.selectionMode = geom.SelectionMode.SELECTED;
+      this.#updateFeatureData(feature);
       changed = true;
     }
     if (changed) { // Only fire if the selection set changed
@@ -1226,8 +1230,10 @@ class MapEditor {
    */
   #clearSelection(fire: boolean = true): void {
     if (this.#selectedFeatures.size) {
-      this.#selectedFeatures.forEach(feature =>
-          this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR));
+      this.#selectedFeatures.forEach(feature => {
+        feature.selectionMode = geom.SelectionMode.NONE;
+        this.#updateFeatureData(feature);
+      });
       this.#selectedFeatures.clear();
       if (fire) {
         this.#map.fire(new events.FeatureSelectionEvent());

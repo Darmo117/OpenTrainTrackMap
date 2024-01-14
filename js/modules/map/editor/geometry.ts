@@ -9,6 +9,7 @@ export type Geometry = geojson.Point | geojson.LineString | geojson.Polygon;
 export type MapFeatureProperties = {
   color: string;
   layer: number;
+  selectionMode: SelectionMode;
 };
 export type PointProperties = MapFeatureProperties & {
   radius: number;
@@ -18,6 +19,15 @@ export type PolylineProperties = LinearProperties & {
   width: number;
 };
 export type PolygonProperties = LinearProperties;
+
+/**
+ * Enumeration of all possible selection states.
+ */
+export enum SelectionMode {
+  NONE,
+  SELECTED,
+  HOVERED,
+}
 
 /**
  * A map feature is a geometry object that can be shown and manipulated in a {@link mgl.Map}.
@@ -59,6 +69,7 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
     this.properties = Object.assign({
       color: "#ffffff",
       layer: 0,
+      selectionMode: SelectionMode.NONE,
     }, properties) as P;
     this.layer = 0;
   }
@@ -95,6 +106,21 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
    */
   set layer(layer: number) {
     this.properties.layer = layer;
+  }
+
+  /**
+   * This feature’s selection mode.
+   */
+  get selectionMode(): SelectionMode {
+    return this.properties.selectionMode;
+  }
+
+  /**
+   * Set this feature’s selection mode.
+   * @param mode The new mode.
+   */
+  set selectionMode(mode: SelectionMode) {
+    this.properties.selectionMode = mode;
   }
 
   /**
