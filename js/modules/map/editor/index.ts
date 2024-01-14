@@ -156,6 +156,7 @@ class MapEditor {
       drawPolygonButtonTitle: window.ottm.translate(`map.controls.edit.draw_polygon.tooltip`),
     });
     this.#map.addControl(this.#drawPointControl, "top-left");
+    this.#map.dragRotate.disable();
 
     // Setup map callbacks
     this.#map.on("click", e => this.#onClick(e));
