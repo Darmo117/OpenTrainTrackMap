@@ -52,6 +52,22 @@ export default class ZoomControl implements mgl.IControl {
     });
   }
 
+  /**
+   * Set whether the "Zoom In" button should be disabled.
+   * @param disable True to disable, false to enable.
+   */
+  setZoomInButtonDisabled(disable: boolean): void {
+    this.#buttonIn.disabled = disable;
+  }
+
+  /**
+   * Set whether the "Zoom Out" button should be disabled.
+   * @param disable True to disable, false to enable.
+   */
+  setZoomOutButtonDisabled(disable: boolean): void {
+    this.#buttonOut.disabled = disable;
+  }
+
   onAdd(map: mgl.Map): HTMLElement {
     this.#map = map;
     this.#container.appendChild(this.#buttonIn);

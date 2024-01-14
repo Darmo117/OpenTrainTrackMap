@@ -110,7 +110,8 @@ export default function initMap(): void {
   map.on("controls.styles.tiles_changed",
       (e: cts.TilesChangedEvent) => onTilesSourceChanged(e.source, true));
 
-  map.addControl(new ZoomControl({
+  let zoomControl: ZoomControl;
+  map.addControl(zoomControl = new ZoomControl({
     zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip") + " [+]",
     zoomOutTitle: window.ottm.translate("map.controls.zoom_out.tooltip") + " [-]",
   }), "top-right");
@@ -170,7 +171,12 @@ export default function initMap(): void {
    */
 
   window.onhashchange = () => centerViewFromUrl();
-  map.on("zoomend", () => updateUrlHash());
+  map.on("zoomend", () => {
+    updateUrlHash();
+    const zoom = map.getZoom();
+    zoomControl.setZoomOutButtonDisabled(zoom === map.getMinZoom());
+    zoomControl.setZoomInButtonDisabled(zoom === map.getMaxZoom());
+  });
   map.on("moveend", () => updateUrlHash());
   map.on("resize", () => updateUrlHash());
   map.on("load", () => {

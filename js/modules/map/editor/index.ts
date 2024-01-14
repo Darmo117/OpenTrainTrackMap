@@ -53,6 +53,7 @@ class EditorPanel {
 }
 
 // TODO use camera expressions to hide less important features when zoom is too small
+//  and to draw all features in black when edit mode is "view_only"
 //  cf. https://maplibre.org/maplibre-style-spec/expressions/#camera-expressions
 class MapEditor {
   static readonly HIGHLIGHT_BASE_COLOR: string = "#00000000";
