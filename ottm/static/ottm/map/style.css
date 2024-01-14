@@ -82,3 +82,13 @@
   /*noinspection CssUnknownTarget*/
   cursor: url("/static/ottm/images/cursors/cursor-grabbing.png") 10 10, grabbing !important;
 }
+
+.cursor-draw-connect-vertex {
+  /*noinspection CssUnknownTarget*/
+  cursor: url("/static/ottm/images/cursors/cursor-draw-connect-vertex.png") 10 10, grabbing !important;
+}
+
+.cursor-draw-connect-line {
+  /*noinspection CssUnknownTarget*/
+  cursor: url("/static/ottm/images/cursors/cursor-draw-connect-line.png") 10 10, grabbing !important;
+}
