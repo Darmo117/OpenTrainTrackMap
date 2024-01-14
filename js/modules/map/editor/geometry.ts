@@ -228,6 +228,12 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
   }
 
   /**
+   * Indicate whether this feature has any points.
+   * @returns True if this feature has no points, false otherwise.
+   */
+  abstract isEmpty(): boolean;
+
+  /**
    * Check whether the given vertex can be appended in this feature at the given path.
    * @param vertex The vertex to check.
    * @param path The path.
@@ -308,6 +314,11 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
    * @returns The segment’s path or null if there is no segment for the two points.
    */
   abstract getSegmentPath(v1: Point, v2: Point): string | null;
+
+  /**
+   * Return the path to the next possible vertex position on this feature’s outer line.
+   */
+  abstract getNextVertexPath(): string;
 
   /**
    * Called when one of the vertices of this feature is being dragged.
@@ -411,6 +422,10 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
    */
   set direction(d: PolylineDirection) {
     this.#direction = d ?? PolylineDirection.FORWARD;
+  }
+
+  isEmpty(): boolean {
+    return this.#vertices.length === 0;
   }
 
   canAppendVertex(vertex: Point, path: string): boolean {
@@ -517,6 +532,10 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
       }
     }
     return null;
+  }
+
+  getNextVertexPath(): string {
+    return "" + this.#vertices.length;
   }
 
   onDrag(pos: mgl.LngLat) {
@@ -632,6 +651,10 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     if (this.#lockStatus[index] !== undefined) {
       this.#lockStatus[index] = true;
     }
+  }
+
+  isEmpty(): boolean {
+    return !this.#vertices[0] || this.#vertices[0].length === 0;
   }
 
   canAppendVertex(vertex: Point, path: string): boolean {
@@ -774,6 +797,10 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
       }
     }
     return null;
+  }
+
+  getNextVertexPath(): string {
+    return "0." + (this.#vertices[0]?.length ?? 0);
   }
 
   onDrag(pos: mgl.LngLat) {

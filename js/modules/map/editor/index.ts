@@ -108,6 +108,7 @@ class MapEditor {
    * The points that were created when drawing the last linear feature.
    */
   #drawnPoints: geom.Point[] = [];
+
   // TODO find a way to add holes to polygons
 
   /**
@@ -344,30 +345,8 @@ class MapEditor {
   }
 
   #quitDrawLineMode(mousePos?: mgl.PointLike) {
-    if (this.#drawnLineString) {
-      let action: geom.Action = null;
-      if (this.#draggedPoint) {
-        action = this.#drawnLineString.removeVertex(this.#draggedPoint);
-        this.removeFeature(this.#draggedPoint.id);
-        this.#draggedPoint = null;
-      }
-      if (action?.type === "delete_feature") {
-        // FIXME prevent deletion of pre-existing isolated points
-        this.removeFeature(this.#drawnLineString.id);
-        this.#drawnPoints.forEach(p => this.removeFeature(p.id));
-      } else {
-        if (this.#drawnLineString.vertices.length === 0) {
-          this.removeFeature(this.#drawnLineString.id);
-        } else {
-          this.#updateFeatureData(this.#drawnLineString);
-          this.#selectFeature(this.#drawnLineString, false);
-        }
-      }
-      this.#drawnLineString = null;
-      this.#drawnPoints.splice(0);
-    }
-    this.#refreshCursor(mousePos);
-    this.#drawPointControl.deactivateButton(1);
+    this.#quitLinearDrawing(this.#drawnLineString, 1, mousePos);
+    this.#drawnLineString = null;
   }
 
   #enableDrawPolygonMode() {
@@ -388,31 +367,40 @@ class MapEditor {
   }
 
   #quitDrawPolygonMode(mousePos?: mgl.PointLike) {
-    if (this.#drawnPolygon) {
+    this.#quitLinearDrawing(this.#drawnPolygon, 2, mousePos, () => this.#drawnPolygon.lockRing(0));
+    this.#drawnPolygon = null;
+  }
+
+  #quitLinearDrawing(
+      feature: geom.LinearFeature,
+      buttonIndex: number,
+      mousePos?: mgl.PointLike,
+      onValidDrawing?: (() => void)
+  ) {
+    if (feature) {
       let action: geom.Action = null;
       if (this.#draggedPoint) {
-        action = this.#drawnPolygon.removeVertex(this.#draggedPoint);
+        action = feature.removeVertex(this.#draggedPoint);
         this.removeFeature(this.#draggedPoint.id);
         this.#draggedPoint = null;
       }
       if (action?.type === "delete_feature") {
         // FIXME prevent deletion of pre-existing isolated points
-        this.removeFeature(this.#drawnPolygon.id);
+        this.removeFeature(feature.id);
         this.#drawnPoints.forEach(p => this.removeFeature(p.id));
       } else {
-        if (this.#drawnPolygon.vertices.length === 0) {
-          this.removeFeature(this.#drawnPolygon.id);
+        if (feature.isEmpty()) {
+          this.removeFeature(feature.id);
         } else {
-          this.#drawnPolygon.lockRing(0);
-          this.#updateFeatureData(this.#drawnPolygon);
-          this.#selectFeature(this.#drawnPolygon, false);
+          onValidDrawing?.();
+          this.#updateFeatureData(feature);
+          this.#selectFeature(feature, false);
         }
       }
-      this.#drawnPolygon = null;
       this.#drawnPoints.splice(0);
     }
     this.#refreshCursor(mousePos);
-    this.#drawPointControl.deactivateButton(2);
+    this.#drawPointControl.deactivateButton(buttonIndex);
   }
 
   /**
@@ -742,25 +730,32 @@ class MapEditor {
     if (!this.#snapResult) {
       this.#clearHover();
       this.#draggedPoint.onDrag(e.lngLat);
-      if (this.#editMode === EditMode.DRAW_LINE && this.#drawnLineString.vertices.length > 2) {
-        const features = this.#getFeatureIds(e.point);
-        const lastVertex = this.#drawnLineString.getVertex("" + (this.#drawnLineString.vertices.length - 2));
-        if (features.has(lastVertex.id)) {
-          this.#setCanvasCursor("draw-connect-vertex");
-        }
-      } else if (this.#editMode === EditMode.DRAW_POLYGON
-          && this.#drawnPolygon.vertices[0]
-          && this.#drawnPolygon.vertices[0].length > 3) {
-        const features = this.#getFeatureIds(e.point);
-        const lastVertex = this.#drawnPolygon.getVertex("0." + (this.#drawnPolygon.vertices[0].length - 2));
-        if (features.has(lastVertex.id)) {
-          this.#setCanvasCursor("draw-connect-vertex");
-        }
+      if (this.#editMode === EditMode.DRAW_LINE && this.#canFinishLineDrawing(e)[0]
+          || this.#editMode === EditMode.DRAW_POLYGON && this.#canFinishPolygonDrawing(e)[0]) {
+        this.#setCanvasCursor("draw-connect-vertex");
       }
     }
 
     this.#updateFeatureData(this.#draggedPoint);
     this.#draggedPoint.boundFeatures.forEach(f => this.#updateFeatureData(f));
+  }
+
+  #canFinishLineDrawing(e: mgl.MapMouseEvent | mgl.MapTouchEvent): [boolean, geom.Point | null] {
+    if (this.#drawnLineString.vertices.length <= 2) {
+      return [false, null];
+    }
+    const features = this.#getFeatureIds(e.point);
+    const lastVertex = this.#drawnLineString.getVertex("" + (this.#drawnLineString.vertices.length - 2));
+    return [features.has(lastVertex.id), lastVertex];
+  }
+
+  #canFinishPolygonDrawing(e: mgl.MapMouseEvent | mgl.MapTouchEvent): [boolean, geom.Point | null] {
+    if (!this.#drawnPolygon.vertices[0] || this.#drawnPolygon.vertices[0].length <= 3) {
+      return [false, null];
+    }
+    const features = this.#getFeatureIds(e.point);
+    const lastVertex = this.#drawnPolygon.getVertex("0." + (this.#drawnPolygon.vertices[0].length - 2));
+    return [features.has(lastVertex.id), lastVertex];
   }
 
   /**
@@ -870,71 +865,14 @@ class MapEditor {
   }
 
   #drawLineVertex(e: mgl.MapMouseEvent) {
-    if (this.#snapResult) {
-      if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
-        let point: geom.Point;
-        if (this.#snapResult.type === "point") {
-          point = this.#snapResult.point;
-        } else {
-          const {feature, path} = this.#snapResult;
-          point = feature.getVertex(path);
-        }
-        this.#drawnLineString.replaceVertex(point, this.#draggedPoint);
-        this.removeFeature(this.#draggedPoint.id);
-        this.#moveLayers(point.id); // Put point on top
-
-      } else { // segment
-        const {feature, path, lngLat} = this.#snapResult;
-        this.#draggedPoint.onDrag(lngLat);
-        feature.insertVertexAfter(this.#draggedPoint, path);
-        // Insert vertex to all features that share the same segment
-        this.#snapResult.featuresWithSameSegment?.forEach(
-            ({feature, path}) => feature.insertVertexAfter(this.#draggedPoint, path));
-        this.#moveLayers(this.#draggedPoint.id); // Put point on top
-        this.#drawnPoints.push(this.#draggedPoint);
-      }
-      this.#snapResult = null;
-
-    } else {
-      if (this.#drawnLineString.vertices.length > 2) {
-        const features = this.#getFeatureIds(e.point);
-        const lastVertex = this.#drawnLineString.getVertex("" + (this.#drawnLineString.vertices.length - 2));
-        if (features.has(lastVertex.id)) {
-          this.#setHover(lastVertex);
-          this.#setCanvasCursor("point");
-          this.#disableDrawLineMode(e.point);
-          return;
-        }
-      }
-      let point: geom.Point;
-      if (this.#hoveredFeature instanceof Point) {
-        // Select existing point instead of creating a new one
-        point = this.#hoveredFeature;
-      } else if (!(point = this.#createNewPointOnHoveredSegment(e))) {
-        point = this.#createNewPoint(e.lngLat);
-      }
-      this.#moveLayers(point.id); // Put point on top
-      if (!this.#draggedPoint) {
-        if (point !== this.#hoveredFeature) {
-          this.#drawnPoints.push(point);
-        }
-        this.#drawnLineString.appendVertex(point, "" + this.#drawnLineString.vertices.length);
-      } else {
-        this.#drawnLineString.replaceVertex(point, this.#draggedPoint);
-        this.removeFeature(this.#draggedPoint.id);
-      }
-    }
-
-    // Create next point
-    this.#draggedPoint = this.#createNewPoint(e.lngLat);
-    this.#drawnLineString.appendVertex(this.#draggedPoint, "" + this.#drawnLineString.vertices.length);
-    this.#updateFeatureData(this.#drawnLineString);
-    if (this.#drawnLineString.vertices.length > 2) {
-      this.#setCanvasCursor("draw-connect-vertex");
-    }
+    this.#drawLinearFeatureVertex(this.#drawnLineString, e);
   }
 
   #drawPolygonVertex(e: mgl.MapMouseEvent) {
+    this.#drawLinearFeatureVertex(this.#drawnPolygon, e);
+  }
+
+  #drawLinearFeatureVertex(feature: geom.LinearFeature, e: mgl.MapMouseEvent) {
     if (this.#snapResult) {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
         let point: geom.Point;
@@ -944,7 +882,7 @@ class MapEditor {
           const {feature, path} = this.#snapResult;
           point = feature.getVertex(path);
         }
-        this.#drawnPolygon.replaceVertex(point, this.#draggedPoint);
+        feature.replaceVertex(point, this.#draggedPoint);
         this.removeFeature(this.#draggedPoint.id);
         this.#moveLayers(point.id); // Put point on top
 
@@ -961,15 +899,18 @@ class MapEditor {
       this.#snapResult = null;
 
     } else {
-      if (this.#drawnPolygon.vertices[0] && this.#drawnPolygon.vertices[0].length > 3) {
-        const features = this.#getFeatureIds(e.point);
-        const lastVertex = this.#drawnPolygon.getVertex("0." + (this.#drawnPolygon.vertices[0].length - 2));
-        if (features.has(lastVertex.id)) {
-          this.#setHover(lastVertex);
-          this.#setCanvasCursor("point");
+      const [canFinish, lastVertex] = feature instanceof geom.LineString
+          ? this.#canFinishLineDrawing(e)
+          : this.#canFinishPolygonDrawing(e);
+      if (canFinish) {
+        this.#setHover(lastVertex);
+        this.#setCanvasCursor("point");
+        if (feature instanceof geom.LineString) {
+          this.#disableDrawLineMode(e.point);
+        } else {
           this.#disableDrawPolygonMode(e.point);
-          return;
         }
+        return;
       }
       let point: geom.Point;
       if (this.#hoveredFeature instanceof Point) {
@@ -983,18 +924,19 @@ class MapEditor {
         if (point !== this.#hoveredFeature) {
           this.#drawnPoints.push(point);
         }
-        this.#drawnPolygon.appendVertex(point, "0." + (this.#drawnPolygon.vertices[0]?.length ?? 0));
+        feature.appendVertex(point, feature.getNextVertexPath());
       } else {
-        this.#drawnPolygon.replaceVertex(point, this.#draggedPoint);
+        feature.replaceVertex(point, this.#draggedPoint);
         this.removeFeature(this.#draggedPoint.id);
       }
     }
 
     // Create next point
     this.#draggedPoint = this.#createNewPoint(e.lngLat);
-    this.#drawnPolygon.appendVertex(this.#draggedPoint, "0." + this.#drawnPolygon.vertices[0].length);
-    this.#updateFeatureData(this.#drawnPolygon);
-    if (this.#drawnPolygon.vertices[0].length > 3) {
+    feature.appendVertex(this.#draggedPoint, feature.getNextVertexPath());
+    this.#updateFeatureData(feature);
+    if (feature instanceof geom.LineString && feature.vertices.length > 2
+        || feature instanceof geom.Polygon && feature.vertices[0].length > 3) {
       this.#setCanvasCursor("draw-connect-vertex");
     }
   }
