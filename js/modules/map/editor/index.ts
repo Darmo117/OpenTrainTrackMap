@@ -108,7 +108,7 @@ class MapEditor {
    * The points that were created when drawing the last linear feature.
    * This list is used for deleting all points that were drawn when the current drawing is cancelled.
    */
-  #drawnPoints: geom.Point[] = [];
+  readonly #drawnPoints: geom.Point[] = [];
 
   // TODO find a way to add holes to polygons
 
