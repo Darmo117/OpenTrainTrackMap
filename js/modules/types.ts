@@ -122,18 +122,18 @@ export class Language {
   readonly thousandsSep: string;
 
   constructor(
-    code: string,
-    name: string,
-    writingDirection: string,
-    comma: string,
-    and: string,
-    dayNames: string[],
-    abbrDayNames: string[],
-    monthNames: string[],
-    abbrMonthNames: string[],
-    ampm: [string, string],
-    decimalSep: string,
-    thousandsSep: string
+      code: string,
+      name: string,
+      writingDirection: string,
+      comma: string,
+      and: string,
+      dayNames: string[],
+      abbrDayNames: string[],
+      monthNames: string[],
+      abbrMonthNames: string[],
+      ampm: [string, string],
+      decimalSep: string,
+      thousandsSep: string
   ) {
     if (dayNames.length !== 7) {
       throw new Error("dayNames expected 7 values");
@@ -220,18 +220,18 @@ export class OTTM {
     const langs: Dict<Language> = {};
     for (const langData of window.OTTM_CONFIG.languages) {
       langs[langData.code] = new Language(
-        langData.code,
-        langData.name,
-        langData.writingDirection,
-        langData.comma,
-        langData.and,
-        langData.dayNames,
-        langData.abbrDayNames,
-        langData.monthNames,
-        langData.abbrMonthNames,
-        langData.ampm,
-        langData.decimalSep,
-        langData.thousandsSep,
+          langData.code,
+          langData.name,
+          langData.writingDirection,
+          langData.comma,
+          langData.and,
+          langData.dayNames,
+          langData.abbrDayNames,
+          langData.monthNames,
+          langData.abbrMonthNames,
+          langData.ampm,
+          langData.decimalSep,
+          langData.thousandsSep,
       );
     }
     this.languages = new Mapping(langs);
@@ -248,8 +248,8 @@ export class OTTM {
    */
   translate(key: string, defaultValue?: string | (() => string), formatArgs: Dict = {}): string {
     let text: string = this.translations.get(key)
-      ?? (defaultValue instanceof Function ? defaultValue() : defaultValue)
-      ?? key;
+        ?? (defaultValue instanceof Function ? defaultValue() : defaultValue)
+        ?? key;
     if (text) {
       for (const [key, value] of Object.entries(formatArgs)) {
         text = text.replaceAll(`{${key}}`, value);
@@ -290,7 +290,7 @@ export class OTTM {
   /**
    * Set referrer URL to login-related links.
    */
-  setReferrer() {
+  setReferrer(): void {
     const path = window.location.pathname + window.location.hash;
     const linkSelectors = [
       "#nav-login-link",
@@ -310,7 +310,7 @@ export class OTTM {
    * @param path Path to pass to "return_to" argument.
    * @param args Additional arguments to append to URL.
    */
-  #setReturnTo($link: JQuery, path: string, args?: Dict) {
+  #setReturnTo($link: JQuery, path: string, args?: Dict): void {
     const url = new URL($link.prop("href"));
     const params = new URLSearchParams({return_to: path});
     if (args) {
@@ -338,7 +338,7 @@ export class OTTM {
    * @param value Cookie’s value.
    * @param options Options.
    */
-  setCookie(name: string, value: string, options: Cookies.CookieAttributes) {
+  setCookie(name: string, value: string, options: Cookies.CookieAttributes): void {
     Cookies.set(name, value, options);
   }
 
@@ -347,7 +347,7 @@ export class OTTM {
    * @param name Cookie’s name.
    * @param options Options.
    */
-  deleteCookie(name: string, options: Cookies.CookieAttributes) {
+  deleteCookie(name: string, options: Cookies.CookieAttributes): void {
     Cookies.remove(name, options);
   }
 }

@@ -38,7 +38,7 @@ class EditorPanel {
     });
   }
 
-  #setupForm(features: geom.MapFeature[], editable: boolean) {
+  #setupForm(features: geom.MapFeature[], editable: boolean): void {
     if (!features.length) {
       this.#$featureType.text("");
     } else {
@@ -204,7 +204,7 @@ class MapEditor {
    * Add the given feature to the map.
    * @param feature The feature to add.
    */
-  addFeature(feature: geom.MapFeature) {
+  addFeature(feature: geom.MapFeature): void {
     // TODO handle z-order
     // TODO put linestrings over polygons with the same z-order
     if (this.#features[feature.id]) {
@@ -236,7 +236,7 @@ class MapEditor {
    * Bound features are updated.
    * @param featureId The ID of the feature to delete.
    */
-  removeFeature(featureId: string) {
+  removeFeature(featureId: string): void {
     const feature = this.#features[featureId];
     if (!feature) {
       return;
@@ -268,7 +268,7 @@ class MapEditor {
    * Update the bound features of the specified deleted point.
    * @param point The point that is being deleted.
    */
-  #updateBoundFeaturesOfDeletedPoint(point: geom.Point) {
+  #updateBoundFeaturesOfDeletedPoint(point: geom.Point): void {
     for (const boundFeature of point.boundFeatures) {
       point.unbindFeature(boundFeature);
       const action = boundFeature.removeVertex(point);
@@ -296,7 +296,7 @@ class MapEditor {
    * Delete the vertices that were only bound to the given deleted line.
    * @param line The line being deleted.
    */
-  #deleteVerticesOfDeletedLineString(line: geom.LineString) {
+  #deleteVerticesOfDeletedLineString(line: geom.LineString): void {
     this.#deleteVerticesOfDeletedLinearFeature(line, line.vertices);
   }
 
@@ -304,7 +304,7 @@ class MapEditor {
    * Delete the vertices that were only bound to the given deleted polygon.
    * @param polygon The polygon being deleted.
    */
-  #deleteVerticesOfDeletedPolygon(polygon: geom.Polygon) {
+  #deleteVerticesOfDeletedPolygon(polygon: geom.Polygon): void {
     for (const ring of polygon.vertices) {
       this.#deleteVerticesOfDeletedLinearFeature(polygon, ring);
     }
@@ -315,7 +315,7 @@ class MapEditor {
    * @param feature The feature being deleted.
    * @param vertices The list of vertices to check for deletion.
    */
-  #deleteVerticesOfDeletedLinearFeature(feature: geom.LinearFeature, vertices: geom.Point[]) {
+  #deleteVerticesOfDeletedLinearFeature(feature: geom.LinearFeature, vertices: geom.Point[]): void {
     for (const vertex of vertices) {
       const bound = vertex.boundFeatures;
       vertex.unbindFeature(feature);
@@ -329,7 +329,7 @@ class MapEditor {
    * Quit the current edit mode. Any ongoing drawing is interrupted.
    * @param mousePos The current mouse position. Used to refresh the cursor.
    */
-  #disableCurrentEditMode(mousePos?: mgl.PointLike) {
+  #disableCurrentEditMode(mousePos?: mgl.PointLike): void {
     switch (this.#editMode) {
       case EditMode.VIEW_ONLY:
       case EditMode.SELECT:
@@ -354,7 +354,7 @@ class MapEditor {
   /**
    * Enable the "draw_point" mode.
    */
-  #enableDrawPointMode() {
+  #enableDrawPointMode(): void {
     if (this.#editMode === EditMode.VIEW_ONLY) {
       return;
     }
@@ -368,7 +368,7 @@ class MapEditor {
    * Any ongoing drawing is interrupted.
    * @param mousePos The current mouse position.
    */
-  #disableDrawPointMode(mousePos?: mgl.PointLike) {
+  #disableDrawPointMode(mousePos?: mgl.PointLike): void {
     this.#editMode = EditMode.SELECT;
     this.#refreshCursor(mousePos);
     this.#drawPointControl.deactivateButton(0);
@@ -377,7 +377,7 @@ class MapEditor {
   /**
    * Enable the "draw_line" mode.
    */
-  #enableDrawLineMode() {
+  #enableDrawLineMode(): void {
     if (this.#editMode === EditMode.VIEW_ONLY) {
       return;
     }
@@ -397,7 +397,7 @@ class MapEditor {
    * Any ongoing drawing is interrupted.
    * @param mousePos The current mouse position.
    */
-  #disableDrawLineMode(mousePos?: mgl.PointLike) {
+  #disableDrawLineMode(mousePos?: mgl.PointLike): void {
     this.#quitLinearDrawing(this.#drawnLineString, 1, mousePos);
     this.#drawnLineString = null;
   }
@@ -405,7 +405,7 @@ class MapEditor {
   /**
    * Enable the "draw_polygon" mode.
    */
-  #enableDrawPolygonMode() {
+  #enableDrawPolygonMode(): void {
     if (this.#editMode === EditMode.VIEW_ONLY) {
       return;
     }
@@ -425,7 +425,7 @@ class MapEditor {
    * Any ongoing drawing is interrupted.
    * @param mousePos The current mouse position.
    */
-  #disableDrawPolygonMode(mousePos?: mgl.PointLike) {
+  #disableDrawPolygonMode(mousePos?: mgl.PointLike): void {
     this.#quitLinearDrawing(this.#drawnPolygon, 2, mousePos, () => this.#drawnPolygon.lockRing(0));
     this.#drawnPolygon = null;
   }
@@ -442,7 +442,7 @@ class MapEditor {
       buttonIndex: number,
       mousePos?: mgl.PointLike,
       onValidDrawing?: (() => void)
-  ) {
+  ): void {
     this.#editMode = EditMode.SELECT;
     if (feature) {
       let action: geom.Action = null;
@@ -521,7 +521,7 @@ class MapEditor {
    * array and appear above all other layers on the map.
    * @see Map.moveLayer
    */
-  #moveLayers(featureId: string, beforeId?: string) {
+  #moveLayers(featureId: string, beforeId?: string): void {
     if (beforeId) {
       const bottomLayer = this.#getLayerIdStack(beforeId)[0];
       this.#getLayerIdStack(featureId).forEach(id => this.#map.moveLayer(id, bottomLayer));
@@ -552,7 +552,7 @@ class MapEditor {
    * Create the layers for the given feature and add them to the map.
    * @param feature A feature.
    */
-  #addLayersForFeature(feature: geom.MapFeature) {
+  #addLayersForFeature(feature: geom.MapFeature): void {
     if (feature instanceof geom.Point) {
       this.#map.addLayer({
         id: feature.id + "-highlight",
@@ -658,7 +658,7 @@ class MapEditor {
    * @param feature A feature.
    * @param color The border’s color.
    */
-  #setFeatureBorderColor(feature: geom.MapFeature, color: string) {
+  #setFeatureBorderColor(feature: geom.MapFeature, color: string): void {
     if (feature instanceof geom.Point) {
       this.#map.setPaintProperty(feature.id + "-highlight", "circle-color", color);
     } else {
@@ -670,7 +670,7 @@ class MapEditor {
    * Set the cursor for the map’s canvas.
    * @param cursor The cursor type. Must be one of {@link MapEditor.CURSORS}.
    */
-  #setCanvasCursor(cursor: typeof MapEditor.CURSORS[number]) {
+  #setCanvasCursor(cursor: typeof MapEditor.CURSORS[number]): void {
     this.#$canvas.addClass("cursor-" + cursor);
     this.#$canvas.removeClass(
         MapEditor.CURSORS
@@ -682,7 +682,7 @@ class MapEditor {
   /**
    * Called when the mouse moves over the map.
    */
-  #onMouseMouve(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
+  #onMouseMouve(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     if (this.#editMode === EditMode.VIEW_ONLY) {
       return;
     }
@@ -708,7 +708,7 @@ class MapEditor {
   /**
    * Called when a {@link Point} is dragged.
    */
-  #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
+  #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     this.#clearSelection();
     this.#setCanvasCursor("draw");
 
@@ -843,7 +843,7 @@ class MapEditor {
   /**
    * Called when a {@link MapFeature} is dragged.
    */
-  #onDragSelectedFeatures(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
+  #onDragSelectedFeatures(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     this.#setCanvasCursor("grabbing");
     this.#selectedFeatures.forEach(feature => {
       feature.onDrag(e.lngLat);
@@ -854,7 +854,7 @@ class MapEditor {
   /**
    * Called when the mouse is pressed down on the map.
    */
-  #onMouseDown(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
+  #onMouseDown(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     if (this.#editMode === EditMode.SELECT && this.#hoveredFeature instanceof geom.Point) {
       e.preventDefault();
       this.#draggedPoint = this.#hoveredFeature;
@@ -865,7 +865,7 @@ class MapEditor {
   /**
    * Called when the mouse is released on the map.
    */
-  #onMouseUp(e: mgl.MapMouseEvent | mgl.MapTouchEvent) {
+  #onMouseUp(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     if (this.#editMode !== EditMode.SELECT) {
       return;
     }
@@ -895,7 +895,7 @@ class MapEditor {
   /**
    * Called when the mouse is clicked on the map.
    */
-  #onClick(e: mgl.MapMouseEvent) {
+  #onClick(e: mgl.MapMouseEvent): void {
     switch (this.#editMode) {
       case EditMode.DRAW_POINT:
         this.#drawPoint(e);
@@ -926,7 +926,7 @@ class MapEditor {
    * Draw a point feature at the mouse cursor’s position.
    * @param e The mouse event.
    */
-  #drawPoint(e: mgl.MapMouseEvent) {
+  #drawPoint(e: mgl.MapMouseEvent): void {
     this.#selectFeature(this.#drawNewPoint(e), false);
     this.#disableDrawPointMode(e.point);
   }
@@ -936,7 +936,7 @@ class MapEditor {
    * @param feature The feature to draw the point for.
    * @param e The mouse event.
    */
-  #drawLinearFeatureVertex(feature: geom.LinearFeature, e: mgl.MapMouseEvent) {
+  #drawLinearFeatureVertex(feature: geom.LinearFeature, e: mgl.MapMouseEvent): void {
     if (this.#snapResult) {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
         const point = this.#getSnappedPoint();
@@ -1023,7 +1023,7 @@ class MapEditor {
    * If the current snap result has type "segment", adds the dragged point to the snapped segment.
    * All features that share that same segment are updated.
    */
-  #addSnappedPointToSegment() {
+  #addSnappedPointToSegment(): void {
     if (this.#snapResult.type === "segment") {
       const {feature, path, lngLat} = this.#snapResult;
       this.#draggedPoint.onDrag(lngLat);
@@ -1038,7 +1038,7 @@ class MapEditor {
   /**
    * Called when the mouse is double-clicked on the map.
    */
-  #onDoubleClick(e: mgl.MapMouseEvent) {
+  #onDoubleClick(e: mgl.MapMouseEvent): void {
     // Prevent default action (zoom)
     e.preventDefault();
     if (this.#hoveredFeature) {
@@ -1050,7 +1050,7 @@ class MapEditor {
   /**
    * Called when a key is pressed.
    */
-  #onKeyDown(e: KeyboardEvent) {
+  #onKeyDown(e: KeyboardEvent): void {
     if (this.#editMode === EditMode.SELECT) {
       if (e.key === "Delete") {
         this.#deleteSelectedFeatures();
@@ -1066,7 +1066,7 @@ class MapEditor {
   /**
    * Called when the map zoom has changed.
    */
-  #onZoomChanged() { // TODO prevent unzooming past threshold if a point is being dragged
+  #onZoomChanged(): void { // TODO prevent unzooming past threshold if a point is being dragged
     const zoom = this.#map.getZoom();
     if (zoom < MapEditor.EDIT_MIN_ZOOM && this.#editMode !== EditMode.VIEW_ONLY) {
       this.#disableCurrentEditMode(); // Interrupt any action
@@ -1134,7 +1134,7 @@ class MapEditor {
    * @param feature The feature to set as being hovered.
    * @throws {Error} If the feature is null.
    */
-  #setHover(feature: geom.MapFeature) {
+  #setHover(feature: geom.MapFeature): void {
     if (!feature) {
       throw new Error("Missing feature");
     }
@@ -1154,7 +1154,7 @@ class MapEditor {
   /**
    * Clear the currently hovered feature.
    */
-  #clearHover() {
+  #clearHover(): void {
     if (this.#hoveredFeature) {
       if (this.#hoveredFeature && !this.#selectedFeatures.has(this.#hoveredFeature)) {
         this.#setFeatureBorderColor(this.#hoveredFeature, MapEditor.HIGHLIGHT_BASE_COLOR);
@@ -1171,7 +1171,7 @@ class MapEditor {
    * otherwise the list is cleared beforehand.
    * @throws {Error} If the feature is null.
    */
-  #selectFeature(feature: geom.MapFeature, keepSelection: boolean) {
+  #selectFeature(feature: geom.MapFeature, keepSelection: boolean): void {
     if (!feature) {
       throw new Error("Missing feature");
     }
@@ -1194,7 +1194,7 @@ class MapEditor {
    * Clear the current selection.
    * @param fire If true and the selection set changed, an event is fired; otherwise an event is never fired.
    */
-  #clearSelection(fire: boolean = true) {
+  #clearSelection(fire: boolean = true): void {
     if (this.#selectedFeatures.size) {
       this.#selectedFeatures.forEach(feature =>
           this.#setFeatureBorderColor(feature, MapEditor.HIGHLIGHT_BASE_COLOR));
@@ -1211,7 +1211,7 @@ class MapEditor {
    *
    * @param mousePos The mouse position. If specified, the feature under the mouse position will be used instead.
    */
-  #refreshCursor(mousePos?: mgl.PointLike) {
+  #refreshCursor(mousePos?: mgl.PointLike): void {
     if (this.#editMode === EditMode.SELECT) {
       let feature: geom.MapFeature;
       if (mousePos) {
@@ -1232,7 +1232,7 @@ class MapEditor {
    * @param lngLat The point’s position.
    * @returns The newly created point.
    */
-  #createNewPoint(lngLat: mgl.LngLat) {
+  #createNewPoint(lngLat: mgl.LngLat): geom.Point {
     let id: string;
     do { // TODO keep global ID counter
       id = `point-${Math.random()}`;
@@ -1245,7 +1245,7 @@ class MapEditor {
   /**
    * If in "select" mode, delete the currently selected features and clear the selection set.
    */
-  #deleteSelectedFeatures() {
+  #deleteSelectedFeatures(): void {
     if (this.#editMode === EditMode.SELECT) {
       this.#selectedFeatures.forEach(f => this.removeFeature(f.id));
       this.#selectedFeatures.clear();
@@ -1256,7 +1256,7 @@ class MapEditor {
    * Update the given feature’s map data.
    * @param feature A feature.
    */
-  #updateFeatureData(feature: geom.MapFeature) {
+  #updateFeatureData(feature: geom.MapFeature): void {
     (this.#map.getSource(feature.id) as mgl.GeoJSONSource).setData(feature);
   }
 }
@@ -1265,7 +1265,7 @@ class MapEditor {
  * Hook a feature editor to the given map.
  * @param map The map.
  */
-export default function initMapEditor(map: mgl.Map) {
+export default function initMapEditor(map: mgl.Map): void {
   const mapEditor = new MapEditor(map);
 
   // TEMP

@@ -59,7 +59,7 @@ export default class ZoomControl implements mgl.IControl {
     return this.#container;
   }
 
-  onRemove() {
+  onRemove(): void {
     this.#container.parentNode?.removeChild(this.#container);
   }
 }

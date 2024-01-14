@@ -85,7 +85,7 @@ export default class TilesSourcesControl implements mgl.IControl {
     return tilesSource;
   }
 
-  #setup() {
+  #setup(): void {
     if (!this.#map) {
       throw Error("map is undefined");
     }
@@ -123,12 +123,12 @@ export default class TilesSourcesControl implements mgl.IControl {
     });
   }
 
-  #onSelectionChange(e: Event) {
+  #onSelectionChange(e: Event): void {
     const id = (e.target as HTMLInputElement).value;
     this.#changeTilesSource(this.#findTilesSourceById(id));
   }
 
-  #changeTilesSource(source: TilesSource) {
+  #changeTilesSource(source: TilesSource): void {
     this.#map.removeLayer("tiles");
     this.#map.removeSource("tiles");
     this.#map.addSource("tiles", source.source);
@@ -151,7 +151,7 @@ export default class TilesSourcesControl implements mgl.IControl {
     return this.#container;
   }
 
-  onRemove() {
+  onRemove(): void {
     this.#container.parentNode?.removeChild(this.#container);
   }
 }

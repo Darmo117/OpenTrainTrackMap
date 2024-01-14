@@ -56,13 +56,13 @@ export default class OpenExternalMapControl implements mgl.IControl {
     });
   }
 
-  #onButtonClick() {
+  #onButtonClick(): void {
     const {lat, lng} = this.#map.getCenter();
     const zoom = this.#map.getZoom();
     window.open(this.#urlPattern
-      .replace("{lat}", lat.toFixed(5))
-      .replace("{lng}", lng.toFixed(5))
-      .replace("{zoom}", this.#zoomTransformer(zoom))
+        .replace("{lat}", lat.toFixed(5))
+        .replace("{lng}", lng.toFixed(5))
+        .replace("{zoom}", this.#zoomTransformer(zoom))
     );
   }
 
@@ -72,7 +72,7 @@ export default class OpenExternalMapControl implements mgl.IControl {
     return this.#container;
   }
 
-  onRemove() {
+  onRemove(): void {
     this.#container.parentNode?.removeChild(this.#container);
   }
 }

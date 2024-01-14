@@ -7,7 +7,7 @@ declare global {
 /**
  * Script for the wiki page editor.
  */
-export default function initEditor() {
+export default function initEditor(): void {
   if (!window.ottm.user.get("useEditorSyntaxHighlighting")) {
     return;
   }

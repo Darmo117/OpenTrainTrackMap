@@ -90,7 +90,7 @@ export default class DrawControl implements mgl.IControl {
    * Deactivate the button at the given index.
    * @param index The button’s index. Should be between 0 and 3 inclusive.
    */
-  deactivateButton(index: number) {
+  deactivateButton(index: number): void {
     this.#buttons[index]?.classList.remove("active");
   }
 
@@ -99,7 +99,7 @@ export default class DrawControl implements mgl.IControl {
    * @param index The button’s index. Should be between 0 and 3 inclusive.
    * @param disabled True to disable the button, false to enable it.
    */
-  setButtonDisabled(index: number, disabled: boolean) {
+  setButtonDisabled(index: number, disabled: boolean): void {
     if (this.#buttons[index]) {
       this.#buttons[index].disabled = disabled;
     }
@@ -110,7 +110,7 @@ export default class DrawControl implements mgl.IControl {
     return this.#container;
   }
 
-  onRemove() {
+  onRemove(): void {
     this.#container.parentNode?.removeChild(this.#container);
   }
 }

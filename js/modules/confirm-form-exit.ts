@@ -9,7 +9,7 @@ let confirmExitCounter = 0;
  * Add a hook to the given form that shows an alert when the user quits the page without submiting that form.
  * @param form The form to add the hook to.
  */
-export default function hookExitConfirm(form: JQuery<HTMLFormElement>) {
+export default function hookExitConfirm(form: JQuery<HTMLFormElement>): void {
   const formState = {
     confirmExit: false,
     savedState: form.serialize(),

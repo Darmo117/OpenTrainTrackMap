@@ -48,14 +48,14 @@ export default class CompassControl implements mgl.IControl {
     });
   }
 
-  #onControlButtonClick() {
+  #onControlButtonClick(): void {
     if (!this.#map) {
       throw Error("map is undefined");
     }
     this.#map.easeTo({bearing: 0, pitch: 0});
   }
 
-  #onRotate() {
+  #onRotate(): void {
     if (!this.#map) {
       throw Error("map is undefined");
     }
@@ -77,7 +77,7 @@ export default class CompassControl implements mgl.IControl {
     return this.#container;
   }
 
-  onRemove() {
+  onRemove(): void {
     this.#container.parentNode?.removeChild(this.#container);
   }
 }

@@ -24,7 +24,7 @@ setAccessKeys();
  * Functions
  */
 
-function hookSettingsDropdownBehavior() {
+function hookSettingsDropdownBehavior(): void {
   const $button = $("#navbar-logged-out-settings");
   if ($button.length) {
     const $parent = $button.parent();
@@ -43,7 +43,7 @@ function hookSettingsDropdownBehavior() {
   }
 }
 
-function hookDarkModeCallback() {
+function hookDarkModeCallback(): void {
   $("#dark-mode-checkbox").on("click", e => {
     const checked = $(e.target).prop("checked");
     Cookies.set("dark_mode", checked);
@@ -51,7 +51,7 @@ function hookDarkModeCallback() {
   });
 }
 
-function hookLanguageSelectorCallback() {
+function hookLanguageSelectorCallback(): void {
   $("#nav-language-select").on("change", e => {
     const langCode = $(e.target).val() as string;
     Cookies.set('language', langCode);
@@ -59,7 +59,7 @@ function hookLanguageSelectorCallback() {
   });
 }
 
-function initForms() {
+function initForms(): void {
   // Add .is-invalid class to form inputs with associated
   // .invalid-feedback div.
   $("form div.form-group").each((_, element) => {
@@ -74,8 +74,8 @@ function initForms() {
    * @param $input1 First input field.
    * @param $input2 Second input field.
    */
-  function passwordConfirm($input1: JQuery<HTMLInputElement>, $input2: JQuery<HTMLInputElement>) {
-    function checker() {
+  function passwordConfirm($input1: JQuery<HTMLInputElement>, $input2: JQuery<HTMLInputElement>): void {
+    function checker(): void {
       if ($input1.val() !== $input2.val()) {
         $input1.addClass("is-invalid");
         $input2.addClass("is-invalid");
@@ -96,14 +96,14 @@ function initForms() {
   }
 
   $("form input[name='warn-unsaved']")
-    .each((_, e) =>
-      hookExitConfirm($(e).closest("form") as JQuery<HTMLFormElement>));
+      .each((_, e) =>
+          hookExitConfirm($(e).closest("form") as JQuery<HTMLFormElement>));
 }
 
 /**
  * Add the shortcut to the title attribute of any element that has an access key.
  */
-function setAccessKeys() {
+function setAccessKeys(): void {
   $("*[accesskey]").each((_, element) => {
     const $element = $(element);
     const accessKey = $element.attr("accesskey");

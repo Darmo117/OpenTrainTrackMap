@@ -180,7 +180,7 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
     this.#boundFeatures.delete(feature);
   }
 
-  onDrag(pos: mgl.LngLat) {
+  onDrag(pos: mgl.LngLat): void {
     this.#updateGeometry(pos);
     this.#boundFeatures.forEach(f => f.onVertexDrag());
   }
@@ -189,7 +189,7 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
    * Update this point’s #lngLat field and `geometry.coordinates` and `geometry.bbox` properties.
    * @param lngLat This point’s new position.
    */
-  #updateGeometry(lngLat: mgl.LngLat) {
+  #updateGeometry(lngLat: mgl.LngLat): void {
     this.#lngLat = utils.copyLngLat(lngLat);
     this.geometry.coordinates = lngLat.toArray();
     const {lng, lat} = lngLat;
@@ -436,7 +436,7 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     return i !== null && (i === 0 || i === this.#vertices.length);
   }
 
-  appendVertex(vertex: Point, path: string) {
+  appendVertex(vertex: Point, path: string): void {
     if (!this.canAppendVertex(vertex, path)) {
       return;
     }
@@ -453,7 +453,7 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     return !this.#vertices.includes(vertex);
   }
 
-  replaceVertex(newVertex: Point, oldVertex: Point) {
+  replaceVertex(newVertex: Point, oldVertex: Point): void {
     if (!this.canAcceptVertex(newVertex)) {
       return;
     }
@@ -472,7 +472,7 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     return i !== null && i < this.#vertices.length - 1;
   }
 
-  insertVertexAfter(vertex: Point, path: string) {
+  insertVertexAfter(vertex: Point, path: string): void {
     if (!this.canInsertVertex(vertex, path)) {
       return;
     }
@@ -538,11 +538,11 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     return "" + this.#vertices.length;
   }
 
-  onDrag(pos: mgl.LngLat) {
+  onDrag(pos: mgl.LngLat): void {
     // TODO
   }
 
-  protected updateGeometry() {
+  protected updateGeometry(): void {
     this.geometry.coordinates = [];
     let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
     for (const vertex of this.#vertices) {
@@ -647,7 +647,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
    * Does nothing if the ring does not exist.
    * @param index Index of the ring to lock.
    */
-  lockRing(index: number) {
+  lockRing(index: number): void {
     if (this.#lockStatus[index] !== undefined) {
       this.#lockStatus[index] = true;
     }
@@ -666,7 +666,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
         || indices[0] === this.#vertices.length && indices[1] === 0;
   }
 
-  appendVertex(vertex: Point, path: string) {
+  appendVertex(vertex: Point, path: string): void {
     if (!this.canAppendVertex(vertex, path)) {
       return;
     }
@@ -691,7 +691,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     return !this.#vertices.some(ring => ring.includes(vertex));
   }
 
-  replaceVertex(newVertex: Point, oldVertex: Point) {
+  replaceVertex(newVertex: Point, oldVertex: Point): void {
     if (!this.canAcceptVertex(newVertex)) {
       return;
     }
@@ -717,7 +717,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
         && indices[1] < this.#vertices[indices[0]].length;
   }
 
-  insertVertexAfter(vertex: Point, path: string) {
+  insertVertexAfter(vertex: Point, path: string): void {
     if (!this.canInsertVertex(vertex, path)) {
       return;
     }
@@ -809,7 +809,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
    * If the index is 0 or ≥ to the number of rings, nothing happens.
    * @param index The index of the ring to delete.
    */
-  deleteRing(index: number) {
+  deleteRing(index: number): void {
     if (0 < index && index < this.#vertices.length) {
       this.#vertices[index].forEach(v => v.unbindFeature(this));
       this.#vertices.splice(index, 1);
@@ -817,11 +817,11 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  onDrag(pos: mgl.LngLat) {
+  onDrag(pos: mgl.LngLat): void {
     // TODO
   }
 
-  protected updateGeometry() {
+  protected updateGeometry(): void {
     this.geometry.coordinates = [];
     let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
     for (const ring of this.#vertices) {

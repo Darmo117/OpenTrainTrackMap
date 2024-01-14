@@ -67,7 +67,7 @@ export class WikiGadgetManager {
    * @param gadgetName The gadget’s name.
    * @throws Error If this manager is locked.
    */
-  registerGadget(gadgetName: string) {
+  registerGadget(gadgetName: string): void {
     if (this.#locked) {
       throw new Error("Cannot register gadgets when manager is locked");
     }
@@ -75,24 +75,24 @@ export class WikiGadgetManager {
     this.#gadgetsQueueSize++;
     const apiPath = window.ottm.config.get("wApiPath");
     $.get(
-      apiPath,
-      {
-        action: "query",
-        query: "gadget",
-        title: gadgetName,
-      },
-      data => {
-        try {
-          const gadget = new WikiGadget(eval(data));
-          this.#gadgets[gadget.name] = gadget;
-        } catch (e) {
-          console.error(`Error while loading gadget "${gadgetName}":\n${e}`);
+        apiPath,
+        {
+          action: "query",
+          query: "gadget",
+          title: gadgetName,
+        },
+        data => {
+          try {
+            const gadget = new WikiGadget(eval(data));
+            this.#gadgets[gadget.name] = gadget;
+          } catch (e) {
+            console.error(`Error while loading gadget "${gadgetName}":\n${e}`);
+          }
+          this.#gadgetsQueueSize--;
+          if (this.#gadgetsQueueSize === 0 && this.#finishedRegistration) {
+            this.#lock();
+          }
         }
-        this.#gadgetsQueueSize--;
-        if (this.#gadgetsQueueSize === 0 && this.#finishedRegistration) {
-          this.#lock();
-        }
-      }
     );
   }
 
@@ -100,7 +100,7 @@ export class WikiGadgetManager {
    * Indicate that gadgets registration is finished.
    * If the loading queue is already empty, lock this manager immediately.
    */
-  finishRegistration() {
+  finishRegistration(): void {
     this.#finishedRegistration = true;
     if (this.#gadgetsQueueSize === 0) {
       this.#lock();
@@ -110,7 +110,7 @@ export class WikiGadgetManager {
   /**
    * Lock this manager after all gadgets have been loaded.
    */
-  #lock() {
+  #lock(): void {
     this.#locked = true;
   }
 
@@ -244,7 +244,7 @@ declare global {
   }
 }
 
-export default function initWiki() {
+export default function initWiki(): void {
   window.wiki = {
     gadgetsManager: new WikiGadgetManager(),
     api: new WikiAPI(),

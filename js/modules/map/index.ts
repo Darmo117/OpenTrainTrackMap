@@ -22,7 +22,7 @@ declare global {
 /**
  * Initalize the map view.
  */
-export default function initMap() {
+export default function initMap(): void {
   const mapStyles = [
     buildTilesSource(
         window.ottm.translate("map.controls.layers.value.osm"),
@@ -224,7 +224,7 @@ export default function initMap() {
    * @param source The new tiles source.
    * @param shouldUpdateUrlHash Whether to update the URL hash.
    */
-  function onTilesSourceChanged(source: cts.TilesSource, shouldUpdateUrlHash: boolean = false) {
+  function onTilesSourceChanged(source: cts.TilesSource, shouldUpdateUrlHash: boolean = false): void {
     map.setMaxZoom(source.source.maxzoom);
     if (shouldUpdateUrlHash) {
       updateUrlHash(); // In case the new max zoom is less than the current one
@@ -245,7 +245,7 @@ export default function initMap() {
    * If yes, the map view is centered on the position returned by the browser.
    * @async
    */
-  function centerViewToUserLocation() {
+  function centerViewToUserLocation(): void {
     navigator.permissions
         .query({name: "geolocation"})
         .then(result => {
@@ -300,7 +300,7 @@ export default function initMap() {
   /**
    * Update page’s URL hash from the current map view position.
    */
-  function updateUrlHash() {
+  function updateUrlHash(): void {
     if (updatingView) {
       updatingView = false;
     } else {
@@ -325,7 +325,7 @@ export default function initMap() {
   /**
    * Center the view from the URL’s hash.
    */
-  function centerViewFromUrl() {
+  function centerViewFromUrl(): void {
     if (updatingHash) {
       updatingHash = false;
     } else {

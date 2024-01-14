@@ -119,13 +119,13 @@ export default class GeocoderControl implements mgl.IControl {
     this.#resultsPanel.style.display = "none";
   }
 
-  #onErase() {
+  #onErase(): void {
     this.#hideResultsPanel();
     this.#textField.value = "";
     this.#textField.focus();
   }
 
-  #onInputSubmit() {
+  #onInputSubmit(): void {
     const query = (this.#textField.value ?? "").trim();
     if (query) {
       const url = GeocoderControl.#BASE_URL
@@ -141,7 +141,7 @@ export default class GeocoderControl implements mgl.IControl {
    * Called when a geocoding request succeeded.
    * @param results The list of results.
    */
-  #onResult(results: SearchResult[]) {
+  #onResult(results: SearchResult[]): void {
     this.#resultsPanel.replaceChildren(); // Clear
     if (results.length === 0) {
       this.#resultsPanel.textContent = this.#options.noResultsMessage ?? "No results.";
@@ -205,7 +205,7 @@ export default class GeocoderControl implements mgl.IControl {
   /**
    * Called when a geocoding request failed.
    */
-  #onFailure() {
+  #onFailure(): void {
     this.#resultsPanel.replaceChildren(); // Clear
     this.#resultsPanel.textContent = this.#options.errorMessage ?? "An error occured.";
     this.#showResultsPanel();
@@ -217,7 +217,7 @@ export default class GeocoderControl implements mgl.IControl {
    * @param lng Result’s longitude.
    * @param boundingBox Result’s bounding box.
    */
-  #onResultClick(lat: number, lng: number, boundingBox: mgl.LngLatBoundsLike) {
+  #onResultClick(lat: number, lng: number, boundingBox: mgl.LngLatBoundsLike): void {
     this.#marker?.remove();
     this.#map.fitBounds(boundingBox);
     this.#marker = new mgl.Marker({});
@@ -225,11 +225,11 @@ export default class GeocoderControl implements mgl.IControl {
     this.#marker.addTo(this.#map);
   }
 
-  #showResultsPanel() {
+  #showResultsPanel(): void {
     this.#resultsPanel.style.display = "block";
   }
 
-  #hideResultsPanel() {
+  #hideResultsPanel(): void {
     this.#marker?.remove();
     this.#resultsPanel.style.display = "none";
     this.#resultsPanel.replaceChildren(); // Clear
@@ -247,7 +247,7 @@ export default class GeocoderControl implements mgl.IControl {
     return this.#container;
   }
 
-  onRemove() {
+  onRemove(): void {
     this.#container.parentNode?.removeChild(this.#container);
   }
 }
