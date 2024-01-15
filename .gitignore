@@ -1,7 +1,7 @@
 .idea/
 venv/
 js/node_modules/
-js/translations/raw_files/
+build_scripts/osm_translations/raw_files/
 
 *.sqlite3
 # Ignore migrations until database’s structure is stable
