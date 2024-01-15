@@ -75,6 +75,44 @@ export function createControlButton(options: ButtonOptions = {}): HTMLButtonElem
 }
 
 /**
+ * Options that can be passed to {@link createMdiIcon}.
+ */
+export type MdiOptions = {
+  size?: 18 | 24 | 36 | 48;
+  rotate?: 45 | 90 | 135 | 180 | 225 | 270 | 315;
+  flip?: "h" | "v";
+  spin?: boolean;
+  color?: "light" | "dark";
+  inactive?: boolean;
+};
+
+/**
+ * Create a span element displaying a MDI icon.
+ * @param name Name of the icon without the "mdi-" prefix.
+ * @param options Options to apply to the icon. Size defaults to 18px.
+ */
+export function createMdiIcon(name: string, options: MdiOptions = {}): HTMLElement {
+  const lineIcon = document.createElement("span");
+  lineIcon.className = `mdi mdi-${name} mdi-${options.size ?? 18}px`;
+  if (options.rotate) {
+    lineIcon.classList.add(`mdi-rotate-${options.rotate}`);
+  }
+  if (options.flip) {
+    lineIcon.classList.add(`mdi-flip-${options.flip}`);
+  }
+  if (options.spin) {
+    lineIcon.classList.add(`mdi-spin`);
+  }
+  if (options.color) {
+    lineIcon.classList.add(`mdi-${options.color}`);
+  }
+  if (options.inactive) {
+    lineIcon.classList.add(`mdi-inactive`);
+  }
+  return lineIcon;
+}
+
+/**
  * Create SVG element from an XML string.
  * @param string SVG data.
  * @returns The SVG element.

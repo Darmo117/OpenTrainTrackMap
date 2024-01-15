@@ -98,19 +98,15 @@ export default class GeocoderControl implements mgl.IControl {
       this.#hideResultsPanel();
     };
 
-    const eraseIcon = document.createElement("span");
-    eraseIcon.className = "mdi mdi-close";
     this.#eraseButton = helpers.createControlButton({
       title: this.#options.eraseButtonTitle ?? "Erase",
-      icon: eraseIcon,
+      icon: helpers.createMdiIcon("close"),
       onClick: () => this.#onErase(),
     });
 
-    const searchIcon = document.createElement("span");
-    searchIcon.className = "mdi mdi-magnify";
     this.#searchButton = helpers.createControlButton({
       title: this.#options.searchButtonTitle ?? "Go",
-      icon: searchIcon,
+      icon: helpers.createMdiIcon("magnify"),
       onClick: () => this.#onInputSubmit(),
     });
 

@@ -2,7 +2,6 @@ import * as mgl from "maplibre-gl";
 import $ from "jquery";
 
 import * as helpers from "../controls/helpers";
-import "./controls.css";
 
 /**
  * Options for the {@link DrawControl} class.
@@ -48,31 +47,25 @@ export default class DrawControl implements mgl.IControl {
 
   constructor(options: DrawControlOptions) {
     this.#container = helpers.createControlContainer("maplibregl-ctrl-draw");
-    const pointIcon = document.createElement("span");
-    pointIcon.className = "mdi mdi-map-marker-outline";
     this.#buttons.push(helpers.createControlButton({
       title: (options.drawPointButtonTitle ?? "Draw Point") + " [1]",
-      icon: pointIcon,
+      icon: helpers.createMdiIcon("map-marker-outline"),
       onClick: button => {
         button.classList.add("active");
         options.onDrawPoint();
       },
     }));
-    const lineIcon = document.createElement("span");
-    lineIcon.className = "mdi mdi-vector-line";
     this.#buttons.push(helpers.createControlButton({
       title: (options.drawLineButtonTitle ?? "Draw Line") + " [2]",
-      icon: lineIcon,
+      icon: helpers.createMdiIcon("vector-line"),
       onClick: button => {
         button.classList.add("active");
         options.onDrawLine();
       },
     }));
-    const polygonIcon = document.createElement("span");
-    polygonIcon.className = "mdi mdi-vector-square";
     this.#buttons.push(helpers.createControlButton({
       title: (options.drawPolygonButtonTitle ?? "Draw Area") + " [3]",
-      icon: polygonIcon,
+      icon: helpers.createMdiIcon("vector-square"),
       onClick: button => {
         button.classList.add("active");
         options.onDrawPolygon();
