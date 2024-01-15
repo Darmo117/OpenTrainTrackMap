@@ -1,6 +1,7 @@
-import * as geom from "./geometry";
 import * as mgl from "maplibre-gl";
 import $ from "jquery";
+
+import * as geom from "./geometry";
 import * as events from "./events";
 
 export default class EditorPanel {
