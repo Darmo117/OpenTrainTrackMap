@@ -165,7 +165,9 @@ class MapEditor {
     // Setup splitter
     const canvasContainerParent = this.#$canvasContainer.parent();
     canvasContainerParent.addClass("split");
-    Split([this.#sidePanel.getContainer(), canvasContainerParent[0]], {
+    const sidePanelContainer = this.#sidePanel.getContainer();
+    sidePanelContainer.addClass("split");
+    Split([sidePanelContainer[0], canvasContainerParent[0]], {
       sizes: [20, 80],
       minSize: [0, 100],
       gutterSize: 5,

@@ -5,13 +5,13 @@ import * as geom from "./geometry";
 import * as events from "./events";
 
 export default class EditorPanel {
-  readonly #$sidePanel: JQuery;
-  readonly #$featureType: JQuery;
+  readonly #$panel: JQuery;
+  readonly #$featureTypeLabel: JQuery;
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();
 
   constructor(map: mgl.Map) {
-    this.#$sidePanel = $("#editor-panel").show().addClass("split");
-    this.#$sidePanel.append(this.#$featureType = $('<h1 id="feature-type"></h1>'));
+    this.#$panel = $("#editor-panel").show();
+    this.#$panel.append(this.#$featureTypeLabel = $('<h1 id="feature-type"></h1>'));
     map.on(events.FeatureSelectionEvent.TYPE, (e: events.FeatureSelectionEvent) => {
       this.#selectedFeatures.clear();
       e.features.forEach(f => this.#selectedFeatures.add(f));
@@ -24,16 +24,16 @@ export default class EditorPanel {
     });
   }
 
-  #setupForm(features: geom.MapFeature[], editable: boolean): void {
-    if (!features.length) {
-      this.#$featureType.text("");
-    } else {
-      this.#$featureType.text(features.map(f => f.id).join(", ")); // TEMP
-      // TODO setup edit form
-    }
+  getContainer(): JQuery {
+    return this.#$panel;
   }
 
-  getContainer(): HTMLElement {
-    return this.#$sidePanel[0];
+  #setupForm(features: geom.MapFeature[], editable: boolean): void {
+    if (!features.length) {
+      this.#$featureTypeLabel.text("");
+    } else {
+      this.#$featureTypeLabel.text(features.map(f => f.id).join(", ")); // TEMP
+      // TODO setup edit form
+    }
   }
 }
