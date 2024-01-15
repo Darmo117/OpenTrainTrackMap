@@ -12,9 +12,9 @@ import yaml
 import gitdir
 
 # Paths
-langs_dir = pathlib.Path('../../ottm/settings/langs')
+langs_dir = pathlib.Path('../ottm/settings/langs')
 generated_files_dir = langs_dir / 'feature_translations'
-raw_files_root = pathlib.Path('raw_files')
+raw_files_root = pathlib.Path('osm_translations/raw_files')
 locales_path = raw_files_root / 'config/locales'
 
 # Gather available language codes
@@ -29,7 +29,7 @@ total_files = gitdir.download(
     'https://github.com/openstreetmap/openstreetmap-website/tree/master/config/locales/',
     raw_files_root,
     # Filter out YAML language files that do not have a .json file in OTTM
-    lambda fname: os.path.splitext(fname)[0] in lang_codes
+    lambda file_path: os.path.splitext(file_path.name)[0] in lang_codes
 )
 
 # No files? abort without deleting current translation files

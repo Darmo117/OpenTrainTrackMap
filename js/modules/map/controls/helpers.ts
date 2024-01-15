@@ -1,3 +1,5 @@
+import MDIcon from "./mdi";
+
 /**
  * Options for the {@link createControlButton} function.
  */
@@ -91,7 +93,7 @@ export type MdiOptions = {
  * @param name Name of the icon without the "mdi-" prefix.
  * @param options Options to apply to the icon. Size defaults to 18px.
  */
-export function createMdiIcon(name: string, options: MdiOptions = {}): HTMLElement {
+export function createMdiIcon(name: MDIcon, options: MdiOptions = {}): HTMLElement {
   const lineIcon = document.createElement("span");
   lineIcon.className = `mdi mdi-${name} mdi-${options.size ?? 18}px`;
   if (options.rotate) {

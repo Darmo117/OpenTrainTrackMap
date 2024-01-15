@@ -51,7 +51,7 @@ def _create_url(url: str) -> tuple[str, pathlib.Path]:
 
 
 def download(repo_url: str, output_dir: pathlib.Path = pathlib.Path('.'),
-             filter_: typing.Callable[[str], bool] = lambda _: True) -> int:
+             filter_: typing.Callable[[pathlib.Path], bool] = lambda _: True) -> int:
     """Downloads the files and directories in repo_url."""
     api_url, download_dirs = _create_url(repo_url)
 
@@ -85,13 +85,14 @@ def download(repo_url: str, output_dir: pathlib.Path = pathlib.Path('.'),
 
             if file_url is not None:
                 file_name = file['name']
-                if not filter_(file_name):
+                file_path = file['path']
+                if not filter_(pathlib.Path(file_path)):
                     continue
                 try:
                     opener = urllib.request.build_opener()
                     opener.addheaders = [('User-agent', 'Mozilla/5.0')]
                     urllib.request.install_opener(opener)
-                    dir_out = (output_dir / file['path']).parent
+                    dir_out = (output_dir / file_path).parent
                     dir_out.mkdir(parents=True, exist_ok=True)
                     # download the file
                     urllib.request.urlretrieve(file_url, dir_out / file_name)
@@ -109,7 +110,7 @@ def download(repo_url: str, output_dir: pathlib.Path = pathlib.Path('.'),
                     print_text('✘ Got interrupted', 'red', in_place=False)
                     sys.exit()
             else:
-                total_files += download(file['html_url'], output_dir)
+                total_files += download(file['html_url'], output_dir, filter_)
 
     return total_files
 
