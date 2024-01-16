@@ -1780,9 +1780,16 @@ class MapEditor {
     return lines;
   }
 
+  /**
+   * Reverse the direction of all selected lines.
+   */
   #reverseSelectedLines(): void {
-    // TODO
-    console.log("Not implemented yet.");
+    this.#getReverseLinesActionCandidates().forEach(line => {
+      line.direction = line.direction === geom.PolylineDirection.FORWARD
+          ? geom.PolylineDirection.BACKWARD
+          : geom.PolylineDirection.FORWARD;
+      this.#updateFeatureData(line);
+    });
   }
 
   /**
