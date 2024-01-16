@@ -81,6 +81,7 @@ class MapEditor {
    * The line string currently being drawn.
    */
   #drawnLineString: geom.LineString = null;
+  #drawnStringAppendEnd: boolean = true;
   /**
    * The polygon currently being drawn.
    */
@@ -397,18 +398,30 @@ class MapEditor {
   /**
    * Enable the "draw_line" mode.
    */
-  #enableDrawLineMode(): void {
+  #enableDrawLineMode(line?: geom.LineString, from?: geom.Point): void {
     if (this.#editMode === EditMode.VIEW_ONLY) {
       return;
     }
     this.#disableCurrentEditMode();
     this.#editMode = EditMode.DRAW_LINE;
-    let id: string;
-    do { // TODO keep global ID counter
-      id = `line-${Math.random()}`;
-    } while (this.#features[id]);
-    this.#drawnLineString = new geom.LineString(id);
-    this.addFeature(this.#drawnLineString);
+    if (line && from && line.isEndVertex(from)) {
+      this.#drawnLineString = line;
+      this.#draggedPoint = this.#createNewPoint(from.lngLat);
+      this.#drawnStringAppendEnd = line.vertices.indexOf(from) !== 0;
+      if (this.#drawnStringAppendEnd) {
+        this.#drawnLineString.appendVertex(this.#draggedPoint, this.#drawnLineString.getNextVertexPath());
+      } else {
+        this.#drawnLineString.appendVertex(this.#draggedPoint, "0");
+      }
+      this.#updateFeatureData(this.#drawnLineString);
+    } else {
+      let id: string;
+      do { // TODO keep global ID counter
+        id = `line-${Math.random()}`;
+      } while (this.#features[id]);
+      this.#drawnLineString = new geom.LineString(id);
+      this.addFeature(this.#drawnLineString);
+    }
     this.#setCanvasCursor(Cursor.DRAW);
   }
 
@@ -857,7 +870,9 @@ class MapEditor {
       return [false, null];
     }
     const features = this.#getFeatureIds(p);
-    const lastVertex = this.#drawnLineString.getVertex("" + (this.#drawnLineString.vertices.length - 2));
+    const lastVertex = this.#drawnStringAppendEnd
+        && this.#drawnLineString.getVertex("" + (this.#drawnLineString.vertices.length - 2))
+        || this.#drawnLineString.getVertex("1");
     return [features.has(lastVertex.id), lastVertex];
   }
 
@@ -984,7 +999,7 @@ class MapEditor {
       buttonStates.move = this.#getMoveFeaturesActionCandidates().length !== 0;
       buttonStates.copy = this.#getCopyFeaturesActionCandidates().length !== 0;
       buttonStates.delete = this.#getDeleteFeaturesActionCandidates().length !== 0;
-      buttonStates.continueLine = this.#getContinueLineActionCandidates() !== null;
+      buttonStates.continueLine = this.#getContinueLineActionCandidate() !== null;
       buttonStates.disconnect = this.#getDisconnectVerticesActionCandidates().length !== 0;
       buttonStates.extractPoint = this.#getExtractVerticesActionCandidates().length !== 0;
       buttonStates.split = this.#getSplitLinesActionCandidates().length !== 0;
@@ -1048,7 +1063,11 @@ class MapEditor {
         if (point !== this.#hoveredFeature) {
           this.#drawnPoints.push(point);
         }
-        feature.appendVertex(point, feature.getNextVertexPath());
+        if (feature instanceof geom.LineString && !this.#drawnStringAppendEnd) {
+          feature.appendVertex(point, "0");
+        } else {
+          feature.appendVertex(point, feature.getNextVertexPath());
+        }
       } else {
         feature.replaceVertex(point, this.#draggedPoint);
         this.removeFeature(this.#draggedPoint.id);
@@ -1057,7 +1076,11 @@ class MapEditor {
 
     // Create next point
     this.#draggedPoint = this.#createNewPoint(e.lngLat);
-    feature.appendVertex(this.#draggedPoint, feature.getNextVertexPath());
+    if (feature instanceof geom.LineString && !this.#drawnStringAppendEnd) {
+      feature.appendVertex(this.#draggedPoint, "0");
+    } else {
+      feature.appendVertex(this.#draggedPoint, feature.getNextVertexPath());
+    }
     this.#updateFeatureData(feature);
     if (feature instanceof geom.LineString && feature.vertices.length > 2
         || feature instanceof geom.Polygon && feature.vertices[0].length > 3) {
@@ -1357,6 +1380,7 @@ class MapEditor {
 
   #moveSelectedFeatures(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1369,6 +1393,7 @@ class MapEditor {
 
   #copySelectedFeatures(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1381,6 +1406,7 @@ class MapEditor {
 
   #pasteFeatures(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1395,7 +1421,8 @@ class MapEditor {
    * If in "select" mode, delete the currently selected features and clear the selection set.
    */
   #deleteSelectedFeatures(): void {
-    this.#getDeleteFeaturesActionCandidates().forEach(f => this.removeFeature(f.id));
+    this.#getDeleteFeaturesActionCandidates()
+        .forEach(f => this.removeFeature(f.id));
     this.#selectedFeatures.clear();
   }
 
@@ -1403,7 +1430,7 @@ class MapEditor {
    * Return the point that is currently eligible for the "continue line" action along with the line that matched:
    * * only one point is selected and that point is at the end of exactly one line.
    */
-  #getContinueLineActionCandidates(): [geom.Point, geom.LineString] | null {
+  #getContinueLineActionCandidate(): [geom.Point, geom.LineString] | null {
     if (this.#editMode !== EditMode.SELECT || this.#selectedFeatures.size !== 1) {
       return null;
     }
@@ -1424,8 +1451,15 @@ class MapEditor {
     return line ? [v, line] : null;
   }
 
+  /**
+   * Continue drawing the line the selected vertex is at one end of.
+   */
   #continueSelectedLine(): void {
-    // TODO
+    const candidate = this.#getContinueLineActionCandidate();
+    if (candidate) {
+      const [point, line] = candidate;
+      this.#enableDrawLineMode(line, point);
+    }
   }
 
   /**
@@ -1447,6 +1481,7 @@ class MapEditor {
 
   #disconnectSelectedVertices(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1469,6 +1504,7 @@ class MapEditor {
 
   #extractSelectedVertices(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1502,6 +1538,7 @@ class MapEditor {
 
   #splitSelectedLines(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1525,6 +1562,7 @@ class MapEditor {
 
   #circularizeSelectedFeatures(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1548,6 +1586,7 @@ class MapEditor {
 
   #squareSelectedFeatures(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1560,6 +1599,7 @@ class MapEditor {
 
   #flipLongSelectedFeatures(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1572,6 +1612,7 @@ class MapEditor {
 
   #flipShortSelectedFeatures(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1593,6 +1634,7 @@ class MapEditor {
 
   #reverseSelectedLines(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1611,6 +1653,7 @@ class MapEditor {
 
   #rotateSelectedFeatures(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
@@ -1632,6 +1675,7 @@ class MapEditor {
 
   #straightenSelectedLines(): void {
     // TODO
+    console.log("Not implemented yet.");
   }
 
   /**
