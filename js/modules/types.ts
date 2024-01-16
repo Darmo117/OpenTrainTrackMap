@@ -31,7 +31,7 @@ declare global {
 }
 
 export type Dict<T = any> = {
-  [key: string]: T
+  [key: string]: T;
 };
 
 /**
