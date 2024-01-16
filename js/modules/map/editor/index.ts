@@ -57,10 +57,30 @@ class MapEditor {
   readonly #contextMenu: ContextMenu;
   readonly #$editZoomNoticePanel: JQuery;
   readonly #drawPointControl: DrawControl;
+  /**
+   * All the features currently managed by this editor.
+   */
   readonly #features: types.Dict<geom.MapFeature> = {};
+  /**
+   * The currently selected features.
+   */
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();
+  /**
+   * The feature currently being hovered by the mouse cursor.
+   */
   #hoveredFeature: geom.MapFeature = null;
+  /**
+   * The current edit mode.
+   */
+  #editMode: EditMode = EditMode.SELECT;
+  /**
+   * The point currently being dragged.
+   */
   #draggedPoint: geom.Point = null;
+  /**
+   * If a point is being dragged and snaps to another feature,
+   * this field contains relevant data to that snapped feature.
+   */
   #snapResult: snap.SnapResult & {
     /**
      * The list of features that have the same segment as the snapped one.
@@ -76,11 +96,32 @@ class MapEditor {
       path: string;
     }[];
   } | null = null;
-  #editMode: EditMode = EditMode.SELECT;
+  /**
+   * The points currently being moved.
+   */
+  #movedPoints: {
+    /**
+     * A point being moved.
+     */
+    point: geom.Point;
+    /**
+     * The point’s distance to the mouse cursor.
+     */
+    offset: geom.LngLatVector;
+    /**
+     * The point’s position before being moved.
+     */
+    startPos: mgl.LngLat;
+  }[] = [];
   /**
    * The line string currently being drawn.
    */
   #drawnLineString: geom.LineString = null;
+  /**
+   * When drawing a line, indicates where the next point will be added on that line:
+   * * `true`: at the end.
+   * * `false`: at the start.
+   */
   #drawnStringAppendEnd: boolean = true;
   /**
    * The polygon currently being drawn.
@@ -91,6 +132,10 @@ class MapEditor {
    * This list is used for deleting all points that were drawn when the current drawing is cancelled.
    */
   readonly #drawnPoints: geom.Point[] = [];
+  /**
+   * The last known position of the mouse on the map.
+   */
+  #mousePositionCache: mgl.LngLat = null;
 
   // TODO find a way to add holes to polygons
 
@@ -366,8 +411,7 @@ class MapEditor {
         this.#disableDrawPolygonMode(mousePos);
         break;
       case EditMode.MOVE_FEATURES:
-        this.#editMode = EditMode.SELECT;
-        // TODO
+        this.#disableMoveFeaturesMode();
         break;
     }
   }
@@ -397,6 +441,11 @@ class MapEditor {
 
   /**
    * Enable the "draw_line" mode.
+   * If one or both of the arguments are not specified,
+   * or the point is not at one end of the line, a new line is created.
+   * @param line Optional. The line to continue drawing.
+   * @param from If "line" is specified, the point to continue drawing from.
+   * Must be at one end of the specified line.
    */
   #enableDrawLineMode(line?: geom.LineString, from?: geom.Point): void {
     if (this.#editMode === EditMode.VIEW_ONLY) {
@@ -501,6 +550,22 @@ class MapEditor {
     }
     this.#refreshCursor(mousePos);
     this.#drawPointControl.deactivateButton(buttonIndex);
+  }
+
+  /**
+   * Quit the current "move_features" mode and go back to "select" mode.
+   * All features that were moved are put back to their position before being moved.
+   */
+  #disableMoveFeaturesMode() {
+    this.#editMode = EditMode.SELECT;
+    const features: Set<geom.LinearFeature> = new Set();
+    this.#movedPoints.forEach(({point, startPos}) => {
+      point.lngLat = startPos;
+      this.#updateFeatureData(point);
+      point.boundFeatures.forEach(f => features.add(f));
+    });
+    features.forEach(f => this.#updateFeatureData(f));
+    this.#movedPoints.splice(0);
   }
 
   /**
@@ -730,9 +795,15 @@ class MapEditor {
 
   /**
    * Called when the mouse moves over the map.
+   * @param e The mouse event.
    */
   #onMouseMouve(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
+    this.#mousePositionCache = e.lngLat;
     if (this.#editMode === EditMode.VIEW_ONLY) {
+      return;
+    }
+    if (this.#editMode === EditMode.MOVE_FEATURES) {
+      this.#onMoveFeatures(e);
       return;
     }
     const hoveredFeature: geom.MapFeature = this.#getFeatureUnderMouse(e.point);
@@ -748,14 +819,12 @@ class MapEditor {
       this.#onDragPoint(e);
     } else {
       this.#refreshCursor();
-      if (this.#editMode === EditMode.MOVE_FEATURES && this.#selectedFeatures.size) {
-        this.#onDragSelectedFeatures(e);
-      }
     }
   }
 
   /**
    * Called when a {@link Point} is dragged.
+   * @param e The mouse event.
    */
   #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     this.#clearSelection();
@@ -892,18 +961,24 @@ class MapEditor {
   }
 
   /**
-   * Called when a {@link MapFeature} is dragged.
+   * Called when a {@link MapFeature} is moved.
+   * @param e The mouse event.
    */
-  #onDragSelectedFeatures(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
+  #onMoveFeatures(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     this.#setCanvasCursor(Cursor.GRABBING);
-    this.#selectedFeatures.forEach(feature => {
-      feature.onDrag(e.lngLat);
-      this.#updateFeatureData(feature);
+    const features: Set<geom.LinearFeature> = new Set();
+    this.#movedPoints.forEach(({point, offset}) => {
+      point.onDrag(e.lngLat, offset);
+      this.#updateFeatureData(point);
+      point.boundFeatures.forEach(f => features.add(f));
     });
+    // Update each bound feature only once
+    features.forEach(f => this.#updateFeatureData(f));
   }
 
   /**
    * Called when the mouse is pressed down on the map.
+   * @param e The mouse event.
    */
   #onMouseDown(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     if (this.#editMode === EditMode.SELECT) {
@@ -929,6 +1004,7 @@ class MapEditor {
 
   /**
    * Called when the mouse is released on the map.
+   * @param e The mouse event.
    */
   #onMouseUp(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
     if (this.#editMode !== EditMode.SELECT) {
@@ -959,6 +1035,7 @@ class MapEditor {
 
   /**
    * Called when the mouse is clicked on the map.
+   * @param e The mouse event.
    */
   #onClick(e: mgl.MapMouseEvent): void {
     switch (this.#editMode) {
@@ -972,7 +1049,8 @@ class MapEditor {
         this.#drawLinearFeatureVertex(this.#drawnPolygon, e);
         break;
       case EditMode.MOVE_FEATURES:
-        break; // TODO
+        this.#placeMovedFeatures(e);
+        break;
       case EditMode.SELECT:
         if (this.#hoveredFeature) {
           const keepSelection = e.originalEvent.ctrlKey && this.#editMode === EditMode.SELECT;
@@ -989,6 +1067,7 @@ class MapEditor {
 
   /**
    * Called when the user requests the context menu.
+   * @param e The mouse event.
    */
   #onContextMenu(e: mgl.MapMouseEvent): void {
     const buttonStates: ctxMenu.ButtonStatesOptions = {};
@@ -1139,7 +1218,18 @@ class MapEditor {
   }
 
   /**
+   * Place down all features that are currently being moved.
+   * @param e The mouse event.
+   */
+  #placeMovedFeatures(e: mgl.MapMouseEvent) {
+    this.#editMode = EditMode.SELECT;
+    this.#movedPoints.splice(0);
+    this.#refreshCursor(e.point);
+  }
+
+  /**
    * Called when the mouse is double-clicked on the map.
+   * @param e The mouse event.
    */
   #onDoubleClick(e: mgl.MapMouseEvent): void {
     // Prevent default action (zoom)
@@ -1152,6 +1242,7 @@ class MapEditor {
 
   /**
    * Called when a key is pressed.
+   * @param e The keyboard event.
    */
   #onKeyDown(e: KeyboardEvent): void {
     if (this.#editMode === EditMode.SELECT) {
@@ -1375,12 +1466,67 @@ class MapEditor {
    * * all selected features.
    */
   #getMoveFeaturesActionCandidates(): geom.MapFeature[] {
-    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+    if (this.#editMode !== EditMode.SELECT) {
+      return [];
+    }
+    // Eliminate points that are bound to a selected linear feature
+    return Array.from(this.#selectedFeatures).filter(f => {
+      return !(f instanceof geom.Point) || !f.boundFeatures.some(ff => {
+        return this.#selectedFeatures.has(ff);
+      });
+    });
   }
 
+  /**
+   * Move the selected features.
+   */
   #moveSelectedFeatures(): void {
-    // TODO
-    console.log("Not implemented yet.");
+    const features = this.#getMoveFeaturesActionCandidates();
+    if (features.length) {
+      this.#editMode = EditMode.MOVE_FEATURES;
+      this.#movedPoints.splice(0);
+      const points: Set<geom.Point> = new Set();
+      for (const f of features) {
+        if (f instanceof geom.Point) {
+          points.add(f);
+          this.#movedPoints.push({
+            point: f,
+            offset: geom.LngLatVector.sub(f.lngLat, this.#mousePositionCache),
+            startPos: f.lngLat,
+          });
+
+        } else if (f instanceof geom.LineString) {
+          // Add all vertices to the list
+          f.vertices.forEach(v => {
+            if (!points.has(v)) {
+              points.add(v);
+              this.#movedPoints.push({
+                point: v,
+                offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache),
+                startPos: v.lngLat,
+              });
+            }
+          });
+
+        } else if (f instanceof geom.Polygon) {
+          // Add all vertices of all rings to the list
+          f.vertices.forEach(ring => {
+            ring.forEach(v => {
+              if (!points.has(v)) {
+                points.add(v);
+                this.#movedPoints.push({
+                  point: v,
+                  offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache),
+                  startPos: v.lngLat,
+                });
+              }
+            });
+          });
+        }
+      }
+
+      this.#setCanvasCursor(Cursor.GRABBING);
+    }
   }
 
   /**

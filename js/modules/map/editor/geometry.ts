@@ -21,6 +21,54 @@ export type PolylineProperties = LinearProperties & {
 export type PolygonProperties = LinearProperties;
 
 /**
+ * This class represents a longitude/latitude offset on the map.
+ */
+export class LngLatVector {
+  /**
+   * The zero vector.
+   */
+  static readonly ZERO: LngLatVector = new LngLatVector(0, 0);
+
+  /**
+   * Get the vector of the difference between the two given positions.
+   * @param ll1 The first position.
+   * @param ll2 The position to substract from the first one.
+   * @returns The distance vector `ll1 - ll2`.
+   */
+  static sub(ll1: mgl.LngLat, ll2: mgl.LngLat): LngLatVector {
+    return new LngLatVector(ll1.lng - ll2.lng, ll1.lat - ll2.lat);
+  }
+
+  /**
+   * The longitude offset.
+   */
+  readonly lng: number;
+  /**
+   * The latitude offset.
+   */
+  readonly lat: number;
+
+  /**
+   * Create a new vector.
+   * @param lng The longitude offset.
+   * @param lat The latitude offset.
+   */
+  constructor(lng: number, lat: number) {
+    this.lng = lng;
+    this.lat = lat;
+  }
+
+  /**
+   * Add this vector to the given LngLat object.
+   * @param lngLat The LngLat to offset.
+   * @returns A new LngLat object.
+   */
+  addTo(lngLat: mgl.LngLat): mgl.LngLat {
+    return new mgl.LngLat(lngLat.lng + this.lng, lngLat.lat + this.lat);
+  }
+}
+
+/**
  * Enumeration of all possible selection states.
  */
 export enum SelectionMode {
@@ -124,12 +172,6 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
   }
 
   /**
-   * Called when this feature is dragged on the map.
-   * @param pos The drag location.
-   */
-  abstract onDrag(pos: mgl.LngLat): void;
-
-  /**
    * Indicate whether this feature has any data bound to it.
    */
   abstract hasData(): boolean;
@@ -153,11 +195,11 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
   constructor(id: string, coords: mgl.LngLat) {
     super(id, {
       type: "Point",
-      coordinates: null, // Updated immediately by #updateGeometry()
+      coordinates: null, // Updated immediately by this.lngLat()
     }, {
       radius: 4,
     });
-    this.#updateGeometry(coords);
+    this.lngLat = coords;
   }
 
   /**
@@ -166,6 +208,15 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
    */
   get lngLat(): mgl.LngLat {
     return utils.copyLngLat(this.#lngLat);
+  }
+
+  /**
+   * Set this point’s location.
+   * @param lngLat This point’s new position.
+   */
+  set lngLat(lngLat: mgl.LngLat) {
+    this.#lngLat = utils.copyLngLat(lngLat);
+    this.#updateGeometry();
   }
 
   /**
@@ -211,9 +262,14 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
     this.#boundFeatures.delete(feature);
   }
 
-  onDrag(pos: mgl.LngLat): void {
-    this.#updateGeometry(pos);
-    this.#boundFeatures.forEach(f => f.onVertexDrag());
+  /**
+   * Called when this point is dragged on the map.
+   * @param mousePos The mouse location.
+   * @param offset The offset between the mouse position and this point’s current position.
+   */
+  onDrag(mousePos: mgl.LngLat, offset: LngLatVector = LngLatVector.ZERO): void {
+    this.#lngLat = offset.addTo(mousePos);
+    this.#updateGeometry();
   }
 
   hasData(): boolean {
@@ -221,14 +277,14 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
   }
 
   /**
-   * Update this point’s #lngLat field and `geometry.coordinates` and `geometry.bbox` properties.
-   * @param lngLat This point’s new position.
+   * Update this point’s `geometry.coordinates` and `geometry.bbox` properties.
+   * Also calls the {@link LinearFeature.onVertexDrag} method on all bound features.
    */
-  #updateGeometry(lngLat: mgl.LngLat): void {
-    this.#lngLat = utils.copyLngLat(lngLat);
-    this.geometry.coordinates = lngLat.toArray();
-    const {lng, lat} = lngLat;
+  #updateGeometry(): void {
+    this.geometry.coordinates = this.#lngLat.toArray();
+    const {lng, lat} = this.#lngLat;
     this.geometry.bbox = [lng, lat, lng, lat];
+    this.#boundFeatures.forEach(f => f.onVertexDrag());
   }
 }
 
@@ -600,10 +656,6 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     return false; // TODO
   }
 
-  onDrag(pos: mgl.LngLat): void {
-    // TODO
-  }
-
   hasData(): boolean {
     return false; // TODO
   }
@@ -896,10 +948,6 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
       this.#vertices.splice(index, 1);
       this.updateGeometry();
     }
-  }
-
-  onDrag(pos: mgl.LngLat): void {
-    // TODO
   }
 
   hasData(): boolean {
