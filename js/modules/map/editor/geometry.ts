@@ -175,6 +175,12 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
    * Indicate whether this feature has any data bound to it.
    */
   abstract hasData(): boolean;
+
+  /**
+   * Copy the data of the given feature.
+   * @param feature The feature to copy the data of.
+   */
+  abstract copyDataOf(feature: MapFeature<G, P>): void;
 }
 
 /**
@@ -274,6 +280,10 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
 
   hasData(): boolean {
     return false; // TODO
+  }
+
+  copyDataOf(point: Point): void {
+    // TODO
   }
 
   /**
@@ -660,6 +670,10 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     return false; // TODO
   }
 
+  copyDataOf(line: LineString): void {
+    // TODO
+  }
+
   isNearlyCircular(): boolean {
     return false; // TODO
   }
@@ -952,6 +966,10 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
 
   hasData(): boolean {
     return false; // TODO
+  }
+
+  copyDataOf(polygon: Polygon): void {
+    // TODO
   }
 
   isNearlyCircular(): boolean {

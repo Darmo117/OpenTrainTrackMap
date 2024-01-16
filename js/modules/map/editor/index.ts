@@ -1014,7 +1014,9 @@ class MapEditor {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
         const point = this.#getSnappedPoint();
         this.#draggedPoint.onDrag(point.lngLat);
-        // TODO copy data from "point" to "this.#draggedPoint" if "this.#draggedPoint" is just a point with no data
+        if (point.hasData() && !this.#draggedPoint.hasData()) {
+          this.#draggedPoint.copyDataOf(point);
+        }
         point.boundFeatures.forEach(
             f => f.replaceVertex(this.#draggedPoint, point));
         this.removeFeature(point.id);
