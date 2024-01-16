@@ -7,3 +7,11 @@ import * as mgl from "maplibre-gl";
 export function copyLngLat(lngLat: mgl.LngLat): mgl.LngLat {
   return mgl.LngLat.convert(lngLat.toArray());
 }
+
+/**
+ * Check if the given mouse event was triggered by the mouse’s secondary button (usually the right button).
+ * @param e The event to check.
+ */
+export function isSecondaryClick(e: MouseEvent): boolean {
+  return e.button === 2;
+}

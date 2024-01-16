@@ -6,8 +6,10 @@ import * as types from "../../types";
 import * as events from "./events";
 import * as geom from "./geometry";
 import * as snap from "./snap";
+import * as utils from "./utils";
 import DrawControl from "./controls";
 import EditorPanel from "./editor-panel";
+import ContextMenu, * as ctxMenu from "./context-menu";
 import "./index.css";
 
 /**
@@ -52,6 +54,7 @@ class MapEditor {
   readonly #map: mgl.Map;
   readonly #$canvasContainer: JQuery;
   readonly #sidePanel: EditorPanel;
+  readonly #contextMenu: ContextMenu;
   readonly #$editZoomNoticePanel: JQuery;
   readonly #drawPointControl: DrawControl;
   readonly #features: types.Dict<geom.MapFeature> = {};
@@ -98,6 +101,38 @@ class MapEditor {
     this.#map = map;
     this.#$canvasContainer = $(this.#map.getCanvasContainer());
     this.#sidePanel = new EditorPanel(this.#map);
+    this.#contextMenu = new ContextMenu(this.#map, {
+      onMove: () => this.#moveSelectedFeatures(),
+      moveTitle: window.ottm.translate("map.context_menu.move"),
+      onCopy: () => this.#copySelectedFeatures(),
+      copyTitle: window.ottm.translate("map.context_menu.copy"),
+      onPaste: () => this.#pasteFeatures(),
+      pasteTitle: window.ottm.translate("map.context_menu.paste"),
+      onDelete: () => this.#deleteSelectedFeatures(),
+      deleteTitle: window.ottm.translate("map.context_menu.delete"),
+      onContinueLine: () => this.#continueSelectedLine(),
+      continueLineTitle: window.ottm.translate("map.context_menu.continue_line"),
+      onDisconnect: () => this.#disconnectSelectedVertices(),
+      disconnectTitle: window.ottm.translate("map.context_menu.disconnect"),
+      onExtractPoint: () => this.#extractSelectedVertices(),
+      extractPointTitle: window.ottm.translate("map.context_menu.extract_point"),
+      onSplit: () => this.#splitSelectedLines(),
+      splitTitle: window.ottm.translate("map.context_menu.split"),
+      onCircularize: () => this.#circularizeSelectedFeatures(),
+      circularizeTitle: window.ottm.translate("map.context_menu.circularize"),
+      onSquare: () => this.#squareSelectedFeatures(),
+      squareTitle: window.ottm.translate("map.context_menu.square"),
+      onFlipLong: () => this.#flipLongSelectedFeatures(),
+      flipLongTitle: window.ottm.translate("map.context_menu.flip_long"),
+      onFlipShort: () => this.#flipShortSelectedFeatures(),
+      flipShortTitle: window.ottm.translate("map.context_menu.flip_short"),
+      onReverseLine: () => this.#reverseSelectedLines(),
+      reverseLineTitle: window.ottm.translate("map.context_menu.reverse_line"),
+      onRotate: () => this.#rotateSelectedFeatures(),
+      rotateTitle: window.ottm.translate("map.context_menu.rotate"),
+      onStraightenLine: () => this.#straightenSelectedLines(),
+      straightenLineTitle: window.ottm.translate("map.context_menu.straighten_line"),
+    });
     this.#drawPointControl = new DrawControl({
       onDrawPoint: () => {
         if (this.#editMode === EditMode.DRAW_POINT) {
@@ -856,10 +891,24 @@ class MapEditor {
    * Called when the mouse is pressed down on the map.
    */
   #onMouseDown(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
-    if (this.#editMode === EditMode.SELECT && this.#hoveredFeature instanceof geom.Point) {
-      e.preventDefault();
-      this.#draggedPoint = this.#hoveredFeature;
-      this.#moveLayers(this.#draggedPoint.id); // Put on top
+    if (this.#editMode === EditMode.SELECT) {
+      // Cannot use instanceof on "e" so we have to test its "type" property to narrow its type
+      if (e.type === "mousedown" && utils.isSecondaryClick(e.originalEvent)) {
+        // We check manually for a secondary mouse button click
+        // as the "contextmenu" event seems to not fire on circle features
+        this.#onContextMenu(e);
+        return;
+      }
+      if (this.#hoveredFeature instanceof geom.Point) {
+        e.preventDefault();
+        this.#draggedPoint = this.#hoveredFeature;
+        this.#moveLayers(this.#draggedPoint.id); // Put on top
+      } else {
+        this.#setCanvasCursor(Cursor.GRABBING);
+      }
+    }
+    if (this.#contextMenu.isVisible()) {
+      this.#contextMenu.hide();
     }
   }
 
@@ -889,8 +938,8 @@ class MapEditor {
     if (this.#draggedPoint) {
       this.#setHover(this.#draggedPoint);
       this.#draggedPoint = null;
-      this.#refreshCursor(e.point);
     }
+    this.#refreshCursor(e.point);
   }
 
   /**
@@ -921,6 +970,36 @@ class MapEditor {
         this.#clearSelection();
         break;
     }
+  }
+
+  /**
+   * Called when the user requests the context menu.
+   */
+  #onContextMenu(e: mgl.MapMouseEvent): void {
+    const buttonStates: ctxMenu.ButtonStatesOptions = {};
+    if (this.#hoveredFeature) {
+      if (this.#hoveredFeature.selectionMode !== geom.SelectionMode.SELECTED) {
+        this.#selectFeature(this.#hoveredFeature, false);
+      }
+      buttonStates.move = this.#getMoveFeaturesActionCandidates().length !== 0;
+      buttonStates.copy = this.#getCopyFeaturesActionCandidates().length !== 0;
+      buttonStates.delete = this.#getDeleteFeaturesActionCandidates().length !== 0;
+      buttonStates.continueLine = this.#getContinueLineActionCandidates() !== null;
+      buttonStates.disconnect = this.#getDisconnectVerticesActionCandidates().length !== 0;
+      buttonStates.extractPoint = this.#getExtractVerticesActionCandidates().length !== 0;
+      buttonStates.split = this.#getSplitLinesActionCandidates().length !== 0;
+      buttonStates.circularize = this.#getCircularizeFeaturesActionCandidates().length !== 0;
+      buttonStates.square = this.#getSquareFeaturesActionCandidates().length !== 0;
+      buttonStates.flipLong = this.#getFlipLongFeaturesActionCandidates().length !== 0;
+      buttonStates.flipShort = this.#getFlipShortFeaturesActionCandidates().length !== 0;
+      buttonStates.reverseLine = this.#getReverseLinesActionCandidates().length !== 0;
+      buttonStates.rotate = this.#getRotateFeaturesActionCandidates().length !== 0;
+      buttonStates.straightenLine = this.#getStraightenLinesActionCandidates().length !== 0;
+    } else {
+      buttonStates.paste = this.#getPasteFeaturesActionCandidates().length !== 0;
+      this.#clearSelection();
+    }
+    this.#contextMenu.show(e.lngLat, buttonStates);
   }
 
   /**
@@ -1269,13 +1348,290 @@ class MapEditor {
   }
 
   /**
+   * Return all values that are currently eligible for the "move features" action:
+   * * all selected features.
+   */
+  #getMoveFeaturesActionCandidates(): geom.MapFeature[] {
+    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+  }
+
+  #moveSelectedFeatures(): void {
+    // TODO
+  }
+
+  /**
+   * Return all values that are currently eligible for the "copy features" action:
+   * * all selected features.
+   */
+  #getCopyFeaturesActionCandidates(): geom.MapFeature[] {
+    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+  }
+
+  #copySelectedFeatures(): void {
+    // TODO
+  }
+
+  /**
+   * Return all values that are currently eligible for the "paste features" action:
+   * * TODO
+   */
+  #getPasteFeaturesActionCandidates(): geom.MapFeature[] {
+    return []; // TODO
+  }
+
+  #pasteFeatures(): void {
+    // TODO
+  }
+
+  /**
+   * Return all values that are currently eligible for the "delete features" action:
+   * * all selected features.
+   */
+  #getDeleteFeaturesActionCandidates(): geom.MapFeature[] {
+    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+  }
+
+  /**
    * If in "select" mode, delete the currently selected features and clear the selection set.
    */
   #deleteSelectedFeatures(): void {
-    if (this.#editMode === EditMode.SELECT) {
-      this.#selectedFeatures.forEach(f => this.removeFeature(f.id));
-      this.#selectedFeatures.clear();
+    this.#getDeleteFeaturesActionCandidates().forEach(f => this.removeFeature(f.id));
+    this.#selectedFeatures.clear();
+  }
+
+  /**
+   * Return the point that is currently eligible for the "continue line" action along with the line that matched:
+   * * only one point is selected and that point is at the end of exactly one line.
+   */
+  #getContinueLineActionCandidates(): [geom.Point, geom.LineString] | null {
+    if (this.#editMode !== EditMode.SELECT || this.#selectedFeatures.size !== 1) {
+      return null;
     }
+    const v: geom.MapFeature = this.#selectedFeatures.values().next().value;
+    if (!(v instanceof geom.Point)) {
+      return null;
+    }
+    let line: geom.LineString;
+    // Vertex must be the first/last vertex of exactly one line
+    for (const f of v.boundFeatures) {
+      if (f instanceof geom.LineString && f.isEndVertex(v)) {
+        if (line) {
+          return null;
+        }
+        line = f;
+      }
+    }
+    return line ? [v, line] : null;
+  }
+
+  #continueSelectedLine(): void {
+    // TODO
+  }
+
+  /**
+   * Return the points that are currently eligible for the "disconnect vertices" action:
+   * * all selected points that are bound to at least two features.
+   */
+  #getDisconnectVerticesActionCandidates(): geom.Point[] {
+    if (this.#editMode !== EditMode.SELECT) {
+      return [];
+    }
+    const points: geom.Point[] = [];
+    for (const f of this.#selectedFeatures) {
+      if (f instanceof geom.Point && f.boundFeatures.length >= 2) {
+        points.push(f);
+      }
+    }
+    return points;
+  }
+
+  #disconnectSelectedVertices(): void {
+    // TODO
+  }
+
+  /**
+   * Return the points that are currently eligible for the "extract vertices" action:
+   * * all selected points with data that are bound to at least one feature.
+   */
+  #getExtractVerticesActionCandidates(): geom.Point[] {
+    if (this.#editMode !== EditMode.SELECT) {
+      return [];
+    }
+    const points: geom.Point[] = [];
+    // Selected features must all be points and at least one must be bound
+    for (const f of this.#selectedFeatures) {
+      if (f instanceof geom.Point && f.boundFeatures.length !== 0 && f.hasData()) {
+        points.push(f);
+      }
+    }
+    return points;
+  }
+
+  #extractSelectedVertices(): void {
+    // TODO
+  }
+
+  /**
+   * Return the lines that are currently eligible for the "split lines" action,
+   * along with the indices where to split them:
+   * * all lines that have selected points and the latter are not at any end of the former.
+   */
+  #getSplitLinesActionCandidates(): [geom.LineString, number[]][] {
+    if (this.#editMode !== EditMode.SELECT) {
+      return [];
+    }
+    const idToIndex: { [id: string]: number } = {};
+    const lines: [geom.LineString, number[]][] = [];
+    for (const f of this.#selectedFeatures) {
+      if (f instanceof geom.Point && f.boundFeatures.length !== 0) {
+        f.boundFeatures.forEach(ff => {
+          if (ff instanceof geom.LineString && !ff.isEndVertex(f)) {
+            const i = ff.vertices.indexOf(f);
+            if (!idToIndex[ff.id]) {
+              idToIndex[ff.id] = lines.length;
+              lines.push([ff, [i]]);
+            } else {
+              lines[idToIndex[ff.id]][1].push(i);
+            }
+          }
+        });
+      }
+    }
+    return lines;
+  }
+
+  #splitSelectedLines(): void {
+    // TODO
+  }
+
+  /**
+   * Return the linear features that are currently eligible for the "circularize features" action:
+   * * all selected polygons that are already nearly circular.
+   * * all selected lines that form a loop that are already nearly circular.
+   * @see geom.LinearFeature.isNearlyCircular
+   */
+  #getCircularizeFeaturesActionCandidates(): geom.LinearFeature[] {
+    if (this.#editMode !== EditMode.SELECT) {
+      return [];
+    }
+    const features: geom.LinearFeature[] = [];
+    for (const f of this.#selectedFeatures) {
+      if ((f instanceof geom.Polygon || f instanceof geom.LineString && f.isLoop()) && f.isNearlyCircular()) {
+        features.push(f);
+      }
+    }
+    return features;
+  }
+
+  #circularizeSelectedFeatures(): void {
+    // TODO
+  }
+
+  /**
+   * Return the linear features that are currently eligible for the "square features" action:
+   * * all selected polygons that are already nearly square.
+   * * all selected lines that form a loop that are already nearly square.
+   * @see geom.LinearFeature.isNearlySquare
+   */
+  #getSquareFeaturesActionCandidates(): geom.LinearFeature[] {
+    if (this.#editMode !== EditMode.SELECT) {
+      return [];
+    }
+    const features: geom.LinearFeature[] = [];
+    for (const f of this.#selectedFeatures) {
+      if ((f instanceof geom.Polygon || f instanceof geom.LineString && f.isLoop()) && f.isNearlySquare()) {
+        features.push(f);
+      }
+    }
+    return features;
+  }
+
+  #squareSelectedFeatures(): void {
+    // TODO
+  }
+
+  /**
+   * Return the features that are currently eligible for the "flip long features" action:
+   * * all selected features.
+   */
+  #getFlipLongFeaturesActionCandidates(): geom.MapFeature[] {
+    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+  }
+
+  #flipLongSelectedFeatures(): void {
+    // TODO
+  }
+
+  /**
+   * Return the features that are currently eligible for the "flip short features" action:
+   * * all selected features.
+   */
+  #getFlipShortFeaturesActionCandidates(): geom.MapFeature[] {
+    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+  }
+
+  #flipShortSelectedFeatures(): void {
+    // TODO
+  }
+
+  /**
+   * Return the lines that are currently eligible for the "reverse lines" action:
+   * * all selected lines.
+   */
+  #getReverseLinesActionCandidates(): geom.LineString[] {
+    if (this.#editMode !== EditMode.SELECT) {
+      return [];
+    }
+    const lines: geom.LineString[] = [];
+    for (const f of this.#selectedFeatures) {
+      if (f instanceof geom.LineString) {
+        lines.push(f);
+      }
+    }
+    return lines;
+  }
+
+  #reverseSelectedLines(): void {
+    // TODO
+  }
+
+  /**
+   * Return the features that are currently eligible for the "rotate features" action:
+   * * all selected features if there are more than one.
+   * * the single selected feature if it is not a point.
+   */
+  #getRotateFeaturesActionCandidates(): geom.MapFeature[] {
+    if (this.#editMode !== EditMode.SELECT
+        || (this.#selectedFeatures.size === 1
+            && this.#selectedFeatures.values().next().value instanceof geom.Point)) {
+      return [];
+    }
+    return Array.from(this.#selectedFeatures);
+  }
+
+  #rotateSelectedFeatures(): void {
+    // TODO
+  }
+
+  /**
+   * Return the lines that are currently eligible for the "straighten lines" action:
+   * * all selected lines that are nearly straight.
+   */
+  #getStraightenLinesActionCandidates(): geom.LineString[] {
+    if (this.#editMode !== EditMode.SELECT) {
+      return [];
+    }
+    const features: geom.LineString[] = [];
+    for (const f of this.#selectedFeatures) {
+      if (f instanceof geom.LineString && f.isNearlyStraight()) {
+        features.push(f);
+      }
+    }
+    return features;
+  }
+
+  #straightenSelectedLines(): void {
+    // TODO
   }
 
   /**

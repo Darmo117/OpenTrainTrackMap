@@ -65,7 +65,7 @@ export default class DrawControl implements mgl.IControl {
     }));
     this.#buttons.push(helpers.createControlButton({
       title: (options.drawPolygonButtonTitle ?? "Draw Area") + " [3]",
-      icon: helpers.createMdiIcon("vector-square"),
+      icon: helpers.createMdiIcon("vector-polygon"),
       onClick: button => {
         button.classList.add("active");
         options.onDrawPolygon();

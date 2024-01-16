@@ -30,3 +30,27 @@
 .maplibregl-ctrl-group button + button {
   border-top-color: #515151 !important;
 }
+
+/*
+ * Context menu
+ */
+
+.map-editor-context-menu > .maplibregl-popup-content {
+  background-color: transparent !important;
+}
+
+.map-editor-context-menu.maplibregl-popup-anchor-top > .maplibregl-popup-tip {
+  border-bottom-color: #2b2a33 !important;
+}
+
+.map-editor-context-menu.maplibregl-popup-anchor-bottom > .maplibregl-popup-tip {
+  border-top-color: #2b2a33 !important;
+}
+
+.map-editor-context-menu.maplibregl-popup-anchor-left > .maplibregl-popup-tip {
+  border-right-color: #2b2a33 !important;
+}
+
+.map-editor-context-menu.maplibregl-popup-anchor-right > .maplibregl-popup-tip {
+  border-left-color: #2b2a33 !important;
+}

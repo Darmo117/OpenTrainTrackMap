@@ -128,6 +128,11 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
    * @param pos The drag location.
    */
   abstract onDrag(pos: mgl.LngLat): void;
+
+  /**
+   * Indicate whether this feature has any data bound to it.
+   */
+  abstract hasData(): boolean;
 }
 
 /**
@@ -209,6 +214,10 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
   onDrag(pos: mgl.LngLat): void {
     this.#updateGeometry(pos);
     this.#boundFeatures.forEach(f => f.onVertexDrag());
+  }
+
+  hasData(): boolean {
+    return false; // TODO
   }
 
   /**
@@ -354,6 +363,16 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
   }
 
   /**
+   * Indicate whether the outer line of this feature is nearly circular.
+   */ // TODO what does that mean?
+  abstract isNearlyCircular(): boolean;
+
+  /**
+   * Indicate whether the outer line of this feature is nearly square.
+   */ // TODO what does that mean?
+  abstract isNearlySquare(): boolean;
+
+  /**
    * Update this feature’s `geometry.coordinates` and `geometry.bbox` properties.
    */
   protected abstract updateGeometry(): void;
@@ -373,7 +392,7 @@ export enum PolylineDirection {
  *
  * As a line string only contains a single vertex list, paths must respect the following format:
  * * `"<nb>"`, where `<nb>` is the index of the vertex/segment to target.
- */
+ */ // TODO allow loops (ie last point = first point)
 export class LineString extends LinearFeature<geojson.LineString, PolylineProperties> {
   static readonly #PATH_PATTERN = /^(\d+)$/;
 
@@ -564,8 +583,44 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     return "" + this.#vertices.length;
   }
 
+  /**
+   * Check whether the given vertex is at one of the two ends of this line.
+   * @param v The vertex to check.
+   * @returns True if the vertex is the first or last one, false otherwise.
+   */
+  isEndVertex(v: Point): boolean {
+    const i = this.#vertices.indexOf(v);
+    return i === 0 || i === this.#vertices.length - 1;
+  }
+
+  /**
+   * Indicate whether this line forms a loop, i.e. its first and last vertex are the same.
+   */
+  isLoop(): boolean {
+    return false; // TODO
+  }
+
   onDrag(pos: mgl.LngLat): void {
     // TODO
+  }
+
+  hasData(): boolean {
+    return false; // TODO
+  }
+
+  isNearlyCircular(): boolean {
+    return false; // TODO
+  }
+
+  isNearlySquare(): boolean {
+    return false; // TODO
+  }
+
+  /**
+   * Indicate whether this line is nearly straight.
+   */ // TODO what does that mean?
+  isNearlyStraight(): boolean {
+    return false; // TODO
   }
 
   protected updateGeometry(): void {
@@ -845,6 +900,18 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
 
   onDrag(pos: mgl.LngLat): void {
     // TODO
+  }
+
+  hasData(): boolean {
+    return false; // TODO
+  }
+
+  isNearlyCircular(): boolean {
+    return false; // TODO
+  }
+
+  isNearlySquare(): boolean {
+    return false; // TODO
   }
 
   protected updateGeometry(): void {
