@@ -76,129 +76,132 @@ export default class ContextMenu {
     this.#container = helpers.createControlContainer("map-editor-context-menu-container");
     this.#buttons = {
       move: helpers.createControlButton({
-        title: options.moveTitle ?? "Move",
+        title: (options.moveTitle ?? "Move") + " [M]",
         icon: helpers.createMdiIcon("cursor-move"),
         onClick: () => this.#performAction(options.onMove),
       }),
       copy: helpers.createControlButton({
-        title: options.copyTitle ?? "Copy",
+        title: (options.copyTitle ?? "Copy") + " [Ctrl+C]",
         icon: helpers.createMdiIcon("content-copy"),
         onClick: () => this.#performAction(options.onCopy),
       }),
       paste: helpers.createControlButton({
-        title: options.pasteTitle ?? "Paste",
+        title: (options.pasteTitle ?? "Paste") + " [Ctrl+V]",
         icon: helpers.createMdiIcon("content-paste"),
         onClick: () => this.#performAction(options.onPaste),
       }),
       delete: helpers.createControlButton({
-        title: options.deleteTitle ?? "Delete",
+        title: (options.deleteTitle ?? "Delete") + " [Ctrl+Backspace]",
         icon: helpers.createMdiIcon("trash-can-outline"),
         onClick: () => this.#performAction(options.onDelete),
       }),
       continueLine: helpers.createControlButton({
-        title: options.continueLineTitle ?? "Continue Line",
+        title: (options.continueLineTitle ?? "Continue Line") + " [A]",
         icon: helpers.createMdiIcon("ray-start-arrow"),
         onClick: () => this.#performAction(options.onContinueLine),
       }),
       disconnect: helpers.createControlButton({
-        title: options.disconnectTitle ?? "Disconnect",
+        title: (options.disconnectTitle ?? "Disconnect") + " [D]",
         icon: helpers.createMdiIcon("pan-horizontal"),
         onClick: () => this.#performAction(options.onDisconnect),
       }),
       extractPoint: helpers.createControlButton({
-        title: options.extractPointTitle ?? "Extract Point",
+        title: (options.extractPointTitle ?? "Extract Point") + " [E]",
         icon: helpers.createMdiIcon("pan-top-right"),
         onClick: () => this.#performAction(options.onExtractPoint),
       }),
       split: helpers.createControlButton({
-        title: options.splitTitle ?? "Split",
+        title: (options.splitTitle ?? "Split") + " [X]",
         icon: helpers.createMdiIcon("content-cut"),
         onClick: () => this.#performAction(options.onSplit),
       }),
       circularize: helpers.createControlButton({
-        title: options.circularizeTitle ?? "Circularize",
+        title: (options.circularizeTitle ?? "Circularize") + " [O]",
         icon: helpers.createMdiIcon("vector-circle"),
         onClick: () => this.#performAction(options.onCircularize),
       }),
       square: helpers.createControlButton({
-        title: options.squareTitle ?? "Square",
+        title: (options.squareTitle ?? "Square") + " [Q]",
         icon: helpers.createMdiIcon("vector-square"),
         onClick: () => this.#performAction(options.onSquare),
       }),
       flipLong: helpers.createControlButton({
-        title: options.flipLongTitle ?? "Flip Long",
+        title: (options.flipLongTitle ?? "Flip Long") + " [T]",
         // icon: helpers.createMdiIcon(""), // TODO icon
         onClick: () => this.#performAction(options.onFlipLong),
       }),
       flipShort: helpers.createControlButton({
-        title: options.flipShortTitle ?? "Flip Short",
+        title: (options.flipShortTitle ?? "Flip Short") + " [Y]",
         // icon: helpers.createMdiIcon(""), // TODO icon
         onClick: () => this.#performAction(options.onFlipShort),
       }),
       reverseLine: helpers.createControlButton({
-        title: options.reverseLineTitle ?? "Reverse Line",
+        title: (options.reverseLineTitle ?? "Reverse Line") + " [V]",
         icon: helpers.createMdiIcon("chevron-double-left"),
         onClick: () => this.#performAction(options.onReverseLine),
       }),
       rotate: helpers.createControlButton({
-        title: options.rotateTitle ?? "Rotate",
+        title: (options.rotateTitle ?? "Rotate") + " [R]",
         icon: helpers.createMdiIcon("rotate-left"),
         onClick: () => this.#performAction(options.onRotate),
       }),
       straightenLine: helpers.createControlButton({
-        title: options.straightenLineTitle ?? "Straighten Line",
+        title: (options.straightenLineTitle ?? "Straighten Line") + " [S]",
         icon: helpers.createMdiIcon("ray-start-vertex-end"),
         onClick: () => this.#performAction(options.onStraightenLine),
       }),
     };
     $("body").on("keydown", e => {
       switch (e.key) {
-        case "V":
+        case "v":
           if (e.ctrlKey) {
-            this.#buttons.paste.click();
+            this.#performAction(options.onPaste);
           } else {
-            this.#buttons.reverseLine.click();
+            this.#performAction(options.onReverseLine);
           }
           break;
-        case "C":
+        case "c":
           if (e.ctrlKey) {
-            this.#buttons.copy.click();
+            this.#performAction(options.onCopy);
           }
           break;
-        case "M":
-          this.#buttons.move.click();
+        case "m":
+          this.#performAction(options.onMove);
           break;
         case "Backspace":
           if (e.ctrlKey) {
-            this.#buttons.delete.click();
+            this.#performAction(options.onDelete);
           }
           break;
-        case "A":
-          this.#buttons.continueLine.click();
+        case "a":
+          this.#performAction(options.onContinueLine);
           break;
-        case "D":
-          this.#buttons.disconnect.click();
+        case "d":
+          this.#performAction(options.onDisconnect);
           break;
-        case "X":
-          this.#buttons.split.click();
+        case "e":
+          this.#performAction(options.onExtractPoint);
           break;
-        case "O":
-          this.#buttons.circularize.click();
+        case "x":
+          this.#performAction(options.onSplit);
           break;
-        case "Q":
-          this.#buttons.square.click();
+        case "o":
+          this.#performAction(options.onCircularize);
           break;
-        case "T":
-          this.#buttons.flipLong.click();
+        case "q":
+          this.#performAction(options.onSquare);
           break;
-        case "Y":
-          this.#buttons.flipShort.click();
+        case "t":
+          this.#performAction(options.onFlipLong);
           break;
-        case "R":
-          this.#buttons.rotate.click();
+        case "y":
+          this.#performAction(options.onFlipShort);
           break;
-        case "S":
-          this.#buttons.straightenLine.click();
+        case "r":
+          this.#performAction(options.onRotate);
+          break;
+        case "s":
+          this.#performAction(options.onStraightenLine);
           break;
       }
     });
