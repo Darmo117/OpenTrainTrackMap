@@ -27,6 +27,15 @@ export function arrayEqual<T>(expected: T[], actual: T[]): void {
   }
 }
 
+export function setEqual<T>(expected: Set<T>, actual: Set<T>): void {
+  if (expected.size !== actual.size) {
+    throw new AssertionError(`set of size ${expected.size}`, actual.size);
+  }
+  if (![...expected].every(e => actual.has(e))) {
+    throw new AssertionError(expected, actual);
+  }
+}
+
 type Dict<T> = {
   [key: string]: T;
 };
