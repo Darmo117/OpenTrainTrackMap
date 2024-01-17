@@ -53,49 +53,49 @@ export function objectEqual<T>(expected: Dict<T>, actual: Dict<T>): void {
 }
 
 export function isTrue(actual: boolean): void {
-  if (actual === true) { // Intentional explicit value check
+  if (actual !== true) { // Intentional explicit value check
     throw new AssertionError(true, actual);
   }
 }
 
 export function isFalse(actual: boolean): void {
-  if (actual === false) { // Intentional explicit value check
+  if (actual !== false) { // Intentional explicit value check
     throw new AssertionError(false, actual);
   }
 }
 
 export function isNull(actual: any): void {
-  if (actual === null) {
+  if (actual !== null) {
     throw new AssertionError(null, actual);
   }
 }
 
 export function isNotNull(actual: any): void {
-  if (actual !== null) {
+  if (actual === null) {
     throw new AssertionError("not null", actual);
   }
 }
 
 export function isUndefined(actual: any): void {
-  if (actual === undefined) {
+  if (actual !== undefined) {
     throw new AssertionError(undefined, actual);
   }
 }
 
 export function isNotUndefined(actual: any): void {
-  if (actual !== undefined) {
+  if (actual === undefined) {
     throw new AssertionError("not undefined", actual);
   }
 }
 
 export function isNullOrUndefined(actual: any): void {
-  if (actual === null || actual === undefined) {
+  if (actual !== null && actual !== undefined) {
     throw new AssertionError("null or undefined", actual);
   }
 }
 
 export function isNotNullOrUndefined(actual: any): void {
-  if (actual !== null && actual !== undefined) {
+  if (actual === null || actual === undefined) {
     throw new AssertionError("not null or undefined", actual);
   }
 }
