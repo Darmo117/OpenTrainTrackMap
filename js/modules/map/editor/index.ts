@@ -574,7 +574,7 @@ class MapEditor {
    * * If there are no features, null is returned.
    * @param mousePos Mouse position.
    * @returns The feature or null if none are at the given mouses position.
-   */ // TODO refactor
+   */
   #getFeatureUnderMouse(mousePos: mgl.PointLike): geom.MapFeature | null {
     const layersOrder = this.#map.getLayersOrder();
     let selectedIndex = Infinity;
@@ -1661,8 +1661,7 @@ class MapEditor {
     }
     const idToIndex: { [id: string]: number } = {};
     const lines: [geom.LineString, number[]][] = [];
-    // Too complex to convert to a stream
-    for (const f of this.#selectedFeatures) { // TODO try using streams
+    for (const f of this.#selectedFeatures) {
       if (f instanceof geom.Point && f.boundFeatures.count() !== 0) {
         f.boundFeatures.forEach(ff => {
           if (ff instanceof geom.LineString && !ff.isEndVertex(f)) {
