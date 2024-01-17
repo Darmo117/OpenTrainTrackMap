@@ -148,6 +148,7 @@ export interface Stream<T> {
    * This is a terminal operation.
    * @param supplier A function that creates a new mutable result container.
    * @param accumulator A function that must fold an element into a result container.
+   * @returns The supplied container.
    */
   collect<R>(supplier: () => R, accumulator: (result: R, e: T) => void): R;
 
@@ -320,7 +321,7 @@ export class Optional<T> {
    */
   get(): T {
     if (this.isEmpty()) {
-      throw new Error("Value is null or undefined");
+      throw new TypeError("Value is null or undefined");
     }
     return this.#value;
   }

@@ -256,6 +256,7 @@ export class StreamImpl<T> implements types.Stream<T> {
         this.#pipeline.close();
         throw new TypeError(`Expected number, got ${e}`);
       }
+      nb++;
       sum += e;
     }
     this.#pipeline.close();
