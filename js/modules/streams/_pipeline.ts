@@ -361,6 +361,9 @@ export class LimitPipeline<T> implements Pipeline<T> {
    * @param maxSize The maximum number of elements to iterate over.
    */
   constructor(previousPipeline: Pipeline<T>, maxSize: number) {
+    if (maxSize < 0) {
+      throw new Error("maxSize must be >= 0");
+    }
     this.previousPipeline = previousPipeline;
     this.#maxSize = maxSize;
   }
@@ -403,6 +406,9 @@ export class SkipPipeline<T> implements Pipeline<T> {
    * @param n The number of elements to skip over from the first one (included).
    */
   constructor(previousPipeline: Pipeline<T>, n: number) {
+    if (n < 0) {
+      throw new Error("n must be >= 0");
+    }
     this.previousPipeline = previousPipeline;
     this.#n = n;
   }
