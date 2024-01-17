@@ -1,6 +1,7 @@
 .idea/
 venv/
 js/node_modules/
+js/test/compiled/
 build_scripts/mdi_names/raw_files/
 build_scripts/osm_translations/raw_files/
 

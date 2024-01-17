@@ -1,9 +1,10 @@
 {
   "name": "opentraintrackmap",
   "version": "1.0.0",
-  "description": "JavaScript dependencies for OTTM’s map viewer/editor.",
-  "main": "map.js",
+  "description": "JavaScript/TypeScript dependencies for OTTM",
+  "main": "index.ts",
   "scripts": {
+    "test": "webpack --mode development --config webpack.config.test.js && node test/compiled/index.js",
     "dev": "webpack --mode development ; webpack --mode development --config webpack.config.map.js ; webpack --mode development --config webpack.config.wiki.js"
   },
   "repository": {
