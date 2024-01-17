@@ -81,6 +81,14 @@ export class StreamImpl<T> implements types.Stream<T> {
    * Terminal operations
    */
 
+  * toGenerator(): Generator<T> {
+    for (const e of this.#pipeline) {
+      yield e;
+    }
+    this.#pipeline.close();
+    return null;
+  }
+
   forEach(action: (e: T) => void): void {
     for (const e of this.#pipeline) {
       action(e);

@@ -103,6 +103,14 @@ export interface Stream<T> {
   skip(n: number): Stream<T>;
 
   /**
+   * Return a {@link Generator} for the values of this stream.
+   *
+   * This is a terminal operation.
+   * @returns The generator.
+   */
+  toGenerator(): Generator<T>;
+
+  /**
    * Perform an action for each element of this stream.
    *
    * This is a terminal operation.

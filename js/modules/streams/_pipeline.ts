@@ -160,19 +160,8 @@ export class FlatMapPipeline<T, R> implements Pipeline<R> {
 
   * [Symbol.iterator](): Generator<R> {
     for (const e of this.previousPipeline) {
-      yield* this.#getGenerator(e);
+      yield* this.#mapper(e).toGenerator();
     }
-    return null;
-  }
-
-  /**
-   * Return a {@link Generator} for the given element by applying the `#mapper` function to it.
-   * @param e The element to get a {@link Generator} for.
-   * @returns A new {@link Generator} object.
-   */
-  * #getGenerator(e: T): Generator<R> {
-    const stream = this.#mapper(e);
-    // TODO
     return null;
   }
 
