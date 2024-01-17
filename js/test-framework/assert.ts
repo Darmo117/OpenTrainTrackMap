@@ -1,6 +1,24 @@
 // noinspection JSUnusedGlobalSymbols
 
-import {AssertionError} from ".";
+/**
+ * This error is thrown by the functions of this module
+ * whenever the assertion they represent is false.
+ */
+export class AssertionError extends Error {
+  /**
+   * Create a new error.
+   * @param expected The expected value.
+   * @param actual The actual value.
+   * @param more Optional. A value to append after the error message.
+   */
+  constructor(expected: any, actual: any, more?: any) {
+    let s = `Assertion Error: expected ${expected}, got ${actual}`;
+    if (more) {
+      s += ` ${more}`;
+    }
+    super(s);
+  }
+}
 
 /**
  * Assert that two values are equal according to the `===` operator.

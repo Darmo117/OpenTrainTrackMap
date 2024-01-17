@@ -91,16 +91,6 @@ export function test(description: string, action: () => void, disable?: boolean)
   };
 }
 
-export class AssertionError extends Error {
-  constructor(expected: any, actual: any, more?: any) {
-    let s = `Assertion Error: expected ${expected}, got ${actual}`;
-    if (more) {
-      s += ` ${more}`;
-    }
-    super(s);
-  }
-}
-
 const ANSI = {
   RESET: 0,
   colors: {
