@@ -2,6 +2,8 @@ import * as gtypes from "../types";
 import * as types from "./types";
 import * as impl from "./_stream-impl";
 
+export {Stream, Optional} from "./types";
+
 /**
  * Create an empty {@link types.Stream}.
  * @returns The new {@link types.Stream}.

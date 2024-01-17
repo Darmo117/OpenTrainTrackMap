@@ -2,6 +2,7 @@ import * as mgl from "maplibre-gl";
 import * as geojson from "geojson";
 
 import * as types from "../../types";
+import * as st from "../../streams";
 import * as utils from "./utils";
 
 export type Geometry = geojson.Point | geojson.LineString | geojson.Polygon;
@@ -245,11 +246,10 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
   }
 
   /**
-   * The list of features this point is bound to.
-   * @returns A copy of the internal list.
+   * A stream of all features this point is bound to.
    */
-  get boundFeatures(): LinearFeature[] {
-    return [...this.#boundFeatures];
+  get boundFeatures(): st.Stream<LinearFeature> {
+    return st.stream(this.#boundFeatures);
   }
 
   /**
@@ -497,7 +497,7 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
    * This line’s vertices.
    * @returns A copy of the internal vertex list.
    */
-  get vertices(): Point[] {
+  get vertices(): Point[] { // TODO use stream
     return [...this.#vertices];
   }
 
@@ -776,7 +776,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
    * This polygon’s vertices.
    * @returns A copy of the internal vertex lists.
    */
-  get vertices(): Point[][] {
+  get vertices(): Point[][] { // TODO use stream
     return [...this.#vertices.map(vs => [...vs])];
   }
 

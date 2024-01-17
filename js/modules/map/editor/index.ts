@@ -3,6 +3,7 @@ import $ from "jquery";
 import Split from "split.js";
 
 import * as types from "../../types";
+import * as st from "../../streams";
 import * as events from "./events";
 import * as geom from "./geometry";
 import * as snap from "./snap";
@@ -335,7 +336,7 @@ class MapEditor {
    * @param point The point that is being deleted.
    */
   #updateBoundFeaturesOfDeletedPoint(point: geom.Point): void {
-    for (const boundFeature of point.boundFeatures) {
+    point.boundFeatures.forEach(boundFeature => {
       point.unbindFeature(boundFeature);
       const action = boundFeature.removeVertex(point);
       let deletedBound = false;
@@ -346,8 +347,7 @@ class MapEditor {
         (boundFeature as geom.Polygon).deleteRing(action.ringIndex);
         // Delete vertices that were only bound to the feature
         action.points.forEach(p => {
-          const bound = p.boundFeatures;
-          if (bound.length === 0 || bound.length === 1 && bound[0] === boundFeature) {
+          if (p.boundFeatures.count() === 0) {
             this.removeFeature(p.id);
           }
         });
@@ -355,7 +355,7 @@ class MapEditor {
       if (!deletedBound) {
         this.#updateFeatureData(boundFeature);
       }
-    }
+    });
   }
 
   /**
@@ -383,9 +383,8 @@ class MapEditor {
    */
   #deleteVerticesOfDeletedLinearFeature(feature: geom.LinearFeature, vertices: geom.Point[]): void {
     for (const vertex of vertices) {
-      const bound = vertex.boundFeatures;
       vertex.unbindFeature(feature);
-      if (bound.length === 0 || bound.length === 1 && bound[0] === feature) {
+      if (vertex.boundFeatures.count() === 0) {
         this.removeFeature(vertex.id);
       }
     }
@@ -575,15 +574,15 @@ class MapEditor {
    * * If there are no features, null is returned.
    * @param mousePos Mouse position.
    * @returns The feature or null if none are at the given mouses position.
-   */
+   */ // TODO refactor
   #getFeatureUnderMouse(mousePos: mgl.PointLike): geom.MapFeature | null {
     const layersOrder = this.#map.getLayersOrder();
     let selectedIndex = Infinity;
     let selectedFeature: geom.MapFeature = null;
-    for (const featureId of this.#getFeatureIds(mousePos)) {
+    this.#getFeatureIds(mousePos).forEach(featureId => {
       const currentIndex = layersOrder.indexOf(featureId);
       if (currentIndex === -1) {
-        continue;
+        return;
       }
       const feature = this.#features[featureId];
       const currentIsPoint = feature instanceof geom.Point;
@@ -594,7 +593,7 @@ class MapEditor {
         selectedIndex = currentIndex;
         selectedFeature = feature;
       }
-    }
+    });
     return selectedFeature;
   }
 
@@ -602,12 +601,13 @@ class MapEditor {
    * Return the list of feature IDs that are currently visible.
    * @param at If specified, only the IDs of features under the given pixel position will be returned.
    * @param exclude List of feature IDs to exclude from the results.
-   * @returns The set of feature IDs that correspond to the criteria.
+   * @returns {} A {@link st.Stream} of distinct feature IDs that correspond to the criteria.
    */
-  #getFeatureIds(at?: mgl.PointLike, exclude?: Set<string>): Set<string> {
-    return new Set(this.#map.queryRenderedFeatures(at)
+  #getFeatureIds(at?: mgl.PointLike, exclude?: Set<string>): st.Stream<string> {
+    return st.stream(this.#map.queryRenderedFeatures(at))
         .filter(f => !exclude?.has(f.source))
-        .map(f => f.source));
+        .map(f => f.source)
+        .distinct();
   }
 
   /**
@@ -846,8 +846,9 @@ class MapEditor {
     });
     // Exclude point itself
     excludedIds.add(this.#draggedPoint.id);
-    const features = Array.from(this.#getFeatureIds(null, excludedIds))
-        .map(id => this.#features[id]);
+    const features = this.#getFeatureIds(null, excludedIds)
+        .map(id => this.#features[id])
+        .toArray();
     const snapResult = snap.trySnapPoint(e.lngLat, features, this.#map.getZoom());
     this.#snapResult = null;
 
@@ -860,7 +861,7 @@ class MapEditor {
           const {feature, path} = snapResult;
           point = feature.getVertex(path);
         }
-        const canSnap = point.boundFeatures.every(
+        const canSnap = point.boundFeatures.allMatch(
             f => f.canAcceptVertex(this.#draggedPoint));
         if (canSnap) {
           this.#snapResult = snapResult;
@@ -942,7 +943,7 @@ class MapEditor {
     const lastVertex = this.#drawnStringAppendEnd
         && this.#drawnLineString.getVertex("" + (this.#drawnLineString.vertices.length - 2))
         || this.#drawnLineString.getVertex("1");
-    return [features.has(lastVertex.id), lastVertex];
+    return [features.anyMatch(id => id === lastVertex.id), lastVertex];
   }
 
   /**
@@ -957,7 +958,7 @@ class MapEditor {
     }
     const features = this.#getFeatureIds(p);
     const lastVertex = this.#drawnPolygon.getVertex("0." + (this.#drawnPolygon.vertices[0].length - 2));
-    return [features.has(lastVertex.id), lastVertex];
+    return [features.anyMatch(id => id === lastVertex.id), lastVertex];
   }
 
   /**
@@ -1077,22 +1078,26 @@ class MapEditor {
       if (this.#hoveredFeature.selectionMode !== geom.SelectionMode.SELECTED) {
         this.#selectFeature(this.#hoveredFeature, false);
       }
-      buttonStates.move = this.#getMoveFeaturesActionCandidates().length !== 0;
-      buttonStates.copy = this.#getCopyFeaturesActionCandidates().length !== 0;
-      buttonStates.delete = this.#getDeleteFeaturesActionCandidates().length !== 0;
+      // We do not use the count() method as streams may contain filters that would
+      // force them to be iterated over in full and that could be costly.
+      // The findFirst() only iterates over a single element if the stream is not empty,
+      // we can thus save a lot of time that way.
+      buttonStates.move = this.#getMoveFeaturesActionCandidates().findFirst().isPresent();
+      buttonStates.copy = this.#getCopyFeaturesActionCandidates().findFirst().isPresent();
+      buttonStates.delete = this.#getDeleteFeaturesActionCandidates().findFirst().isPresent();
       buttonStates.continueLine = this.#getContinueLineActionCandidate() !== null;
-      buttonStates.disconnect = this.#getDisconnectVerticesActionCandidates().length !== 0;
-      buttonStates.extractPoint = this.#getExtractVerticesActionCandidates().length !== 0;
-      buttonStates.split = this.#getSplitLinesActionCandidates().length !== 0;
-      buttonStates.circularize = this.#getCircularizeFeaturesActionCandidates().length !== 0;
-      buttonStates.square = this.#getSquareFeaturesActionCandidates().length !== 0;
-      buttonStates.flipLong = this.#getFlipLongFeaturesActionCandidates().length !== 0;
-      buttonStates.flipShort = this.#getFlipShortFeaturesActionCandidates().length !== 0;
-      buttonStates.reverseLine = this.#getReverseLinesActionCandidates().length !== 0;
-      buttonStates.rotate = this.#getRotateFeaturesActionCandidates().length !== 0;
-      buttonStates.straightenLine = this.#getStraightenLinesActionCandidates().length !== 0;
+      buttonStates.disconnect = this.#getDisconnectVerticesActionCandidates().findFirst().isPresent();
+      buttonStates.extractPoint = this.#getExtractVerticesActionCandidates().findFirst().isPresent();
+      buttonStates.split = this.#getSplitLinesActionCandidates().findFirst().isPresent();
+      buttonStates.circularize = this.#getCircularizeFeaturesActionCandidates().findFirst().isPresent();
+      buttonStates.square = this.#getSquareFeaturesActionCandidates().findFirst().isPresent();
+      buttonStates.flipLong = this.#getFlipLongFeaturesActionCandidates().findFirst().isPresent();
+      buttonStates.flipShort = this.#getFlipShortFeaturesActionCandidates().findFirst().isPresent();
+      buttonStates.reverseLine = this.#getReverseLinesActionCandidates().findFirst().isPresent();
+      buttonStates.rotate = this.#getRotateFeaturesActionCandidates().findFirst().isPresent();
+      buttonStates.straightenLine = this.#getStraightenLinesActionCandidates().findFirst().isPresent();
     } else {
-      buttonStates.paste = this.#getPasteFeaturesActionCandidates().length !== 0;
+      buttonStates.paste = this.#getPasteFeaturesActionCandidates().findFirst().isPresent();
       this.#clearSelection();
     }
     this.#contextMenu.show(e.lngLat, buttonStates);
@@ -1303,13 +1308,10 @@ class MapEditor {
   #createNewPointOnHoveredSegment(e: mgl.MapMouseEvent): geom.Point | null {
     if (this.#hoveredFeature instanceof geom.LinearFeature) {
       // Search which linear feature was clicked
-      const features: geom.LinearFeature[] = [];
-      for (const id of this.#getFeatureIds(e.point)) {
-        const feature = this.#features[id];
-        if (feature instanceof geom.LinearFeature) {
-          features.push(feature);
-        }
-      }
+      const features = this.#getFeatureIds(e.point)
+          .map(id => this.#features[id])
+          .filter(f => f instanceof geom.LinearFeature)
+          .toArray()
 
       const snapResult = snap.trySnapPoint(e.lngLat, features, this.#map.getZoom());
       // User clicked near a line, add a new point to it
@@ -1467,39 +1469,52 @@ class MapEditor {
    * Return all values that are currently eligible for the "move features" action:
    * * all selected features.
    */
-  #getMoveFeaturesActionCandidates(): geom.MapFeature[] {
+  #getMoveFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
     if (this.#editMode !== EditMode.SELECT) {
-      return [];
+      return st.emptyStream();
     }
     // Eliminate points that are bound to a selected linear feature
-    return Array.from(this.#selectedFeatures).filter(f => {
-      return !(f instanceof geom.Point) || !f.boundFeatures.some(ff => {
-        return this.#selectedFeatures.has(ff);
-      });
-    });
+    return st.stream(this.#selectedFeatures)
+        .filter(f => {
+          return !(f instanceof geom.Point) || !f.boundFeatures.anyMatch(ff => {
+            return this.#selectedFeatures.has(ff);
+          });
+        });
   }
 
   /**
    * Move the selected features.
    */
   #moveSelectedFeatures(): void {
-    const features = this.#getMoveFeaturesActionCandidates();
-    if (features.length) {
-      this.#editMode = EditMode.MOVE_FEATURES;
-      this.#movedPoints.splice(0);
-      const points: Set<geom.Point> = new Set();
-      for (const f of features) {
-        if (f instanceof geom.Point) {
-          points.add(f);
-          this.#movedPoints.push({
-            point: f,
-            offset: geom.LngLatVector.sub(f.lngLat, this.#mousePositionCache),
-            startPos: f.lngLat,
-          });
+    this.#movedPoints.splice(0);
+    const points: Set<geom.Point> = new Set();
 
-        } else if (f instanceof geom.LineString) {
-          // Add all vertices to the list
-          f.vertices.forEach(v => {
+    this.#getMoveFeaturesActionCandidates().forEach(f => {
+      if (f instanceof geom.Point) {
+        points.add(f);
+        this.#movedPoints.push({
+          point: f,
+          offset: geom.LngLatVector.sub(f.lngLat, this.#mousePositionCache),
+          startPos: f.lngLat,
+        });
+
+      } else if (f instanceof geom.LineString) {
+        // Add all vertices to the list
+        f.vertices.forEach(v => {
+          if (!points.has(v)) {
+            points.add(v);
+            this.#movedPoints.push({
+              point: v,
+              offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache),
+              startPos: v.lngLat,
+            });
+          }
+        });
+
+      } else if (f instanceof geom.Polygon) {
+        // Add all vertices of all rings to the list
+        f.vertices.forEach(ring => {
+          ring.forEach(v => {
             if (!points.has(v)) {
               points.add(v);
               this.#movedPoints.push({
@@ -1509,24 +1524,12 @@ class MapEditor {
               });
             }
           });
-
-        } else if (f instanceof geom.Polygon) {
-          // Add all vertices of all rings to the list
-          f.vertices.forEach(ring => {
-            ring.forEach(v => {
-              if (!points.has(v)) {
-                points.add(v);
-                this.#movedPoints.push({
-                  point: v,
-                  offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache),
-                  startPos: v.lngLat,
-                });
-              }
-            });
-          });
-        }
+        });
       }
+    });
 
+    if (this.#movedPoints.length) {
+      this.#editMode = EditMode.MOVE_FEATURES;
       this.#setCanvasCursor(Cursor.GRABBING);
     }
   }
@@ -1535,8 +1538,8 @@ class MapEditor {
    * Return all values that are currently eligible for the "copy features" action:
    * * all selected features.
    */
-  #getCopyFeaturesActionCandidates(): geom.MapFeature[] {
-    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+  #getCopyFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
+    return this.#editMode === EditMode.SELECT ? st.stream(this.#selectedFeatures) : st.emptyStream();
   }
 
   #copySelectedFeatures(): void {
@@ -1548,8 +1551,8 @@ class MapEditor {
    * Return all values that are currently eligible for the "paste features" action:
    * * TODO
    */
-  #getPasteFeaturesActionCandidates(): geom.MapFeature[] {
-    return []; // TODO
+  #getPasteFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
+    return st.emptyStream(); // TODO
   }
 
   #pasteFeatures(): void {
@@ -1561,8 +1564,8 @@ class MapEditor {
    * Return all values that are currently eligible for the "delete features" action:
    * * all selected features.
    */
-  #getDeleteFeaturesActionCandidates(): geom.MapFeature[] {
-    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+  #getDeleteFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
+    return this.#editMode === EditMode.SELECT ? st.stream(this.#selectedFeatures) : st.emptyStream();
   }
 
   /**
@@ -1588,7 +1591,7 @@ class MapEditor {
     }
     let line: geom.LineString;
     // Vertex must be the first/last vertex of exactly one line
-    for (const f of v.boundFeatures) {
+    for (const f of v.boundFeatures.toGenerator()) {
       if (f instanceof geom.LineString && f.isEndVertex(v)) {
         if (line) {
           return null;
@@ -1614,17 +1617,13 @@ class MapEditor {
    * Return the points that are currently eligible for the "disconnect vertices" action:
    * * all selected points that are bound to at least two features.
    */
-  #getDisconnectVerticesActionCandidates(): geom.Point[] {
+  #getDisconnectVerticesActionCandidates(): st.Stream<geom.Point> {
     if (this.#editMode !== EditMode.SELECT) {
-      return [];
+      return st.emptyStream();
     }
-    const points: geom.Point[] = [];
-    for (const f of this.#selectedFeatures) {
-      if (f instanceof geom.Point && f.boundFeatures.length >= 2) {
-        points.push(f);
-      }
-    }
-    return points;
+    return st.stream(this.#selectedFeatures)
+        .filter(f => f instanceof geom.Point
+            && f.boundFeatures.count() >= 2) as st.Stream<geom.Point>;
   }
 
   #disconnectSelectedVertices(): void {
@@ -1636,18 +1635,13 @@ class MapEditor {
    * Return the points that are currently eligible for the "extract vertices" action:
    * * all selected points with data that are bound to at least one feature.
    */
-  #getExtractVerticesActionCandidates(): geom.Point[] {
+  #getExtractVerticesActionCandidates(): st.Stream<geom.Point> {
     if (this.#editMode !== EditMode.SELECT) {
-      return [];
+      return st.emptyStream();
     }
-    const points: geom.Point[] = [];
-    // Selected features must all be points and at least one must be bound
-    for (const f of this.#selectedFeatures) {
-      if (f instanceof geom.Point && f.boundFeatures.length !== 0 && f.hasData()) {
-        points.push(f);
-      }
-    }
-    return points;
+    return st.stream(this.#selectedFeatures)
+        .filter(f => f instanceof geom.Point
+            && f.hasData() && f.boundFeatures.count() !== 0) as st.Stream<geom.Point>;
   }
 
   #extractSelectedVertices(): void {
@@ -1660,14 +1654,15 @@ class MapEditor {
    * along with the indices where to split them:
    * * all lines that have selected points and the latter are not at any end of the former.
    */
-  #getSplitLinesActionCandidates(): [geom.LineString, number[]][] {
+  #getSplitLinesActionCandidates(): st.Stream<[geom.LineString, number[]]> {
     if (this.#editMode !== EditMode.SELECT) {
-      return [];
+      return st.emptyStream();
     }
     const idToIndex: { [id: string]: number } = {};
     const lines: [geom.LineString, number[]][] = [];
+    // Too complex to convert to a stream
     for (const f of this.#selectedFeatures) {
-      if (f instanceof geom.Point && f.boundFeatures.length !== 0) {
+      if (f instanceof geom.Point && f.boundFeatures.count() !== 0) {
         f.boundFeatures.forEach(ff => {
           if (ff instanceof geom.LineString && !ff.isEndVertex(f)) {
             const i = ff.vertices.indexOf(f);
@@ -1681,7 +1676,7 @@ class MapEditor {
         });
       }
     }
-    return lines;
+    return st.stream(lines);
   }
 
   #splitSelectedLines(): void {
@@ -1695,17 +1690,13 @@ class MapEditor {
    * * all selected lines that form a loop that are already nearly circular.
    * @see geom.LinearFeature.isNearlyCircular
    */
-  #getCircularizeFeaturesActionCandidates(): geom.LinearFeature[] {
+  #getCircularizeFeaturesActionCandidates(): st.Stream<geom.LinearFeature> {
     if (this.#editMode !== EditMode.SELECT) {
-      return [];
+      return st.emptyStream();
     }
-    const features: geom.LinearFeature[] = [];
-    for (const f of this.#selectedFeatures) {
-      if ((f instanceof geom.Polygon || f instanceof geom.LineString && f.isLoop()) && f.isNearlyCircular()) {
-        features.push(f);
-      }
-    }
-    return features;
+    return st.stream(this.#selectedFeatures)
+        .filter(f =>
+            (f instanceof geom.Polygon || f instanceof geom.LineString && f.isLoop()) && f.isNearlyCircular()) as st.Stream<geom.LinearFeature>;
   }
 
   #circularizeSelectedFeatures(): void {
@@ -1719,17 +1710,13 @@ class MapEditor {
    * * all selected lines that form a loop that are already nearly square.
    * @see geom.LinearFeature.isNearlySquare
    */
-  #getSquareFeaturesActionCandidates(): geom.LinearFeature[] {
+  #getSquareFeaturesActionCandidates(): st.Stream<geom.LinearFeature> {
     if (this.#editMode !== EditMode.SELECT) {
-      return [];
+      return st.emptyStream();
     }
-    const features: geom.LinearFeature[] = [];
-    for (const f of this.#selectedFeatures) {
-      if ((f instanceof geom.Polygon || f instanceof geom.LineString && f.isLoop()) && f.isNearlySquare()) {
-        features.push(f);
-      }
-    }
-    return features;
+    return st.stream(this.#selectedFeatures)
+        .filter(f =>
+            (f instanceof geom.Polygon || f instanceof geom.LineString && f.isLoop()) && f.isNearlySquare()) as st.Stream<geom.LinearFeature>;
   }
 
   #squareSelectedFeatures(): void {
@@ -1741,8 +1728,8 @@ class MapEditor {
    * Return the features that are currently eligible for the "flip long features" action:
    * * all selected features.
    */
-  #getFlipLongFeaturesActionCandidates(): geom.MapFeature[] {
-    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+  #getFlipLongFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
+    return this.#editMode === EditMode.SELECT ? st.stream(this.#selectedFeatures) : st.emptyStream();
   }
 
   #flipLongSelectedFeatures(): void {
@@ -1754,8 +1741,8 @@ class MapEditor {
    * Return the features that are currently eligible for the "flip short features" action:
    * * all selected features.
    */
-  #getFlipShortFeaturesActionCandidates(): geom.MapFeature[] {
-    return this.#editMode === EditMode.SELECT ? Array.from(this.#selectedFeatures) : [];
+  #getFlipShortFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
+    return this.#editMode === EditMode.SELECT ? st.stream(this.#selectedFeatures) : st.emptyStream();
   }
 
   #flipShortSelectedFeatures(): void {
@@ -1767,17 +1754,12 @@ class MapEditor {
    * Return the lines that are currently eligible for the "reverse lines" action:
    * * all selected lines.
    */
-  #getReverseLinesActionCandidates(): geom.LineString[] {
+  #getReverseLinesActionCandidates(): st.Stream<geom.LineString> {
     if (this.#editMode !== EditMode.SELECT) {
-      return [];
+      return st.emptyStream();
     }
-    const lines: geom.LineString[] = [];
-    for (const f of this.#selectedFeatures) {
-      if (f instanceof geom.LineString) {
-        lines.push(f);
-      }
-    }
-    return lines;
+    return st.stream(this.#selectedFeatures)
+        .filter(f => f instanceof geom.LinearFeature) as st.Stream<geom.LineString>;
   }
 
   /**
@@ -1797,13 +1779,13 @@ class MapEditor {
    * * all selected features if there are more than one.
    * * the single selected feature if it is not a point.
    */
-  #getRotateFeaturesActionCandidates(): geom.MapFeature[] {
+  #getRotateFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
     if (this.#editMode !== EditMode.SELECT
         || (this.#selectedFeatures.size === 1
             && this.#selectedFeatures.values().next().value instanceof geom.Point)) {
-      return [];
+      return st.emptyStream();
     }
-    return Array.from(this.#selectedFeatures);
+    return st.stream(this.#selectedFeatures);
   }
 
   #rotateSelectedFeatures(): void {
@@ -1815,17 +1797,13 @@ class MapEditor {
    * Return the lines that are currently eligible for the "straighten lines" action:
    * * all selected lines that are nearly straight.
    */
-  #getStraightenLinesActionCandidates(): geom.LineString[] {
+  #getStraightenLinesActionCandidates(): st.Stream<geom.LineString> {
     if (this.#editMode !== EditMode.SELECT) {
-      return [];
+      return st.emptyStream();
     }
-    const features: geom.LineString[] = [];
-    for (const f of this.#selectedFeatures) {
-      if (f instanceof geom.LineString && f.isNearlyStraight()) {
-        features.push(f);
-      }
-    }
-    return features;
+    return st.stream(this.#selectedFeatures)
+        .filter(f =>
+            f instanceof geom.LineString && f.isNearlyStraight()) as st.Stream<geom.LineString>;
   }
 
   #straightenSelectedLines(): void {
