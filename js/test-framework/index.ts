@@ -23,6 +23,8 @@ export function doTests(...contexts: Context[]) {
   let failed = 0;
   let ignored = 0;
 
+  console.log(); // New line
+
   tests(contexts);
 
   let message = `\nFound ${total} test(s): ${passed} passing`;
