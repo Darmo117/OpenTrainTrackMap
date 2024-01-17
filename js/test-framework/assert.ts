@@ -99,3 +99,15 @@ export function isNotNullOrUndefined(actual: any): void {
     throw new AssertionError("not null or undefined", actual);
   }
 }
+
+export function throws<E extends typeof Error>(errorType: E, action: () => void): void {
+  try {
+    action();
+  } catch (e) {
+    if (e.constructor !== errorType) {
+      throw new AssertionError(`error of type ${errorType.name}`, e.constructor.name);
+    }
+    return;
+  }
+  throw new AssertionError("error thrown", "no error");
+}
