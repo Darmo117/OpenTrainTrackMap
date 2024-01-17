@@ -1,6 +1,6 @@
 // noinspection JSUnusedGlobalSymbols
 
-import {AssertionError} from "./_core";
+import {AssertionError} from "./index";
 
 export function equal<T>(expected: T, actual: T): void {
   if (expected !== actual) {
