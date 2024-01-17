@@ -494,11 +494,10 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
   }
 
   /**
-   * This line’s vertices.
-   * @returns A copy of the internal vertex list.
+   * An ordered stream containing this line’s vertices.
    */
-  get vertices(): Point[] { // TODO use stream
-    return [...this.#vertices];
+  get vertices(): st.Stream<Point> {
+    return st.stream(this.#vertices);
   }
 
   /**
@@ -773,11 +772,10 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
   }
 
   /**
-   * This polygon’s vertices.
-   * @returns A copy of the internal vertex lists.
+   * This polygon’s vertices as a list of ordered streams, each stream corresponding to a ring.
    */
-  get vertices(): Point[][] { // TODO use stream
-    return [...this.#vertices.map(vs => [...vs])];
+  get vertices(): st.Stream<Point>[] {
+    return this.#vertices.map(vs => st.stream(vs));
   }
 
   /**

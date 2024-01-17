@@ -205,7 +205,7 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
       const nearestPoint = nearestPointOnLine(feature, pos.toArray());
       if ((!closestFeature || nearestPoint.properties.dist < closestFeature.dist)
           // Segment index may be > than actual number of segments on line feature
-          && nearestPoint.properties.index < feature.vertices.length - 1) {
+          && nearestPoint.properties.index < feature.vertices.count() - 1) {
         const path = "" + nearestPoint.properties.index;
         closestFeature = {
           lngLat: mgl.LngLat.convert(nearestPoint.geometry.coordinates as [number, number]),

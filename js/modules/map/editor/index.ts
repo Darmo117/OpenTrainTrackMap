@@ -379,15 +379,15 @@ class MapEditor {
   /**
    * Delete the vertices that were only bound to the given deleted linear feature.
    * @param feature The feature being deleted.
-   * @param vertices The list of vertices to check for deletion.
+   * @param vertices A stream of vertices to check for deletion.
    */
-  #deleteVerticesOfDeletedLinearFeature(feature: geom.LinearFeature, vertices: geom.Point[]): void {
-    for (const vertex of vertices) {
+  #deleteVerticesOfDeletedLinearFeature(feature: geom.LinearFeature, vertices: st.Stream<geom.Point>): void {
+    vertices.forEach(vertex => {
       vertex.unbindFeature(feature);
       if (vertex.boundFeatures.count() === 0) {
         this.removeFeature(vertex.id);
       }
-    }
+    });
   }
 
   /**
@@ -455,7 +455,7 @@ class MapEditor {
     if (line && from && line.isEndVertex(from)) {
       this.#drawnLineString = line;
       this.#draggedPoint = this.#createNewPoint(from.lngLat);
-      this.#drawnStringAppendEnd = line.vertices.indexOf(from) !== 0;
+      this.#drawnStringAppendEnd = line.vertices.toArray().indexOf(from) !== 0;
       if (this.#drawnStringAppendEnd) {
         this.#drawnLineString.appendVertex(this.#draggedPoint, this.#drawnLineString.getNextVertexPath());
       } else {
@@ -936,12 +936,13 @@ class MapEditor {
    * and the last drawn vertex of the feature.
    */
   #canFinishLineDrawing(p: mgl.PointLike): [boolean, geom.Point | null] {
-    if (this.#drawnLineString.vertices.length <= 2) {
+    const verticesNb = this.#drawnLineString.vertices.count();
+    if (verticesNb <= 2) {
       return [false, null];
     }
     const features = this.#getFeatureIds(p);
     const lastVertex = this.#drawnStringAppendEnd
-        && this.#drawnLineString.getVertex("" + (this.#drawnLineString.vertices.length - 2))
+        && this.#drawnLineString.getVertex("" + (verticesNb - 2))
         || this.#drawnLineString.getVertex("1");
     return [features.anyMatch(id => id === lastVertex.id), lastVertex];
   }
@@ -953,11 +954,11 @@ class MapEditor {
    * and the last drawn vertex of the feature.
    */
   #canFinishPolygonDrawing(p: mgl.PointLike): [boolean, geom.Point | null] {
-    if (!this.#drawnPolygon.vertices[0] || this.#drawnPolygon.vertices[0].length <= 3) {
+    if (!this.#drawnPolygon.vertices[0] || this.#drawnPolygon.vertices[0].count() <= 3) {
       return [false, null];
     }
     const features = this.#getFeatureIds(p);
-    const lastVertex = this.#drawnPolygon.getVertex("0." + (this.#drawnPolygon.vertices[0].length - 2));
+    const lastVertex = this.#drawnPolygon.getVertex("0." + (this.#drawnPolygon.vertices[0].count() - 2));
     return [features.anyMatch(id => id === lastVertex.id), lastVertex];
   }
 
@@ -1168,8 +1169,8 @@ class MapEditor {
       feature.appendVertex(this.#draggedPoint, feature.getNextVertexPath());
     }
     this.#updateFeatureData(feature);
-    if (feature instanceof geom.LineString && feature.vertices.length > 2
-        || feature instanceof geom.Polygon && feature.vertices[0].length > 3) {
+    if (feature instanceof geom.LineString && feature.vertices.count() > 2
+        || feature instanceof geom.Polygon && feature.vertices[0].count() > 3) {
       this.#setCanvasCursor(Cursor.CONNECT_VERTEX);
     }
   }
@@ -1661,11 +1662,11 @@ class MapEditor {
     const idToIndex: { [id: string]: number } = {};
     const lines: [geom.LineString, number[]][] = [];
     // Too complex to convert to a stream
-    for (const f of this.#selectedFeatures) {
+    for (const f of this.#selectedFeatures) { // TODO try using streams
       if (f instanceof geom.Point && f.boundFeatures.count() !== 0) {
         f.boundFeatures.forEach(ff => {
           if (ff instanceof geom.LineString && !ff.isEndVertex(f)) {
-            const i = ff.vertices.indexOf(f);
+            const i = ff.vertices.toArray().indexOf(f);
             if (!idToIndex[ff.id]) {
               idToIndex[ff.id] = lines.length;
               lines.push([ff, [i]]);
