@@ -51,12 +51,12 @@ core.doTests(
 
             core.test("keeps original order of previous pipeline", () => {
               let values = [1, 2, 3, 4];
-              assert.arrayEqual(values, [...new pl.FilterPipeline(source(values), e => true)]);
+              assert.arrayEqual(values, [...new pl.FilterPipeline(source(values), () => true)]);
             }),
 
             core.test("stops when closed", () => {
               let i = 0;
-              const p = new pl.FilterPipeline(source([1, 2, 3, 4]), e => true);
+              const p = new pl.FilterPipeline(source([1, 2, 3, 4]), () => true);
               for (const _ of p) {
                 if (i == 2) {
                   p.close();
