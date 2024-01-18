@@ -151,35 +151,35 @@ class MapEditor {
     this.#sidePanel = new EditorPanel(this.#map);
     this.#contextMenu = new ContextMenu(this.#map, {
       onMove: () => this.#moveSelectedFeatures(),
-      moveTitle: window.ottm.translate("map.context_menu.move"),
+      moveTitle: window.ottm.translate("map.context_menu.move.tooltip"),
       onCopy: () => this.#copySelectedFeatures(),
-      copyTitle: window.ottm.translate("map.context_menu.copy"),
+      copyTitle: window.ottm.translate("map.context_menu.copy.tooltip"),
       onPaste: () => this.#pasteFeatures(),
-      pasteTitle: window.ottm.translate("map.context_menu.paste"),
+      pasteTitle: window.ottm.translate("map.context_menu.paste.tooltip"),
       onDelete: () => this.#deleteSelectedFeatures(),
-      deleteTitle: window.ottm.translate("map.context_menu.delete"),
+      deleteTitle: window.ottm.translate("map.context_menu.delete.tooltip"),
       onContinueLine: () => this.#continueSelectedLine(),
-      continueLineTitle: window.ottm.translate("map.context_menu.continue_line"),
+      continueLineTitle: window.ottm.translate("map.context_menu.continue_line.tooltip"),
       onDisconnect: () => this.#disconnectSelectedVertices(),
-      disconnectTitle: window.ottm.translate("map.context_menu.disconnect"),
+      disconnectTitle: window.ottm.translate("map.context_menu.disconnect.tooltip"),
       onExtractPoint: () => this.#extractSelectedVertices(),
-      extractPointTitle: window.ottm.translate("map.context_menu.extract_point"),
+      extractPointTitle: window.ottm.translate("map.context_menu.extract_point.tooltip"),
       onSplit: () => this.#splitSelectedLines(),
-      splitTitle: window.ottm.translate("map.context_menu.split"),
+      splitTitle: window.ottm.translate("map.context_menu.split.tooltip"),
       onCircularize: () => this.#circularizeSelectedFeatures(),
-      circularizeTitle: window.ottm.translate("map.context_menu.circularize"),
+      circularizeTitle: window.ottm.translate("map.context_menu.circularize.tooltip"),
       onSquare: () => this.#squareSelectedFeatures(),
-      squareTitle: window.ottm.translate("map.context_menu.square"),
+      squareTitle: window.ottm.translate("map.context_menu.square.tooltip"),
       onFlipLong: () => this.#flipLongSelectedFeatures(),
-      flipLongTitle: window.ottm.translate("map.context_menu.flip_long"),
+      flipLongTitle: window.ottm.translate("map.context_menu.flip_long.tooltip"),
       onFlipShort: () => this.#flipShortSelectedFeatures(),
-      flipShortTitle: window.ottm.translate("map.context_menu.flip_short"),
+      flipShortTitle: window.ottm.translate("map.context_menu.flip_short.tooltip"),
       onReverseLine: () => this.#reverseSelectedLines(),
-      reverseLineTitle: window.ottm.translate("map.context_menu.reverse_line"),
+      reverseLineTitle: window.ottm.translate("map.context_menu.reverse_line.tooltip"),
       onRotate: () => this.#rotateSelectedFeatures(),
-      rotateTitle: window.ottm.translate("map.context_menu.rotate"),
+      rotateTitle: window.ottm.translate("map.context_menu.rotate.tooltip"),
       onStraightenLine: () => this.#straightenSelectedLines(),
-      straightenLineTitle: window.ottm.translate("map.context_menu.straighten_line"),
+      straightenLineTitle: window.ottm.translate("map.context_menu.straighten_line.tooltip"),
     });
     this.#drawPointControl = new DrawControl({
       onDrawPoint: () => {
@@ -203,9 +203,9 @@ class MapEditor {
           this.#enableDrawPolygonMode();
         }
       },
-      drawPointButtonTitle: window.ottm.translate(`map.controls.edit.draw_point.tooltip`),
-      drawLineButtonTitle: window.ottm.translate(`map.controls.edit.draw_line.tooltip`),
-      drawPolygonButtonTitle: window.ottm.translate(`map.controls.edit.draw_polygon.tooltip`),
+      drawPointButtonTitle: window.ottm.translate("map.controls.edit.draw_point.tooltip"),
+      drawLineButtonTitle: window.ottm.translate("map.controls.edit.draw_line.tooltip"),
+      drawPolygonButtonTitle: window.ottm.translate("map.controls.edit.draw_polygon.tooltip"),
     });
     this.#map.addControl(this.#drawPointControl, "top-left");
     this.#map.dragRotate.disable();

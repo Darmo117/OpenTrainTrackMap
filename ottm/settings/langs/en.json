@@ -751,6 +751,53 @@
             }
           }
         },
+        "context_menu": {
+          "move": {
+            "tooltip": "Move the selected features to a different location"
+          },
+          "copy": {
+            "tooltip": "Copy the selected features"
+          },
+          "paste": {
+            "tooltip": "Paste the copied features"
+          },
+          "delete": {
+            "tooltip": "Delete the selected features"
+          },
+          "continue_line": {
+            "tooltip": "Continue this line"
+          },
+          "disconnect": {
+            "tooltip": "Disconnect the features at the selected points"
+          },
+          "extract_point": {
+            "tooltip": "Extract the selected points from their parent lines/areas"
+          },
+          "split": {
+            "tooltip": "Divide lines in two at the selected points"
+          },
+          "circularize": {
+            "tooltip": "Make the selected features circular"
+          },
+          "square": {
+            "tooltip": "Square the corners of the selected features"
+          },
+          "flip_long": {
+            "tooltip": "Flip the selected features along their long axis"
+          },
+          "flip_short": {
+            "tooltip": "Flip the selected features along their short axis"
+          },
+          "reverse_line": {
+            "tooltip": "Reverse the direction of the selected lines"
+          },
+          "rotate": {
+            "tooltip": "Rotate the selected features around their center point"
+          },
+          "straighten_line": {
+            "tooltip": "Straighten the selected lines"
+          }
+        },
         "edit_zoom_notice": "Zoom in to edit",
         "editor_panel": {
           "title": {

@@ -779,6 +779,53 @@
             }
           }
         },
+        "context_menu": {
+          "move": {
+            "tooltip": "Déplacer les éléments sélectionnés à un endroit différent"
+          },
+          "copy": {
+            "tooltip": "Copier les éléments sélectionnés"
+          },
+          "paste": {
+            "tooltip": "Coller les éléments copiés"
+          },
+          "delete": {
+            "tooltip": "Supprimer les éléments sélectionnés"
+          },
+          "continue_line": {
+            "tooltip": "Continuer cette ligne"
+          },
+          "disconnect": {
+            "tooltip": "Déconnecter les éléments aux points sélectionnés"
+          },
+          "extract_point": {
+            "tooltip": "Extraire les points sélectionnés de leur lignes/zones parentes"
+          },
+          "split": {
+            "tooltip": "Couper en deux les lignes aux points sélectionnés"
+          },
+          "circularize": {
+            "tooltip": "Rendre circulaires les éléments sélectionnés"
+          },
+          "square": {
+            "tooltip": "Mettre à angle les droits les angles des éléments sélectionnés"
+          },
+          "flip_long": {
+            "tooltip": "Retourner les éléments sélectionnés selon leur long axe"
+          },
+          "flip_short": {
+            "tooltip": "Retourner les éléments sélectionnés selon leur court axe"
+          },
+          "reverse_line": {
+            "tooltip": "Inverser la direction des lignes sélectionnées"
+          },
+          "rotate": {
+            "tooltip": "Pivoter les éléments sélectionnés autour de leur centre"
+          },
+          "straighten_line": {
+            "tooltip": "Rendre droites les lignes sélectionnées"
+          }
+        },
         "edit_zoom_notice": "Zoomez pour modifier",
         "editor_panel": {
           "title": {

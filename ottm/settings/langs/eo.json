@@ -758,6 +758,53 @@
             }
           }
         },
+        "context_menu": {
+          "move": {
+            "tooltip": "Movi la elektitajn objektojn"
+          },
+          "copy": {
+            "tooltip": "Kopii la elektitajn objektojn"
+          },
+          "paste": {
+            "tooltip": "Alglui la kopiitajn objektojn"
+          },
+          "delete": {
+            "tooltip": "Forigi la elektitajn objektojn"
+          },
+          "continue_line": {
+            "tooltip": "Daŭri ĉi-tiun linion"
+          },
+          "disconnect": {
+            "tooltip": "Malkonekti la objektojn al la elektitaj punktoj"
+          },
+          "extract_point": {
+            "tooltip": "Eltiri la elektitajn punktojn el ĝiaj parentobjektoj"
+          },
+          "split": {
+            "tooltip": "Dividi liniojn al la elektitaj punktoj"
+          },
+          "circularize": {
+            "tooltip": "Cirkligi la elektitajn objektojn"
+          },
+          "square": {
+            "tooltip": "Ortigi la angulojn de la elektitaj objektoj"
+          },
+          "flip_long": {
+            "tooltip": "Inversigi la elektitajn objektojn laŭ ĝiaj longa akso"
+          },
+          "flip_short": {
+            "tooltip": "Inversigi la elektitajn objektojn laŭ ĝiaj mallonga akso"
+          },
+          "reverse_line": {
+            "tooltip": "Inversigi la direkton de la elektitaj linioj"
+          },
+          "rotate": {
+            "tooltip": "Turni la elektitajn objektojn"
+          },
+          "straighten_line": {
+            "tooltip": "Rektigi la elektitajn liniojn"
+          }
+        },
         "edit_zoom_notice": "Zomu por redakti",
         "editor_panel": {
           "title": {
