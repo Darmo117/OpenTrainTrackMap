@@ -4,6 +4,7 @@ import Split from "split.js";
 
 import * as types from "../../types";
 import * as st from "../../streams";
+import Map from "../map";
 import * as events from "./events";
 import * as geom from "./geometry";
 import * as snap from "./snap";
@@ -242,7 +243,11 @@ class MapEditor {
     this.#map.on("zoomstart", () => this.#onZoomChangeStart());
     this.#map.on("zoomend", () => this.#onZoomChangeEnd());
     this.#map.on("load", () => this.#onZoomChangeEnd());
-    $("body").on("keydown", e => this.#onKeyDown(e.originalEvent));
+    $("body").on("keydown", e => {
+      if (!(this.#map instanceof Map) || !this.#map.textFieldHasFocus) {
+        this.#onKeyDown(e.originalEvent);
+      }
+    });
 
     // Setup splitter
     const canvasContainerParent = this.#$canvasContainer.parent();
@@ -1240,8 +1245,6 @@ class MapEditor {
    * @param e The mouse event.
    */
   #onDoubleClick(e: mgl.MapMouseEvent): void {
-    // Prevent default action (zoom)
-    e.preventDefault();
     if (this.#hoveredFeature) {
       this.#createNewPointOnHoveredSegment(e);
       this.#refreshCursor(e.point);
@@ -1824,7 +1827,7 @@ class MapEditor {
  * Hook a feature editor to the given map.
  * @param map The map.
  */
-export default function initMapEditor(map: mgl.Map): void {
+export default function initMapEditor(map: Map): void {
   const mapEditor = new MapEditor(map);
 
   // TEMP

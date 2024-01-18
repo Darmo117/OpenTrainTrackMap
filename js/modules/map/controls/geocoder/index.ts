@@ -1,4 +1,5 @@
 import * as mgl from "maplibre-gl";
+import $ from "jquery";
 
 import * as utils from "../../../utils";
 import * as helpers from "../helpers";

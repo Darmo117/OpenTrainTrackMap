@@ -2,6 +2,7 @@ import * as mgl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import $ from "jquery";
 
+import Map from "./map";
 import CompassControl from "./controls/compass";
 import GeocoderControl from "./controls/geocoder";
 import TilesSourcesControl, * as cts from "./controls/tiles-sources";
@@ -53,7 +54,7 @@ export default function initMap(): void {
 
   const editMode = window.OTTM_MAP_CONFIG.edit;
   const defaultMapStyle = editMode ? mapStyles[1] : mapStyles[0];
-  const map = new mgl.Map({
+  const map = new Map({
     container: "map",
     antialias: true,
     style: {
@@ -76,6 +77,7 @@ export default function initMap(): void {
     center: [0, 0],
     zoom: 1,
   });
+  map.keyboard.disable(); // Disable default keyboard actions
 
   /*
    * Add controls
@@ -108,14 +110,14 @@ export default function initMap(): void {
     title: window.ottm.translate("map.controls.layers.tooltip"),
     sources: mapStyles,
   }), "top-left");
-  map.on("controls.styles.tiles_changed",
-      (e: cts.TilesChangedEvent) => onTilesSourceChanged(e.source, true));
 
   let zoomControl: ZoomControl;
   map.addControl(zoomControl = new ZoomControl({
     zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip") + " [+]",
     zoomOutTitle: window.ottm.translate("map.controls.zoom_out.tooltip") + " [-]",
   }), "top-right");
+  map.boxZoom.disable();
+  map.doubleClickZoom.disable();
 
   const staticPath = window.ottm.config.get("staticPath");
 
@@ -191,6 +193,30 @@ export default function initMap(): void {
     delete window.OTTM_MAP_CONFIG;
     $("#ottm-map-config-script").remove();
   });
+  map.on("controls.styles.tiles_changed",
+      (e: cts.TilesChangedEvent) => onTilesSourceChanged(e.source, true));
+
+  $("body").on("keydown", e => {
+    if (map.textFieldHasFocus) {
+      return;
+    }
+    switch (e.key) {
+      case "ArrowUp":
+        map.panBy([0, -100]);
+        break;
+      case "ArrowDown":
+        map.panBy([0, 100]);
+        break;
+      case "ArrowLeft":
+        map.panBy([-100, 0]);
+        break;
+      case "ArrowRight":
+        map.panBy([100, 0]);
+        break;
+    }
+  });
+
+  map.hookTextFieldsFocusEvents();
 
   /*
    * Functions

@@ -1,6 +1,8 @@
 import * as mgl from "maplibre-gl";
 
+import Map from "../../map";
 import * as helpers from "../helpers";
+import $ from "jquery";
 
 const PLUS_ICON = helpers.parseSVG(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
@@ -43,12 +45,12 @@ export default class ZoomControl implements mgl.IControl {
     this.#buttonIn = helpers.createControlButton({
       title: options.zoomInTitle ?? "Zoom In",
       icon: PLUS_ICON,
-      onClick: () => this.#map?.zoomIn(),
+      onClick: () => this.#map.zoomIn(),
     });
     this.#buttonOut = helpers.createControlButton({
       title: options.zoomOutTitle ?? "Zoom Out",
       icon: MINUS_ICON,
-      onClick: () => this.#map?.zoomOut(),
+      onClick: () => this.#map.zoomOut(),
     });
   }
 
@@ -72,6 +74,19 @@ export default class ZoomControl implements mgl.IControl {
     this.#map = map;
     this.#container.appendChild(this.#buttonIn);
     this.#container.appendChild(this.#buttonOut);
+    $(this.#map.getContainer()).on("keydown", e => {
+      if (this.#map instanceof Map && this.#map.textFieldHasFocus) {
+        return;
+      }
+      switch (e.key) {
+        case "+":
+          this.#map.zoomIn();
+          break;
+        case "-":
+          this.#map.zoomOut();
+          break;
+      }
+    });
     return this.#container;
   }
 

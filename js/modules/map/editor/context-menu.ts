@@ -1,5 +1,7 @@
 import * as mgl from "maplibre-gl";
+import $ from "jquery";
 
+import Map from "../map";
 import * as helpers from "../controls/helpers";
 import "./context-menu.css";
 
@@ -152,6 +154,9 @@ export default class ContextMenu {
       }),
     };
     $("body").on("keydown", e => {
+      if (this.#map instanceof Map && this.#map.textFieldHasFocus) {
+        return;
+      }
       switch (e.key) {
         case "v":
           if (e.ctrlKey) {
