@@ -129,12 +129,12 @@ export default class ContextMenu {
       }),
       flipLong: helpers.createControlButton({
         title: (options.flipLongTitle ?? "Flip Long") + " [T]",
-        // icon: helpers.createMdiIcon(""), // TODO icon
+        icon: helpers.createMdiIcon("dock-top"),
         onClick: () => this.#performAction(options.onFlipLong),
       }),
       flipShort: helpers.createControlButton({
         title: (options.flipShortTitle ?? "Flip Short") + " [Y]",
-        // icon: helpers.createMdiIcon(""), // TODO icon
+        icon: helpers.createMdiIcon("dock-left"),
         onClick: () => this.#performAction(options.onFlipShort),
       }),
       reverseLine: helpers.createControlButton({
@@ -144,7 +144,7 @@ export default class ContextMenu {
       }),
       rotate: helpers.createControlButton({
         title: (options.rotateTitle ?? "Rotate") + " [R]",
-        icon: helpers.createMdiIcon("rotate-left"),
+        icon: helpers.createMdiIcon("backup-restore"),
         onClick: () => this.#performAction(options.onRotate),
       }),
       straightenLine: helpers.createControlButton({
