@@ -1097,8 +1097,9 @@ class MapEditor {
       buttonStates.split = this.#getSplitLinesActionCandidates().findFirst().isPresent();
       buttonStates.circularize = this.#getCircularizeFeaturesActionCandidates().findFirst().isPresent();
       buttonStates.square = this.#getSquareFeaturesActionCandidates().findFirst().isPresent();
-      buttonStates.flipLong = this.#getFlipLongFeaturesActionCandidates().findFirst().isPresent();
-      buttonStates.flipShort = this.#getFlipShortFeaturesActionCandidates().findFirst().isPresent();
+      const canFlip = this.#getFlipFeaturesActionCandidates().findFirst().isPresent();
+      buttonStates.flipLong = canFlip;
+      buttonStates.flipShort = canFlip;
       buttonStates.reverseLine = this.#getReverseLinesActionCandidates().findFirst().isPresent();
       buttonStates.rotate = this.#getRotateFeaturesActionCandidates().findFirst().isPresent();
       buttonStates.straightenLine = this.#getStraightenLinesActionCandidates().findFirst().isPresent();
@@ -1729,23 +1730,31 @@ class MapEditor {
 
   /**
    * Return the features that are currently eligible for the "flip long features" action:
-   * * all selected features.
+   * * all selected features, as long as it is not a single point, two points, or a single line with only two vertices.
    */
-  #getFlipLongFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
-    return this.#editMode === EditMode.SELECT ? st.stream(this.#selectedFeatures) : st.emptyStream();
+  #getFlipFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
+    if (this.#editMode !== EditMode.SELECT) {
+      return st.emptyStream();
+    }
+    const entries = this.#selectedFeatures.entries();
+    if (this.#selectedFeatures.size === 1) {
+      const {value: [feature, _]} = entries.next();
+      if (feature instanceof geom.Point || feature instanceof geom.LineString && feature.vertices.count() === 2) {
+        return st.emptyStream();
+      }
+    } else if (this.#selectedFeatures.size === 2) {
+      const {value: [feature1, _1]} = entries.next();
+      const {value: [feature2, _2]} = entries.next();
+      if (feature1 instanceof geom.Point && feature2 instanceof geom.Point) {
+        return st.emptyStream();
+      }
+    }
+    return st.stream(this.#selectedFeatures);
   }
 
   #flipLongSelectedFeatures(): void {
     // TODO
     console.log("Not implemented yet.");
-  }
-
-  /**
-   * Return the features that are currently eligible for the "flip short features" action:
-   * * all selected features.
-   */
-  #getFlipShortFeaturesActionCandidates(): st.Stream<geom.MapFeature> {
-    return this.#editMode === EditMode.SELECT ? st.stream(this.#selectedFeatures) : st.emptyStream();
   }
 
   #flipShortSelectedFeatures(): void {
