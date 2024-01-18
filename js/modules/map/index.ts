@@ -51,7 +51,8 @@ export default function initMap(): void {
     ),
   ];
 
-  const defaultMapStyle = window.OTTM_MAP_CONFIG.edit ? mapStyles[1] : mapStyles[0];
+  const editMode = window.OTTM_MAP_CONFIG.edit;
+  const defaultMapStyle = editMode ? mapStyles[1] : mapStyles[0];
   const map = new mgl.Map({
     container: "map",
     antialias: true,
@@ -89,18 +90,18 @@ export default function initMap(): void {
     unit: "metric",
   }));
 
-  map.addControl(new GeocoderControl({
-    language: window.ottm.getPageLanguage().code,
-    translator: (key, defaultValue) => window.ottm.translate(key, defaultValue),
-    searchButtonTitle: window.ottm.translate("map.controls.search.search_button.title"),
-    eraseButtonTitle: window.ottm.translate("map.controls.search.erase_button.title"),
-    placeholderText: window.ottm.translate("map.controls.search.placeholder"),
-    noResultsMessage: window.ottm.translate("map.controls.search.no_results"),
-    errorMessage: window.ottm.translate("map.controls.search.error"),
-  }), "top-left");
-
-  if (window.OTTM_MAP_CONFIG.edit) {
+  if (editMode) {
     initMapEditor(map);
+  } else {
+    map.addControl(new GeocoderControl({
+      language: window.ottm.getPageLanguage().code,
+      translator: (key, defaultValue) => window.ottm.translate(key, defaultValue),
+      searchButtonTitle: window.ottm.translate("map.controls.search.search_button.title"),
+      eraseButtonTitle: window.ottm.translate("map.controls.search.erase_button.title"),
+      placeholderText: window.ottm.translate("map.controls.search.placeholder"),
+      noResultsMessage: window.ottm.translate("map.controls.search.no_results"),
+      errorMessage: window.ottm.translate("map.controls.search.error"),
+    }), "top-left");
   }
 
   map.addControl(new TilesSourcesControl({
