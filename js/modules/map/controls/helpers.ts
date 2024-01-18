@@ -32,6 +32,10 @@ export type ButtonOptions = {
    * Optional. A callback to invoke whenever the button is clicked.
    */
   onClick?: ((button: HTMLButtonElement) => void);
+  /**
+   * Optional. The list of key names for the button’s shortcut.
+   */
+  shortcut?: string[];
 };
 
 /**
@@ -54,6 +58,9 @@ export function createControlButton(options: ButtonOptions = {}): HTMLButtonElem
   const button = document.createElement("button");
   if (options.title) {
     button.title = options.title;
+  }
+  if (options.shortcut) {
+    button.title += " [" + window.ottm.formatShortcut(...options.shortcut) + "]";
   }
   if (options.icon) {
     button.appendChild(options.icon);

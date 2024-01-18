@@ -690,6 +690,21 @@
       }
     },
     "js": {
+      "key": {
+        "Ctrl": "Ctrl",
+        "Alt": "Alt",
+        "Shift": "Shift",
+        "Meta": "Meta",
+        "Delete": "Delete",
+        "Backspace": "Backspace",
+        "Space": "Space",
+        "Enter": "Enter",
+        "Return": "Enter",
+        "LeftArrow": "Left Arrow",
+        "RightArrow": "Right Arrow",
+        "UpArrow": "Up Arrow",
+        "DownArrow": "Down Arrow"
+      },
       "map": {
         "controls": {
           "layers": {

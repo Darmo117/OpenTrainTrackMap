@@ -113,8 +113,8 @@ export default function initMap(): void {
 
   let zoomControl: ZoomControl;
   map.addControl(zoomControl = new ZoomControl({
-    zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip") + " [+]",
-    zoomOutTitle: window.ottm.translate("map.controls.zoom_out.tooltip") + " [-]",
+    zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip"),
+    zoomOutTitle: window.ottm.translate("map.controls.zoom_out.tooltip"),
   }), "top-right");
   map.boxZoom.disable();
   map.doubleClickZoom.disable();

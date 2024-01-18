@@ -46,11 +46,13 @@ export default class ZoomControl implements mgl.IControl {
       title: options.zoomInTitle ?? "Zoom In",
       icon: PLUS_ICON,
       onClick: () => this.#map.zoomIn(),
+      shortcut: ["+"],
     });
     this.#buttonOut = helpers.createControlButton({
       title: options.zoomOutTitle ?? "Zoom Out",
       icon: MINUS_ICON,
       onClick: () => this.#map.zoomOut(),
+      shortcut: ["-"],
     });
   }
 

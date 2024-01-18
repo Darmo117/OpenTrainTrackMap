@@ -1,6 +1,8 @@
 import $ from "jquery";
 import Cookies from "js-cookie";
 
+import * as st from "./streams";
+
 declare global {
   interface Window {
     // Inject global properties
@@ -256,6 +258,18 @@ export class OTTM {
       }
     }
     return text;
+  }
+
+  /**
+   * Format the given key names into a localized shortcut.
+   * @param keys The unlocalized key names to format.
+   * @return A string in the format `key1+key2+…`.
+   */
+  formatShortcut(...keys: string[]): string {
+    return st.stream(keys)
+        .map(k => this.translate(`key.${k}`, () => k.toUpperCase()))
+        .toArray()
+        .join("+");
   }
 
   /**

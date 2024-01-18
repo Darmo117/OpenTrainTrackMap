@@ -48,28 +48,31 @@ export default class DrawControl implements mgl.IControl {
   constructor(options: DrawControlOptions) {
     this.#container = helpers.createControlContainer("maplibregl-ctrl-draw");
     this.#buttons.push(helpers.createControlButton({
-      title: (options.drawPointButtonTitle ?? "Draw Point") + " [1]",
+      title: options.drawPointButtonTitle ?? "Draw Point",
       icon: helpers.createMdiIcon("map-marker-outline"),
       onClick: button => {
         button.classList.add("active");
         options.onDrawPoint();
       },
+      shortcut: ["1"],
     }));
     this.#buttons.push(helpers.createControlButton({
-      title: (options.drawLineButtonTitle ?? "Draw Line") + " [2]",
+      title: options.drawLineButtonTitle ?? "Draw Line",
       icon: helpers.createMdiIcon("vector-line"),
       onClick: button => {
         button.classList.add("active");
         options.onDrawLine();
       },
+      shortcut: ["2"],
     }));
     this.#buttons.push(helpers.createControlButton({
-      title: (options.drawPolygonButtonTitle ?? "Draw Area") + " [3]",
+      title: options.drawPolygonButtonTitle ?? "Draw Area",
       icon: helpers.createMdiIcon("vector-polygon"),
       onClick: button => {
         button.classList.add("active");
         options.onDrawPolygon();
       },
+      shortcut: ["3"],
     }));
     $("body").on("keydown", e => {
       const key = +e.key - 1;

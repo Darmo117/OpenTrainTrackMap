@@ -109,7 +109,7 @@ function setAccessKeys(): void {
     const accessKey = $element.attr("accesskey");
     if (accessKey) {
       const title = $element.attr("title");
-      const shortcut = `[Alt+Shift+${accessKey}]`;
+      const shortcut = "[" + window.ottm.formatShortcut("Alt", "Shift", accessKey) + "]";
       $element.attr("title", (title ? title + " " : "") + shortcut);
     }
   });

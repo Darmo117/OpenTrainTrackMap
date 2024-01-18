@@ -697,6 +697,21 @@
       }
     },
     "js": {
+      "key": {
+        "Ctrl": "Stir",
+        "Alt": "Alt",
+        "Shift": "Maj",
+        "Meta": "Meta",
+        "Delete": "Forig",
+        "Backspace": "Reen",
+        "Space": "Spaco",
+        "Enter": "Enig",
+        "Return": "Enig",
+        "LeftArrow": "Sago maldekstren",
+        "RightArrow": "Sago dekstren",
+        "UpArrow": "Sago supren",
+        "DownArrow": "Sago malsupren"
+      },
       "map": {
         "controls": {
           "layers": {

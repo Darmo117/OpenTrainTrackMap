@@ -718,6 +718,21 @@
       }
     },
     "js": {
+      "key": {
+        "Ctrl": "Ctrl",
+        "Alt": "Alt",
+        "Shift": "Maj",
+        "Meta": "Méta",
+        "Delete": "Supprimer",
+        "Backspace": "Retour arrière",
+        "Space": "Espace",
+        "Enter": "Entrée",
+        "Return": "Entrée",
+        "LeftArrow": "Flèche gauche",
+        "RightArrow": "Flèche droite",
+        "UpArrow": "Flèche haute",
+        "DownArrow": "Flèche basse"
+      },
       "map": {
         "controls": {
           "layers": {
