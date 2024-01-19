@@ -1,7 +1,7 @@
 import * as mgl from "maplibre-gl";
 
 import * as helpers from "../helpers";
-import "./index.css";
+import "./_index.css";
 
 /**
  * Type of the event fired whenever the user selects a tiles source.

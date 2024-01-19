@@ -1,4 +1,4 @@
-import * as geom from "./geometry";
+import * as geom from "../model/geometry";
 
 /**
  * Base class for the map editor’s events.

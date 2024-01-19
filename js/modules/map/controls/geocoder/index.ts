@@ -3,7 +3,7 @@ import $ from "jquery";
 
 import * as utils from "../../../utils";
 import * as helpers from "../helpers";
-import "./index.css";
+import "./_index.css";
 
 /**
  * Options for the {@link GeocoderControl} class.

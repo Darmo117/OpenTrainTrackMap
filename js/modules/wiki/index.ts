@@ -1,5 +1,5 @@
 import * as types from "../types";
-import initEditor from "./editor";
+import initEditor from "./_editor";
 
 type GadgetCode = {
   name: string;

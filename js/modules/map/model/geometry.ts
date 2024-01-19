@@ -3,7 +3,7 @@ import * as geojson from "geojson";
 
 import * as types from "../../types";
 import * as st from "../../streams";
-import * as utils from "./utils";
+import * as utils from "../utils";
 
 export type Geometry = geojson.Point | geojson.LineString | geojson.Polygon;
 

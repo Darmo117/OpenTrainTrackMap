@@ -5,7 +5,7 @@ import $ from "jquery";
 import Cookies from "js-cookie";
 
 import * as types from "./types";
-import hookExitConfirm from "./confirm-form-exit";
+import hookExitConfirm from "./_confirm-form-exit";
 // `<IMPORTS_PLACEHOLDER>`
 
 window.ottm = new types.OTTM();

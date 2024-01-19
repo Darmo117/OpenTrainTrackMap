@@ -3,7 +3,7 @@ import $ from "jquery";
 
 import Map from "../map";
 import * as helpers from "../controls/helpers";
-import "./context-menu.css";
+import "./_context-menu.css";
 
 /**
  * Base type for button-related options.

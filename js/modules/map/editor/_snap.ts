@@ -5,7 +5,7 @@ import distance from "@turf/distance";
 import polygonToLine from "@turf/polygon-to-line";
 import nearestPointOnLine from "@turf/nearest-point-on-line";
 
-import * as geom from "./geometry";
+import * as geom from "../model/geometry";
 
 /**
  * Union of the object types returned by {@link trySnapPoint}.

@@ -1,10 +1,10 @@
 import * as mgl from "maplibre-gl";
 import $ from "jquery";
 
-import * as geom from "./geometry";
-import * as events from "./events";
+import * as geom from "../model/geometry";
+import * as events from "./_events";
 
-export default class EditorPanel {
+export default class _editorPanel {
   readonly #$panel: JQuery;
   readonly #$featureTypeLabel: JQuery;
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();

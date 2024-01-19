@@ -4,15 +4,16 @@ import Split from "split.js";
 
 import * as types from "../../types";
 import * as st from "../../streams";
+import * as geom from "../model/geometry";
 import Map from "../map";
-import * as events from "./events";
-import * as geom from "./geometry";
-import * as snap from "./snap";
-import * as utils from "./utils";
-import DrawControl from "./controls";
-import EditorPanel from "./editor-panel";
-import ContextMenu, * as ctxMenu from "./context-menu";
-import "./index.css";
+import * as utils from "../utils";
+import * as events from "./_events";
+import * as snap from "./_snap";
+import DrawControl from "./_controls";
+import _editorPanel from "./_editor-panel";
+import ContextMenu, * as ctxMenu from "./_context-menu";
+
+import "./_index.css";
 
 /**
  * Enumeration of the map editor’s modes.
@@ -55,7 +56,7 @@ class MapEditor {
 
   readonly #map: mgl.Map;
   readonly #$canvasContainer: JQuery;
-  readonly #sidePanel: EditorPanel;
+  readonly #sidePanel: _editorPanel;
   readonly #contextMenu: ContextMenu;
   readonly #$editZoomNoticePanel: JQuery;
   readonly #drawPointControl: DrawControl;
@@ -148,7 +149,7 @@ class MapEditor {
   constructor(map: mgl.Map) {
     this.#map = map;
     this.#$canvasContainer = $(this.#map.getCanvasContainer());
-    this.#sidePanel = new EditorPanel(this.#map);
+    this.#sidePanel = new _editorPanel(this.#map);
     this.#contextMenu = new ContextMenu(this.#map, {
       onMove: () => this.#moveSelectedFeatures(),
       moveTitle: window.ottm.translate("map.context_menu.move.tooltip"),
