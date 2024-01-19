@@ -15,7 +15,7 @@ class DateInterval:  # TODO test
     A ValueError may be raised if at least one of these situations is encountered:
         - start_date is after end_date.
         - start_date, end_date or both are in the future.
-        - is_current is true and end_date is not None
+        - is_current is true and end_date is not None.
     """
 
     def __init__(self, start_date: _dt.datetime | None, approx_start: bool,
