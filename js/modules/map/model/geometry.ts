@@ -4,6 +4,8 @@ import * as geojson from "geojson";
 import * as types from "../../types";
 import * as st from "../../streams";
 import * as utils from "../utils";
+import * as core from "./core";
+import * as ngeom from "./non-geometries";
 
 export type Geometry = geojson.Point | geojson.LineString | geojson.Polygon;
 
@@ -99,12 +101,14 @@ export enum SelectionMode {
  * @see MapFeatureProperties
  */
 export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFeatureProperties = MapFeatureProperties>
-    implements geojson.Feature<G, P> {
+    extends core.TemporalObject implements geojson.Feature<G, P> {
   // Fields required by geojson.Feature
   readonly type = "Feature";
   readonly geometry: G;
   readonly properties: P;
   readonly id: string;
+
+  #notes: ngeom.Note[];
 
   /**
    * Create a new map feature.
@@ -113,6 +117,7 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
    * @param properties The feature’s additional properties.
    */
   protected constructor(id: string, geometry: G, properties: types.Dict = {}) {
+    super();
     this.id = id;
     this.geometry = geometry;
     this.properties = Object.assign({
