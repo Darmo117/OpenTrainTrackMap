@@ -1,12 +1,4 @@
-export class DateInterval {
-  private startDate: Date;
-  private endDate: Date;
-  private approxStart: boolean;
-  private approxEnd: boolean;
-  private isCurrent: boolean;
-
-  // TODO
-}
+import {DateInterval} from "./date-interval";
 
 export class Note {
   private author: string;

@@ -107,9 +107,8 @@ class DateInterval:  # TODO test
 
     @is_current.setter
     def is_current(self, is_current: bool):
-        if is_current:
-            if self._end_date:
-                raise ValueError('"is_current" attribute cannot be true while an end date is defined')
+        if is_current and self._end_date:
+            raise ValueError('"is_current" attribute cannot be true while an end date is defined')
         self._is_current = is_current
 
     def overlaps(self, other: DateInterval) -> bool | None:
@@ -186,7 +185,7 @@ class DateInterval:  # TODO test
 
     @classmethod
     def from_string(cls, s: str) -> DateInterval:
-        m = re.fullmatch(r'\[((~?)(\d{4}(?:-\d{2}){2})|\?),\s*((~?)(\d{4}(?:-\d{2}){2})|\?)]', s)
+        m = re.fullmatch(r'\[((~?)(\d{4}(?:-\d{2}){2})|\?),\s*((~?)(\d{4}(?:-\d{2}){2})|\?|…)]', s)
         if not m:
             raise ValueError('cannot parse string')
         start_approx, start_date = cls._extract_datetime(m, 0)
