@@ -11,7 +11,7 @@ import django.shortcuts as _dj_scut
 
 from . import _magic_variables as _mv, _parser_context as _pc, _template_tags as _tt
 from .. import constants as _w_cons, namespaces as _w_ns, pages as _w_pages
-from ... import utils as _utils, auth as _auth
+from ... import auth as _auth, utils as _utils
 from .... import models as _models, settings as _settings
 
 
@@ -168,7 +168,7 @@ class Parser:
         user = _auth.get_user_from_name(page.base_name) if page.namespace == _w_ns.NS_USER else None
         # noinspection PyTypeChecker
         self._context = _pc.ParserContext(
-            placeholder_index=_random.randint(1e12, 1e13 - 1),  # Random start index
+            placeholder_index=_random.randint(int(1e12), int(1e13 - 1)),  # Random start index
             user=user,
             page=page,
             revision=revision,
