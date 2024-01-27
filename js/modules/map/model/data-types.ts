@@ -232,6 +232,10 @@ export abstract class ObjectProperty<T> {
    */
   readonly objectType: ObjectType;
   /**
+   * This property’s name prefixed with the object type it is bound to.
+   */
+  readonly fullName: string;
+  /**
    * This property’s label.
    */
   readonly label: string;
@@ -264,6 +268,7 @@ export abstract class ObjectProperty<T> {
       deprecated: boolean
   ) {
     this.objectType = objectType;
+    this.fullName = `${objectType.label}.${label}`;
     this.label = label;
     this.localizedName = localizedName;
     this.isUnique = unique;
@@ -296,6 +301,15 @@ export abstract class ObjectProperty<T> {
                 && propertyValue.getValues().allMatch(v => this.isValueValid(v)))
         );
   }
+
+  /**
+   * Create a new {@link ObjectPropertyValue} for this property.
+   * @param value The initial value.
+   * @returns {} A {@link SingleObjectPropertyValue} if this property is unique,
+   *  a {@link MultipleObjectPropertyValue} otherwise.
+   */
+  abstract newValue(value: T): SingleObjectPropertyValue<T, ObjectProperty<T>>
+      | MultipleObjectPropertyValue<T, ObjectProperty<T>>;
 }
 
 /**
@@ -304,6 +318,13 @@ export abstract class ObjectProperty<T> {
 export class BoolProperty extends ObjectProperty<boolean> {
   isValueValid(v: boolean): boolean {
     return typeof v === "boolean";
+  }
+
+  newValue(value: boolean): SingleObjectPropertyValue<boolean, BoolProperty>
+      | MultipleObjectPropertyValue<boolean, BoolProperty> {
+    return this.isUnique
+        ? new SingleObjectPropertyValue(value, this)
+        : new MultipleObjectPropertyValue(value, this);
   }
 }
 
@@ -366,6 +387,12 @@ export class IntProperty extends ObjectProperty<number> {
         && (this.min === null || v >= this.min)
         && (this.max === null || v <= this.max);
   }
+
+  newValue(value: number, unit?: Unit): IntSingleObjectPropertyValue | IntMultipleObjectPropertyValue {
+    return this.isUnique
+        ? new IntSingleObjectPropertyValue(value, this, unit)
+        : new IntMultipleObjectPropertyValue(value, this, unit);
+  }
 }
 
 /**
@@ -421,6 +448,12 @@ export class FloatProperty extends ObjectProperty<number> {
         && (this.min === null || v >= this.min)
         && (this.max === null || v <= this.max);
   }
+
+  newValue(value: number, unit?: Unit): FloatSingleObjectPropertyValue | FloatMultipleObjectPropertyValue {
+    return this.isUnique
+        ? new FloatSingleObjectPropertyValue(value, this, unit)
+        : new FloatMultipleObjectPropertyValue(value, this, unit);
+  }
 }
 
 /**
@@ -456,6 +489,13 @@ export class StringProperty extends ObjectProperty<string> {
   isValueValid(v: string): boolean {
     return typeof v === "string";
   }
+
+  newValue(value: string, translations?: { [langCode: string]: string }): StringSingleObjectPropertyValue
+      | StringMultipleObjectPropertyValue {
+    return this.isUnique
+        ? new StringSingleObjectPropertyValue(value, this, translations)
+        : new StringMultipleObjectPropertyValue(value, this, translations);
+  }
 }
 
 /**
@@ -464,6 +504,13 @@ export class StringProperty extends ObjectProperty<string> {
 export class DateIntervalProperty extends ObjectProperty<di.DateInterval> {
   isValueValid(v: di.DateInterval): boolean {
     return v instanceof di.DateInterval;
+  }
+
+  newValue(value: di.DateInterval): SingleObjectPropertyValue<di.DateInterval, DateIntervalProperty>
+      | MultipleObjectPropertyValue<di.DateInterval, DateIntervalProperty> {
+    return this.isUnique
+        ? new SingleObjectPropertyValue(value, this)
+        : new MultipleObjectPropertyValue(value, this);
   }
 }
 
@@ -500,6 +547,13 @@ export class TypeProperty extends ObjectProperty<ObjectInstance> {
   isValueValid(v: ObjectInstance): boolean {
     return v instanceof ObjectInstance && v.isInstanceOf(this.targeType);
   }
+
+  newValue(value: ObjectInstance): SingleObjectPropertyValue<ObjectInstance, TypeProperty>
+      | MultipleObjectPropertyValue<ObjectInstance, TypeProperty> {
+    return this.isUnique
+        ? new SingleObjectPropertyValue(value, this)
+        : new MultipleObjectPropertyValue(value, this);
+  }
 }
 
 /**
@@ -535,6 +589,13 @@ export class EnumProperty extends ObjectProperty<string> {
 
   isValueValid(v: string): boolean {
     return typeof v === "string" && this.enumType.values.anyMatch(value => value === v);
+  }
+
+  newValue(value: string): SingleObjectPropertyValue<string, EnumProperty>
+      | MultipleObjectPropertyValue<string, EnumProperty> {
+    return this.isUnique
+        ? new SingleObjectPropertyValue(value, this)
+        : new MultipleObjectPropertyValue(value, this);
   }
 }
 
@@ -621,11 +682,17 @@ export class ObjectInstance {
    */
   setPropertyValue<T>(name: string, value: T): void {
     const property = this.#getUniquePropertyOrThrow(name);
-    const p = this.#uniqueProperties[name];
-    if (p) {
-      p.setValue(value);
+    const pValue = this.#uniqueProperties[name];
+    if (pValue) {
+      pValue.setValue(value);
     } else {
-      this.#uniqueProperties[name] = new SingleObjectPropertyValue(value, property);
+      let propValue: SingleObjectPropertyValue<T, ObjectProperty<any>>;
+      if ((property instanceof IntProperty || property instanceof FloatProperty) && property.unitType) {
+        propValue = property.newValue(value as number, property.unitType.units.findFirst().get()) as any;
+      } else {
+        propValue = property.newValue(value) as any;
+      }
+      this.#uniqueProperties[name] = propValue;
     }
   }
 
@@ -672,11 +739,17 @@ export class ObjectInstance {
    */
   addValueToProperty<T>(name: string, value: T): void {
     const property = this.#getMultiplePropertyOrThrow(name);
-    const p = this.#multiProperties[name];
-    if (p) {
-      p.addValue(value);
+    const pValue = this.#multiProperties[name];
+    if (pValue) {
+      pValue.addValue(value);
     } else {
-      this.#multiProperties[name] = new MultipleObjectPropertyValue(value, property);
+      let propValue: MultipleObjectPropertyValue<T, ObjectProperty<any>>;
+      if ((property instanceof IntProperty || property instanceof FloatProperty) && property.unitType) {
+        propValue = property.newValue(value as number, property.unitType.units.findFirst().get()) as any;
+      } else {
+        propValue = property.newValue(value) as any;
+      }
+      this.#multiProperties[name] = propValue;
     }
   }
 
@@ -734,7 +807,6 @@ export abstract class ObjectPropertyValue<T, OP extends ObjectProperty<T>> {
   }
 }
 
-// TODO handle int/float units and string translations
 /**
  * This class represents the single value bound to an {@link ObjectProperty} definition
  * with a `isUnique` field set to `true`.
@@ -767,9 +839,169 @@ export class SingleObjectPropertyValue<T, OP extends ObjectProperty<T>> extends 
    */
   setValue(value: T): void {
     if (!this.propertyType.isValueValid(value)) {
-      throw new TypeError(`Invalid value for property "${this.propertyType.objectType.label}.${this.propertyType.label}"`);
+      throw new TypeError(`Invalid value for property "${this.propertyType.fullName}"`);
     }
     this.#value = value;
+  }
+}
+
+/**
+ * This class represents the single int value bound to an {@link IntProperty} definition
+ * with a `isUnique` field set to `true`.
+ */
+export class IntSingleObjectPropertyValue extends SingleObjectPropertyValue<number, IntProperty> {
+  #unit: Unit | null;
+
+  /**
+   * Create a new int property value.
+   * @param value The value to bind to the property.
+   * @param propertyType The property to bind the value to.
+   * @param unit Optional. The unit to attach to this value.
+   * @throws {TypeError} If the value is invalid for the property
+   *  or the unit’s type differs from the one defined by the property.
+   */
+  constructor(value: number, propertyType: IntProperty, unit?: Unit) {
+    super(value, propertyType);
+    this.unit = unit;
+  }
+
+  /**
+   * The unit attached to this value. May be null.
+   */
+  get unit(): Unit | null {
+    return this.#unit;
+  }
+
+  /**
+   * Set the unit attached to this value. May be null.
+   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
+   * @throws {Error} If the unit is null or undefined.
+   */
+  set unit(unit: Unit) {
+    const expectedType = this.propertyType.unitType;
+    if (!unit && !expectedType) {
+      return;
+    }
+    if (!unit && expectedType) {
+      throw new Error(`Undefined unit`);
+    }
+    if (unit && !expectedType) {
+      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
+    }
+    const actualType = unit.type;
+    if (expectedType !== actualType) {
+      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
+    }
+    this.#unit = unit;
+  }
+}
+
+/**
+ * This class represents the single float value bound to an {@link FloatProperty} definition
+ * with a `isUnique` field set to `true`.
+ */
+export class FloatSingleObjectPropertyValue extends SingleObjectPropertyValue<number, FloatProperty> {
+  #unit: Unit | null;
+
+  /**
+   * Create a new float property value.
+   * @param value The value to bind to the property.
+   * @param propertyType The property to bind the value to.
+   * @param unit Optional. The unit to attach to this value.
+   * @throws {TypeError} If the value is invalid for the property
+   *  or the unit’s type differs from the one defined by the property.
+   */
+  constructor(value: number, propertyType: FloatProperty, unit?: Unit) {
+    super(value, propertyType);
+    this.unit = unit;
+  }
+
+  /**
+   * The unit attached to this value. May be null.
+   */
+  get unit(): Unit | null {
+    return this.#unit;
+  }
+
+  /**
+   * Set the unit attached to this value. May be null.
+   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
+   * @throws {Error} If the unit is null or undefined.
+   */
+  set unit(unit: Unit) {
+    const expectedType = this.propertyType.unitType;
+    if (!unit && !expectedType) {
+      return;
+    }
+    if (!unit && expectedType) {
+      throw new Error(`Undefined unit`);
+    }
+    if (unit && !expectedType) {
+      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
+    }
+    const actualType = unit.type;
+    if (expectedType !== actualType) {
+      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
+    }
+    this.#unit = unit;
+  }
+}
+
+/**
+ * This class represents the single string value bound to an {@link StringProperty} definition
+ * with a `isUnique` field set to `true`.
+ */
+export class StringSingleObjectPropertyValue extends SingleObjectPropertyValue<string, StringProperty> {
+  readonly #translations: { [langCode: string]: string };
+
+  /**
+   * Create a new string property value.
+   * @param value The value to bind to the property.
+   * @param propertyType The property to bind the value to.
+   * @param translations Optional. The existing translations for this value.
+   * @throws {Error} If translations are provided but the property is not translatable.
+   */
+  constructor(value: string, propertyType: StringProperty, translations?: { [langCode: string]: string }) {
+    super(value, propertyType);
+    if (translations) {
+      this.#ensureTranslatable();
+    }
+    this.#translations = {...translations};
+  }
+
+  /**
+   * The translations for this string value.
+   * @returns A stream of string pairs, each containing the language code and the text for that language in that order.
+   */
+  get translations(): stream.Stream<[string, string]> {
+    return stream.streamOfObject(this.#translations);
+  }
+
+  /**
+   * Set the translation for the given language code.
+   * @param langCode The language code.
+   * @param tr The translation for that language.
+   * @throws {Error} If the property is not translatable.
+   */
+  setTranslation(langCode: string, tr: string): void {
+    this.#ensureTranslatable();
+    this.#translations[langCode] = tr;
+  }
+
+  /**
+   * Remove the translation for the given language code.
+   * @param langCode The language code.
+   * @throws {Error} If the property is not translatable.
+   */
+  removeTranslation(langCode: string): void {
+    this.#ensureTranslatable();
+    delete this.#translations[langCode];
+  }
+
+  #ensureTranslatable() {
+    if (!this.propertyType.translatable) {
+      throw new Error(`Property "${this.propertyType.fullName}" is not translatable`);
+    }
   }
 }
 
@@ -824,6 +1056,168 @@ export class MultipleObjectPropertyValue<T, OP extends ObjectProperty<T>> extend
     const i = this.#value.indexOf(value);
     if (i !== -1) {
       this.#value.splice(i, 1);
+    }
+  }
+}
+
+/**
+ * This class represents the int values bound to an {@link IntProperty} definition
+ * with a `isUnique` field set to `false`.
+ */
+export class IntMultipleObjectPropertyValue extends MultipleObjectPropertyValue<number, IntProperty> {
+  #unit: Unit | null;
+
+  /**
+   * Create a new int property value.
+   * @param firstValue The first value to bind to the property.
+   * @param propertyType The property to bind the value to.
+   * @param unit Optional. The unit to attach to the values.
+   * @throws {TypeError} If the value is invalid for the property
+   *  or the unit’s type differs from the one defined by the property.
+   */
+  constructor(firstValue: number, propertyType: IntProperty, unit?: Unit) {
+    super(firstValue, propertyType);
+    this.unit = unit;
+  }
+
+  /**
+   * The unit attached to the values. May be null.
+   */
+  get unit(): Unit | null {
+    return this.#unit;
+  }
+
+  /**
+   * Set the unit attached to the values. May be null.
+   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
+   * @throws {Error} If the unit is null or undefined.
+   */
+  set unit(unit: Unit) {
+    const expectedType = this.propertyType.unitType;
+    if (!unit && !expectedType) {
+      return;
+    }
+    if (!unit && expectedType) {
+      throw new Error(`Undefined unit`);
+    }
+    if (unit && !expectedType) {
+      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
+    }
+    const actualType = unit.type;
+    if (expectedType !== actualType) {
+      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
+    }
+    this.#unit = unit;
+  }
+}
+
+/**
+ * This class represents the float values bound to an {@link FloatProperty} definition
+ * with a `isUnique` field set to `false`.
+ */
+export class FloatMultipleObjectPropertyValue extends MultipleObjectPropertyValue<number, FloatProperty> {
+  #unit: Unit | null;
+
+  /**
+   * Create a new float property value.
+   * @param firstValue The first value to bind to the property.
+   * @param propertyType The property to bind the value to.
+   * @param unit Optional. The unit to attach to the values.
+   * @throws {TypeError} If the value is invalid for the property
+   *  or the unit’s type differs from the one defined by the property.
+   */
+  constructor(firstValue: number, propertyType: FloatProperty, unit?: Unit) {
+    super(firstValue, propertyType);
+    this.unit = unit;
+  }
+
+  /**
+   * The unit attached to the values. May be null.
+   */
+  get unit(): Unit | null {
+    return this.#unit;
+  }
+
+  /**
+   * Set the unit attached to the values. May be null.
+   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
+   * @throws {Error} If the unit is null or undefined.
+   */
+  set unit(unit: Unit) {
+    const expectedType = this.propertyType.unitType;
+    if (!unit && !expectedType) {
+      return;
+    }
+    if (!unit && expectedType) {
+      throw new Error(`Undefined unit`);
+    }
+    if (unit && !expectedType) {
+      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
+    }
+    const actualType = unit.type;
+    if (expectedType !== actualType) {
+      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
+    }
+    this.#unit = unit;
+  }
+}
+
+/**
+ * This class represents the string values bound to an {@link StringProperty} definition
+ * with a `isUnique` field set to `false`.
+ */
+export class StringMultipleObjectPropertyValue extends MultipleObjectPropertyValue<string, StringProperty> {
+  readonly #translations: { [langCode: string]: string }[] = [];
+
+  /**
+   * Create a new string property value.
+   * @param firstValue The first value to bind to the property.
+   * @param propertyType The property to bind the value to.
+   * @param translations Optional. The existing translations for the value.
+   * @throws {Error} If translations are provided but the property is not translatable.
+   */
+  constructor(firstValue: string, propertyType: StringProperty, translations?: { [langCode: string]: string }) {
+    super(firstValue, propertyType);
+    this.#ensureTranslatable();
+    this.#translations.push({...translations});
+  }
+
+  /**
+   * The translations for the string values.
+   * @returns An ordered stream that contains streams of string pairs,
+   *  each containing the language code and the text for that language in that order,
+   *  for each value of this property.
+   */
+  get translations(): stream.Stream<stream.Stream<[string, string]>> {
+    return stream.stream(this.#translations).map(t => stream.streamOfObject(t));
+  }
+
+  /**
+   * Set the translation for the given language code and value index.
+   * @param langCode The language code.
+   * @param tr The translation for that language.
+   * @param index The index of the value whose translation is to be modified.
+   * @throws {Error} If the property is not translatable.
+   */
+  setTranslation(langCode: string, tr: string, index: number): void {
+    this.#ensureTranslatable();
+    this.#translations[index][langCode] = tr;
+  }
+
+  /**
+   * Remove the translation for the given language code and value index.
+   * @param langCode The language code.
+   * @param index The index of the value whose translation is to be removed.
+   * @throws {Error} If the property is not translatable.
+   */
+  removeTranslation(langCode: string, index: number): void {
+    this.#ensureTranslatable();
+    delete this.#translations[index][langCode];
+  }
+
+  #ensureTranslatable() {
+    if (!this.propertyType.translatable) {
+      throw new Error(`Property "${this.propertyType.fullName}" is not translatable`);
     }
   }
 }
