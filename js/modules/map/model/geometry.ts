@@ -1044,11 +1044,47 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
   }
 }
 
+/**
+ * Notes are used to leave comments on geometries.
+ */
 export class Note {
   readonly #date: Date;
-  readonly #authorName: string;
-  readonly #text: string;
+  /**
+   * The username of the author that wrote this note.
+   */
+  readonly authorName: string;
+  /**
+   * This note’s text.
+   */
+  readonly text: string;
   readonly #geometries: MapFeature[] = [];
 
-  // TODO
+  /**
+   * Create a new note.
+   * @param date The date the note was published on.
+   * @param authorName The username of the author that wrote the note.
+   * @param text The note’s text.
+   * @param geometries The geometries the note is linked to.
+   */
+  constructor(date: Date, authorName: string, text: string, geometries: MapFeature[]) {
+    this.#date = date;
+    this.authorName = authorName;
+    this.text = text;
+    this.#geometries = [...geometries];
+  }
+
+  /**
+   * The date this note was published on.
+   */
+  get date(): Date {
+    return new Date(this.#date.getTime());
+  }
+
+  /**
+   * The geometries this note is linked to.
+   * @returns A stream of all geometries this note is linked to.
+   */
+  get geometries(): st.Stream<MapFeature> {
+    return st.stream(this.#geometries);
+  }
 }
