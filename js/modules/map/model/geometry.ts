@@ -4,8 +4,7 @@ import * as geojson from "geojson";
 import * as types from "../../types";
 import * as st from "../../streams";
 import * as utils from "../utils";
-import * as core from "./core";
-import * as ngeom from "./non-geometries";
+import * as dtypes from "./data-types"
 
 export type Geometry = geojson.Point | geojson.LineString | geojson.Polygon;
 
@@ -101,23 +100,30 @@ export enum SelectionMode {
  * @see MapFeatureProperties
  */
 export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFeatureProperties = MapFeatureProperties>
-    extends core.TemporalObject implements geojson.Feature<G, P> {
+    implements geojson.Feature<G, P> {
   // Fields required by geojson.Feature
   readonly type = "Feature";
   readonly geometry: G;
   readonly properties: P;
   readonly id: string;
 
-  #notes: ngeom.Note[];
+  readonly dataObject: dtypes.ObjectInstance;
 
   /**
    * Create a new map feature.
+   * @param dataObject The attached object containing data.
    * @param id The feature’s ID.
    * @param geometry The feature’s geometry object.
    * @param properties The feature’s additional properties.
+   * @param layer The z-order layer index.
    */
-  protected constructor(id: string, geometry: G, properties: types.Dict = {}) {
-    super();
+  protected constructor(
+      dataObject: dtypes.ObjectInstance,
+      id: string,
+      geometry: G,
+      properties: types.Dict = {},
+      layer: number = 0
+  ) {
     this.id = id;
     this.geometry = geometry;
     this.properties = Object.assign({
@@ -125,7 +131,13 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
       layer: 0,
       selectionMode: SelectionMode.NONE,
     }, properties) as P;
-    this.layer = 0;
+    const expectedGeomType = this.geometry.type;
+    const actualGeomType = dataObject.type.geometryType;
+    if (actualGeomType !== expectedGeomType) {
+      throw new Error(`Invalid data object geometry type: expected "${expectedGeomType}", got "${actualGeomType}"`);
+    }
+    this.dataObject = dataObject;
+    this.layer = layer;
   }
 
   /**
@@ -201,16 +213,23 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
 
   /**
    * Create a new point.
+   * @param dataObject The attached object containing data.
    * @param id The feature’s ID.
    * @param coords The point’s coordinates.
+   * @param layer The z-order layer index.
    */
-  constructor(id: string, coords: mgl.LngLat) {
-    super(id, {
+  constructor(
+      dataObject: dtypes.ObjectInstance,
+      id: string,
+      coords: mgl.LngLat,
+      layer: number = 0
+  ) {
+    super(dataObject, id, {
       type: "Point",
       coordinates: null, // Updated immediately by this.lngLat()
     }, {
       radius: 4,
-    });
+    }, layer);
     this.lngLat = coords;
   }
 
@@ -329,10 +348,6 @@ export type DeleteRingAction = {
  */
 export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P extends LinearProperties = LinearProperties>
     extends MapFeature<G, P> {
-
-  protected constructor(id: string, geometry: G, properties: types.Dict) {
-    super(id, geometry, properties);
-  }
 
   /**
    * Indicate whether this feature has any points.
@@ -472,17 +487,24 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
 
   /**
    * Create a line string.
+   * @param dataObject The attached object containing data.
    * @param id The feature’s ID.
    * @param vertices Optional. A list of (at least 2) points. It must not contain any duplicates.
+   * @param layer The z-order layer index.
    * @throws {Error} If a point is present multiple times in the list of points or the list contains less than 2 points.
    */
-  constructor(id: string, vertices?: Point[]) {
-    super(id, {
+  constructor(
+      dataObject: dtypes.ObjectInstance,
+      id: string,
+      vertices?: Point[],
+      layer: number = 0
+  ) {
+    super(dataObject, id, {
       type: "LineString",
       coordinates: [],
     }, {
       width: 2,
-    });
+    }, layer);
     if (vertices) {
       if (vertices.length < 2) {
         throw new Error(`Expected at least 2 points, got ${vertices.length} in linestring ${id}`);
@@ -740,16 +762,23 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
 
   /**
    * Create a polygon.
+   * @param dataObject The attached object containing data.
    * @param id The feature’s ID.
    * @param vertices Optional. A list of point lists that should each contain at least 3 points.
    * It must not contain any duplicates. Each sublist represents a ring.
+   * @param layer The z-order layer index.
    * @throws {Error} If a point is present multiple times in the lists or a list contains less than 3 points.
    */
-  constructor(id: string, vertices?: Point[][]) {
-    super(id, {
+  constructor(
+      dataObject: dtypes.ObjectInstance,
+      id: string,
+      vertices?: Point[][],
+      layer: number = 0
+  ) {
+    super(dataObject, id, {
       type: "Polygon",
       coordinates: [[]],
-    }, {});
+    }, {}, layer);
     if (vertices) {
       // Separate loop to avoid binding vertices unnecessarily
       for (let i = 0; i < vertices.length; i++) {
@@ -975,7 +1004,8 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     // TODO
   }
 
-  isNearlyCircular(): boolean {
+  isNearlyCircular(): boolean { // TODO compare area and perimeter to those of a circle
+    // 4*π*area/(perimeter**2) (= 1 for circles)
     return false; // TODO
   }
 
@@ -1012,4 +1042,12 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     const m = Polygon.#PATH_PATTERN.exec(path);
     return m ? [+m[1], +m[2]] : null;
   }
+}
+
+export class Note {
+  readonly #text: string;
+  readonly #date: Date;
+  readonly #geometries: MapFeature[] = [];
+
+  // TODO
 }

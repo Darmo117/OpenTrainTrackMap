@@ -24,6 +24,7 @@ export type ButtonsMapping<T> = {
   reverseLine?: T;
   rotate?: T;
   straightenLine?: T;
+  // TODO regularly distribute points
 };
 
 /**

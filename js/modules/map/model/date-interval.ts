@@ -43,17 +43,17 @@ export class PartialDate {
 
   /**
    * Create a new partial date.
-   * @param year The date’s year. Must be ≥ 0.
+   * @param year The date’s year. Must be ≥ 0 and ≤ 9999.
    * @param month Optional. The date’s month. Must be between 1 and 12 inclusive.
    * @param day Optional. The month’s day. Must be a valid day for the given month.
    * @throws {Error} If any of the following conditions is true:
-   *  * the year is undefined or ≤ 0
-   *  * the month is undefined but the day is
-   *  * the month is not between 1 and 12 inclusive
-   *  * the day is invalid for the given month
+   *  - the year is undefined or ≤ 0
+   *  - the month is undefined but the day is
+   *  - the month is not between 1 and 12 inclusive
+   *  - the day is invalid for the given month
    */
   constructor(year: number, month?: number, day?: number) {
-    if (typeof year !== "number" || year < 0) {
+    if (typeof year !== "number" || year < 0 || year > 9999) {
       throw new Error(`Invalid year: ${year}`);
     }
     const monthDef = typeof month === "number";
@@ -80,8 +80,9 @@ export class PartialDate {
    */
   static #checkDate(y: number, m: number, d: number) {
     const leapYear = y % 4 === 0 && y % 100 !== 0 || y % 400 === 0;
-    if ((m === 1 || m === 3 || m === 5 || m === 7 || m === 8 || m === 10 || m === 12) && d > 31
-        || (m === 4 || m === 6 || m === 9 || m === 12) && d > 30
+    if (d < 1
+        || (m === 1 || m === 3 || m === 5 || m === 7 || m === 8 || m === 10 || m === 12) && d > 31
+        || (m === 4 || m === 6 || m === 9 || m === 11) && d > 30
         || m === 2 && (leapYear && d > 29 || !leapYear && d > 28)) {
       throw new Error(`Invalid day: ${d}`);
     }
@@ -120,7 +121,7 @@ export class PartialDate {
   /**
    * Check whether this date precedes the given one.
    * @param other A date to check against this one.
-   * @returns True if this date precedes the given one.
+   * @returns True if this date precedes the given one, false otherwise.
    */
   precedes(other: PartialDate): boolean {
     return this.year < other.year
@@ -135,7 +136,7 @@ export class PartialDate {
   /**
    * Check whether this date precedes or equals the given one.
    * @param other A date to check against this one.
-   * @returns True if this date precedes or equals the given one.
+   * @returns True if this date precedes or equals the given one, false otherwise.
    */
   precedesOrEquals(other: PartialDate): boolean {
     return this.precedes(other) || this.equals(other);
@@ -144,7 +145,7 @@ export class PartialDate {
   /**
    * Check whether this date follows the given one.
    * @param other A date to check against this one.
-   * @returns True if this date follows the given one.
+   * @returns True if this date follows the given one, false otherwise.
    */
   follows(other: PartialDate): boolean {
     return this.year > other.year
@@ -159,7 +160,7 @@ export class PartialDate {
   /**
    * Check whether this date follows or equals the given one.
    * @param other A date to check against this one.
-   * @returns True if this date follows or equals the given one.
+   * @returns True if this date follows or equals the given one, false otherwise.
    */
   followsOrEquals(other: PartialDate): boolean {
     return this.follows(other) || this.equals(other);
@@ -170,7 +171,10 @@ export class PartialDate {
    * where `MM` and `DD` can be `??` if either of those is undefined.
    */
   toString(): string {
-    return `${this.year}-${this.month ?? "??"}-${this.day ?? "??"}`;
+    const year = this.year.toLocaleString("en-US", {minimumSignificantDigits: 4});
+    const month = this.month?.toLocaleString("en-US", {minimumSignificantDigits: 2}) ?? "??";
+    const day = this.day?.toLocaleString("en-US", {minimumSignificantDigits: 2}) ?? "??";
+    return `${year}-${month}-${day}`;
   }
 }
 
@@ -195,7 +199,7 @@ export class DateInterval {
       throw new Error(`Invalid date interval string: ${s}`);
     }
     const [approxStart, startDate] = this.#extractDatetime(m, 1);
-    if (m.groups[1] === "...") {
+    if (m.groups[2] === "...") {
       return new this(startDate, null, approxStart, false, true);
     }
     const [approxEnd, endDate] = this.#extractDatetime(m, 2);
@@ -204,7 +208,7 @@ export class DateInterval {
 
   /**
    * Parse the date at the given index in the match object’s groups.
-   * @param match The Regex match object.
+   * @param match The RegExp match object.
    * @param index The index in the match object’s groups.
    * @return A tuple with a boolean indicating whether the date is defined (`true`) or not (`?`),
    *  and the corresponding {@link PartialDate} object.
@@ -221,8 +225,8 @@ export class DateInterval {
     return [approx, PartialDate.parse(s)];
   }
 
-  readonly #startDate: PartialDate;
-  readonly #endDate: PartialDate;
+  readonly #startDate: PartialDate | null;
+  readonly #endDate: PartialDate | null;
   readonly #approxStart: boolean;
   readonly #approxEnd: boolean;
   readonly #isCurrent: boolean;
@@ -235,13 +239,13 @@ export class DateInterval {
    * @param approxEnd Optional. Whether the end date is approximate.
    * @param isCurrent Optional. Whether the interval is current.
    * @throws {Error} In any of the following cases:
-   *  * start and end dates are both undefined
-   *  * end date precedes start date
-   *  * start date follows end date
-   *  * start and end date are equal
-   *  * `isCurrent` is true and end date is set
-   *  * `approxStart` is true and start date is undefined
-   *  * `approxEnd` is true and end date is undefined
+   *  - start and end dates are both undefined
+   *  - end date precedes start date
+   *  - start date follows end date
+   *  - start and end date are equal
+   *  - `isCurrent` is true and end date is set
+   *  - `approxStart` is true and start date is undefined
+   *  - `approxEnd` is true and end date is undefined
    */
   constructor(
       startDate: PartialDate | null,
@@ -332,7 +336,8 @@ export class DateInterval {
   /**
    * Check whether this interval precedes the given one, with a gap in-between.
    * @param other An interval to check against this one.
-   * @returns True if this interval’s end date precedes the start date of the given one.
+   * @returns True if this interval’s end date precedes the start date of the given one,
+   *  false otherwise.
    */
   precedes(other: DateInterval): boolean {
     return this.endDate && other.startDate && this.endDate.precedes(other.startDate);
@@ -341,7 +346,8 @@ export class DateInterval {
   /**
    * Check whether this interval precedes the given one, with no gap in-between.
    * @param other An interval to check against this one.
-   * @returns True if this interval’s end date is the same as the start date of the given one.
+   * @returns True if this interval’s end date is the same as the start date of the given one,
+   *  false otherwise.
    */
   precedesAndMeets(other: DateInterval): boolean {
     return this.endDate && other.startDate && this.endDate.equals(other.startDate);
@@ -350,7 +356,8 @@ export class DateInterval {
   /**
    * Check whether this interval follows the given one, with a gap in-between.
    * @param other An interval to check against this one.
-   * @returns True if this interval’s start date follows the end date of the given one.
+   * @returns True if this interval’s start date follows the end date of the given one,
+   *  false otherwise.
    */
   follows(other: DateInterval): boolean {
     return this.startDate && other.endDate && this.startDate.follows(other.endDate);
@@ -359,7 +366,8 @@ export class DateInterval {
   /**
    * Check whether this interval follows the given one, with no gap in-between.
    * @param other An interval to check against this one.
-   * @returns True if this interval’s start date is the same as the end date of the given one.
+   * @returns True if this interval’s start date is the same as the end date of the given one,
+   *  false otherwise.
    */
   followsAndMeets(other: DateInterval): boolean {
     return this.startDate && other.endDate && this.startDate.equals(other.endDate);
@@ -369,9 +377,9 @@ export class DateInterval {
    * Check whether this interval overlaps the given one.
    * @param other An interval to check against this one.
    * @returns True if this interval starts inside the given one,
-   * or the given one starts inside this one,
-   * or this start date is the given one’s end date,
-   * or this end date is the given one’s start date; false otherwise.
+   *  or the given one starts inside this one,
+   *  or this start date is the given one’s end date,
+   *  or this end date is the given one’s start date; false otherwise.
    */
   overlaps(other: DateInterval): boolean {
     const now = PartialDate.now();

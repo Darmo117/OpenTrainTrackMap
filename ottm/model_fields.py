@@ -1,5 +1,4 @@
 """This module defines custom model fields."""
-import datetime
 import typing as _typ
 
 import django.core.exceptions as _dj_exc
@@ -11,10 +10,10 @@ from .api import data_types as _dt
 
 class DateIntervalField(_dj_models.Field):
     """A model field that can store a DateInterval object."""
-    description = _t('A date interval with possibly fuzzy bounds.')
+    description = _t('A date interval with possibly approximate bounds.')
 
     def __init__(self, *args, **kwargs):
-        kwargs['max_length'] = 45
+        kwargs['max_length'] = 26  # Longest case example: '[~2024-01-01, ~2025-01-01]'
         super().__init__(*args, **kwargs)
 
     def deconstruct(self):
@@ -42,22 +41,14 @@ class DateIntervalField(_dj_models.Field):
 
     @staticmethod
     def to_string(value: _dt.DateInterval) -> str:
-        start_date = value.start_date.isoformat()
-        end_date = value.end_date.isoformat()
-        return (f'{start_date};{int(value.fuzzy_start_date)};{end_date};'
-                f'{int(value.fuzzy_end_date)};{int(value.is_current)}')
+        return str(value)
 
     @staticmethod
     def parse(s: str) -> _dt.DateInterval:
-        parts = s.split(';')
-        if len(parts) != 5:
-            raise _dj_exc.ValidationError('invalid date interval data', code='date_interval_field_validation_error')
-        start_date = datetime.datetime.fromisoformat(parts[0])
-        approx_start = parts[1] != '0'
-        end_date = datetime.datetime.fromisoformat(parts[2])
-        approx_end = parts[3] != '0'
-        is_current = parts[4] != '0'
-        return _dt.DateInterval(start_date, approx_start, end_date, approx_end, is_current)
+        try:
+            return _dt.DateInterval.parse(s)
+        except ValueError as e:
+            raise _dj_exc.ValidationError(str(e), code='date_interval_field_validation_error')
 
 
 class CommaSeparatedStringsField(_dj_models.TextField):

@@ -1,9 +1,18 @@
 from __future__ import annotations
 
+import re
+
 import django.core.exceptions as _dj_exc
 import django.db.models as _dj_models
 
 from .. import settings as _settings
+
+LANG_CODE_PATTERN = re.compile(r'^[a-z]+(-[A-Z])?$')
+
+
+def lang_code_validator(v: str):
+    if not LANG_CODE_PATTERN.fullmatch(v):
+        raise _dj_exc.ValidationError(f'Invalid language code: "{v}"')
 
 
 class DateTimeFormat(_dj_models.Model):
@@ -13,7 +22,7 @@ class DateTimeFormat(_dj_models.Model):
 class Language(_dj_models.Model):
     DIRECTIONS = ('ltr', 'rtl')
 
-    code = _dj_models.CharField(max_length=20, unique=True)
+    code = _dj_models.CharField(max_length=20, unique=True, validators=[lang_code_validator])
     name = _dj_models.CharField(max_length=100, unique=True)
     writing_direction = _dj_models.CharField(max_length=3, choices=tuple((d, d) for d in DIRECTIONS))
     available_for_ui = _dj_models.BooleanField(default=False)

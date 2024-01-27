@@ -10,7 +10,7 @@ import django.core.exceptions as _dj_exc
 import django.db.models as _dj_models
 import pytz as _pytz
 
-from . import _i18n_models as _i18n_m, _ottm_models as _ottm_m
+from . import _i18n_models as _i18n_m
 from .. import model_fields, settings as _settings
 from ..api import data_types as _data_types, groups as _groups, permissions as _perms, \
     timezones as _tz, utils as _utils
@@ -877,9 +877,10 @@ class User:
         return (b := self.block) and b.is_active
 
     @property
-    def edits(self) -> _dj_models.Manager[_ottm_m.EditGroup]:
+    def edits(self) -> _dj_models.Manager[object]:
         """A Manager object for this user’s edit groups."""
-        return self._user.edit_groups if self.exists else _dj_auth_models.EmptyManager(_ottm_m.EditGroup)
+        # return self._user.edit_groups if self.exists else _dj_auth_models.EmptyManager(_ottm_m.EditGroup)
+        return None
 
     @property
     def wiki_edits(self) -> _dj_models.QuerySet[PageRevision]:
@@ -951,9 +952,10 @@ class User:
         """Return the total number of notes created by this user."""
         if not self.exists:
             return 0
-        return (_ottm_m.ObjectAdded.objects
-                .filter(edit_group__author=self._user, object_type=_ottm_m.Note.__name__)
-                .count())
+        # return (_ottm_m.ObjectAdded.objects
+        #         .filter(edit_group__author=self._user, object_type=_ottm_m.Note.__name__)
+        #         .count())
+        return 0
 
     def edits_count(self) -> int:
         """Return the total number of edits on objects and relations made by this user."""
