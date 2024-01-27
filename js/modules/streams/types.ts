@@ -458,4 +458,8 @@ export class Optional<T> {
     }
     return this.#value;
   }
+
+  toString(): string {
+    return `Optional[${this.#value}]`;
+  }
 }

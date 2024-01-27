@@ -5,12 +5,14 @@ import Split from "split.js";
 import * as types from "../../types";
 import * as st from "../../streams";
 import * as geom from "../model/geometry";
+import {LinearFeature} from "../model/geometry";
+import * as dtypes from "../model/data-types";
 import Map from "../map";
 import * as utils from "../utils";
 import * as events from "./_events";
 import * as snap from "./_snap";
 import DrawControl from "./_controls";
-import _editorPanel from "./_editor-panel";
+import EditorPanel from "./_editor-panel";
 import ContextMenu, * as ctxMenu from "./_context-menu";
 
 import "./_index.css";
@@ -56,7 +58,7 @@ class MapEditor {
 
   readonly #map: mgl.Map;
   readonly #$canvasContainer: JQuery;
-  readonly #sidePanel: _editorPanel;
+  readonly #sidePanel: EditorPanel;
   readonly #contextMenu: ContextMenu;
   readonly #$editZoomNoticePanel: JQuery;
   readonly #drawPointControl: DrawControl;
@@ -140,16 +142,37 @@ class MapEditor {
    */
   #mousePositionCache: mgl.LngLat = null;
 
+  /**
+   * Internal cache of available data types.
+   */
+  readonly #dataTypes: {
+    units: types.Dict<dtypes.UnitType>;
+    enums: types.Dict<dtypes.Enum>;
+    objects: types.Dict<dtypes.ObjectType>;
+  } = {
+    units: {},
+    enums: {},
+    objects: {},
+  };
+
   // TODO find a way to add holes to polygons
 
   /**
    * Create a new editor for the given map.
    * @param map A map.
+   * @param dataTypes All available data types.
    */
-  constructor(map: mgl.Map) {
+  constructor(map: mgl.Map, dataTypes: {
+    units: types.Dict<dtypes.UnitType>;
+    enums: types.Dict<dtypes.Enum>;
+    objects: types.Dict<dtypes.ObjectType>;
+  }) {
+    this.#dataTypes.units = {...dataTypes.units};
+    this.#dataTypes.enums = {...dataTypes.enums};
+    this.#dataTypes.objects = {...dataTypes.objects};
     this.#map = map;
     this.#$canvasContainer = $(this.#map.getCanvasContainer());
-    this.#sidePanel = new _editorPanel(this.#map);
+    this.#sidePanel = new EditorPanel(this.#map);
     this.#contextMenu = new ContextMenu(this.#map, {
       onMove: () => this.#moveSelectedFeatures(),
       moveTitle: window.ottm.translate("map.context_menu.move.tooltip"),
@@ -274,6 +297,23 @@ class MapEditor {
   }
 
   /**
+   * Get the data type for the given name and type string.
+   * @param typeName The type’s name.
+   * @param metaType A string representing the class of the type to return.
+   * @returns The type for the given name or undefined if it does not exist.
+   */
+  getDataType(typeName: string, metaType: "UnitType" | "Enum" | "ObjectType"): dtypes.UnitType | dtypes.Enum | dtypes.ObjectType {
+    switch (metaType) {
+      case "UnitType":
+        return this.#dataTypes.units[typeName];
+      case "Enum":
+        return this.#dataTypes.enums[typeName];
+      case "ObjectType":
+        return this.#dataTypes.objects[typeName];
+    }
+  }
+
+  /**
    * Add the given feature to the map.
    * @param feature The feature to add.
    */
@@ -289,7 +329,9 @@ class MapEditor {
     if (feature instanceof geom.LineString) {
       feature.vertices.forEach(v => this.addFeature(v));
     } else if (feature instanceof geom.Polygon) {
-      feature.vertices.forEach(vs => vs.forEach(v => this.addFeature(v)));
+      feature.vertices
+          .flatMap(s => s)
+          .forEach(v => this.addFeature(v));
     }
     this.#map.addSource(feature.id, {
       type: "geojson",
@@ -300,7 +342,9 @@ class MapEditor {
     if (feature instanceof geom.LineString) {
       feature.vertices.forEach(v => this.#moveLayers(v.id));
     } else if (feature instanceof geom.Polygon) {
-      feature.vertices.forEach(vs => vs.forEach(v => this.#moveLayers(v.id)));
+      feature.vertices
+          .flatMap(s => s)
+          .forEach(v => this.#moveLayers(v.id));
     }
   }
 
@@ -314,6 +358,7 @@ class MapEditor {
     if (!feature) {
       return;
     }
+    this.#getLayerIdStack(featureId).forEach(id => this.#map.removeLayer(id));
     // Remove now to avoid potential infinite recursions
     delete this.#features[featureId];
 
@@ -325,11 +370,6 @@ class MapEditor {
       this.#deleteVerticesOfDeletedPolygon(feature);
     }
 
-    this.#map.removeLayer(featureId + "-highlight");
-    if (feature instanceof geom.LinearFeature) {
-      this.#map.removeLayer(featureId + "-border");
-    }
-    this.#map.removeLayer(featureId);
     this.#map.removeSource(featureId);
     this.#selectedFeatures.delete(feature);
     if (this.#hoveredFeature?.id === featureId) {
@@ -377,9 +417,8 @@ class MapEditor {
    * @param polygon The polygon being deleted.
    */
   #deleteVerticesOfDeletedPolygon(polygon: geom.Polygon): void {
-    for (const ring of polygon.vertices) {
-      this.#deleteVerticesOfDeletedLinearFeature(polygon, ring);
-    }
+    polygon.vertices
+        .forEach(ring => this.#deleteVerticesOfDeletedLinearFeature(polygon, ring));
   }
 
   /**
@@ -392,6 +431,8 @@ class MapEditor {
       vertex.unbindFeature(feature);
       if (vertex.boundFeatures.count() === 0) {
         this.removeFeature(vertex.id);
+      } else {
+        this.#updateFeatureData(vertex);
       }
     });
   }
@@ -473,7 +514,7 @@ class MapEditor {
       do { // TODO keep global ID counter
         id = `line-${Math.random()}`;
       } while (this.#features[id]);
-      this.#drawnLineString = new geom.LineString(id);
+      this.#drawnLineString = new geom.LineString((n, t) => this.getDataType(n, t), id);
       this.addFeature(this.#drawnLineString);
     }
     this.#setCanvasCursor(Cursor.DRAW);
@@ -502,7 +543,7 @@ class MapEditor {
     do { // TODO keep global ID counter
       id = `polygon-${Math.random()}`;
     } while (this.#features[id]);
-    this.#drawnPolygon = new geom.Polygon(id);
+    this.#drawnPolygon = new geom.Polygon((n, t) => this.getDataType(n, t), id);
     this.addFeature(this.#drawnPolygon);
     this.#setCanvasCursor(Cursor.DRAW);
   }
@@ -644,7 +685,7 @@ class MapEditor {
     if (feature instanceof geom.Point) {
       return [feature.id + "-highlight", feature.id];
     } else if (feature instanceof geom.LineString) {
-      return [feature.id + "-highlight", feature.id + "-border", feature.id];
+      return [feature.id + "-highlight", feature.id, feature.id + "-foreground"];
     } else if (feature instanceof geom.Polygon) {
       return [feature.id, feature.id + "-highlight", feature.id + "-border"];
     } else {
@@ -699,6 +740,7 @@ class MapEditor {
         },
         filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
+
     } else if (feature instanceof geom.LineString) {
       this.#map.addLayer({
         id: feature.id + "-highlight",
@@ -715,20 +757,6 @@ class MapEditor {
         filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
       });
       this.#map.addLayer({
-        id: feature.id + "-border",
-        type: "line",
-        source: feature.id,
-        layout: {
-          "line-cap": "round",
-          "line-join": "round",
-        },
-        paint: {
-          "line-width": ["+", ["get", "width"], 2],
-          "line-color": MapEditor.#BORDER_COLOR,
-        },
-        filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
-      });
-      this.#map.addLayer({
         id: feature.id,
         type: "line",
         source: feature.id,
@@ -740,10 +768,25 @@ class MapEditor {
           "line-width": ["get", "width"],
           "line-color": ["step", ["zoom"],
             MapEditor.#NON_EDITABLE_COLOR, // If 0 < zoom < MapEditor.EDIT_MIN_ZOOM
-            MapEditor.#EDIT_MIN_ZOOM, ["get", "color"] // If zoom >= MapEditor.EDIT_MIN_ZOOM
+            MapEditor.#EDIT_MIN_ZOOM, ["get", "color"], // If zoom >= MapEditor.EDIT_MIN_ZOOM
           ],
         },
       });
+      this.#map.addLayer({
+        id: feature.id + "-foreground",
+        type: "line",
+        source: feature.id,
+        layout: {
+          "line-cap": "butt",
+          "line-join": "round",
+        },
+        paint: {
+          "line-width": ["get", "fgWidth"],
+          "line-color": ["get", "fgColor"],
+        },
+        filter: MapEditor.#FILTER_TOGGLE_VISIBILITY_FOR_ZOOM,
+      });
+
     } else if (feature instanceof geom.Polygon) {
       this.#map.addLayer({
         id: feature.id,
@@ -783,6 +826,14 @@ class MapEditor {
       });
     } else {
       throw TypeError(`Unexpected type: ${feature}`);
+    }
+    this.#onObjectDataUpdate(feature);
+  }
+
+  #onObjectDataUpdate(feature: geom.MapFeature): void { // TODO call when relevant
+    if (feature instanceof geom.LineString) {
+      this.#map.setPaintProperty(feature.id, "line-dasharray", feature.properties.dash);
+      this.#map.setPaintProperty(feature.id + "-foreground", "line-dasharray", feature.properties.fgDash);
     }
   }
 
@@ -845,9 +896,9 @@ class MapEditor {
       if (f instanceof geom.LineString) {
         f.vertices.forEach(v => excludedIds.add(v.id));
       } else if (f instanceof geom.Polygon) {
-        f.vertices.forEach(ring => {
-          ring.forEach(v => excludedIds.add(v.id));
-        });
+        f.vertices
+            .flatMap(s => s)
+            .forEach(v => excludedIds.add(v.id));
       }
     });
     // Exclude point itself
@@ -960,11 +1011,13 @@ class MapEditor {
    * and the last drawn vertex of the feature.
    */
   #canFinishPolygonDrawing(p: mgl.PointLike): [boolean, geom.Point | null] {
-    if (!this.#drawnPolygon.vertices[0] || this.#drawnPolygon.vertices[0].count() <= 3) {
+    const externalRing = this.#drawnPolygon.vertices.findFirst();
+    if (externalRing.map(ring => ring.count() <= 3).orElse(true)) {
       return [false, null];
     }
     const features = this.#getFeatureIds(p);
-    const lastVertex = this.#drawnPolygon.getVertex("0." + (this.#drawnPolygon.vertices[0].count() - 2));
+    const lastVertex =
+        this.#drawnPolygon.getVertex("0." + (externalRing.get().count() - 2));
     return [features.anyMatch(id => id === lastVertex.id), lastVertex];
   }
 
@@ -1133,11 +1186,13 @@ class MapEditor {
         feature.replaceVertex(point, this.#draggedPoint);
         this.removeFeature(this.#draggedPoint.id);
         this.#moveLayers(point.id); // Put point on top
+        this.#draggedPoint = null;
       } else { // segment
         this.#addSnappedPointToSegment();
         this.#drawnPoints.push(this.#draggedPoint);
       }
       this.#snapResult = null;
+
     } else {
       const [canFinish, lastVertex] = feature instanceof geom.LineString
           ? this.#canFinishLineDrawing(e.point)
@@ -1152,8 +1207,9 @@ class MapEditor {
         }
         return;
       }
-      const point = this.#drawNewPoint(e);
+
       if (!this.#draggedPoint) {
+        const point = this.#drawNewPoint(e);
         if (point !== this.#hoveredFeature) {
           this.#drawnPoints.push(point);
         }
@@ -1162,12 +1218,11 @@ class MapEditor {
         } else {
           feature.appendVertex(point, feature.getNextVertexPath());
         }
-      } else {
-        feature.replaceVertex(point, this.#draggedPoint);
-        this.removeFeature(this.#draggedPoint.id);
+        this.#updateFeatureData(point);
       }
     }
 
+    const prevPoint = this.#draggedPoint;
     // Create next point
     this.#draggedPoint = this.#createNewPoint(e.lngLat);
     if (feature instanceof geom.LineString && !this.#drawnStringAppendEnd) {
@@ -1175,9 +1230,12 @@ class MapEditor {
     } else {
       feature.appendVertex(this.#draggedPoint, feature.getNextVertexPath());
     }
+    if (prevPoint) {
+      this.#updateFeatureData(prevPoint);
+    }
     this.#updateFeatureData(feature);
     if (feature instanceof geom.LineString && feature.vertices.count() > 2
-        || feature instanceof geom.Polygon && feature.vertices[0].count() > 3) {
+        || feature instanceof geom.Polygon && feature.vertices.findFirst().get().count() > 3) {
       this.#setCanvasCursor(Cursor.CONNECT_VERTEX);
     }
   }
@@ -1466,7 +1524,7 @@ class MapEditor {
     do { // TODO keep global ID counter
       id = `point-${Math.random()}`;
     } while (this.#features[id]);
-    const newPoint = new geom.Point(id, lngLat);
+    const newPoint = new geom.Point((n, t) => this.getDataType(n, t), id, lngLat);
     this.addFeature(newPoint);
     return newPoint;
   }
@@ -1519,18 +1577,18 @@ class MapEditor {
 
       } else if (f instanceof geom.Polygon) {
         // Add all vertices of all rings to the list
-        f.vertices.forEach(ring => {
-          ring.forEach(v => {
-            if (!points.has(v)) {
-              points.add(v);
-              this.#movedPoints.push({
-                point: v,
-                offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache),
-                startPos: v.lngLat,
-              });
-            }
-          });
-        });
+        f.vertices
+            .flatMap(s => s)
+            .forEach(v => {
+              if (!points.has(v)) {
+                points.add(v);
+                this.#movedPoints.push({
+                  point: v,
+                  offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache),
+                  startPos: v.lngLat,
+                });
+              }
+            });
       }
     });
 
@@ -1838,31 +1896,59 @@ class MapEditor {
  * @param map The map.
  */
 export default function initMapEditor(map: Map): void {
-  const mapEditor = new MapEditor(map);
+  // TEMP
+  const lengthUnitType = new dtypes.UnitType("length", "Length");
+  const millimeterUnit = new dtypes.Unit(lengthUnitType, "mm");
+  lengthUnitType.addUnit(millimeterUnit);
+  const track_level_enum = new dtypes.Enum("track_level", "Track Level", {
+    on_ground: "On Ground",
+    tunnel: "Underground",
+    bridge: "Bridge",
+  });
+  const track_section = new dtypes.ObjectType("track_section", "Track Section", null, "LineString");
+  track_section.addProperty(new dtypes.EnumProperty(track_section, "level", "Level", true, false, track_level_enum));
+  const conv_track_section = new dtypes.ObjectType("conventional_track_section", "Railway Track Section", track_section);
+  conv_track_section.addProperty(new dtypes.FloatProperty(conv_track_section, "gauge", "Gauge", true, false, 0, null, lengthUnitType));
+
+  const mapEditor = new MapEditor(map, {
+    units: {
+      length: lengthUnitType,
+    },
+    enums: {
+      track_level: track_level_enum,
+    },
+    objects: {
+      track_section: track_section,
+      conventional_track_section: conv_track_section,
+    },
+  });
 
   // TEMP
-  const point0 = new geom.Point("point0", new mgl.LngLat(1.4500, 43.6005));
-  const point1 = new geom.Point("point1", new mgl.LngLat(1.4500, 43.6000));
-  const point2 = new geom.Point("point2", new mgl.LngLat(1.4505, 43.6000));
-  const point3 = new geom.Point("point3", new mgl.LngLat(1.4505, 43.6005));
-  const point4 = new geom.Point("point4", new mgl.LngLat(1.4506, 43.6010));
-  const line1 = new geom.LineString("line1", [point1, point2, point3, point4]);
-  line1.color = "#ffe46d";
-  line1.width = 4;
-  const polygon1 = new geom.Polygon("polygon1", [
+  const typeProvider: geom.DataTypeProvider = (n, t) => mapEditor.getDataType(n, t);
+
+  const track1 = new dtypes.ObjectInstance(conv_track_section);
+  track1.setPropertyValue("level", "on_ground");
+  track1.setPropertyValue("gauge", 1435);
+
+  const point0 = new geom.Point(typeProvider, "point0", new mgl.LngLat(1.4500, 43.6005));
+  const point1 = new geom.Point(typeProvider, "point1", new mgl.LngLat(1.4500, 43.6000));
+  const point2 = new geom.Point(typeProvider, "point2", new mgl.LngLat(1.4505, 43.6000));
+  const point3 = new geom.Point(typeProvider, "point3", new mgl.LngLat(1.4505, 43.6005));
+  const point4 = new geom.Point(typeProvider, "point4", new mgl.LngLat(1.4506, 43.6010));
+  const line1 = new geom.LineString(typeProvider, "line1", [point1, point2, point3, point4], 0, track1);
+  const polygon1 = new geom.Polygon(typeProvider, "polygon1", [
     [
       point3,
-      new geom.Point("point02", new mgl.LngLat(1.4505, 43.6010)),
-      new geom.Point("point03", new mgl.LngLat(1.4510, 43.6015)),
-      new geom.Point("point04", new mgl.LngLat(1.4515, 43.6015)),
+      new geom.Point(typeProvider, "point02", new mgl.LngLat(1.4505, 43.6010)),
+      new geom.Point(typeProvider, "point03", new mgl.LngLat(1.4510, 43.6015)),
+      new geom.Point(typeProvider, "point04", new mgl.LngLat(1.4515, 43.6015)),
     ],
     [
       point4,
-      new geom.Point("point12", new mgl.LngLat(1.4508, 43.6010)),
-      new geom.Point("point13", new mgl.LngLat(1.4510, 43.6013)),
+      new geom.Point(typeProvider, "point12", new mgl.LngLat(1.4508, 43.6010)),
+      new geom.Point(typeProvider, "point13", new mgl.LngLat(1.4510, 43.6013)),
     ],
   ]);
-  polygon1.color = "#00FFA6";
   map.on("load", () => {
     mapEditor.addFeature(point0);
     mapEditor.addFeature(point1);

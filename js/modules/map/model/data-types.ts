@@ -11,6 +11,75 @@ import * as di from "./date-interval"
 export const TEMPORAL_STATE_TYPE_NAME: string = "temporal_state";
 
 /**
+ * This class represents a unit type (e.g. length, speed, etc.).
+ */
+export class UnitType {
+  /**
+   * This unit type’s internal label.
+   */
+  readonly label: string;
+  /**
+   * This unit type’s localized label.
+   */
+  readonly localizedName: string;
+  readonly #units: Set<Unit> = new Set();
+
+  /**
+   * Create a new enum type.
+   * @param label The enum’s label.
+   * @param localizedName The enum’s localized label.
+   */
+  constructor(label: string, localizedName: string) {
+    this.label = label;
+    this.localizedName = localizedName;
+  }
+
+  /**
+   * This type’s units.
+   * @returns An unordered stream of this type’s units.
+   */
+  get units(): stream.Stream<Unit> {
+    return stream.stream(this.#units);
+  }
+
+  /**
+   * Add a {@link Unit} to this type.
+   * @param unit The unit to add.
+   * @throws {TypeError} If the type of the given unit is not this type.
+   */
+  addUnit(unit: Unit): void {
+    if (unit.type !== this) {
+      throw new TypeError(`Invalid unit type: expected "${this.label}", got "${unit.type.label}"`);
+    }
+    this.#units.add(unit);
+  }
+}
+
+/**
+ * This class represents a specific unit of a certain type (e.g. km for length, km/h for speed, etc.).
+ */
+export class Unit {
+  /**
+   * This unit’s type.
+   */
+  readonly type: UnitType;
+  /**
+   * This unit’s symbol.
+   */
+  readonly symbol: string;
+
+  /**
+   * Create a new unit.
+   * @param type The unit’s type.
+   * @param symbol The unit’s symbol.
+   */
+  constructor(type: UnitType, symbol: string) {
+    this.type = type;
+    this.symbol = symbol;
+  }
+}
+
+/**
  * Enum values are objects that map each value to its translation in the page’s current language.
  */
 export type EnumValues = {
@@ -84,10 +153,7 @@ export class ObjectType {
    * The type this one inherits from. May be null.
    */
   readonly parentType: ObjectType | null;
-  /**
-   * The type of geometry this object may be associated to.
-   */
-  readonly geometryType: GeometryType | null;
+  readonly #geometryType: GeometryType | null;
   readonly #properties: { [name: string]: ObjectProperty<any> } = {};
 
   /**
@@ -102,7 +168,7 @@ export class ObjectType {
     this.label = label;
     this.localizedName = localizedName;
     this.parentType = parentType;
-    this.geometryType = geometryType;
+    this.#geometryType = geometryType;
   }
 
   /**
@@ -139,12 +205,19 @@ export class ObjectType {
   }
 
   /**
-   * Check whether this object is the same as the given one or a sub-type.
+   * Check whether this object type is the same as the given one or a sub-type.
    * @param other The type to check.
    * @returns True if this type or any of its parent types is the same (according to `===`) as the given one.
    */
   isSameOrSubtypeOf(other: ObjectType): boolean {
     return this === other || (this.parentType?.isSameOrSubtypeOf(other) ?? false);
+  }
+
+  /**
+   * The type of geometry this object type may be associated to.
+   */
+  getGeometryType(): GeometryType {
+    return this.#geometryType ?? this.parentType?.getGeometryType() ?? null;
   }
 }
 
@@ -245,7 +318,11 @@ export class IntProperty extends ObjectProperty<number> {
   /**
    * If not `null`, the lowest highest value.
    */
-  readonly max: number | null;
+  readonly max: number | null
+  /**
+   * The type of unit the values represent.
+   */
+  readonly unitType: UnitType | null;
 
   /**
    * Create an new integer object property.
@@ -256,6 +333,7 @@ export class IntProperty extends ObjectProperty<number> {
    * @param deprecated Whether this property is deprecated, i.e. whether it should no longer be used.
    * @param min If specified, the lowest allowed value.
    * @param max If specified, the highest allowed value.
+   * @param unitType The type of unit the values represent.
    * @throws {Error} If `min` > `max` or any of the two is not an integer.
    */
   constructor(
@@ -264,8 +342,9 @@ export class IntProperty extends ObjectProperty<number> {
       localizedName: string,
       unique: boolean,
       deprecated: boolean,
-      min?: number | null,
-      max?: number | null
+      min: number = null,
+      max: number = null,
+      unitType: UnitType = null
   ) {
     super(objectType, label, localizedName, unique, deprecated);
     if (typeof min === "number" && typeof max === "number" && min > max) {
@@ -279,6 +358,7 @@ export class IntProperty extends ObjectProperty<number> {
     }
     this.min = min;
     this.max = max;
+    this.unitType = unitType;
   }
 
   isValueValid(v: number): boolean {
@@ -300,6 +380,10 @@ export class FloatProperty extends ObjectProperty<number> {
    * If not `null`, the lowest highest value.
    */
   readonly max: number | null;
+  /**
+   * The type of unit the values represent.
+   */
+  readonly unitType: UnitType | null;
 
   /**
    * Create an new integer object property.
@@ -310,6 +394,7 @@ export class FloatProperty extends ObjectProperty<number> {
    * @param deprecated Whether this property is deprecated, i.e. whether it should no longer be used.
    * @param min If specified, the lowest allowed value.
    * @param max If specified, the highest allowed value.
+   * @param unitType The type of unit the values represent.
    * @throws {Error} If `min` > `max`.
    */
   constructor(
@@ -318,8 +403,9 @@ export class FloatProperty extends ObjectProperty<number> {
       localizedName: string,
       unique: boolean,
       deprecated: boolean,
-      min?: number | null,
-      max?: number | null
+      min: number = null,
+      max: number = null,
+      unitType: UnitType = null
   ) {
     super(objectType, label, localizedName, unique, deprecated);
     if (min > max) {
@@ -327,6 +413,7 @@ export class FloatProperty extends ObjectProperty<number> {
     }
     this.min = min;
     this.max = max;
+    this.unitType = unitType;
   }
 
   isValueValid(v: number): boolean {
@@ -463,6 +550,10 @@ export class ObjectInstance {
   readonly #uniqueProperties: { [name: string]: SingleObjectPropertyValue<any, any> } = {};
   readonly #multiProperties: { [name: string]: MultipleObjectPropertyValue<any, any> } = {};
 
+  constructor(type: ObjectType) {
+    this.#type = type;
+  }
+
   /**
    * This object’s type.
    */
@@ -479,8 +570,10 @@ export class ObjectInstance {
    */
   setType(newType: ObjectType): void {
     if (newType !== this.#type) {
-      if (this.#type.geometryType !== newType.geometryType) {
-        throw new TypeError(`Incompatible geometry type, expected "${this.#type.geometryType}", got "${newType.geometryType}"`);
+      const expectedGeomType = this.#type.getGeometryType();
+      const actualGeomType = newType.getGeometryType();
+      if (expectedGeomType !== actualGeomType) {
+        throw new TypeError(`Incompatible geometry type, expected "${expectedGeomType}", got "${actualGeomType}"`);
       }
 
       // Delete properties that are not compatible with the new type
@@ -631,6 +724,7 @@ export abstract class ObjectPropertyValue<T, OP extends ObjectProperty<T>> {
   }
 }
 
+// TODO handle int/float units and string translations
 /**
  * This class represents the single value bound to an {@link ObjectProperty} definition
  * with a `isUnique` field set to `true`.

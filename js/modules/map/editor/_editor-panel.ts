@@ -4,7 +4,7 @@ import $ from "jquery";
 import * as geom from "../model/geometry";
 import * as events from "./_events";
 
-export default class _editorPanel {
+export default class EditorPanel {
   readonly #$panel: JQuery;
   readonly #$featureTypeLabel: JQuery;
   readonly #selectedFeatures: Set<geom.MapFeature> = new Set();

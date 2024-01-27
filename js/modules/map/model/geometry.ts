@@ -1,7 +1,5 @@
 import * as mgl from "maplibre-gl";
 import * as geojson from "geojson";
-
-import * as types from "../../types";
 import * as st from "../../streams";
 import * as utils from "../utils";
 import * as dtypes from "./data-types"
@@ -19,8 +17,18 @@ export type PointProperties = MapFeatureProperties & {
 export type LinearProperties = MapFeatureProperties;
 export type LineStringProperties = LinearProperties & {
   width: number;
+  dash: number[] | null;
+  fgColor: string;
+  fgWidth: number;
+  fgDash: number[] | null;
 };
 export type PolygonProperties = LinearProperties;
+
+/**
+ * A function that provides the given data type for a name and type string.
+ */
+export type DataTypeProvider =
+    (typeName: string, metaType: "UnitType" | "Enum" | "ObjectType") => dtypes.UnitType | dtypes.Enum | dtypes.ObjectType;
 
 /**
  * This class represents a longitude/latitude offset on the map.
@@ -108,34 +116,37 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
   readonly id: string;
   // Using # seems to mess up things
   private dataObject_: dtypes.ObjectInstance | null = null;
+  private readonly dataTypesProvider: DataTypeProvider;
 
   /**
    * Create a new map feature.
+   * @param dataTypesProvider A function that provides the given data type for a name and type string.
    * @param id The feature’s ID.
    * @param geometry The feature’s geometry object.
-   * @param properties The feature’s additional properties.
    * @param layer The z-order layer index.
    * @param dataObject The attached object containing data. May be null.
+   * @throws {TypeError} If the data object’s geometry type is incompatible with this geometry.
    */
   protected constructor(
+      dataTypesProvider: DataTypeProvider,
       id: string,
       geometry: G,
-      properties: types.Dict = {},
       layer: number = 0,
       dataObject: dtypes.ObjectInstance = null,
   ) {
     this.id = id;
     this.geometry = geometry;
-    this.properties = Object.assign({
+    this.properties = {
       color: "#ffffff",
       layer: 0,
       selectionMode: SelectionMode.NONE,
-    }, properties) as P;
+    } as P;
+    this.dataTypesProvider = dataTypesProvider;
     if (dataObject) {
       const expectedGeomType = this.geometry.type;
-      const actualGeomType = dataObject.type.geometryType;
+      const actualGeomType = dataObject.type.getGeometryType();
       if (actualGeomType !== expectedGeomType) {
-        throw new Error(`Invalid data object geometry type: expected "${expectedGeomType}", got "${actualGeomType}"`);
+        throw new TypeError(`Invalid data object geometry type: expected "${expectedGeomType}", got "${actualGeomType}"`);
       }
       this.dataObject_ = dataObject;
     }
@@ -151,18 +162,6 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
    */
   get color(): string {
     return this.properties.color;
-  }
-
-  /**
-   * Set this feature’s color.
-   * @param color The new color.
-   * @throws {Error} If the string is empty.
-   */
-  set color(color: string) {
-    if (!color) {
-      throw new Error("Missing color");
-    }
-    this.properties.color = color;
   }
 
   /**
@@ -204,10 +203,10 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
     if (!feature.dataObject) {
       return;
     }
-    const actualGeomType = feature.dataObject.type.geometryType;
     const expectedGeomType = this.geometry.type;
-    if (actualGeomType !== expectedGeomType) {
-      throw new TypeError(`Invalid geometry type: expected "${expectedGeomType}", got "${actualGeomType}"`)
+    const actualGeomType = feature.dataObject.type.getGeometryType();
+    if (expectedGeomType !== actualGeomType) {
+      throw new TypeError(`Invalid geometry type: expected "${expectedGeomType}", got "${actualGeomType}"`);
     }
     this.dataObject_ = feature.dataObject;
     this.updateProperties();
@@ -217,6 +216,33 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
    * Update this feature’s `properties` field.
    */
   abstract updateProperties(): void;
+
+  /**
+   * Get the {@link dtypes.UnitType} for the given name.
+   * @param name The type’s name.
+   * @returns The corresponding type.
+   */
+  protected getUnitType(name: string): dtypes.UnitType {
+    return this.dataTypesProvider(name, "UnitType") as dtypes.UnitType;
+  }
+
+  /**
+   * Get the {@link dtypes.Enum} for the given name.
+   * @param name The enum’s name.
+   * @returns The corresponding enum.
+   */
+  protected getEnum(name: string): dtypes.Enum {
+    return this.dataTypesProvider(name, "Enum") as dtypes.Enum;
+  }
+
+  /**
+   * Get the {@link dtypes.ObjectType} for the given name.
+   * @param name The type’s name.
+   * @returns The corresponding type.
+   */
+  protected getObjectType(name: string): dtypes.ObjectType {
+    return this.dataTypesProvider(name, "ObjectType") as dtypes.ObjectType;
+  }
 }
 
 /**
@@ -231,22 +257,22 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
 
   /**
    * Create a new point.
+   * @param dataTypesProvider A function that provides the given data type for a name and type string.
    * @param id The feature’s ID.
    * @param coords The point’s coordinates.
    * @param layer The z-order layer index.
    * @param dataObject The attached object containing data.
    */
   constructor(
+      dataTypesProvider: DataTypeProvider,
       id: string,
       coords: mgl.LngLat,
       layer: number = 0,
       dataObject: dtypes.ObjectInstance = null
   ) {
-    super(id, {
+    super(dataTypesProvider, id, {
       type: "Point",
       coordinates: null, // Updated immediately by this.lngLat()
-    }, {
-      radius: 4,
     }, layer, dataObject);
     this.lngLat = coords;
     this.updateProperties();
@@ -331,7 +357,7 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
     this.geometry.coordinates = this.#lngLat.toArray();
     const {lng, lat} = this.#lngLat;
     this.geometry.bbox = [lng, lat, lng, lat];
-    this.#boundFeatures.forEach(f => f.onVertexDrag());
+    this.#boundFeatures.forEach(f => f.onVertexDrag(this));
   }
 
   updateProperties() {
@@ -470,9 +496,10 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
 
   /**
    * Called when one of the vertices of this feature is being dragged.
+   * @param draggedVertex The vertex being dragged.
    */
-  onVertexDrag() {
-    this.updateGeometry();
+  onVertexDrag(draggedVertex: Point) {
+    this.updateGeometry(draggedVertex);
   }
 
   /**
@@ -487,8 +514,9 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
 
   /**
    * Update this feature’s `geometry.coordinates` and `geometry.bbox` properties.
+   * @param draggedVertex If specified, the dragged vertex that induced this operation.
    */
-  protected abstract updateGeometry(): void;
+  protected abstract updateGeometry(draggedVertex?: Point): void;
 }
 
 export enum PolylineDirection {
@@ -514,6 +542,7 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
 
   /**
    * Create a line string.
+   * @param dataTypesProvider A function that provides the given data type for a name and type string.
    * @param id The feature’s ID.
    * @param vertices Optional. A list of (at least 2) points. It must not contain any duplicates.
    * @param layer The z-order layer index.
@@ -521,16 +550,15 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
    * @throws {Error} If a point is present multiple times in the list of points or the list contains less than 2 points.
    */
   constructor(
+      dataTypesProvider: DataTypeProvider,
       id: string,
       vertices?: Point[],
       layer: number = 0,
       dataObject: dtypes.ObjectInstance = null
   ) {
-    super(id, {
+    super(dataTypesProvider, id, {
       type: "LineString",
       coordinates: [],
-    }, {
-      width: 2,
     }, layer, dataObject);
     if (vertices) {
       if (vertices.length < 2) {
@@ -544,7 +572,6 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
         }
         this.appendVertex(vertex, path);
       }
-      vertices.forEach(v => v.updateProperties()); // Refresh properties of all vertices
     }
     this.updateProperties();
   }
@@ -561,18 +588,6 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
    */
   get width(): number {
     return this.properties.width;
-  }
-
-  /**
-   * Set this line’s width in pixels.
-   * @param width The new width.
-   * @throws {Error} If the width is less than 1.
-   */
-  set width(width: number) {
-    if (width < 1) {
-      throw new Error(`Line width is too small: ${width}`);
-    }
-    this.properties.width = width;
   }
 
   /**
@@ -736,7 +751,7 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
     return false; // TODO
   }
 
-  protected updateGeometry(): void {
+  protected updateGeometry(draggedVertex?: Point): void {
     this.geometry.coordinates = [];
     let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
     for (const vertex of this.#vertices) {
@@ -748,10 +763,51 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
       north = Math.max(lat, north);
     }
     this.geometry.bbox = [west, south, east, north];
+    if (draggedVertex) {
+      draggedVertex.updateProperties();
+    } else {
+      this.#vertices.forEach(v => v.updateProperties());
+    }
   }
 
   updateProperties() {
-    // TODO
+    if (!this.dataObject) {
+      this.properties.width = 2;
+      this.properties.color = "#ffffff";
+      this.properties.dash = null;
+      this.properties.fgColor = "#ffffff";
+      this.properties.fgWidth = 0;
+      this.properties.fgDash = null;
+
+    } else {
+      if (this.dataObject.isInstanceOf(this.getObjectType("track_section"))) {
+        this.properties.width = 6;
+        if (this.dataObject.isInstanceOf(this.getObjectType("conventional_track_section"))) {
+          const gauge = this.dataObject.getPropertyValue<number>("gauge");
+          if (gauge !== null && gauge >= 1435) {
+            this.properties.width = 8;
+          }
+        }
+        this.properties.dash = null;
+        this.properties.fgWidth = 2;
+        this.properties.fgDash = [4, 4];
+        let color: string;
+        switch (this.dataObject.getPropertyValue("level")) {
+          case "bridge":
+            color = "#131313";
+            break;
+          case "tunnel":
+            color = "#9b9b9b";
+            break;
+          case "on_ground":
+          default:
+            color = "#3d3d3d";
+            break;
+        }
+        this.properties.color = color;
+        this.properties.fgColor = "#ffffff";
+      }
+    }
   }
 
   /**
@@ -787,6 +843,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
 
   /**
    * Create a polygon.
+   * @param dataTypesProvider A function that provides the given data type for a name and type string.
    * @param id The feature’s ID.
    * @param vertices Optional. A list of point lists that should each contain at least 3 points.
    * It must not contain any duplicates. Each sublist represents a ring.
@@ -795,15 +852,16 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
    * @throws {Error} If a point is present multiple times in the lists or a list contains less than 3 points.
    */
   constructor(
+      dataTypesProvider: DataTypeProvider,
       id: string,
       vertices?: Point[][],
       layer: number = 0,
       dataObject: dtypes.ObjectInstance = null
   ) {
-    super(id, {
+    super(dataTypesProvider, id, {
       type: "Polygon",
       coordinates: [[]],
-    }, {}, layer, dataObject);
+    }, layer, dataObject);
     if (vertices) {
       // Separate loop to avoid binding vertices unnecessarily
       for (let i = 0; i < vertices.length; i++) {
@@ -833,10 +891,11 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
   }
 
   /**
-   * This polygon’s vertices as a list of ordered streams, each stream corresponding to a ring.
+   * This polygon’s vertices as an ordered stream of ordered streams, each stream corresponding to a ring.
+   * The first stream is always the outermost one.
    */
-  get vertices(): st.Stream<Point>[] {
-    return this.#vertices.map(vs => st.stream(vs));
+  get vertices(): st.Stream<st.Stream<Point>> {
+    return st.stream(this.#vertices.map(vs => st.stream(vs)));
   }
 
   /**
@@ -1032,7 +1091,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     return false; // TODO
   }
 
-  protected updateGeometry(): void {
+  protected updateGeometry(draggedVertex?: Point): void {
     this.geometry.coordinates = [];
     let west = Infinity, south = Infinity, east = -Infinity, north = -Infinity;
     for (const ring of this.#vertices) {
@@ -1050,6 +1109,11 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
       this.geometry.coordinates.push(points);
     }
     this.geometry.bbox = [west, south, east, north];
+    if (draggedVertex) {
+      draggedVertex.updateProperties();
+    } else {
+      this.#vertices.forEach(ring => ring.forEach(v => v.updateProperties()));
+    }
   }
 
   updateProperties() {
