@@ -157,14 +157,14 @@ r2=+ instances</panel_attributes>
       <x>1300</x>
       <y>700</y>
       <w>100</w>
-      <h>130</h>
+      <h>150</h>
     </coordinates>
     <panel_attributes>lt=&lt;-
 m1=1
 r1=+ object
 m2=*
 r2=+ properties</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;110.0</additional_attributes>
+    <additional_attributes>10.0;10.0;10.0;130.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
@@ -638,14 +638,12 @@ m2=*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1200</x>
-      <y>810</y>
-      <w>200</w>
-      <h>50</h>
+      <x>1230</x>
+      <y>830</y>
+      <w>170</w>
+      <h>30</h>
     </coordinates>
-    <panel_attributes>ObjectPropertyValue
--
-+ date_interval: DateInterval</panel_attributes>
+    <panel_attributes>ObjectPropertyValue</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
