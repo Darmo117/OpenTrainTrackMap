@@ -783,6 +783,123 @@ export class ObjectInstance {
   }
 
   /**
+   * Get the currently selected unit of the given property.
+   * @param name The name of the property to get the unit of.
+   * @returns The property’s current unit or null if the property has not yet been set.
+   * @throws {TypeError} If the property does not exist or it does not have a unit.
+   */
+  getPropertyUnit(name: string): Unit | null {
+    const property = this.#type.getProperty(name);
+    if (!property) {
+      throw new TypeError(`Invalid property "${name}" for object of type "${this.#type.label}"`);
+    }
+    if (!(property instanceof IntProperty) && !(property instanceof FloatProperty) || !property.unitType) {
+      throw new TypeError(`Property "${property.fullName}" does not have a unit`);
+    }
+    if (this.#uniqueProperties[name]) {
+      return (this.#uniqueProperties[name] as IntSingleObjectPropertyValue | FloatSingleObjectPropertyValue).unit;
+    }
+    if (this.#multiProperties[name]) {
+      return (this.#multiProperties[name] as IntMultipleObjectPropertyValue | FloatMultipleObjectPropertyValue).unit;
+    }
+    return null;
+  }
+
+  /**
+   * Set the unit of the given property.
+   * @param name The name of the property to set the unit of.
+   * @param unit The new unit.
+   * @throws {TypeError} If the property does not exist, or it does not have a unit,
+   *  or the new unit’s type is incompatible.
+   */
+  setPropertyUnit(name: string, unit: Unit): void {
+    const property = this.#type.getProperty(name);
+    if (!property) {
+      throw new TypeError(`Invalid property "${name}" for object of type "${this.#type.label}"`);
+    }
+    if (!(property instanceof IntProperty) && !(property instanceof FloatProperty) || !property.unitType) {
+      throw new TypeError(`Property "${property.fullName}" does not have a unit`);
+    }
+    if (this.#uniqueProperties[name]) {
+      (this.#uniqueProperties[name] as IntSingleObjectPropertyValue | FloatSingleObjectPropertyValue).unit = unit;
+    }
+    if (this.#multiProperties[name]) {
+      (this.#multiProperties[name] as IntMultipleObjectPropertyValue | FloatMultipleObjectPropertyValue).unit = unit;
+    }
+  }
+
+  /**
+   * Get the translations of the given string property value.
+   * @param name The name of the property to get the translations of.
+   * @param index If the property is not unique, the index of the value to get translations of.
+   * @returns A stream of the value’s translations.
+   * @throws {TypeError} If the property does not exist, or it is not translatable.
+   */
+  getPropertyValueTranslations(name: string, index?: number): stream.Stream<[string, string]> {
+    const property = this.#type.getProperty(name);
+    if (!property) {
+      throw new TypeError(`Invalid property "${name}" for object of type "${this.#type.label}"`);
+    }
+    if (!(property instanceof StringProperty) || !property.translatable) {
+      throw new TypeError(`Property "${property.fullName}" is not translatable`);
+    }
+    if (this.#uniqueProperties[name]) {
+      return (this.#uniqueProperties[name] as StringSingleObjectPropertyValue).translations;
+    }
+    if (this.#multiProperties[name]) {
+      return (this.#multiProperties[name] as StringMultipleObjectPropertyValue).translations[index];
+    }
+    return null;
+  }
+
+  /**
+   * Set the translation of the given string property value for the given language.
+   * @param name The name of the property to get the translations of.
+   * @param langCode The language code of the translation.
+   * @param tr The translated text.
+   * @param index If the property is not unique, the index of the value to set the translation of.
+   * @throws {TypeError} If the property does not exist, or it is not translatable.
+   */
+  setPropertyValueTranslation(name: string, langCode: string, tr: string, index?: number): void {
+    const property = this.#type.getProperty(name);
+    if (!property) {
+      throw new TypeError(`Invalid property "${name}" for object of type "${this.#type.label}"`);
+    }
+    if (!(property instanceof StringProperty) || !property.translatable) {
+      throw new TypeError(`Property "${property.fullName}" is not translatable`);
+    }
+    if (this.#uniqueProperties[name]) {
+      (this.#uniqueProperties[name] as StringSingleObjectPropertyValue).setTranslation(langCode, tr);
+    }
+    if (this.#multiProperties[name]) {
+      (this.#multiProperties[name] as StringMultipleObjectPropertyValue).setTranslation(langCode, tr, index);
+    }
+  }
+
+  /**
+   * Remove the translation of the given string property value for the given language.
+   * @param name The name of the property to get the translations of.
+   * @param langCode The language code of the translation.
+   * @param index If the property is not unique, the index of the value to set remove the translation of.
+   * @throws {TypeError} If the property does not exist, or it is not translatable.
+   */
+  removePropertyValueTranslation(name: string, langCode: string, index?: number): void {
+    const property = this.#type.getProperty(name);
+    if (!property) {
+      throw new TypeError(`Invalid property "${name}" for object of type "${this.#type.label}"`);
+    }
+    if (!(property instanceof StringProperty) || !property.translatable) {
+      throw new TypeError(`Property "${property.fullName}" is not translatable`);
+    }
+    if (this.#uniqueProperties[name]) {
+      (this.#uniqueProperties[name] as StringSingleObjectPropertyValue).removeTranslation(langCode);
+    }
+    if (this.#multiProperties[name]) {
+      (this.#multiProperties[name] as StringMultipleObjectPropertyValue).removeTranslation(langCode, index);
+    }
+  }
+
+  /**
    * Check whether this object is an instance of the given {@link ObjectType}.
    * @param t The type to check.
    * @returns True if this object has the given type in its type hierarchy, false otherwise.
@@ -1184,12 +1301,12 @@ export class StringMultipleObjectPropertyValue extends MultipleObjectPropertyVal
 
   /**
    * The translations for the string values.
-   * @returns An ordered stream that contains streams of string pairs,
+   * @returns An array that contains streams of string pairs,
    *  each containing the language code and the text for that language in that order,
    *  for each value of this property.
    */
-  get translations(): stream.Stream<stream.Stream<[string, string]>> {
-    return stream.stream(this.#translations).map(t => stream.streamOfObject(t));
+  get translations(): stream.Stream<[string, string]>[] {
+    return this.#translations.map(t => stream.streamOfObject(t));
   }
 
   /**
