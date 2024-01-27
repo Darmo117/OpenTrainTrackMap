@@ -1045,8 +1045,9 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
 }
 
 export class Note {
-  readonly #text: string;
   readonly #date: Date;
+  readonly #authorName: string;
+  readonly #text: string;
   readonly #geometries: MapFeature[] = [];
 
   // TODO
