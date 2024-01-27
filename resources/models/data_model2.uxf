@@ -645,15 +645,16 @@ bg=pink</panel_attributes>
     <id>UMLNote</id>
     <coordinates>
       <x>2170</x>
-      <y>10</y>
+      <y>0</y>
       <w>140</w>
-      <h>90</h>
+      <h>100</h>
     </coordinates>
     <panel_attributes>main_traffic
 spur
 yard
 siding
 crossover
+derailing
 bg=orange</panel_attributes>
     <additional_attributes/>
   </element>
@@ -5249,9 +5250,10 @@ style=wordwrap</panel_attributes>
       <x>2760</x>
       <y>970</y>
       <w>90</w>
-      <h>60</h>
+      <h>70</h>
     </coordinates>
     <panel_attributes>none
+high_speed
 tram
 metro
 bg=orange</panel_attributes>
