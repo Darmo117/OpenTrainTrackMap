@@ -546,12 +546,22 @@ export class EnumProperty extends ObjectProperty<string> {
  * This class represents an instance of an {@link ObjectType}.
  */
 export class ObjectInstance {
+  /**
+   * This object’s database ID or null if it does not exist in it yet.
+   */
+  readonly id: number | null;
   #type: ObjectType;
   readonly #uniqueProperties: { [name: string]: SingleObjectPropertyValue<any, any> } = {};
   readonly #multiProperties: { [name: string]: MultipleObjectPropertyValue<any, any> } = {};
 
-  constructor(type: ObjectType) {
+  /**
+   * Create a new object instance of the given type.
+   * @param type The object’s type.
+   * @param id This object’s database ID. Leave empty for new objects.
+   */
+  constructor(type: ObjectType, id?: number) {
     this.#type = type;
+    this.id = id;
   }
 
   /**
