@@ -1022,7 +1022,7 @@ class MapEditor {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
         const point = this.#getSnappedPoint();
         this.#draggedPoint.onDrag(point.lngLat);
-        if (point.hasData() && !this.#draggedPoint.hasData()) {
+        if (point.dataObject && !this.#draggedPoint.dataObject) {
           this.#draggedPoint.copyDataOf(point);
         }
         point.boundFeatures.forEach(
@@ -1647,7 +1647,7 @@ class MapEditor {
     }
     return st.stream(this.#selectedFeatures)
         .filter(f => f instanceof geom.Point
-            && f.hasData() && f.boundFeatures.count() !== 0) as st.Stream<geom.Point>;
+            && f.dataObject && f.boundFeatures.count() !== 0) as st.Stream<geom.Point>;
   }
 
   #extractSelectedVertices(): void {

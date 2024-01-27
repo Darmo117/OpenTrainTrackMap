@@ -17,7 +17,7 @@ export type PointProperties = MapFeatureProperties & {
   radius: number;
 };
 export type LinearProperties = MapFeatureProperties;
-export type PolylineProperties = LinearProperties & {
+export type LineStringProperties = LinearProperties & {
   width: number;
 };
 export type PolygonProperties = LinearProperties;
@@ -106,23 +106,23 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
   readonly geometry: G;
   readonly properties: P;
   readonly id: string;
-
-  readonly dataObject: dtypes.ObjectInstance;
+  // Using # seems to mess up things
+  private dataObject_: dtypes.ObjectInstance | null = null;
 
   /**
    * Create a new map feature.
-   * @param dataObject The attached object containing data.
    * @param id The feature’s ID.
    * @param geometry The feature’s geometry object.
    * @param properties The feature’s additional properties.
    * @param layer The z-order layer index.
+   * @param dataObject The attached object containing data. May be null.
    */
   protected constructor(
-      dataObject: dtypes.ObjectInstance,
       id: string,
       geometry: G,
       properties: types.Dict = {},
-      layer: number = 0
+      layer: number = 0,
+      dataObject: dtypes.ObjectInstance = null,
   ) {
     this.id = id;
     this.geometry = geometry;
@@ -131,13 +131,19 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
       layer: 0,
       selectionMode: SelectionMode.NONE,
     }, properties) as P;
-    const expectedGeomType = this.geometry.type;
-    const actualGeomType = dataObject.type.geometryType;
-    if (actualGeomType !== expectedGeomType) {
-      throw new Error(`Invalid data object geometry type: expected "${expectedGeomType}", got "${actualGeomType}"`);
+    if (dataObject) {
+      const expectedGeomType = this.geometry.type;
+      const actualGeomType = dataObject.type.geometryType;
+      if (actualGeomType !== expectedGeomType) {
+        throw new Error(`Invalid data object geometry type: expected "${expectedGeomType}", got "${actualGeomType}"`);
+      }
+      this.dataObject_ = dataObject;
     }
-    this.dataObject = dataObject;
     this.layer = layer;
+  }
+
+  get dataObject(): dtypes.ObjectInstance | null {
+    return this.dataObject_;
   }
 
   /**
@@ -190,15 +196,27 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
   }
 
   /**
-   * Indicate whether this feature has any data bound to it.
-   */
-  abstract hasData(): boolean;
-
-  /**
    * Copy the data of the given feature.
+   * If the feature does not have a data object, nothing happens.
    * @param feature The feature to copy the data of.
    */
-  abstract copyDataOf(feature: MapFeature<G, P>): void;
+  copyDataOf(feature: MapFeature<G, P>): void {
+    if (!feature.dataObject) {
+      return;
+    }
+    const actualGeomType = feature.dataObject.type.geometryType;
+    const expectedGeomType = this.geometry.type;
+    if (actualGeomType !== expectedGeomType) {
+      throw new TypeError(`Invalid geometry type: expected "${expectedGeomType}", got "${actualGeomType}"`)
+    }
+    this.dataObject_ = feature.dataObject;
+    this.updateProperties();
+  }
+
+  /**
+   * Update this feature’s `properties` field.
+   */
+  abstract updateProperties(): void;
 }
 
 /**
@@ -213,24 +231,25 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
 
   /**
    * Create a new point.
-   * @param dataObject The attached object containing data.
    * @param id The feature’s ID.
    * @param coords The point’s coordinates.
    * @param layer The z-order layer index.
+   * @param dataObject The attached object containing data.
    */
   constructor(
-      dataObject: dtypes.ObjectInstance,
       id: string,
       coords: mgl.LngLat,
-      layer: number = 0
+      layer: number = 0,
+      dataObject: dtypes.ObjectInstance = null
   ) {
-    super(dataObject, id, {
+    super(id, {
       type: "Point",
       coordinates: null, // Updated immediately by this.lngLat()
     }, {
       radius: 4,
-    }, layer);
+    }, layer, dataObject);
     this.lngLat = coords;
+    this.updateProperties();
   }
 
   /**
@@ -247,7 +266,7 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
    */
   set lngLat(lngLat: mgl.LngLat) {
     this.#lngLat = utils.copyLngLat(lngLat);
-    this.#updateGeometry();
+    this.updateGeometry();
   }
 
   /**
@@ -282,6 +301,7 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
    */
   bindFeature(feature: LinearFeature) {
     this.#boundFeatures.add(feature);
+    this.updateProperties();
   }
 
   /**
@@ -290,6 +310,7 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
    */
   unbindFeature(feature: LinearFeature) {
     this.#boundFeatures.delete(feature);
+    this.updateProperties();
   }
 
   /**
@@ -299,26 +320,32 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
    */
   onDrag(mousePos: mgl.LngLat, offset: LngLatVector = LngLatVector.ZERO): void {
     this.#lngLat = offset.addTo(mousePos);
-    this.#updateGeometry();
-  }
-
-  hasData(): boolean {
-    return false; // TODO
-  }
-
-  copyDataOf(point: Point): void {
-    // TODO
+    this.updateGeometry();
   }
 
   /**
    * Update this point’s `geometry.coordinates` and `geometry.bbox` properties.
    * Also calls the {@link LinearFeature.onVertexDrag} method on all bound features.
    */
-  #updateGeometry(): void {
+  protected updateGeometry(): void {
     this.geometry.coordinates = this.#lngLat.toArray();
     const {lng, lat} = this.#lngLat;
     this.geometry.bbox = [lng, lat, lng, lat];
     this.#boundFeatures.forEach(f => f.onVertexDrag());
+  }
+
+  updateProperties() {
+    this.properties.color = this.#boundFeatures.size > 1 ? "#bbbbbb" : "#ffffff";
+    if (this.dataObject) {
+      this.properties.radius = 6;
+    } else if (this.#boundFeatures.size === 0
+        || this.#boundFeatures.size === 1
+        && this.boundFeatures.allMatch(f => f instanceof LineString && f.isEndVertex(this))) {
+      this.properties.radius = 5;
+    } else {
+      this.properties.radius = 3.5;
+    }
+    // TODO set icon depending on objectData’s type
   }
 }
 
@@ -479,7 +506,7 @@ export enum PolylineDirection {
  * As a line string only contains a single vertex list, paths must respect the following format:
  * * `"<nb>"`, where `<nb>` is the index of the vertex/segment to target.
  */ // TODO allow loops (ie last point = first point)
-export class LineString extends LinearFeature<geojson.LineString, PolylineProperties> {
+export class LineString extends LinearFeature<geojson.LineString, LineStringProperties> {
   static readonly #PATH_PATTERN = /^(\d+)$/;
 
   readonly #vertices: Point[] = [];
@@ -487,24 +514,24 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
 
   /**
    * Create a line string.
-   * @param dataObject The attached object containing data.
    * @param id The feature’s ID.
    * @param vertices Optional. A list of (at least 2) points. It must not contain any duplicates.
    * @param layer The z-order layer index.
+   * @param dataObject The attached object containing data.
    * @throws {Error} If a point is present multiple times in the list of points or the list contains less than 2 points.
    */
   constructor(
-      dataObject: dtypes.ObjectInstance,
       id: string,
       vertices?: Point[],
-      layer: number = 0
+      layer: number = 0,
+      dataObject: dtypes.ObjectInstance = null
   ) {
-    super(dataObject, id, {
+    super(id, {
       type: "LineString",
       coordinates: [],
     }, {
       width: 2,
-    }, layer);
+    }, layer, dataObject);
     if (vertices) {
       if (vertices.length < 2) {
         throw new Error(`Expected at least 2 points, got ${vertices.length} in linestring ${id}`);
@@ -517,7 +544,9 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
         }
         this.appendVertex(vertex, path);
       }
+      vertices.forEach(v => v.updateProperties()); // Refresh properties of all vertices
     }
+    this.updateProperties();
   }
 
   /**
@@ -692,14 +721,6 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
     return false; // TODO
   }
 
-  hasData(): boolean {
-    return false; // TODO
-  }
-
-  copyDataOf(line: LineString): void {
-    // TODO
-  }
-
   isNearlyCircular(): boolean {
     return false; // TODO
   }
@@ -727,6 +748,10 @@ export class LineString extends LinearFeature<geojson.LineString, PolylineProper
       north = Math.max(lat, north);
     }
     this.geometry.bbox = [west, south, east, north];
+  }
+
+  updateProperties() {
+    // TODO
   }
 
   /**
@@ -762,23 +787,23 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
 
   /**
    * Create a polygon.
-   * @param dataObject The attached object containing data.
    * @param id The feature’s ID.
    * @param vertices Optional. A list of point lists that should each contain at least 3 points.
    * It must not contain any duplicates. Each sublist represents a ring.
    * @param layer The z-order layer index.
+   * @param dataObject The attached object containing data.
    * @throws {Error} If a point is present multiple times in the lists or a list contains less than 3 points.
    */
   constructor(
-      dataObject: dtypes.ObjectInstance,
       id: string,
       vertices?: Point[][],
-      layer: number = 0
+      layer: number = 0,
+      dataObject: dtypes.ObjectInstance = null
   ) {
-    super(dataObject, id, {
+    super(id, {
       type: "Polygon",
       coordinates: [[]],
-    }, {}, layer);
+    }, {}, layer, dataObject);
     if (vertices) {
       // Separate loop to avoid binding vertices unnecessarily
       for (let i = 0; i < vertices.length; i++) {
@@ -798,11 +823,13 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
           this.appendVertex(vertex, path);
         }
         this.lockRing(ringI);
+        ring.forEach(v => v.updateProperties()); // Refresh properties of all vertices
       }
     } else {
       // Unlock exterior ring for later drawing
       this.#lockStatus.push(false);
     }
+    this.updateProperties();
   }
 
   /**
@@ -996,14 +1023,6 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  hasData(): boolean {
-    return false; // TODO
-  }
-
-  copyDataOf(polygon: Polygon): void {
-    // TODO
-  }
-
   isNearlyCircular(): boolean { // TODO compare area and perimeter to those of a circle
     // 4*π*area/(perimeter**2) (= 1 for circles)
     return false; // TODO
@@ -1031,6 +1050,10 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
       this.geometry.coordinates.push(points);
     }
     this.geometry.bbox = [west, south, east, north];
+  }
+
+  updateProperties() {
+    // TODO
   }
 
   /**
