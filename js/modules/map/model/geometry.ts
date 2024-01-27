@@ -113,7 +113,12 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
   readonly type = "Feature";
   readonly geometry: G;
   readonly properties: P;
-  readonly id: string;
+  id: string = null;
+
+  /**
+   * This feature’s database ID. Null if this feature does not exist in the database yet.
+   */
+  readonly dbId: number | null;
   // Using # seems to mess up things
   private dataObject_: dtypes.ObjectInstance | null = null;
   private readonly dataTypesProvider: DataTypeProvider;
@@ -121,20 +126,20 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
   /**
    * Create a new map feature.
    * @param dataTypesProvider A function that provides the given data type for a name and type string.
-   * @param id The feature’s ID.
    * @param geometry The feature’s geometry object.
+   * @param dbId The feature’s database ID.
    * @param layer The z-order layer index.
    * @param dataObject The attached object containing data. May be null.
    * @throws {TypeError} If the data object’s geometry type is incompatible with this geometry.
    */
   protected constructor(
       dataTypesProvider: DataTypeProvider,
-      id: string,
       geometry: G,
-      layer: number = 0,
-      dataObject: dtypes.ObjectInstance = null,
+      dbId?: number,
+      layer?: number,
+      dataObject?: dtypes.ObjectInstance,
   ) {
-    this.id = id;
+    this.dbId = dbId;
     this.geometry = geometry;
     this.properties = {
       color: "#ffffff",
@@ -150,7 +155,7 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
       }
       this.dataObject_ = dataObject;
     }
-    this.layer = layer;
+    this.layer = layer ?? 0;
   }
 
   get dataObject(): dtypes.ObjectInstance | null {
@@ -258,22 +263,22 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
   /**
    * Create a new point.
    * @param dataTypesProvider A function that provides the given data type for a name and type string.
-   * @param id The feature’s ID.
    * @param coords The point’s coordinates.
+   * @param dbId The feature’s database ID.
    * @param layer The z-order layer index.
    * @param dataObject The attached object containing data.
    */
   constructor(
       dataTypesProvider: DataTypeProvider,
-      id: string,
       coords: mgl.LngLat,
-      layer: number = 0,
-      dataObject: dtypes.ObjectInstance = null
+      dbId?: number,
+      layer?: number,
+      dataObject?: dtypes.ObjectInstance
   ) {
-    super(dataTypesProvider, id, {
+    super(dataTypesProvider, {
       type: "Point",
       coordinates: null, // Updated immediately by this.lngLat()
-    }, layer, dataObject);
+    }, dbId, layer, dataObject);
     this.lngLat = coords;
     this.updateProperties();
   }
@@ -543,26 +548,26 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
   /**
    * Create a line string.
    * @param dataTypesProvider A function that provides the given data type for a name and type string.
-   * @param id The feature’s ID.
    * @param vertices Optional. A list of (at least 2) points. It must not contain any duplicates.
+   * @param dbId The feature’s database ID.
    * @param layer The z-order layer index.
    * @param dataObject The attached object containing data.
    * @throws {Error} If a point is present multiple times in the list of points or the list contains less than 2 points.
    */
   constructor(
       dataTypesProvider: DataTypeProvider,
-      id: string,
       vertices?: Point[],
-      layer: number = 0,
-      dataObject: dtypes.ObjectInstance = null
+      dbId?: number,
+      layer?: number,
+      dataObject?: dtypes.ObjectInstance
   ) {
-    super(dataTypesProvider, id, {
+    super(dataTypesProvider, {
       type: "LineString",
       coordinates: [],
-    }, layer, dataObject);
+    }, dbId, layer, dataObject);
     if (vertices) {
       if (vertices.length < 2) {
-        throw new Error(`Expected at least 2 points, got ${vertices.length} in linestring ${id}`);
+        throw new Error(`Expected at least 2 points, got ${vertices.length} in linestring ${dbId}`);
       }
       for (let i = 0; i < vertices.length; i++) {
         const vertex = vertices[i];
@@ -844,30 +849,30 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
   /**
    * Create a polygon.
    * @param dataTypesProvider A function that provides the given data type for a name and type string.
-   * @param id The feature’s ID.
    * @param vertices Optional. A list of point lists that should each contain at least 3 points.
    * It must not contain any duplicates. Each sublist represents a ring.
+   * @param dbId The feature’s database ID.
    * @param layer The z-order layer index.
    * @param dataObject The attached object containing data.
    * @throws {Error} If a point is present multiple times in the lists or a list contains less than 3 points.
    */
   constructor(
       dataTypesProvider: DataTypeProvider,
-      id: string,
       vertices?: Point[][],
-      layer: number = 0,
-      dataObject: dtypes.ObjectInstance = null
+      dbId?: number,
+      layer?: number,
+      dataObject?: dtypes.ObjectInstance
   ) {
-    super(dataTypesProvider, id, {
+    super(dataTypesProvider, {
       type: "Polygon",
       coordinates: [[]],
-    }, layer, dataObject);
+    }, dbId, layer, dataObject);
     if (vertices) {
       // Separate loop to avoid binding vertices unnecessarily
       for (let i = 0; i < vertices.length; i++) {
         const ring = vertices[i];
         if (ring.length < 3) {
-          throw new Error(`Expected at least 3 points, got ${ring.length} in ring ${i} of polygon ${id}`);
+          throw new Error(`Expected at least 3 points, got ${ring.length} in ring ${i} of polygon ${dbId}`);
         }
       }
       for (let ringI = 0; ringI < vertices.length; ringI++) {
