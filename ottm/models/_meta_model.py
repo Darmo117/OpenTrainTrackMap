@@ -12,8 +12,6 @@ from . import _i18n_models as _i18n
 from .. import model_fields as _mf
 from ..api import data_types as _dt
 
-# TODO check temporal states overlaps in API
-
 IDENTIFIER_LENGTH = 50
 IDENTIFIER_PATTERN = re.compile(r'^[a-z][a-z0-9_-]*$')
 
