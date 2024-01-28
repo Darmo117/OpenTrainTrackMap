@@ -153,6 +153,14 @@ export class ObjectType {
    * The type this one inherits from. May be null.
    */
   readonly parentType: ObjectType | null;
+  /**
+   * Whether this type is deprecated, i.e. whether it should no longer be used.
+   */
+  readonly isDeprecated: boolean;
+  /**
+   * Whether this type may be the target of a {@link TemporalProperty}.
+   */
+  readonly isTemporal: boolean;
   readonly #geometryType: GeometryType | null;
   readonly #properties: { [name: string]: ObjectProperty<any> } = {};
 
@@ -163,11 +171,22 @@ export class ObjectType {
    * @param parentType The type’s parent type. May be null.
    * @param geometryType The type of geometry the object may be associated to.
    *  May be null for types that should not be associated to geometries (e.g. relations, operators, etc.).
+   * @param temporal Whether this type may be the target of a {@link TemporalProperty}.
+   * @param deprecated Whether this type is deprecated, i.e. whether it should no longer be used.
    */
-  constructor(label: string, localizedName: string, parentType: ObjectType = null, geometryType: GeometryType = null) {
+  constructor(
+      label: string,
+      localizedName: string,
+      parentType: ObjectType = null,
+      geometryType: GeometryType = null,
+      temporal: boolean = false,
+      deprecated: boolean = false
+  ) {
     this.label = label;
     this.localizedName = localizedName;
     this.parentType = parentType;
+    this.isTemporal = temporal;
+    this.isDeprecated = deprecated;
     this.#geometryType = geometryType;
   }
 
@@ -331,7 +350,7 @@ export class BoolProperty extends ObjectProperty<boolean> {
 /**
  * This class represents a property that accepts only integer values.
  */
-export class IntProperty extends ObjectProperty<number> {
+export abstract class NumberProperty extends ObjectProperty<number> {
   /**
    * If not `null`, the lowest allowed value.
    */
@@ -345,6 +364,48 @@ export class IntProperty extends ObjectProperty<number> {
    */
   readonly unitType: UnitType | null;
 
+  /**
+   * Create an new number object property.
+   * @param objectType The {@link ObjectType} the property should be attached to.
+   * @param label The property’s label.
+   * @param localizedName The property’s localized label.
+   * @param unique Whether this property may have a single value (`true`) or several (`false`).
+   * @param deprecated Whether this property is deprecated, i.e. whether it should no longer be used.
+   * @param min If specified, the lowest allowed value.
+   * @param max If specified, the highest allowed value.
+   * @param unitType The type of unit the values represent.
+   * @throws {Error} If `min` > `max`.
+   */
+  constructor(
+      objectType: ObjectType,
+      label: string,
+      localizedName: string,
+      unique: boolean,
+      deprecated: boolean,
+      min: number = null,
+      max: number = null,
+      unitType: UnitType = null
+  ) {
+    super(objectType, label, localizedName, unique, deprecated);
+    if (typeof min === "number" && typeof max === "number" && min > max) {
+      throw new Error("min > max");
+    }
+    this.min = min;
+    this.max = max;
+    this.unitType = unitType;
+  }
+
+  isValueValid(v: number): boolean {
+    return typeof v === "number"
+        && (this.min === null || v >= this.min)
+        && (this.max === null || v <= this.max);
+  }
+}
+
+/**
+ * This class represents a property that accepts only integer values.
+ */
+export class IntProperty extends NumberProperty {
   /**
    * Create an new integer object property.
    * @param objectType The {@link ObjectType} the property should be attached to.
@@ -367,25 +428,17 @@ export class IntProperty extends ObjectProperty<number> {
       max: number = null,
       unitType: UnitType = null
   ) {
-    super(objectType, label, localizedName, unique, deprecated);
-    if (typeof min === "number" && typeof max === "number" && min > max) {
-      throw new Error("min > max");
-    }
+    super(objectType, label, localizedName, unique, deprecated, min, max, unitType);
     if (typeof min === "number" && !Number.isInteger(min)) {
       throw new Error("min should be an integer");
     }
     if (typeof max === "number" && !Number.isInteger(max)) {
       throw new Error("max should be an integer");
     }
-    this.min = min;
-    this.max = max;
-    this.unitType = unitType;
   }
 
   isValueValid(v: number): boolean {
-    return Number.isInteger(v)
-        && (this.min === null || v >= this.min)
-        && (this.max === null || v <= this.max);
+    return Number.isInteger(v) && super.isValueValid(v);
   }
 
   newValue(value: number, unit?: Unit): IntSingleObjectPropertyValue | IntMultipleObjectPropertyValue {
@@ -398,57 +451,7 @@ export class IntProperty extends ObjectProperty<number> {
 /**
  * This class represents a property that accepts only floating point numbers values.
  */
-export class FloatProperty extends ObjectProperty<number> {
-  /**
-   * If not `null`, the lowest allowed value.
-   */
-  readonly min: number | null;
-  /**
-   * If not `null`, the lowest highest value.
-   */
-  readonly max: number | null;
-  /**
-   * The type of unit the values represent.
-   */
-  readonly unitType: UnitType | null;
-
-  /**
-   * Create an new integer object property.
-   * @param objectType The {@link ObjectType} the property should be attached to.
-   * @param label The property’s label.
-   * @param localizedName The property’s localized label.
-   * @param unique Whether this property may have a single value (`true`) or several (`false`).
-   * @param deprecated Whether this property is deprecated, i.e. whether it should no longer be used.
-   * @param min If specified, the lowest allowed value.
-   * @param max If specified, the highest allowed value.
-   * @param unitType The type of unit the values represent.
-   * @throws {Error} If `min` > `max`.
-   */
-  constructor(
-      objectType: ObjectType,
-      label: string,
-      localizedName: string,
-      unique: boolean,
-      deprecated: boolean,
-      min: number = null,
-      max: number = null,
-      unitType: UnitType = null
-  ) {
-    super(objectType, label, localizedName, unique, deprecated);
-    if (min > max) {
-      throw new Error("min > max");
-    }
-    this.min = min;
-    this.max = max;
-    this.unitType = unitType;
-  }
-
-  isValueValid(v: number): boolean {
-    return typeof v === "number"
-        && (this.min === null || v >= this.min)
-        && (this.max === null || v <= this.max);
-  }
-
+export class FloatProperty extends NumberProperty {
   newValue(value: number, unit?: Unit): FloatSingleObjectPropertyValue | FloatMultipleObjectPropertyValue {
     return this.isUnique
         ? new FloatSingleObjectPropertyValue(value, this, unit)
@@ -557,6 +560,44 @@ export class TypeProperty extends ObjectProperty<ObjectInstance> {
 }
 
 /**
+ * This class represents a property that accepts only temporal {@link ObjectInstance} values.
+ */
+export class TemporalProperty extends TypeProperty {
+  /**
+   * Whether this property allows date interval overlaps among its target values.
+   */
+  readonly allowsOverlaps: boolean;
+
+  /**
+   * Create an new integer object property.
+   * @param objectType The {@link ObjectType} the property should be attached to.
+   * @param label The property’s label.
+   * @param localizedName The property’s localized label.
+   * @param deprecated Whether this property is deprecated, i.e. whether it should no longer be used.
+   * @param targetType The type of the objects the property can point to.
+   * @param allowsOverlaps Whether the property allows date interval overlaps amongs its target values.
+   */
+  constructor(
+      objectType: ObjectType,
+      label: string,
+      localizedName: string,
+      deprecated: boolean,
+      targetType: ObjectType,
+      allowsOverlaps: boolean
+  ) {
+    super(objectType, label, localizedName, false, deprecated, targetType);
+    if (!targetType.isTemporal) {
+      throw new TypeError("Target type is not temporal");
+    }
+    this.allowsOverlaps = allowsOverlaps;
+  }
+
+  newValue(value: ObjectInstance): TemporalObjectPropertyValue {
+    return new TemporalObjectPropertyValue(value, this);
+  }
+}
+
+/**
  * This class represents a property that accepts only {@link Enum} values,
  * i.e. only values from the specified {@link Enum} will be accepted.
  */
@@ -612,17 +653,22 @@ export class ObjectInstance {
    */
   readonly id: number | null;
   #type: ObjectType;
+  #existenceInterval: di.DateInterval | null;
   readonly #uniqueProperties: { [name: string]: SingleObjectPropertyValue<any, any> } = {};
   readonly #multiProperties: { [name: string]: MultipleObjectPropertyValue<any, any> } = {};
 
   /**
    * Create a new object instance of the given type.
    * @param type The object’s type.
+   * @param existenceInterval The object’s existence inverval if it is temporal.
    * @param id This object’s database ID. Leave empty for new objects.
+   * @throws {Error} If `existenceInterval` is not null and this object is not temporal,
+   *  or `existenceInterval` is null and this object is temporal.
    */
-  constructor(type: ObjectType, id?: number) {
+  constructor(type: ObjectType, existenceInterval?: di.DateInterval | null, id?: number) {
     this.#type = type;
     this.id = id;
+    this.existenceInterval = existenceInterval;
   }
 
   /**
@@ -661,6 +707,29 @@ export class ObjectInstance {
 
       this.#type = newType;
     }
+  }
+
+  /**
+   * This object’s existence interval if it is temporal, null otherwise.
+   */
+  get existenceInterval(): di.DateInterval | null {
+    return this.#existenceInterval;
+  }
+
+  /**
+   * Set this object’s existence interval.
+   * @param interval The new interval.
+   * @throws {Error} If the value is not null and this object is not temporal,
+   *  or the value is null and this object is temporal.
+   */
+  set existenceInterval(interval: di.DateInterval) {
+    if (!this.type.isTemporal && interval) {
+      throw new Error("Object is not temporal")
+    }
+    if (this.type.isTemporal && !interval) {
+      throw new Error("Missing existence interval for temporal object")
+    }
+    this.#existenceInterval = interval;
   }
 
   /**
@@ -793,14 +862,14 @@ export class ObjectInstance {
     if (!property) {
       throw new TypeError(`Invalid property "${name}" for object of type "${this.#type.label}"`);
     }
-    if (!(property instanceof IntProperty) && !(property instanceof FloatProperty) || !property.unitType) {
+    if (!(property instanceof NumberProperty) || !property.unitType) {
       throw new TypeError(`Property "${property.fullName}" does not have a unit`);
     }
     if (this.#uniqueProperties[name]) {
-      return (this.#uniqueProperties[name] as IntSingleObjectPropertyValue | FloatSingleObjectPropertyValue).unit;
+      return (this.#uniqueProperties[name] as NumberSingleObjectPropertyValue<any>).unit;
     }
     if (this.#multiProperties[name]) {
-      return (this.#multiProperties[name] as IntMultipleObjectPropertyValue | FloatMultipleObjectPropertyValue).unit;
+      return (this.#multiProperties[name] as NumberMultipleObjectPropertyValue<any>).unit;
     }
     return null;
   }
@@ -817,14 +886,14 @@ export class ObjectInstance {
     if (!property) {
       throw new TypeError(`Invalid property "${name}" for object of type "${this.#type.label}"`);
     }
-    if (!(property instanceof IntProperty) && !(property instanceof FloatProperty) || !property.unitType) {
+    if (!(property instanceof NumberProperty) || !property.unitType) {
       throw new TypeError(`Property "${property.fullName}" does not have a unit`);
     }
     if (this.#uniqueProperties[name]) {
-      (this.#uniqueProperties[name] as IntSingleObjectPropertyValue | FloatSingleObjectPropertyValue).unit = unit;
+      (this.#uniqueProperties[name] as NumberSingleObjectPropertyValue<any>).unit = unit;
     }
     if (this.#multiProperties[name]) {
-      (this.#multiProperties[name] as IntMultipleObjectPropertyValue | FloatMultipleObjectPropertyValue).unit = unit;
+      (this.#multiProperties[name] as NumberMultipleObjectPropertyValue<any>).unit = unit;
     }
   }
 
@@ -911,7 +980,7 @@ export class ObjectInstance {
 }
 
 /**
- * This class represents a value bound to a {@link ObjectProperty} definition.
+ * This class represents a value or set of values bound to an {@link ObjectProperty} definition.
  */
 export abstract class ObjectPropertyValue<T, OP extends ObjectProperty<T>> {
   /**
@@ -952,13 +1021,64 @@ export class SingleObjectPropertyValue<T, OP extends ObjectProperty<T>> extends 
   /**
    * Set the property’s value.
    * @param value The new value.
-   * @throws {TypeError} If the value is invalid for the property.
+   * @throws {Error} If the value is invalid for the property.
    */
   setValue(value: T): void {
     if (!this.propertyType.isValueValid(value)) {
-      throw new TypeError(`Invalid value for property "${this.propertyType.fullName}"`);
+      throw new Error(`Invalid value for property "${this.propertyType.fullName}"`);
     }
     this.#value = value;
+  }
+}
+
+/**
+ * This class represents the single number value bound to a {@link IntProperty} definition
+ * with a `isUnique` field set to `true`.
+ */
+export class NumberSingleObjectPropertyValue<OP extends NumberProperty> extends SingleObjectPropertyValue<number, OP> {
+  #unit: Unit | null;
+
+  /**
+   * Create a new number property value.
+   * @param value The value to bind to the property.
+   * @param propertyType The property to bind the value to.
+   * @param unit Optional. The unit to attach to this value.
+   * @throws {TypeError} If the value is invalid for the property
+   *  or the unit’s type differs from the one defined by the property.
+   */
+  constructor(value: number, propertyType: OP, unit?: Unit) {
+    super(value, propertyType);
+    this.unit = unit;
+  }
+
+  /**
+   * The unit attached to this value. May be null.
+   */
+  get unit(): Unit | null {
+    return this.#unit;
+  }
+
+  /**
+   * Set the unit attached to this value. May be null.
+   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
+   * @throws {Error} If the unit is null or undefined.
+   */
+  set unit(unit: Unit) {
+    const expectedType = this.propertyType.unitType;
+    if (!unit && !expectedType) {
+      return;
+    }
+    if (!unit && expectedType) {
+      throw new Error(`Undefined unit`);
+    }
+    if (unit && !expectedType) {
+      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
+    }
+    const actualType = unit.type;
+    if (expectedType !== actualType) {
+      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
+    }
+    this.#unit = unit;
   }
 }
 
@@ -966,106 +1086,18 @@ export class SingleObjectPropertyValue<T, OP extends ObjectProperty<T>> extends 
  * This class represents the single int value bound to an {@link IntProperty} definition
  * with a `isUnique` field set to `true`.
  */
-export class IntSingleObjectPropertyValue extends SingleObjectPropertyValue<number, IntProperty> {
-  #unit: Unit | null;
-
-  /**
-   * Create a new int property value.
-   * @param value The value to bind to the property.
-   * @param propertyType The property to bind the value to.
-   * @param unit Optional. The unit to attach to this value.
-   * @throws {TypeError} If the value is invalid for the property
-   *  or the unit’s type differs from the one defined by the property.
-   */
-  constructor(value: number, propertyType: IntProperty, unit?: Unit) {
-    super(value, propertyType);
-    this.unit = unit;
-  }
-
-  /**
-   * The unit attached to this value. May be null.
-   */
-  get unit(): Unit | null {
-    return this.#unit;
-  }
-
-  /**
-   * Set the unit attached to this value. May be null.
-   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
-   * @throws {Error} If the unit is null or undefined.
-   */
-  set unit(unit: Unit) {
-    const expectedType = this.propertyType.unitType;
-    if (!unit && !expectedType) {
-      return;
-    }
-    if (!unit && expectedType) {
-      throw new Error(`Undefined unit`);
-    }
-    if (unit && !expectedType) {
-      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
-    }
-    const actualType = unit.type;
-    if (expectedType !== actualType) {
-      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
-    }
-    this.#unit = unit;
-  }
+export class IntSingleObjectPropertyValue extends NumberSingleObjectPropertyValue<IntProperty> {
 }
 
 /**
- * This class represents the single float value bound to an {@link FloatProperty} definition
+ * This class represents the single float value bound to a {@link FloatProperty} definition
  * with a `isUnique` field set to `true`.
  */
-export class FloatSingleObjectPropertyValue extends SingleObjectPropertyValue<number, FloatProperty> {
-  #unit: Unit | null;
-
-  /**
-   * Create a new float property value.
-   * @param value The value to bind to the property.
-   * @param propertyType The property to bind the value to.
-   * @param unit Optional. The unit to attach to this value.
-   * @throws {TypeError} If the value is invalid for the property
-   *  or the unit’s type differs from the one defined by the property.
-   */
-  constructor(value: number, propertyType: FloatProperty, unit?: Unit) {
-    super(value, propertyType);
-    this.unit = unit;
-  }
-
-  /**
-   * The unit attached to this value. May be null.
-   */
-  get unit(): Unit | null {
-    return this.#unit;
-  }
-
-  /**
-   * Set the unit attached to this value. May be null.
-   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
-   * @throws {Error} If the unit is null or undefined.
-   */
-  set unit(unit: Unit) {
-    const expectedType = this.propertyType.unitType;
-    if (!unit && !expectedType) {
-      return;
-    }
-    if (!unit && expectedType) {
-      throw new Error(`Undefined unit`);
-    }
-    if (unit && !expectedType) {
-      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
-    }
-    const actualType = unit.type;
-    if (expectedType !== actualType) {
-      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
-    }
-    this.#unit = unit;
-  }
+export class FloatSingleObjectPropertyValue extends NumberSingleObjectPropertyValue<FloatProperty> {
 }
 
 /**
- * This class represents the single string value bound to an {@link StringProperty} definition
+ * This class represents the single string value bound to a {@link StringProperty} definition
  * with a `isUnique` field set to `true`.
  */
 export class StringSingleObjectPropertyValue extends SingleObjectPropertyValue<string, StringProperty> {
@@ -1123,7 +1155,7 @@ export class StringSingleObjectPropertyValue extends SingleObjectPropertyValue<s
 }
 
 /**
- * This class represents the values bound to {@link ObjectProperty} definition
+ * This class represents the values bound to an {@link ObjectProperty} definition
  * with a `isUnique` field set to `false`.
  */
 export class MultipleObjectPropertyValue<T, OP extends ObjectProperty<T>> extends ObjectPropertyValue<T, OP> {
@@ -1151,7 +1183,7 @@ export class MultipleObjectPropertyValue<T, OP extends ObjectProperty<T>> extend
   /**
    * Bind a value to the property.
    * @param value The value to bind.
-   * @throws {TypeError} If the value is invalid for the property.
+   * @throws {Error} If the value is invalid for the property.
    */
   addValue(value: T): void {
     if (!this.propertyType.isValueValid(value)) {
@@ -1178,109 +1210,72 @@ export class MultipleObjectPropertyValue<T, OP extends ObjectProperty<T>> extend
 }
 
 /**
+ * This class represents the number values bound to a {@link NumberProperty} definition
+ * with a `isUnique` field set to `false`.
+ */
+export abstract class NumberMultipleObjectPropertyValue<OP extends NumberProperty> extends MultipleObjectPropertyValue<number, OP> {
+  #unit: Unit | null;
+
+  /**
+   * Create a new number property value.
+   * @param firstValue The first value to bind to the property.
+   * @param propertyType The property to bind the value to.
+   * @param unit Optional. The unit to attach to the values.
+   * @throws {TypeError} If the value is invalid for the property
+   *  or the unit’s type differs from the one defined by the property.
+   */
+  constructor(firstValue: number, propertyType: OP, unit?: Unit) {
+    super(firstValue, propertyType);
+    this.unit = unit;
+  }
+
+  /**
+   * The unit attached to the values. May be null.
+   */
+  get unit(): Unit | null {
+    return this.#unit;
+  }
+
+  /**
+   * Set the unit attached to the values. May be null.
+   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
+   * @throws {Error} If the unit is null or undefined.
+   */
+  set unit(unit: Unit) {
+    const expectedType = this.propertyType.unitType;
+    if (!unit && !expectedType) {
+      return;
+    }
+    if (!unit && expectedType) {
+      throw new Error(`Undefined unit`);
+    }
+    if (unit && !expectedType) {
+      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
+    }
+    const actualType = unit.type;
+    if (expectedType !== actualType) {
+      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
+    }
+    this.#unit = unit;
+  }
+}
+
+/**
  * This class represents the int values bound to an {@link IntProperty} definition
  * with a `isUnique` field set to `false`.
  */
-export class IntMultipleObjectPropertyValue extends MultipleObjectPropertyValue<number, IntProperty> {
-  #unit: Unit | null;
-
-  /**
-   * Create a new int property value.
-   * @param firstValue The first value to bind to the property.
-   * @param propertyType The property to bind the value to.
-   * @param unit Optional. The unit to attach to the values.
-   * @throws {TypeError} If the value is invalid for the property
-   *  or the unit’s type differs from the one defined by the property.
-   */
-  constructor(firstValue: number, propertyType: IntProperty, unit?: Unit) {
-    super(firstValue, propertyType);
-    this.unit = unit;
-  }
-
-  /**
-   * The unit attached to the values. May be null.
-   */
-  get unit(): Unit | null {
-    return this.#unit;
-  }
-
-  /**
-   * Set the unit attached to the values. May be null.
-   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
-   * @throws {Error} If the unit is null or undefined.
-   */
-  set unit(unit: Unit) {
-    const expectedType = this.propertyType.unitType;
-    if (!unit && !expectedType) {
-      return;
-    }
-    if (!unit && expectedType) {
-      throw new Error(`Undefined unit`);
-    }
-    if (unit && !expectedType) {
-      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
-    }
-    const actualType = unit.type;
-    if (expectedType !== actualType) {
-      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
-    }
-    this.#unit = unit;
-  }
+export class IntMultipleObjectPropertyValue extends NumberMultipleObjectPropertyValue<IntProperty> {
 }
 
 /**
- * This class represents the float values bound to an {@link FloatProperty} definition
+ * This class represents the float values bound to a {@link FloatProperty} definition
  * with a `isUnique` field set to `false`.
  */
-export class FloatMultipleObjectPropertyValue extends MultipleObjectPropertyValue<number, FloatProperty> {
-  #unit: Unit | null;
-
-  /**
-   * Create a new float property value.
-   * @param firstValue The first value to bind to the property.
-   * @param propertyType The property to bind the value to.
-   * @param unit Optional. The unit to attach to the values.
-   * @throws {TypeError} If the value is invalid for the property
-   *  or the unit’s type differs from the one defined by the property.
-   */
-  constructor(firstValue: number, propertyType: FloatProperty, unit?: Unit) {
-    super(firstValue, propertyType);
-    this.unit = unit;
-  }
-
-  /**
-   * The unit attached to the values. May be null.
-   */
-  get unit(): Unit | null {
-    return this.#unit;
-  }
-
-  /**
-   * Set the unit attached to the values. May be null.
-   * @throws {TypeError} If the unit’s type differs from the one defined by the property.
-   * @throws {Error} If the unit is null or undefined.
-   */
-  set unit(unit: Unit) {
-    const expectedType = this.propertyType.unitType;
-    if (!unit && !expectedType) {
-      return;
-    }
-    if (!unit && expectedType) {
-      throw new Error(`Undefined unit`);
-    }
-    if (unit && !expectedType) {
-      throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
-    }
-    const actualType = unit.type;
-    if (expectedType !== actualType) {
-      throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
-    }
-    this.#unit = unit;
-  }
+export class FloatMultipleObjectPropertyValue extends NumberMultipleObjectPropertyValue<FloatProperty> {
 }
 
 /**
- * This class represents the string values bound to an {@link StringProperty} definition
+ * This class represents the string values bound to a {@link StringProperty} definition
  * with a `isUnique` field set to `false`.
  */
 export class StringMultipleObjectPropertyValue extends MultipleObjectPropertyValue<string, StringProperty> {
@@ -1336,5 +1331,18 @@ export class StringMultipleObjectPropertyValue extends MultipleObjectPropertyVal
     if (!this.propertyType.translatable) {
       throw new Error(`Property "${this.propertyType.fullName}" is not translatable`);
     }
+  }
+}
+
+/**
+ * This class represents the temporal objects bound to a {@link TemporalProperty} definition.
+ */
+export class TemporalObjectPropertyValue extends MultipleObjectPropertyValue<ObjectInstance, TemporalProperty> {
+  addValue(value: ObjectInstance): void {
+    if (!this.propertyType.allowsOverlaps
+        && this.getValues().anyMatch(o => value.existenceInterval.overlaps(o.existenceInterval))) {
+      throw new Error("Object’s existence interval overlaps another one’s");
+    }
+    super.addValue(value);
   }
 }

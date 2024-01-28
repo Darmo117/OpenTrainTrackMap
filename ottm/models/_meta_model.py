@@ -179,6 +179,12 @@ class ObjectType(_dj_models.Model):
         blank=True,
         default=None,
     )
+    deprecated = _dj_models.BooleanField(
+        default=False,
+    )
+    temporal = _dj_models.BooleanField(
+        default=False,
+    )
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude)
@@ -274,38 +280,31 @@ class BooleanProperty(ObjectProperty):
     pass
 
 
-class IntegerProperty(ObjectProperty):
+class NumberProperty(ObjectProperty):
+    unit_type = _dj_models.ForeignKey(
+        UnitType,
+        on_delete=_dj_models.PROTECT,
+        null=True,
+        blank=True,
+        default=None,
+    )
+    min: Number  # Implemented in sub-classes
+    max: Number  # Implemented in sub-classes
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude)
+        if (not exclude or 'min' not in exclude and 'max' not in exclude) and self.min >= self.max:
+            raise _dj_exc.ValidationError('Invalid min/max values', code='invalid_number_property_min_max')
+
+
+class IntegerProperty(NumberProperty):
     min = _dj_models.IntegerField()
     max = _dj_models.IntegerField()
-    unit_type = _dj_models.ForeignKey(
-        UnitType,
-        on_delete=_dj_models.PROTECT,
-        null=True,
-        blank=True,
-        default=None,
-    )
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude)
-        if (not exclude or 'min' not in exclude and 'max' not in exclude) and self.min >= self.max:
-            raise _dj_exc.ValidationError('Invalid min/max values', code='invalid_int_property_min_max')
 
 
-class FloatProperty(ObjectProperty):
+class FloatProperty(NumberProperty):
     min = _dj_models.FloatField()
     max = _dj_models.FloatField()
-    unit_type = _dj_models.ForeignKey(
-        UnitType,
-        on_delete=_dj_models.PROTECT,
-        null=True,
-        blank=True,
-        default=None,
-    )
-
-    def validate_constraints(self, exclude=None):
-        super().validate_constraints(exclude)
-        if (not exclude or 'min' not in exclude and 'max' not in exclude) and self.min >= self.max:
-            raise _dj_exc.ValidationError('Invalid min/max values', code='invalid_float_property_min_max')
 
 
 class StringProperty(ObjectProperty):
@@ -323,6 +322,20 @@ class TypeProperty(ObjectProperty):
         ObjectType,
         on_delete=_dj_models.PROTECT,
     )
+
+
+class TemporalProperty(TypeProperty):
+    allows_overlaps = _dj_models.BooleanField(
+        default=False,
+    )
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude)
+        if (not exclude or 'unique' not in exclude) and self.unique:
+            raise _dj_exc.ValidationError(
+                'Temporal properties cannot have "unique" property set to True',
+                code='TemporalProperty_unique'
+            )
 
 
 class EnumProperty(ObjectProperty):
@@ -355,6 +368,25 @@ class Object(_dj_models.Model):
         on_delete=_dj_models.PROTECT,
         related_name='instances',
     )
+    existence_inverval = _mf.DateIntervalField(
+        null=True,
+        blank=True,
+        default=None,
+    )
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude)
+        if not exclude or 'existence_inverval' not in exclude:
+            if self.existence_inverval and not self.type.temporal:
+                raise _dj_exc.ValidationError(
+                    'Non-temporal object cannot have an existence interval',
+                    code='Object_non_temporal_has_existence_inverval'
+                )
+            elif not self.existence_inverval and self.type.temporal:
+                raise _dj_exc.ValidationError(
+                    'Temporal object must have an existence interval',
+                    code='Object_temporal_has_no_existence_inverval'
+                )
 
 
 class ObjectPropertyValue(_dj_models.Model):  # Cannot use generics with Django models (last checked 2024-01-24)
@@ -408,8 +440,7 @@ class BooleanPropertyValue(ObjectPropertyValue):
             )
 
 
-class IntegerPropertyValue(ObjectPropertyValue):
-    value = _dj_models.IntegerField()
+class NumberPropertyValue(ObjectPropertyValue):
     unit = _dj_models.ForeignKey(
         Unit,
         on_delete=_dj_models.PROTECT,
@@ -417,6 +448,42 @@ class IntegerPropertyValue(ObjectPropertyValue):
         blank=True,
         default=None,
     )
+    value: Number  # Implemented in sub-classes
+
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude)
+        if (not exclude or 'property_type' not in exclude) and not isinstance(self.property_type, NumberProperty):
+            raise _dj_exc.ValidationError(
+                'Invalid integer property type',
+                code='NumberPropertyValue_invalid_property_type'
+            )
+        if not exclude or 'value' not in exclude:
+            if self.value < self.property_type.min:
+                raise _dj_exc.ValidationError('Value cannot be less than min',
+                                              code='NumberPropertyValue_less_than_min')
+            if self.value > self.property_type.max:
+                raise _dj_exc.ValidationError('Value cannot be greater than max',
+                                              code='NumberPropertyValue_greater_than_max')
+        if not exclude or 'unit' not in exclude:
+            if self.unit and self.property_type.unit_type and self.unit.type != self.property_type.unit_type:
+                raise _dj_exc.ValidationError(
+                    f'Invalid unit type, expected {self.property_type.unit_type}, got {self.unit.type}',
+                    code='NumberPropertyValue_mismatch_unit_type'
+                )
+            if self.unit and not self.property_type.unit_type:
+                raise _dj_exc.ValidationError(
+                    f'Unexpected unit for property value',
+                    code='NumberPropertyValue_unexpected_unit'
+                )
+            if not self.unit and self.property_type.unit_type:
+                raise _dj_exc.ValidationError(
+                    f'Missing unit for property value',
+                    code='NumberPropertyValue_missing_unit'
+                )
+
+
+class IntegerPropertyValue(NumberPropertyValue):
+    value = _dj_models.IntegerField()
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude)
@@ -425,40 +492,10 @@ class IntegerPropertyValue(ObjectPropertyValue):
                 'Invalid integer property type',
                 code='IntegerPropertyValue_invalid_property_type'
             )
-        if not exclude or 'value' not in exclude:
-            if self.value < self.property_type.min:
-                raise _dj_exc.ValidationError('Value cannot be less than min',
-                                              code='IntegerPropertyValue_less_than_min')
-            if self.value > self.property_type.max:
-                raise _dj_exc.ValidationError('Value cannot be greater than max',
-                                              code='IntegerPropertyValue_greater_than_max')
-        if not exclude or 'unit' not in exclude:
-            if self.unit and self.property_type.unit_type and self.unit.type != self.property_type.unit_type:
-                raise _dj_exc.ValidationError(
-                    f'Invalid unit type, expected {self.property_type.unit_type}, got {self.unit.type}',
-                    code='IntegerPropertyValue_mismatch_unit_type'
-                )
-            if self.unit and not self.property_type.unit_type:
-                raise _dj_exc.ValidationError(
-                    f'Unexpected unit for property value',
-                    code='IntegerPropertyValue_unexpected_unit'
-                )
-            if not self.unit and self.property_type.unit_type:
-                raise _dj_exc.ValidationError(
-                    f'Missing unit for property value',
-                    code='IntegerPropertyValue_missing_unit'
-                )
 
 
-class FloatPropertyValue(ObjectPropertyValue):
+class FloatPropertyValue(NumberPropertyValue):
     value = _dj_models.FloatField()
-    unit = _dj_models.ForeignKey(
-        Unit,
-        on_delete=_dj_models.PROTECT,
-        null=True,
-        blank=True,
-        default=None,
-    )
 
     def validate_constraints(self, exclude=None):
         super().validate_constraints(exclude)
@@ -467,29 +504,6 @@ class FloatPropertyValue(ObjectPropertyValue):
                 'Invalid float property type',
                 code='FloatPropertyValue_invalid_property_type'
             )
-        if not exclude or 'value' not in exclude:
-            if self.value < self.property_type.min:
-                raise _dj_exc.ValidationError('Value cannot be less than min',
-                                              code='FloatPropertyValue_less_than_min')
-            if self.value > self.property_type.max:
-                raise _dj_exc.ValidationError('Value cannot be greater than max',
-                                              code='FloatPropertyValue_greater_than_max')
-        if not exclude or 'unit' not in exclude:
-            if self.unit and self.property_type.unit_type and self.unit.type != self.property_type.unit_type:
-                raise _dj_exc.ValidationError(
-                    f'Invalid unit type, expected {self.property_type.unit_type}, got {self.unit.type}',
-                    code='FloatPropertyValue_mismatch_unit_type'
-                )
-            if self.unit and not self.property_type.unit_type:
-                raise _dj_exc.ValidationError(
-                    f'Unexpected unit for property value',
-                    code='FloatPropertyValue_unexpected_unit'
-                )
-            if not self.unit and self.property_type.unit_type:
-                raise _dj_exc.ValidationError(
-                    f'Missing unit for property value',
-                    code='FloatPropertyValue_missing_unit'
-                )
 
 
 class StringPropertyValue(ObjectPropertyValue):
@@ -559,6 +573,30 @@ class TypePropertyValue(ObjectPropertyValue):
             raise _dj_exc.ValidationError(
                 'Invalid type property type',
                 code='TypePropertyValue_invalid_property_type'
+            )
+
+
+class TemporalPropertyValue(TypePropertyValue):
+    def validate_constraints(self, exclude=None):
+        super().validate_constraints(exclude)
+        if (not exclude or 'property_type' not in exclude) and not isinstance(self.property_type, TemporalProperty):
+            raise _dj_exc.ValidationError(
+                'Invalid type property type',
+                code='TemporalPropertyValue_invalid_property_type'
+            )
+        if (not exclude or 'value' not in exclude) and not self.value.type.temporal:
+            raise _dj_exc.ValidationError(
+                'Target object is not temporal',
+                code='TemporalPropertyValue_non_temporal_target_object'
+            )
+        # noinspection PyUnresolvedReferences
+        if ((not exclude or 'value' not in exclude)
+                and not self.property_type.allows_overlaps
+                and any(self.object.existence_inverval.overlaps(pv.object.existence_inverval)
+                        for pv in self.property_type.instances.filter(object=self.object))):
+            raise _dj_exc.ValidationError(
+                'Temporal object existence interval overlap',
+                code='TemporalPropertyValue_existence_interval_overlap'
             )
 
 
