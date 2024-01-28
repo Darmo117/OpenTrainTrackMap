@@ -804,7 +804,7 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
           case "tunnel":
             color = "#9b9b9b";
             break;
-          case "on_ground":
+          case "surface":
           default:
             color = "#3d3d3d";
             break;

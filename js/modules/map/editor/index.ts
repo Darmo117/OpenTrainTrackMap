@@ -1949,7 +1949,7 @@ export default function initMapEditor(map: Map): void {
   const millimeterUnit = new dtypes.Unit(lengthUnitType, "mm");
   lengthUnitType.addUnit(millimeterUnit);
   const track_level_enum = new dtypes.Enum("track_level", "Track Level", {
-    on_ground: "On Ground",
+    surface: "Surface",
     tunnel: "Underground",
     bridge: "Bridge",
   });
