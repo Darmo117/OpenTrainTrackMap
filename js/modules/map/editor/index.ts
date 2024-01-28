@@ -1974,7 +1974,7 @@ export default function initMapEditor(map: Map): void {
   // TEMP
 
   const track1 = new dtypes.ObjectInstance(conv_track_section);
-  track1.setPropertyValue("level", "on_ground");
+  track1.setPropertyValue("level", "surface");
   track1.setPropertyValue("gauge", 1435);
 
   map.on("load", () => {
