@@ -1,5 +1,7 @@
 import * as mgl from "maplibre-gl";
 import * as geojson from "geojson";
+import * as turf from "@turf/turf";
+
 import * as st from "../../streams";
 import * as utils from "../utils";
 import * as dtypes from "./data-types"
@@ -508,9 +510,31 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
   }
 
   /**
-   * Indicate whether the outer line of this feature is nearly circular.
-   */ // TODO what does that mean?
-  abstract isNearlyCircular(): boolean;
+   * Indicate whether a ring of this feature is nearly circular.
+   *
+   * The circularity coefficient is derived from the formula by Cox (1927).
+   * @param ringIndex The index of the ring.
+   * @return True if the circularity coefficient of the ring is greater than or equal to 0.6, false otherwise.
+   * @see Cox, E. P. (1927). A Method of Assigning Numerical and Percentage Values to the Degree
+   *  of Roundness of Sand Grains. Journal of Paleontology, 1(3), 179–183. http://www.jstor.org/stable/1298056
+   */
+  isNearlyCircular(ringIndex: number): boolean {
+    return 4 * Math.PI * this.getArea(ringIndex) / (this.getPerimeter(ringIndex) ** 2) >= 0.6;
+  }
+
+  /**
+   * Calculate the area of the region enclosed by the given closed ring.
+   * @param ringIndex The index of the ring.
+   * @returns The area of the region.
+   */
+  abstract getArea(ringIndex?: number): number;
+
+  /**
+   * Calculate the perimeter of the given closed ring.
+   * @param ringIndex The index of the ring for polygons.
+   * @returns The perimeter of the ring.
+   */
+  abstract getPerimeter(ringIndex?: number): number;
 
   /**
    * Indicate whether the outer line of this feature is nearly square.
@@ -741,8 +765,19 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
     return false; // TODO
   }
 
-  isNearlyCircular(): boolean {
-    return false; // TODO
+  isNearlyCircular(ring: number): boolean {
+    return this.isLoop() && super.isNearlyCircular(ring);
+  }
+
+  getArea(): number {
+    if (!this.isLoop()) {
+      throw new Error("Line is not a loop");
+    }
+    return getPolygonArea(this.#vertices);
+  }
+
+  getPerimeter(): number {
+    return getPolygonPerimeter(this.#vertices);
   }
 
   isNearlySquare(): boolean {
@@ -1087,9 +1122,20 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  isNearlyCircular(): boolean { // TODO compare area and perimeter to those of a circle
-    // 4*π*area/(perimeter**2) (= 1 for circles)
-    return false; // TODO
+  getArea(ringIndex: number): number {
+    const ring = this.#vertices[ringIndex];
+    if (!ring) {
+      throw new Error(`Invalid ring index: ${ringIndex}`);
+    }
+    return getPolygonArea(ring);
+  }
+
+  getPerimeter(ringIndex: number): number {
+    const ring = this.#vertices[ringIndex];
+    if (!ring) {
+      throw new Error(`Invalid ring index: ${ringIndex}`);
+    }
+    return getPolygonPerimeter(ring);
   }
 
   isNearlySquare(): boolean {
@@ -1179,4 +1225,31 @@ export class Note {
   get geometries(): st.Stream<MapFeature> {
     return st.stream(this.#geometries);
   }
+}
+
+/**
+ * Calculate the area of the polygon formed by the given array of {@link Point}.
+ * @param vertices The array of vertices, without repeating the first one at the end.
+ * @returns The area of the polygon.
+ */
+export function getPolygonArea(vertices: Point[]): number {
+  return turf.area(toPolygon(vertices));
+}
+
+/**
+ * Calculate the perimeter of the polygon formed by the given array of {@link Point}.
+ * @param vertices The array of vertices, without repeating the first one at the end.
+ * @returns The perimeter of the polygon.
+ */
+export function getPolygonPerimeter(vertices: Point[]): number {
+  return turf.lineDistance(toPolygon(vertices), {units: "meters"});
+}
+
+/**
+ * Convert an array of {@link Point}s to a Turf polygon feature.
+ * @param vertices The array of vertices, without repeating the first one at the end.
+ * @returns A Turf polygon feature.
+ */
+function toPolygon(vertices: Point[]): turf.Feature<turf.Polygon> {
+  return turf.polygon([[...vertices, vertices[0]].map(v => v.lngLat.toArray())]);
 }
