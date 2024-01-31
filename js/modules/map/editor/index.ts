@@ -11,7 +11,7 @@ import * as utils from "../utils";
 import * as events from "./_events";
 import * as snap from "./_snap";
 import DrawControl from "./_controls";
-import EditorPanel from "./_editor-panel";
+import EditorPanel from "./_side-panel";
 import ContextMenu, * as ctxMenu from "./_context-menu";
 
 import "./_index.css";
@@ -198,7 +198,7 @@ class MapEditor {
     this.#dataTypes.objects = {...dataTypes.objects};
     this.#map = map;
     this.#$canvasContainer = $(this.#map.getCanvasContainer());
-    this.#sidePanel = new EditorPanel(this.#map);
+    this.#sidePanel = new EditorPanel(this.#map, (n, t) => this.#getDataType(n, t));
     this.#contextMenu = new ContextMenu(this.#map, {
       onMove: () => this.#moveSelectedFeatures(),
       moveTitle: window.ottm.translate("map.context_menu.move.tooltip"),
@@ -1998,7 +1998,12 @@ export default function initMapEditor(map: Map): void {
     tunnel: "Underground",
     bridge: "Bridge",
   });
-  const track_section = new dtypes.ObjectType("track_section", "Track Section", null, "LineString");
+
+  const geometry = new dtypes.ObjectType("geometry", "Geometry", null);
+  const point = new dtypes.ObjectType("point", "Point", geometry, "Point");
+  const linestring = new dtypes.ObjectType("linestring", "Line", geometry, "LineString");
+  const polygon = new dtypes.ObjectType("polygon", "Polygon", geometry, "Polygon");
+  const track_section = new dtypes.ObjectType("track_section", "Track Section", linestring);
   track_section.addProperty(new dtypes.EnumProperty(track_section, "level", "Level", true, false, track_level_enum));
   const conv_track_section = new dtypes.ObjectType("conventional_track_section", "Railway Track Section", track_section);
   conv_track_section.addProperty(new dtypes.FloatProperty(conv_track_section, "gauge", "Gauge", true, false, 0, null, lengthUnitType));
@@ -2011,12 +2016,14 @@ export default function initMapEditor(map: Map): void {
       track_level: track_level_enum,
     },
     objects: {
-      track_section: track_section,
+      geometry,
+      point,
+      linestring,
+      polygon,
+      track_section,
       conventional_track_section: conv_track_section,
     },
   });
-
-  // TEMP
 
   const track1 = new dtypes.ObjectInstance(conv_track_section);
   track1.setPropertyValue("level", "surface");
