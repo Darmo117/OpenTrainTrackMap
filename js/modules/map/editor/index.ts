@@ -1247,13 +1247,14 @@ class MapEditor {
     if (this.#snapResult) {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
         const point = this.#getSnappedPoint();
+        const atLineEnd = feature instanceof geom.LineString && feature.isEndVertex(point);
         // Keep already existing point
         feature.replaceVertex(point, this.#draggedPoint);
         this.#removeFeature(this.#draggedPoint.id);
         this.#moveLayers(point.id); // Put point on top
         this.#draggedPoint = null;
         // If the vertex is drawn on the first vertex of the drawn line, end the drawing
-        if (feature instanceof geom.LineString && feature.getVertexPath(point) === "0") {
+        if (atLineEnd) {
           this.#updateFeatureData(point);
           this.#setHover(point);
           this.#setCanvasCursor(Cursor.POINT);
