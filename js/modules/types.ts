@@ -268,7 +268,6 @@ export class OTTM {
   formatShortcut(...keys: string[]): string {
     return st.stream(keys)
         .map(k => this.translate(`key.${k}`, () => k.toUpperCase()))
-        .toArray()
         .join("+");
   }
 

@@ -262,4 +262,22 @@ export class StreamImpl<T> implements types.Stream<T> {
     this.#pipeline.close();
     return nb !== 0 ? types.Optional.of(sum / nb) : types.Optional.empty();
   }
+
+  join(joiner: string): string {
+    const type = typeof joiner;
+    if (type !== "string") {
+      throw new TypeError(`Joiner argument must be a string, got ${type}`);
+    }
+    let r = "";
+    let first = true;
+    for (const e of this.#pipeline) {
+      if (first) {
+        r += e;
+        first = false;
+      } else {
+        r += joiner + e;
+      }
+    }
+    return r;
+  }
 }

@@ -257,6 +257,18 @@ export interface Stream<T> {
    * @throws {TypeError} If the elements of this stream are not numbers.
    */
   average(): Optional<number>;
+
+  /**
+   * Return a string consisting of every element of this stream joined by the given string.
+   * Each element is converted to a string before being joined.
+   * This is a special case of a reduction.
+   *
+   * This is a terminal operation.
+   * @returns A string consisting of every element of this stream joined by the given string
+   *  or an empty string if the this stream is empty.
+   * @throws {TypeError} If the elements of this stream are not numbers.
+   */
+  join(joiner: string): string;
 }
 
 /**

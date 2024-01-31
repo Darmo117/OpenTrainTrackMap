@@ -41,7 +41,7 @@ export default class FeatureTypeButton implements Component {
     this.#buttonText.textContent = st.stream(types)
         .map(t => t.localizedName)
         .distinct()
-        .reduce("", (r, e) => r ? r + ", " + e : e);
+        .join(", ");
   }
 
   get container(): HTMLElement {

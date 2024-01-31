@@ -440,5 +440,23 @@ core.doTests(
               assert.throws(TypeError, () => stream([1, "b"]).average());
             }),
         ),
+
+        core.describe("#join()",
+            core.test("joins the values in the stream", () => {
+              assert.equal("a,b,c,d", stream(["a", "b", "c", "d"]).join(","));
+            }),
+
+            core.test("converts values to strings", () => {
+              assert.equal("1,null,undefined,[object Object]", stream([1, null, undefined, {}]).join(","));
+            }),
+
+            core.test("returns an empty string if the stream is empty", () => {
+              assert.equal("", stream([]).join(","));
+            }),
+
+            core.test("throws an error if the argument is not a string", () => {
+              assert.throws(TypeError, () => stream(["a", "b"]).join(1 as any));
+            }),
+        ),
     ),
 );
