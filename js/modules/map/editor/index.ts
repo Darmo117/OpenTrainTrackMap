@@ -882,7 +882,7 @@ class MapEditor {
     this.#onObjectDataUpdate(feature);
   }
 
-  #onObjectDataUpdate(feature: geom.MapFeature): void { // TODO call when relevant
+  #onObjectDataUpdate(feature: geom.MapFeature): void {
     if (feature instanceof geom.LineString) {
       this.#map.setPaintProperty(feature.id, "line-dasharray", feature.properties.dash);
       this.#map.setPaintProperty(feature.id + "-foreground", "line-dasharray", feature.properties.fgDash);
