@@ -1181,7 +1181,11 @@ class MapEditor {
       case EditMode.SELECT:
         if (this.#hoveredFeature) {
           const keepSelection = e.originalEvent.ctrlKey && this.#editMode === EditMode.SELECT;
-          this.#selectFeature(this.#hoveredFeature, keepSelection);
+          if (this.#selectedFeatures.has(this.#hoveredFeature)) {
+            this.#deselectFeature(this.#hoveredFeature);
+          } else {
+            this.#selectFeature(this.#hoveredFeature, keepSelection);
+          }
         } else {
           this.#clearSelection();
         }
@@ -1544,6 +1548,22 @@ class MapEditor {
     }
     if (changed) { // Only fire if the selection set changed
       this.#map.fire(new events.FeatureSelectionEvent([...this.#selectedFeatures]));
+    }
+  }
+
+  /**
+   * Deselect the given feature.
+   * @param feature The feature to deselect.
+   * @throws {Error} If the feature is null.
+   */
+  #deselectFeature(feature: geom.MapFeature): void {
+    if (!feature) {
+      throw new Error("Missing feature");
+    }
+    if (this.#selectedFeatures.delete(feature)) {
+      feature.selectionMode = geom.SelectionMode.NONE;
+      this.#updateFeatureData(feature);
+      this.#map.fire(new events.FeatureSelectionEvent([...this.#selectedFeatures]))
     }
   }
 
