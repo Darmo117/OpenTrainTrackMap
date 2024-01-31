@@ -26,11 +26,17 @@ export type LineStringProperties = LinearProperties & {
 };
 export type PolygonProperties = LinearProperties;
 
+export type GeometryTypes = {
+  UnitType: dtypes.UnitType;
+  Enum: dtypes.Enum;
+  ObjectType: dtypes.ObjectType;
+};
+
 /**
  * A function that provides the given data type for a name and type string.
  */
 export type DataTypeProvider =
-    (typeName: string, metaType: "UnitType" | "Enum" | "ObjectType") => dtypes.UnitType | dtypes.Enum | dtypes.ObjectType;
+    <K extends keyof GeometryTypes>(typeName: string, metaType: K) => GeometryTypes[K];
 
 /**
  * This class represents a longitude/latitude offset on the map.
@@ -123,7 +129,7 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
   readonly dbId: number | null;
   // Using # seems to mess up things
   private dataObject_: dtypes.ObjectInstance | null = null;
-  private readonly dataTypesProvider: DataTypeProvider;
+  protected readonly dataTypesProvider: DataTypeProvider;
 
   /**
    * Create a new map feature.
@@ -223,33 +229,6 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
    * Update this feature’s `properties` field.
    */
   abstract updateProperties(): void;
-
-  /**
-   * Get the {@link dtypes.UnitType} for the given name.
-   * @param name The type’s name.
-   * @returns The corresponding type.
-   */
-  protected getUnitType(name: string): dtypes.UnitType {
-    return this.dataTypesProvider(name, "UnitType") as dtypes.UnitType;
-  }
-
-  /**
-   * Get the {@link dtypes.Enum} for the given name.
-   * @param name The enum’s name.
-   * @returns The corresponding enum.
-   */
-  protected getEnum(name: string): dtypes.Enum {
-    return this.dataTypesProvider(name, "Enum") as dtypes.Enum;
-  }
-
-  /**
-   * Get the {@link dtypes.ObjectType} for the given name.
-   * @param name The type’s name.
-   * @returns The corresponding type.
-   */
-  protected getObjectType(name: string): dtypes.ObjectType {
-    return this.dataTypesProvider(name, "ObjectType") as dtypes.ObjectType;
-  }
 }
 
 /**
@@ -907,9 +886,9 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
       this.properties.fgDash = null;
 
     } else {
-      if (this.dataObject.isInstanceOf(this.getObjectType("track_section"))) {
+      if (this.dataObject.isInstanceOf(this.dataTypesProvider("track_section", "ObjectType"))) {
         this.properties.width = 6;
-        if (this.dataObject.isInstanceOf(this.getObjectType("conventional_track_section"))) {
+        if (this.dataObject.isInstanceOf(this.dataTypesProvider("conventional_track_section", "ObjectType"))) {
           const gauge = this.dataObject.getPropertyValue<number>("gauge");
           if (gauge !== null && gauge >= 1435) {
             this.properties.width = 8;
