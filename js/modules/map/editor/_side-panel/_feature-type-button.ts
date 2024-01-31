@@ -37,11 +37,12 @@ export default class FeatureTypeButton implements Component {
   setFeatureTypes(types: dtypes.ObjectType[]): void {
     if (!types.length) {
       this.setFeatureType(null);
+    } else {
+      this.#buttonText.textContent = st.stream(types)
+          .map(t => t.localizedName)
+          .distinct()
+          .join(", ");
     }
-    this.#buttonText.textContent = st.stream(types)
-        .map(t => t.localizedName)
-        .distinct()
-        .join(", ");
   }
 
   get container(): HTMLElement {
