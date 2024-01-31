@@ -513,41 +513,77 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
    * Called when one of the vertices of this feature is being dragged.
    * @param draggedVertex The vertex being dragged.
    */
-  onVertexDrag(draggedVertex: Point) {
+  onVertexDrag(draggedVertex: Point): void {
     this.updateGeometry(draggedVertex);
   }
+
+  static readonly CIRCULARITY_THRESHOLD: number = 0.6;
 
   /**
    * Indicate whether a ring of this feature is nearly circular.
    *
    * The circularity coefficient is derived from the formula by Cox (1927).
    * @param ringIndex The index of the ring.
-   * @return True if the circularity coefficient of the ring is greater than or equal to 0.6, false otherwise.
+   * @returns True if the circularity coefficient of the ring is greater than or equal to 0.6, false otherwise.
    * @see Cox, E. P. (1927). A Method of Assigning Numerical and Percentage Values to the Degree
    *  of Roundness of Sand Grains. Journal of Paleontology, 1(3), 179–183. http://www.jstor.org/stable/1298056
+   * @throws {Error} If the index is invalid.
    */
   isNearlyCircular(ringIndex: number): boolean {
-    return 4 * Math.PI * this.getArea(ringIndex) / (this.getPerimeter(ringIndex) ** 2) >= 0.6;
+    return 4 * Math.PI * this.getArea(ringIndex) / (this.getPerimeter(ringIndex) ** 2) >= LinearFeature.CIRCULARITY_THRESHOLD;
   }
 
   /**
    * Calculate the area of the region enclosed by the given closed ring.
    * @param ringIndex The index of the ring.
    * @returns The area of the region.
+   * @throws {Error} If the index is invalid.
    */
-  abstract getArea(ringIndex?: number): number;
+  getArea(ringIndex: number): number {
+    return getPolygonArea(this.getRing(ringIndex));
+  }
 
   /**
    * Calculate the perimeter of the given closed ring.
-   * @param ringIndex The index of the ring for polygons.
+   * @param ringIndex The index of the ring.
    * @returns The perimeter of the ring.
+   * @throws {Error} If the index is invalid.
    */
-  abstract getPerimeter(ringIndex?: number): number;
+  getPerimeter(ringIndex: number): number {
+    return getPolygonPerimeter(this.getRing(ringIndex));
+  }
+
+  static readonly RIGHT_ANGLE_THRESHOLD: number = 5;
 
   /**
-   * Indicate whether the outer line of this feature is nearly square.
-   */ // TODO what does that mean?
-  abstract isNearlySquare(): boolean;
+   * Indicate whether the given ring of this feature is nearly square,
+   * i.e. all its angles are nearly a multiple of 90°.
+   * @param ringIndex The index of the ring.
+   * @returns True if all angles at each vertex is a multiple of 90° ± 5°, false otherwise.
+   * @throws {Error} If the index is invalid.
+   */
+  isNearlySquare(ringIndex: number): boolean {
+    const ring = this.getRing(ringIndex);
+    for (let i = 0; i < ring.length; i++) {
+      const vPrev = i == 0 ? ring[ring.length - 1] : ring[i - 1];
+      const vCurr = ring[i];
+      const vNext = i == ring.length - 1 ? ring[0] : ring[i + 1];
+      const angle = turf.angle(vPrev, vCurr, vNext, {mercator: true}) % 90;
+      const t = LinearFeature.RIGHT_ANGLE_THRESHOLD;
+      if (angle > t && angle < 90 - t) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Return the vertices of the ring at the given index.
+   * @param index The index of the ring.
+   * @returns The vertices of the given ring.
+   * @throws {Error} If the index is invalid.
+   */
+  protected abstract getRing(index: number): Point[];
 
   /**
    * Update this feature’s `geometry.coordinates` and `geometry.bbox` properties.
@@ -570,7 +606,7 @@ export enum PolylineDirection {
  *
  * As a line string only contains a single vertex list, paths must respect the following format:
  * * `"<nb>"`, where `<nb>` is the index of the vertex/segment to target.
- */ // TODO allow loops (ie last point = first point)
+ */
 export class LineString extends LinearFeature<geojson.LineString, LineStringProperties> {
   static readonly #PATH_PATTERN = /^(\d+)$/;
 
@@ -798,29 +834,33 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
   }
 
   /**
-   * Indicate whether this line forms a loop, i.e. its first and last vertex are the same.
+   * Indicate whether this line forms a loop, i.e. it has more than one vertex
+   * and its first and last vertex are the same.
    */
   isLoop(): boolean {
     return this.#vertices.length > 1 && this.#vertices[0] === this.#vertices[this.#vertices.length - 1];
   }
 
-  isNearlyCircular(ring: number): boolean {
-    return this.isLoop() && super.isNearlyCircular(ring);
-  }
-
-  getArea(): number {
+  getArea(ringIndex: number): number {
     if (!this.isLoop()) {
-      throw new Error("Line is not a loop");
+      throw new Error("LineString is not a loop");
     }
-    return getPolygonArea(this.#vertices);
+    return super.getArea(ringIndex);
   }
 
-  getPerimeter(): number {
-    return getPolygonPerimeter(this.#vertices);
+  getPerimeter(ringIndex: number): number {
+    if (!this.isLoop()) {
+      throw new Error("LineString is not a loop");
+    }
+    return super.getPerimeter(ringIndex);
   }
 
-  isNearlySquare(): boolean {
-    return false; // TODO
+  protected getRing(index: number): Point[] {
+    if (index !== 0) {
+      throw new Error(`Invalid ring index: ${index}`);
+    }
+    // Discard last vertex
+    return this.#vertices.slice(0, this.#vertices.length - 1);
   }
 
   /**
@@ -1171,24 +1211,12 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  getArea(ringIndex: number): number {
-    const ring = this.#vertices[ringIndex];
+  protected getRing(index: number): Point[] {
+    const ring = this.#vertices[index];
     if (!ring) {
-      throw new Error(`Invalid ring index: ${ringIndex}`);
+      throw new Error(`Invalid ring index: ${index}`);
     }
-    return getPolygonArea(ring);
-  }
-
-  getPerimeter(ringIndex: number): number {
-    const ring = this.#vertices[ringIndex];
-    if (!ring) {
-      throw new Error(`Invalid ring index: ${ringIndex}`);
-    }
-    return getPolygonPerimeter(ring);
-  }
-
-  isNearlySquare(): boolean {
-    return false; // TODO
+    return [...ring];
   }
 
   protected updateGeometry(draggedVertex?: Point): void {

@@ -1851,7 +1851,7 @@ class MapEditor {
     }
     return st.stream(this.#selectedFeatures)
         .filter(f =>
-            (f instanceof geom.Polygon || f instanceof geom.LineString && f.isLoop()) && f.isNearlySquare()) as st.Stream<geom.LinearFeature>;
+            f instanceof geom.LinearFeature && f.isNearlySquare(0)) as st.Stream<geom.LinearFeature>;
   }
 
   #squareSelectedFeatures(): void {
