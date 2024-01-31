@@ -1,6 +1,7 @@
 import * as mgl from "maplibre-gl";
 import $ from "jquery";
 
+import * as st from "../../../streams";
 import * as geom from "../../model/geometry";
 import * as dtypes from "../../model/data-types";
 import * as events from "../_events";
@@ -53,10 +54,21 @@ export default class EditorPanel {
   }
 
   #setupSingleForm(feature: geom.MapFeature, editable: boolean): void {
-    const type = feature.dataObject?.type;
+    const type = feature.dataObject?.type ?? this.#getDefaultType(feature);
     this.#featureTypeButton.disabled = !editable;
-    this.#setType(type ?? this.#getDefaultType(feature));
-    // TODO
+    this.#setType(type);
+    type.properties.forEach(property => {
+      this.#createFieldForProperty(property);
+      if (property.isUnique) {
+        const value = feature.dataObject.getPropertyValue(property.label);
+        if (value !== null) {
+          this.#setFieldValue(property, value);
+        }
+      } else {
+        const values = feature.dataObject.getPropertyValues(property.label);
+        this.#setFieldValues(property, values);
+      }
+    });
   }
 
   #setupMultipleForm(features: geom.MapFeature[]): void {
@@ -82,5 +94,20 @@ export default class EditorPanel {
   #onTypeButtonClick(): void {
     // TODO
     console.log("type button clicked"); // DEBUG
+  }
+
+  #createFieldForProperty(property: dtypes.ObjectProperty<any>): void {
+    console.log("create field for", property.fullName); // DEBUG
+    // TODO
+  }
+
+  #setFieldValue<T>(property: dtypes.ObjectProperty<T>, value: T): void {
+    console.log("set field value for", property.fullName, "to", value); // DEBUG
+    // TODO
+  }
+
+  #setFieldValues<T>(property: dtypes.ObjectProperty<T>, values: st.Stream<T>) {
+    console.log("set field values for", property.fullName, "to", values.toArray()); // DEBUG
+    // TODO
   }
 }

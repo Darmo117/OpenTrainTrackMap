@@ -544,7 +544,7 @@ bg=pink</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>2160</x>
+      <x>2170</x>
       <y>470</y>
       <w>300</w>
       <h>60</h>
@@ -1140,12 +1140,12 @@ r1=parent_type</panel_attributes>
     <coordinates>
       <x>1920</x>
       <y>450</y>
-      <w>230</w>
+      <w>240</w>
       <h>80</h>
     </coordinates>
-    <panel_attributes>_*track_gauge_prop: FloatProperty*_
+    <panel_attributes>_*track_gauges_prop: FloatProperty*_
 -
-label = "gauge"
+label = "gauges"
 unique = False
 min = 0</panel_attributes>
     <additional_attributes/>

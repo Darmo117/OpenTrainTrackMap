@@ -889,8 +889,10 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
       if (this.dataObject.isInstanceOf(this.dataTypesProvider("track_section", "ObjectType"))) {
         this.properties.width = 6;
         if (this.dataObject.isInstanceOf(this.dataTypesProvider("conventional_track_section", "ObjectType"))) {
-          const gauge = this.dataObject.getPropertyValue<number>("gauge");
-          if (gauge !== null && gauge >= 1435) {
+          const normalOrBroadGauge = this.dataObject
+              .getPropertyValues<number>("gauges")
+              .anyMatch(g => g >= 1435);
+          if (normalOrBroadGauge) {
             this.properties.width = 8;
           }
         }

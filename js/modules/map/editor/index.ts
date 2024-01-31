@@ -2006,7 +2006,7 @@ export default function initMapEditor(map: Map): void {
   const track_section = new dtypes.ObjectType("track_section", "Track Section", linestring);
   track_section.addProperty(new dtypes.EnumProperty(track_section, "level", "Level", true, false, track_level_enum));
   const conv_track_section = new dtypes.ObjectType("conventional_track_section", "Railway Track Section", track_section);
-  conv_track_section.addProperty(new dtypes.FloatProperty(conv_track_section, "gauge", "Gauge", true, false, 0, null, lengthUnitType));
+  conv_track_section.addProperty(new dtypes.FloatProperty(conv_track_section, "gauges", "Gauge", false, false, 0, null, lengthUnitType));
 
   const mapEditor = new MapEditor(map, {
     units: {
@@ -2027,7 +2027,7 @@ export default function initMapEditor(map: Map): void {
 
   const track1 = new dtypes.ObjectInstance(conv_track_section);
   track1.setPropertyValue("level", "surface");
-  track1.setPropertyValue("gauge", 1435);
+  track1.addValueToProperty("gauges", 1435);
 
   map.on("load", () => {
     mapEditor.createFeature({dbId: 0, type: "Point", lng: 1.4500, lat: 43.6005,});

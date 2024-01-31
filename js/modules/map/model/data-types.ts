@@ -1,4 +1,4 @@
-import * as stream from "../../streams";
+import * as st from "../../streams";
 import * as di from "./date-interval"
 
 /*
@@ -38,8 +38,8 @@ export class UnitType {
    * This type’s units.
    * @returns An unordered stream of this type’s units.
    */
-  get units(): stream.Stream<Unit> {
-    return stream.stream(this.#units);
+  get units(): st.Stream<Unit> {
+    return st.stream(this.#units);
   }
 
   /**
@@ -119,16 +119,16 @@ export class Enum {
   /**
    * A stream of this enum’s values.
    */
-  get values(): stream.Stream<string> {
-    return stream.streamOfObject(this.#values).map(([key, _]) => key);
+  get values(): st.Stream<string> {
+    return st.streamOfObject(this.#values).map(([key, _]) => key);
   }
 
   /**
    * A stream of this enum’s values and their translations.
    * @returns A stream of string pairs, each containing a value and its translation in this order.
    */
-  get valuesTranslations(): stream.Stream<[string, string]> {
-    return stream.streamOfObject(this.#values);
+  get valuesTranslations(): st.Stream<[string, string]> {
+    return st.streamOfObject(this.#values);
   }
 }
 
@@ -188,6 +188,26 @@ export class ObjectType {
     this.isTemporal = temporal;
     this.isDeprecated = deprecated;
     this.#geometryType = geometryType;
+  }
+
+  /**
+   * The properties of this object type and its parents’.
+   * @returns A stream of this type’s properties.
+   */
+  get properties(): st.Stream<ObjectProperty<any>> {
+    return st.stream(this.#getProperties())
+        .flatMap(st.streamOfObject)
+        .map(([_, p]) => p);
+  }
+
+  #getProperties(): { [name: string]: ObjectProperty<any> }[] {
+    const a: { [name: string]: ObjectProperty<any> }[] = [];
+    let type: ObjectType = this;
+    do {
+      a.splice(0, 0, type.#properties); // Insert first
+      type = type.parentType;
+    } while (type);
+    return a;
   }
 
   /**
@@ -795,9 +815,9 @@ export class ObjectInstance {
    *  or has been removed but not set again afterwards.
    * @throws {TypeError} If the property does not exist for this object’s type or is unique.
    */
-  getPropertyValues<T>(name: string): stream.Stream<T> {
+  getPropertyValues<T>(name: string): st.Stream<T> {
     this.#getMultiplePropertyOrThrow(name);
-    return this.#multiProperties[name]?.getValues() ?? stream.emptyStream();
+    return this.#multiProperties[name]?.getValues() ?? st.emptyStream();
   }
 
   /**
@@ -904,7 +924,7 @@ export class ObjectInstance {
    * @returns A stream of the value’s translations.
    * @throws {TypeError} If the property does not exist, or it is not translatable.
    */
-  getPropertyValueTranslations(name: string, index?: number): stream.Stream<[string, string]> {
+  getPropertyValueTranslations(name: string, index?: number): st.Stream<[string, string]> {
     const property = this.#type.getProperty(name);
     if (!property) {
       throw new TypeError(`Invalid property "${name}" for object of type "${this.#type.label}"`);
@@ -1122,8 +1142,8 @@ export class StringSingleObjectPropertyValue extends SingleObjectPropertyValue<s
    * The translations for this string value.
    * @returns A stream of string pairs, each containing the language code and the text for that language in that order.
    */
-  get translations(): stream.Stream<[string, string]> {
-    return stream.streamOfObject(this.#translations);
+  get translations(): st.Stream<[string, string]> {
+    return st.streamOfObject(this.#translations);
   }
 
   /**
@@ -1176,8 +1196,8 @@ export class MultipleObjectPropertyValue<T, OP extends ObjectProperty<T>> extend
    * The values of the property.
    * @returns A stream of all values bound to the property.
    */
-  getValues(): stream.Stream<T> {
-    return stream.stream(this.#value);
+  getValues(): st.Stream<T> {
+    return st.stream(this.#value);
   }
 
   /**
@@ -1300,8 +1320,8 @@ export class StringMultipleObjectPropertyValue extends MultipleObjectPropertyVal
    *  each containing the language code and the text for that language in that order,
    *  for each value of this property.
    */
-  get translations(): stream.Stream<[string, string]>[] {
-    return this.#translations.map(t => stream.streamOfObject(t));
+  get translations(): st.Stream<[string, string]>[] {
+    return this.#translations.map(t => st.streamOfObject(t));
   }
 
   /**
