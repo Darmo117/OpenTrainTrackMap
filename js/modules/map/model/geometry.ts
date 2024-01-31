@@ -841,6 +841,10 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
     return this.#vertices.length > 1 && this.#vertices[0] === this.#vertices[this.#vertices.length - 1];
   }
 
+  isNearlyCircular(ringIndex: number): boolean {
+    return this.isLoop() && super.isNearlyCircular(ringIndex);
+  }
+
   getArea(ringIndex: number): number {
     if (!this.isLoop()) {
       throw new Error("LineString is not a loop");
@@ -853,6 +857,10 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
       throw new Error("LineString is not a loop");
     }
     return super.getPerimeter(ringIndex);
+  }
+
+  isNearlySquare(ringIndex: number): boolean {
+    return this.isLoop() && super.isNearlySquare(ringIndex);
   }
 
   protected getRing(index: number): Point[] {
