@@ -1235,6 +1235,7 @@ class MapEditor {
   #drawPoint(e: mgl.MapMouseEvent): void {
     this.#selectFeature(this.#drawNewPoint(e), false);
     this.#disableDrawPointMode(e.point);
+    this.#setCanvasCursor(Cursor.POINT);
   }
 
   /**
@@ -1378,9 +1379,10 @@ class MapEditor {
    * @param e The mouse event.
    */
   #onDoubleClick(e: mgl.MapMouseEvent): void {
-    if (this.#hoveredFeature) {
-      this.#createNewPointOnHoveredSegment(e);
-      this.#refreshCursor(e.point);
+    if (this.#hoveredFeature instanceof geom.LinearFeature) {
+      const point = this.#createNewPointOnHoveredSegment(e);
+      this.#setHover(point);
+      this.#setCanvasCursor(Cursor.POINT);
     }
   }
 
@@ -1471,6 +1473,7 @@ class MapEditor {
             }
           }
         });
+        this.#updateFeatureData(newPoint);
         return newPoint;
       }
     }

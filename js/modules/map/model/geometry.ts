@@ -801,7 +801,7 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
    * Indicate whether this line forms a loop, i.e. its first and last vertex are the same.
    */
   isLoop(): boolean {
-    return this.#vertices.length && this.#vertices[0] === this.#vertices[this.#vertices.length - 1];
+    return this.#vertices.length > 1 && this.#vertices[0] === this.#vertices[this.#vertices.length - 1];
   }
 
   isNearlyCircular(ring: number): boolean {
