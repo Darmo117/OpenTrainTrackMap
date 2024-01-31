@@ -26,7 +26,7 @@ export type LineStringProperties = LinearProperties & {
 };
 export type PolygonProperties = LinearProperties;
 
-export type GeometryTypes = {
+export type DataTypes = {
   UnitType: dtypes.UnitType;
   Enum: dtypes.Enum;
   ObjectType: dtypes.ObjectType;
@@ -36,7 +36,7 @@ export type GeometryTypes = {
  * A function that provides the given data type for a name and type string.
  */
 export type DataTypeProvider =
-    <K extends keyof GeometryTypes>(typeName: string, metaType: K) => GeometryTypes[K];
+    <K extends keyof DataTypes>(typeName: string, metaType: K) => DataTypes[K];
 
 /**
  * This class represents a longitude/latitude offset on the map.

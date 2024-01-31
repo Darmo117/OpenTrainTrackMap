@@ -348,14 +348,14 @@ class MapEditor {
    * @param metaType A string representing the class of the type to return.
    * @returns The type for the given name or undefined if it does not exist.
    */
-  #getDataType<K extends keyof geom.GeometryTypes>(typeName: string, metaType: K): geom.GeometryTypes[K] {
+  #getDataType<K extends keyof geom.DataTypes>(typeName: string, metaType: K): geom.DataTypes[K] {
     switch (metaType) {
       case "UnitType":
-        return this.#dataTypes.units[typeName] as geom.GeometryTypes[K];
+        return this.#dataTypes.units[typeName] as geom.DataTypes[K];
       case "Enum":
-        return this.#dataTypes.enums[typeName] as geom.GeometryTypes[K];
+        return this.#dataTypes.enums[typeName] as geom.DataTypes[K];
       case "ObjectType":
-        return this.#dataTypes.objects[typeName] as geom.GeometryTypes[K];
+        return this.#dataTypes.objects[typeName] as geom.DataTypes[K];
     }
   }
 
