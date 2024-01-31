@@ -946,7 +946,19 @@ class MapEditor {
       excludedIds.add(f.id);
       // Exclude all the feature’s points
       if (f instanceof geom.LineString) {
-        f.vertices.forEach(v => excludedIds.add(v.id));
+        const lastPath = "" + (f.vertices.count() - 1);
+        // Allow other end point if #draggedPoint is at an end
+        if (!f.isLoop() && f.getVertexPath(this.#draggedPoint) === "0") {
+          f.vertices
+              .filter(v => f.getVertexPath(v) !== lastPath)
+              .forEach(v => excludedIds.add(v.id));
+        } else if (!f.isLoop() && f.getVertexPath(this.#draggedPoint) === lastPath) {
+          f.vertices
+              .skip(1)
+              .forEach(v => excludedIds.add(v.id));
+        } else {
+          f.vertices.forEach(v => excludedIds.add(v.id));
+        }
       } else if (f instanceof geom.Polygon) {
         f.vertices
             .flatMap(s => s)
@@ -971,7 +983,7 @@ class MapEditor {
           point = feature.getVertex(path);
         }
         const canSnap = point.boundFeatures.allMatch(
-            f => f.canAcceptVertex(this.#draggedPoint));
+            f => f.canAcceptVertex(this.#draggedPoint, f.getVertexPath(point)));
         if (canSnap) {
           this.#snapResult = snapResult;
           // Move dragged point to the snap position
@@ -1239,6 +1251,15 @@ class MapEditor {
         this.#removeFeature(this.#draggedPoint.id);
         this.#moveLayers(point.id); // Put point on top
         this.#draggedPoint = null;
+        // If the vertex is drawn on the first vertex of the drawn line, end the drawing
+        if (feature instanceof geom.LineString && feature.getVertexPath(point) === "0") {
+          this.#updateFeatureData(point);
+          this.#setHover(point);
+          this.#setCanvasCursor(Cursor.POINT);
+          this.#disableDrawLineMode(e.point);
+          this.#snapResult = null;
+          return;
+        }
       } else { // segment
         this.#addSnappedPointToSegment();
         this.#drawnPoints.push(this.#draggedPoint);

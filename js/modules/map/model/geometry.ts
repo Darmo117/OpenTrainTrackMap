@@ -431,11 +431,12 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
   abstract appendVertex(vertex: Point, path: string): void;
 
   /**
-   * Check whether this feature can accept the given vertex anywhere.
+   * Check whether this feature can accept the given vertex anywhere or at the given path.
    * @param vertex The vertex to check.
+   * @param at The path where the vertex may be accepted, or null to check if the vertex may be accepted anywhere.
    * @returns True if this feature is accepted, false otherwise.
    */
-  abstract canAcceptVertex(vertex: Point): boolean
+  abstract canAcceptVertex(vertex: Point, at?: string): boolean
 
   /**
    * Replace a vertex of this feature by the specified one.
@@ -495,6 +496,13 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
    * @returns The segment’s path or null if there is no segment for the two points.
    */
   abstract getSegmentPath(v1: Point, v2: Point): string | null;
+
+  /**
+   * Return the path of the given vertex.
+   * @param v The vertex to get the path of.
+   * @returns The path for the vertex or null if it is not present in this feature.
+   */
+  abstract getVertexPath(v: Point): string | null;
 
   /**
    * Return the path to the next possible vertex position on this feature’s outer line.
@@ -659,15 +667,34 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
     this.updateGeometry();
   }
 
-  canAcceptVertex(vertex: Point): boolean {
-    return !this.#vertices.includes(vertex);
+  canAcceptVertex(vertex: Point, at?: string): boolean {
+    const i = this.#vertices.indexOf(vertex);
+    if (i === -1) {
+      return true;
+    }
+    if (!at || this.isLoop()) {
+      return false;
+    }
+    const atI = this.#getVertexIndex(at);
+    if (atI === null
+        || Math.abs(i - atI) <= 2) { // Cannot accept if vertices have not at least two other vertices in-between
+      return false;
+    }
+    const lastI = this.#vertices.length - 1;
+    // Allow first vertex to snap to last vertex and vice-versa
+    return i === 0 && atI === lastI || i === lastI && atI === 0;
   }
 
   replaceVertex(newVertex: Point, oldVertex: Point): void {
-    if (!this.canAcceptVertex(newVertex)) {
+    if (!this.canAcceptVertex(newVertex, this.getVertexPath(oldVertex))) {
       return;
     }
-    this.#vertices[this.#vertices.indexOf(oldVertex)] = newVertex;
+    // Replace everywhere
+    let i = this.#vertices.indexOf(oldVertex);
+    do {
+      this.#vertices[i] = newVertex;
+      i = this.#vertices.indexOf(oldVertex);
+    } while (i !== -1);
     newVertex.bindFeature(this);
     oldVertex.unbindFeature(this);
     this.updateGeometry();
@@ -692,12 +719,16 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
   }
 
   removeVertex(vertex: Point): Action {
-    const i = this.#vertices.indexOf(vertex);
+    let i = this.#vertices.indexOf(vertex);
     if (i !== -1) {
-      if (this.#vertices.length <= 2) {
+      if (this.#vertices.length <= 2 || this.isLoop() && this.#vertices.length === 3) {
         return {type: "delete_feature"};
       }
-      this.#vertices.splice(i, 1);
+      // Vertex may be present twice if this is a loop
+      do {
+        this.#vertices.splice(i, 1).length
+        i = this.#vertices.indexOf(vertex);
+      } while (i !== -1)
       vertex.unbindFeature(this);
       this.updateGeometry();
     }
@@ -744,6 +775,11 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
     return null;
   }
 
+  getVertexPath(v: Point): string | null {
+    const i = this.#vertices.indexOf(v);
+    return i !== null ? "" + i : null;
+  }
+
   getNextVertexPath(): string {
     return "" + this.#vertices.length;
   }
@@ -754,6 +790,9 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
    * @returns True if the vertex is the first or last one, false otherwise.
    */
   isEndVertex(v: Point): boolean {
+    if (this.isLoop()) {
+      return false;
+    }
     const i = this.#vertices.indexOf(v);
     return i === 0 || i === this.#vertices.length - 1;
   }
@@ -762,7 +801,7 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
    * Indicate whether this line forms a loop, i.e. its first and last vertex are the same.
    */
   isLoop(): boolean {
-    return false; // TODO
+    return this.#vertices.length && this.#vertices[0] === this.#vertices[this.#vertices.length - 1];
   }
 
   isNearlyCircular(ring: number): boolean {
@@ -1099,6 +1138,16 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
       } else if (i1 === -1 && i2 !== -1 || i1 !== -1 && i2 === -1) {
         // Vertices are not on the same ring, no need to search further
         break;
+      }
+    }
+    return null;
+  }
+
+  getVertexPath(v: Point): string | null {
+    for (let ringI = 0; ringI < this.#vertices.length; ringI++) {
+      const i = this.#vertices[ringI].indexOf(v);
+      if (i !== -1) {
+        return `${ringI}.${i}`;
       }
     }
     return null;
