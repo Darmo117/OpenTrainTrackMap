@@ -6,28 +6,6 @@ import * as helpers from "../controls/helpers";
 import "./_context-menu.css";
 
 /**
- * Base type for button-related options.
- */
-export type ButtonsMapping<T> = {
-  move?: T;
-  copy?: T;
-  paste?: T;
-  delete?: T;
-  continueLine?: T;
-  disconnect?: T;
-  extractPoint?: T;
-  split?: T;
-  circularize?: T;
-  square?: T;
-  flipLong?: T;
-  flipShort?: T;
-  reverseLine?: T;
-  rotate?: T;
-  straightenLine?: T;
-  // TODO regularly distribute points
-};
-
-/**
  * Options for the {@link ContextMenu} class.
  */
 export type ContextMenuOptions = {
@@ -66,13 +44,47 @@ export type ContextMenuOptions = {
 /**
  * Options for the {@link ContextMenu.show} method.
  */
-export type ButtonStatesOptions = ButtonsMapping<boolean>;
+export type ButtonStatesOptions = {
+  move?: boolean;
+  copy?: boolean;
+  paste?: boolean;
+  delete?: boolean;
+  continueLine?: boolean;
+  disconnect?: boolean;
+  extractPoint?: boolean;
+  split?: boolean;
+  circularize?: boolean;
+  square?: boolean;
+  flipLong?: boolean;
+  flipShort?: boolean;
+  reverseLine?: boolean;
+  rotate?: boolean;
+  straightenLine?: boolean;
+  // TODO regularly distribute points
+};
 
 export default class ContextMenu {
   readonly #map: mgl.Map;
   readonly #popup: mgl.Popup;
   readonly #container: HTMLElement;
-  readonly #buttons: ButtonsMapping<HTMLButtonElement>;
+  readonly #buttons: {
+    move: HTMLButtonElement;
+    copy: HTMLButtonElement;
+    paste: HTMLButtonElement;
+    delete: HTMLButtonElement;
+    continueLine: HTMLButtonElement;
+    disconnect: HTMLButtonElement;
+    extractPoint: HTMLButtonElement;
+    split: HTMLButtonElement;
+    circularize: HTMLButtonElement;
+    square: HTMLButtonElement;
+    flipLong: HTMLButtonElement;
+    flipShort: HTMLButtonElement;
+    reverseLine: HTMLButtonElement;
+    rotate: HTMLButtonElement;
+    straightenLine: HTMLButtonElement;
+    // TODO regularly distribute points
+  };
 
   constructor(map: mgl.Map, options: ContextMenuOptions) {
     this.#map = map;
@@ -259,7 +271,7 @@ export default class ContextMenu {
     let anyEnabled = false;
     for (const [key, button] of Object.entries(this.#buttons)) {
       const enabled = buttonStates[key as keyof ButtonStatesOptions];
-      this.#setButtonState(button, enabled);
+      this.#setButtonState(button, !!enabled);
       if (enabled) {
         anyEnabled = true;
       }

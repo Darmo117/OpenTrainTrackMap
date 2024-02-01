@@ -70,8 +70,8 @@ export default class GeocoderControl implements mgl.IControl {
   static readonly #BASE_URL: string =
       "https://nominatim.openstreetmap.org/search?q={query}&format=jsonv2&accept-language={lang}";
 
-  #map: mgl.Map;
-  #marker: mgl.Marker;
+  #map: mgl.Map | undefined;
+  #marker: mgl.Marker | undefined;
   readonly #options: GeocoderControlOptions;
   readonly #container: HTMLDivElement;
   readonly #textField: HTMLInputElement;
@@ -215,6 +215,9 @@ export default class GeocoderControl implements mgl.IControl {
    * @param boundingBox Result’s bounding box.
    */
   #onResultClick(lat: number, lng: number, boundingBox: mgl.LngLatBoundsLike): void {
+    if (!this.#map) {
+      return;
+    }
     this.#marker?.remove();
     this.#map.fitBounds(boundingBox);
     this.#marker = new mgl.Marker({});

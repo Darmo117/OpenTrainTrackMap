@@ -215,7 +215,7 @@ core.doTests(
             }),
 
             core.test("returns the identity if stream is empty", () => {
-              assert.equal(0, stream([]).reduce(0, (a, b) => a + b));
+              assert.equal(0, stream<number>([]).reduce(0, (a, b) => a + b));
             }),
         ),
 
@@ -452,10 +452,6 @@ core.doTests(
 
             core.test("returns an empty string if the stream is empty", () => {
               assert.equal("", stream([]).join(","));
-            }),
-
-            core.test("throws an error if the argument is not a string", () => {
-              assert.throws(TypeError, () => stream(["a", "b"]).join(1 as any));
             }),
         ),
     ),

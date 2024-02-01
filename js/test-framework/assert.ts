@@ -11,7 +11,7 @@ export class AssertionError extends Error {
    * @param actual The actual value.
    * @param more Optional. A value to append after the error message.
    */
-  constructor(expected: any, actual: any, more?: any) {
+  constructor(expected: unknown, actual: unknown, more?: unknown) {
     let s = `Assertion Error: expected ${expected}, got ${actual}`;
     if (more) {
       s += ` ${more}`;
@@ -118,7 +118,7 @@ export function objectEqual<T>(expected: Dict<T>, actual: Dict<T>): void {
  * @throws {AssertionError} If `actual !== true`.
  */
 export function isTrue(actual: boolean): void {
-  if (actual !== true) { // Intentional explicit value check
+  if (!actual) {
     throw new AssertionError(true, actual);
   }
 }
@@ -129,7 +129,7 @@ export function isTrue(actual: boolean): void {
  * @throws {AssertionError} If `actual !== false`.
  */
 export function isFalse(actual: boolean): void {
-  if (actual !== false) { // Intentional explicit value check
+  if (actual) {
     throw new AssertionError(false, actual);
   }
 }
@@ -139,7 +139,7 @@ export function isFalse(actual: boolean): void {
  * @param actual The value to check.
  * @throws {AssertionError} If `actual !== null`.
  */
-export function isNull(actual: any): void {
+export function isNull(actual: unknown): void {
   if (actual !== null) {
     throw new AssertionError(null, actual);
   }
@@ -150,7 +150,7 @@ export function isNull(actual: any): void {
  * @param actual The value to check.
  * @throws {AssertionError} If `actual === null`.
  */
-export function isNotNull(actual: any): void {
+export function isNotNull(actual: unknown): void {
   if (actual === null) {
     throw new AssertionError("not null", actual);
   }
@@ -161,7 +161,7 @@ export function isNotNull(actual: any): void {
  * @param actual The value to check.
  * @throws {AssertionError} If `actual !== undefined`.
  */
-export function isUndefined(actual: any): void {
+export function isUndefined(actual: unknown): void {
   if (actual !== undefined) {
     throw new AssertionError(undefined, actual);
   }
@@ -172,7 +172,7 @@ export function isUndefined(actual: any): void {
  * @param actual The value to check.
  * @throws {AssertionError} If `actual === undefined`.
  */
-export function isNotUndefined(actual: any): void {
+export function isNotUndefined(actual: unknown): void {
   if (actual === undefined) {
     throw new AssertionError("not undefined", actual);
   }
@@ -183,7 +183,7 @@ export function isNotUndefined(actual: any): void {
  * @param actual The value to check.
  * @throws {AssertionError} If `actual !== null && actual !== undefined`.
  */
-export function isNullOrUndefined(actual: any): void {
+export function isNullOrUndefined(actual: unknown): void {
   if (actual !== null && actual !== undefined) {
     throw new AssertionError("null or undefined", actual);
   }
@@ -194,7 +194,7 @@ export function isNullOrUndefined(actual: any): void {
  * @param actual The value to check.
  * @throws {AssertionError} If `actual === null || actual === undefined`.
  */
-export function isNotNullOrUndefined(actual: any): void {
+export function isNotNullOrUndefined(actual: unknown): void {
   if (actual === null || actual === undefined) {
     throw new AssertionError("not null or undefined", actual);
   }
@@ -211,6 +211,9 @@ export function throws<E extends typeof Error>(expected: E, action: () => void):
   try {
     action();
   } catch (e) {
+    if (!(e instanceof Error)) {
+      throw new AssertionError(`error of type ${expected.name}`, typeof e);
+    }
     if (e.constructor !== expected) {
       throw new AssertionError(`error of type ${expected.name}`, e.constructor.name);
     }

@@ -60,12 +60,12 @@ export default class EditorPanel {
     type.properties.forEach(property => {
       this.#createFieldForProperty(property);
       if (property.isUnique) {
-        const value = feature.dataObject.getPropertyValue(property.label);
+        const value = feature.dataObject?.getPropertyValue(property.label);
         if (value !== null) {
           this.#setFieldValue(property, value);
         }
       } else {
-        const values = feature.dataObject.getPropertyValues(property.label);
+        const values = feature.dataObject?.getPropertyValues(property.label) ?? st.emptyStream();
         this.#setFieldValues(property, values);
       }
     });
@@ -96,7 +96,7 @@ export default class EditorPanel {
     console.log("type button clicked"); // DEBUG
   }
 
-  #createFieldForProperty(property: dtypes.ObjectProperty<any>): void {
+  #createFieldForProperty(property: dtypes.ObjectProperty<unknown>): void {
     console.log("create field for", property.fullName); // DEBUG
     // TODO
   }

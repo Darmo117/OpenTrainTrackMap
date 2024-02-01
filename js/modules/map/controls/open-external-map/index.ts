@@ -37,7 +37,7 @@ export type OpenExternalMapControlOptions = {
  * A control that opens the map’s current location in the specified external map.
  */
 export default class OpenExternalMapControl implements mgl.IControl {
-  #map: mgl.Map;
+  #map: mgl.Map | undefined;
   readonly #container: HTMLElement;
   readonly #urlPattern: string;
   readonly #zoomTransformer: ZoomTransformer;
@@ -57,6 +57,9 @@ export default class OpenExternalMapControl implements mgl.IControl {
   }
 
   #onButtonClick(): void {
+    if (!this.#map) {
+      return;
+    }
     const {lat, lng} = this.#map.getCenter();
     const zoom = this.#map.getZoom();
     window.open(this.#urlPattern

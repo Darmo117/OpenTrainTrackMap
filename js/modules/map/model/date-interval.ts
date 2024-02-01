@@ -13,7 +13,7 @@ export class PartialDate {
    */
   static parse(s: string): PartialDate {
     const match = this.#PATTERN.exec(s);
-    if (!match) {
+    if (!match?.groups) {
       throw new Error(`Invalid partial date string: ${s}`);
     }
     const year = +match.groups[1];
@@ -53,7 +53,7 @@ export class PartialDate {
    *  - the day is invalid for the given month
    */
   constructor(year: number, month?: number, day?: number) {
-    if (typeof year !== "number" || year < 0 || year > 9999) {
+    if (year < 0 || year > 9999) {
       throw new Error(`Invalid year: ${year}`);
     }
     const monthDef = typeof month === "number";
@@ -70,8 +70,8 @@ export class PartialDate {
       }
     }
     this.#year = year;
-    this.#month = month;
-    this.#day = day;
+    this.#month = month ?? null;
+    this.#day = day ?? null;
   }
 
   /**
@@ -195,7 +195,7 @@ export class DateInterval {
    */
   static parse(s: string): DateInterval {
     const m = this.#PATTERN.exec(s);
-    if (!m) {
+    if (!m?.groups) {
       throw new Error(`Invalid date interval string: ${s}`);
     }
     const [approxStart, startDate] = this.#extractDatetime(m, 1);
@@ -214,6 +214,9 @@ export class DateInterval {
    *  and the corresponding {@link PartialDate} object.
    */
   static #extractDatetime(match: RegExpMatchArray, index: number): [boolean, PartialDate | null] {
+    if (!match.groups) {
+      throw new Error("No match");
+    }
     let s = match.groups[index];
     if (s === "?") {
       return [false, null];
@@ -328,8 +331,8 @@ export class DateInterval {
   equals(other: DateInterval): boolean {
     return this.hasApproxStartDate === other.hasApproxStartDate
         && this.hasApproxEndDate === other.hasApproxEndDate
-        && this.startDate.equals(other.startDate)
-        && this.endDate.equals(other.endDate)
+        && (!this.startDate && !other.startDate || !!this.startDate && !!other.startDate && this.startDate.equals(other.startDate))
+        && (!this.endDate && !other.endDate || !!this.endDate && !!other.endDate && this.endDate.equals(other.endDate))
         && this.isCurrent === other.isCurrent;
   }
 
@@ -340,7 +343,7 @@ export class DateInterval {
    *  false otherwise.
    */
   precedes(other: DateInterval): boolean {
-    return this.endDate && other.startDate && this.endDate.precedes(other.startDate);
+    return !!this.endDate && !!other.startDate && this.endDate.precedes(other.startDate);
   }
 
   /**
@@ -350,7 +353,7 @@ export class DateInterval {
    *  false otherwise.
    */
   precedesAndMeets(other: DateInterval): boolean {
-    return this.endDate && other.startDate && this.endDate.equals(other.startDate);
+    return !!this.endDate && !!other.startDate && this.endDate.equals(other.startDate);
   }
 
   /**
@@ -360,7 +363,7 @@ export class DateInterval {
    *  false otherwise.
    */
   follows(other: DateInterval): boolean {
-    return this.startDate && other.endDate && this.startDate.follows(other.endDate);
+    return !!this.startDate && !!other.endDate && this.startDate.follows(other.endDate);
   }
 
   /**
@@ -370,7 +373,7 @@ export class DateInterval {
    *  false otherwise.
    */
   followsAndMeets(other: DateInterval): boolean {
-    return this.startDate && other.endDate && this.startDate.equals(other.endDate);
+    return !!this.startDate && !!other.endDate && this.startDate.equals(other.endDate);
   }
 
   /**
@@ -386,14 +389,14 @@ export class DateInterval {
     const thisEnd = this.isCurrent ? now : this.endDate;
     const otherEnd = other.isCurrent ? now : other.endDate;
     return (
-        this.startDate && thisEnd && ( // Other starts or ends inside this
-            other.startDate && this.startDate.precedesOrEquals(other.startDate) && other.startDate.precedesOrEquals(thisEnd)
-            || otherEnd && this.startDate.precedesOrEquals(otherEnd) && otherEnd.precedesOrEquals(this.endDate)
+        !!this.startDate && !!thisEnd && ( // Other starts or ends inside this
+            !!other.startDate && this.startDate.precedesOrEquals(other.startDate) && other.startDate.precedesOrEquals(thisEnd)
+            || !!otherEnd && this.startDate.precedesOrEquals(otherEnd) && otherEnd.precedesOrEquals(thisEnd)
         )
     ) || (
-        other.startDate && otherEnd && ( // This starts or ends inside other
-            this.startDate && other.startDate.precedesOrEquals(this.startDate) && this.startDate.precedesOrEquals(otherEnd)
-            || thisEnd && other.startDate.precedesOrEquals(thisEnd) && thisEnd.precedesOrEquals(otherEnd)
+        !!other.startDate && !!otherEnd && ( // This starts or ends inside other
+            !!this.startDate && other.startDate.precedesOrEquals(this.startDate) && this.startDate.precedesOrEquals(otherEnd)
+            || !!thisEnd && other.startDate.precedesOrEquals(thisEnd) && thisEnd.precedesOrEquals(otherEnd)
         )
     );
   }

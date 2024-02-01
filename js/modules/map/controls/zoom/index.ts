@@ -35,7 +35,7 @@ export type ZoomControlOptions = {
  * A control that adds a button to zoom in and another to zoom out the map.
  */
 export default class ZoomControl implements mgl.IControl {
-  #map: mgl.Map;
+  #map: mgl.Map | undefined;
   readonly #container: HTMLDivElement;
   readonly #buttonIn: HTMLButtonElement;
   readonly #buttonOut: HTMLButtonElement;
@@ -45,13 +45,13 @@ export default class ZoomControl implements mgl.IControl {
     this.#buttonIn = helpers.createControlButton({
       title: options.zoomInTitle ?? "Zoom In",
       icon: PLUS_ICON,
-      onClick: () => this.#map.zoomIn(),
+      onClick: () => this.#map?.zoomIn(),
       shortcut: ["+"],
     });
     this.#buttonOut = helpers.createControlButton({
       title: options.zoomOutTitle ?? "Zoom Out",
       icon: MINUS_ICON,
-      onClick: () => this.#map.zoomOut(),
+      onClick: () => this.#map?.zoomOut(),
       shortcut: ["-"],
     });
   }
@@ -77,7 +77,7 @@ export default class ZoomControl implements mgl.IControl {
     this.#container.appendChild(this.#buttonIn);
     this.#container.appendChild(this.#buttonOut);
     $(this.#map.getContainer()).on("keydown", e => {
-      if (this.#map instanceof Map && this.#map.textFieldHasFocus) {
+      if (!this.#map || this.#map instanceof Map && this.#map.textFieldHasFocus) {
         return;
       }
       switch (e.key) {

@@ -177,7 +177,7 @@ export class ObjectType {
   constructor(
       label: string,
       localizedName: string,
-      parentType: ObjectType = null,
+      parentType: ObjectType | null = null,
       geometryType: GeometryType = null,
       temporal: boolean = false,
       deprecated: boolean = false
@@ -202,7 +202,7 @@ export class ObjectType {
 
   #getProperties(): { [name: string]: ObjectProperty<any> }[] {
     const a: { [name: string]: ObjectProperty<any> }[] = [];
-    let type: ObjectType = this;
+    let type: ObjectType | null = this;
     do {
       a.splice(0, 0, type.#properties); // Insert first
       type = type.parentType;
@@ -356,6 +356,7 @@ export abstract class ObjectProperty<T> {
  */
 export class BoolProperty extends ObjectProperty<boolean> {
   isValueValid(v: boolean): boolean {
+    // noinspection SuspiciousTypeOfGuard
     return typeof v === "boolean";
   }
 
@@ -402,9 +403,9 @@ export abstract class NumberProperty extends ObjectProperty<number> {
       localizedName: string,
       unique: boolean,
       deprecated: boolean,
-      min: number = null,
-      max: number = null,
-      unitType: UnitType = null
+      min: number | null = null,
+      max: number | null = null,
+      unitType: UnitType | null = null
   ) {
     super(objectType, label, localizedName, unique, deprecated);
     if (typeof min === "number" && typeof max === "number" && min > max) {
@@ -416,10 +417,14 @@ export abstract class NumberProperty extends ObjectProperty<number> {
   }
 
   isValueValid(v: number): boolean {
+    // noinspection SuspiciousTypeOfGuard
     return typeof v === "number"
         && (this.min === null || v >= this.min)
         && (this.max === null || v <= this.max);
   }
+
+  abstract newValue(value: number, unit?: Unit):
+      NumberSingleObjectPropertyValue<NumberProperty> | NumberMultipleObjectPropertyValue<NumberProperty>;
 }
 
 /**
@@ -444,15 +449,15 @@ export class IntProperty extends NumberProperty {
       localizedName: string,
       unique: boolean,
       deprecated: boolean,
-      min: number = null,
-      max: number = null,
-      unitType: UnitType = null
+      min: number | null = null,
+      max: number | null = null,
+      unitType: UnitType | null = null
   ) {
     super(objectType, label, localizedName, unique, deprecated, min, max, unitType);
-    if (typeof min === "number" && !Number.isInteger(min)) {
+    if (!Number.isInteger(min)) {
       throw new Error("min should be an integer");
     }
-    if (typeof max === "number" && !Number.isInteger(max)) {
+    if (!Number.isInteger(max)) {
       throw new Error("max should be an integer");
     }
   }
@@ -510,6 +515,7 @@ export class StringProperty extends ObjectProperty<string> {
   }
 
   isValueValid(v: string): boolean {
+    // noinspection SuspiciousTypeOfGuard
     return typeof v === "string";
   }
 
@@ -526,6 +532,7 @@ export class StringProperty extends ObjectProperty<string> {
  */
 export class DateIntervalProperty extends ObjectProperty<di.DateInterval> {
   isValueValid(v: di.DateInterval): boolean {
+    // noinspection SuspiciousTypeOfGuard
     return v instanceof di.DateInterval;
   }
 
@@ -568,6 +575,7 @@ export class TypeProperty extends ObjectProperty<ObjectInstance> {
   }
 
   isValueValid(v: ObjectInstance): boolean {
+    // noinspection SuspiciousTypeOfGuard
     return v instanceof ObjectInstance && v.isInstanceOf(this.targeType);
   }
 
@@ -649,6 +657,7 @@ export class EnumProperty extends ObjectProperty<string> {
   }
 
   isValueValid(v: string): boolean {
+    // noinspection SuspiciousTypeOfGuard
     return typeof v === "string" && this.enumType.values.anyMatch(value => value === v);
   }
 
@@ -673,9 +682,9 @@ export class ObjectInstance {
    */
   readonly id: number | null;
   #type: ObjectType;
-  #existenceInterval: di.DateInterval | null;
-  readonly #uniqueProperties: { [name: string]: SingleObjectPropertyValue<any, any> } = {};
-  readonly #multiProperties: { [name: string]: MultipleObjectPropertyValue<any, any> } = {};
+  #existenceInterval: di.DateInterval | null = null;
+  readonly #uniqueProperties: { [name: string]: SingleObjectPropertyValue<unknown, ObjectProperty<unknown>> } = {};
+  readonly #multiProperties: { [name: string]: MultipleObjectPropertyValue<unknown, ObjectProperty<unknown>> } = {};
 
   /**
    * Create a new object instance of the given type.
@@ -687,8 +696,8 @@ export class ObjectInstance {
    */
   constructor(type: ObjectType, existenceInterval?: di.DateInterval | null, id?: number) {
     this.#type = type;
-    this.id = id;
-    this.existenceInterval = existenceInterval;
+    this.id = id ?? null;
+    this.existenceInterval = existenceInterval ?? null;
   }
 
   /**
@@ -742,7 +751,7 @@ export class ObjectInstance {
    * @throws {Error} If the value is not null and this object is not temporal,
    *  or the value is null and this object is temporal.
    */
-  set existenceInterval(interval: di.DateInterval) {
+  set existenceInterval(interval: di.DateInterval | null) {
     if (!this.type.isTemporal && interval) {
       throw new Error("Object is not temporal")
     }
@@ -760,7 +769,7 @@ export class ObjectInstance {
    */
   getPropertyValue<T>(name: string): T | null {
     this.#getUniquePropertyOrThrow(name);
-    return this.#uniqueProperties[name]?.value ?? null;
+    return (this.#uniqueProperties[name]?.value as T) ?? null;
   }
 
   /**
@@ -770,18 +779,19 @@ export class ObjectInstance {
    * @throws {TypeError} If the property does not exist for this object’s type or is not unique.
    */
   setPropertyValue<T>(name: string, value: T): void {
-    const property = this.#getUniquePropertyOrThrow(name);
-    const pValue = this.#uniqueProperties[name];
+    const property: ObjectProperty<T> = this.#getUniquePropertyOrThrow(name);
+    const pValue = this.#uniqueProperties[name] as SingleObjectPropertyValue<T, ObjectProperty<T>>;
     if (pValue) {
       pValue.setValue(value);
     } else {
-      let propValue: SingleObjectPropertyValue<T, ObjectProperty<any>>;
-      if ((property instanceof IntProperty || property instanceof FloatProperty) && property.unitType) {
-        propValue = property.newValue(value as number, property.unitType.units.findFirst().get()) as any;
+      if (property instanceof NumberProperty) {
+        if (typeof value !== "number") {
+          throw new TypeError(`Expected number, got ${(typeof value)}`);
+        }
+        this.#uniqueProperties[name] = property.newValue(value, property?.unitType?.units.findFirst().get()) as NumberSingleObjectPropertyValue<NumberProperty>;
       } else {
-        propValue = property.newValue(value) as any;
+        this.#uniqueProperties[name] = property.newValue(value) as SingleObjectPropertyValue<T, ObjectProperty<T>>;
       }
-      this.#uniqueProperties[name] = propValue;
     }
   }
 
@@ -797,7 +807,7 @@ export class ObjectInstance {
     }
   }
 
-  #getUniquePropertyOrThrow(name: string): ObjectProperty<any> {
+  #getUniquePropertyOrThrow<T>(name: string): ObjectProperty<T> {
     const property = this.#type.getProperty(name);
     if (!property) {
       throw new TypeError(`Invalid property "${name}" for object of type "${this.#type.label}"`);
@@ -817,7 +827,7 @@ export class ObjectInstance {
    */
   getPropertyValues<T>(name: string): st.Stream<T> {
     this.#getMultiplePropertyOrThrow(name);
-    return this.#multiProperties[name]?.getValues() ?? st.emptyStream();
+    return (this.#multiProperties[name]?.getValues() as st.Stream<T>) ?? st.emptyStream();
   }
 
   /**
@@ -832,13 +842,14 @@ export class ObjectInstance {
     if (pValue) {
       pValue.addValue(value);
     } else {
-      let propValue: MultipleObjectPropertyValue<T, ObjectProperty<any>>;
-      if ((property instanceof IntProperty || property instanceof FloatProperty) && property.unitType) {
-        propValue = property.newValue(value as number, property.unitType.units.findFirst().get()) as any;
+      if (property instanceof NumberProperty) {
+        if (typeof value !== "number") {
+          throw new TypeError(`Expected number, got ${(typeof value)}`);
+        }
+        this.#multiProperties[name] = property.newValue(value, property.unitType?.units.findFirst().get()) as NumberMultipleObjectPropertyValue<NumberProperty>;
       } else {
-        propValue = property.newValue(value) as any;
+        this.#multiProperties[name] = property.newValue(value) as MultipleObjectPropertyValue<T, ObjectProperty<T>>;
       }
-      this.#multiProperties[name] = propValue;
     }
   }
 
@@ -935,10 +946,10 @@ export class ObjectInstance {
     if (this.#uniqueProperties[name]) {
       return (this.#uniqueProperties[name] as StringSingleObjectPropertyValue).translations;
     }
-    if (this.#multiProperties[name]) {
+    if (this.#multiProperties[name] && typeof index === "number") {
       return (this.#multiProperties[name] as StringMultipleObjectPropertyValue).translations[index];
     }
-    return null;
+    return st.emptyStream();
   }
 
   /**
@@ -960,7 +971,7 @@ export class ObjectInstance {
     if (this.#uniqueProperties[name]) {
       (this.#uniqueProperties[name] as StringSingleObjectPropertyValue).setTranslation(langCode, tr);
     }
-    if (this.#multiProperties[name]) {
+    if (this.#multiProperties[name] && typeof index === "number") {
       (this.#multiProperties[name] as StringMultipleObjectPropertyValue).setTranslation(langCode, tr, index);
     }
   }
@@ -983,7 +994,7 @@ export class ObjectInstance {
     if (this.#uniqueProperties[name]) {
       (this.#uniqueProperties[name] as StringSingleObjectPropertyValue).removeTranslation(langCode);
     }
-    if (this.#multiProperties[name]) {
+    if (this.#multiProperties[name] && typeof index === "number") {
       (this.#multiProperties[name] as StringMultipleObjectPropertyValue).removeTranslation(langCode, index);
     }
   }
@@ -1018,6 +1029,7 @@ export abstract class ObjectPropertyValue<T, OP extends ObjectProperty<T>> {
  * with a `isUnique` field set to `true`.
  */
 export class SingleObjectPropertyValue<T, OP extends ObjectProperty<T>> extends ObjectPropertyValue<T, OP> {
+  // @ts-ignore
   #value: T;
 
   /**
@@ -1056,7 +1068,7 @@ export class SingleObjectPropertyValue<T, OP extends ObjectProperty<T>> extends 
  * with a `isUnique` field set to `true`.
  */
 export class NumberSingleObjectPropertyValue<OP extends NumberProperty> extends SingleObjectPropertyValue<number, OP> {
-  #unit: Unit | null;
+  #unit: Unit | null = null;
 
   /**
    * Create a new number property value.
@@ -1068,7 +1080,7 @@ export class NumberSingleObjectPropertyValue<OP extends NumberProperty> extends 
    */
   constructor(value: number, propertyType: OP, unit?: Unit) {
     super(value, propertyType);
-    this.unit = unit;
+    this.unit = unit ?? null;
   }
 
   /**
@@ -1081,20 +1093,18 @@ export class NumberSingleObjectPropertyValue<OP extends NumberProperty> extends 
   /**
    * Set the unit attached to this value. May be null.
    * @throws {TypeError} If the unit’s type differs from the one defined by the property.
-   * @throws {Error} If the unit is null or undefined.
+   * @throws {Error} If the unit is null but one is required.
    */
-  set unit(unit: Unit) {
+  set unit(unit: Unit | null) {
     const expectedType = this.propertyType.unitType;
     if (!unit && !expectedType) {
       return;
-    }
-    if (!unit && expectedType) {
-      throw new Error(`Undefined unit`);
-    }
-    if (unit && !expectedType) {
+    } else if (!unit && expectedType) {
+      throw new Error(`Missing unit`);
+    } else if (unit && !expectedType) {
       throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
     }
-    const actualType = unit.type;
+    const actualType = (unit as Unit).type;
     if (expectedType !== actualType) {
       throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
     }
@@ -1234,7 +1244,7 @@ export class MultipleObjectPropertyValue<T, OP extends ObjectProperty<T>> extend
  * with a `isUnique` field set to `false`.
  */
 export abstract class NumberMultipleObjectPropertyValue<OP extends NumberProperty> extends MultipleObjectPropertyValue<number, OP> {
-  #unit: Unit | null;
+  #unit: Unit | null = null;
 
   /**
    * Create a new number property value.
@@ -1246,7 +1256,7 @@ export abstract class NumberMultipleObjectPropertyValue<OP extends NumberPropert
    */
   constructor(firstValue: number, propertyType: OP, unit?: Unit) {
     super(firstValue, propertyType);
-    this.unit = unit;
+    this.unit = unit ?? null;
   }
 
   /**
@@ -1259,20 +1269,18 @@ export abstract class NumberMultipleObjectPropertyValue<OP extends NumberPropert
   /**
    * Set the unit attached to the values. May be null.
    * @throws {TypeError} If the unit’s type differs from the one defined by the property.
-   * @throws {Error} If the unit is null or undefined.
+   * @throws {Error} If the unit is null but one is required.
    */
-  set unit(unit: Unit) {
+  set unit(unit: Unit | null) {
     const expectedType = this.propertyType.unitType;
     if (!unit && !expectedType) {
       return;
-    }
-    if (!unit && expectedType) {
+    } else if (!unit && expectedType) {
       throw new Error(`Undefined unit`);
-    }
-    if (unit && !expectedType) {
+    } else if (unit && !expectedType) {
       throw new TypeError(`Unexpected unit for property "${this.propertyType.fullName}"`);
     }
-    const actualType = unit.type;
+    const actualType = (unit as Unit).type;
     if (expectedType !== actualType) {
       throw new TypeError(`Invalid unit type for property "${this.propertyType.fullName}": expected "${expectedType?.label}", got "${actualType}"`);
     }
@@ -1360,7 +1368,9 @@ export class StringMultipleObjectPropertyValue extends MultipleObjectPropertyVal
 export class TemporalObjectPropertyValue extends MultipleObjectPropertyValue<ObjectInstance, TemporalProperty> {
   addValue(value: ObjectInstance): void {
     if (!this.propertyType.allowsOverlaps
-        && this.getValues().anyMatch(o => value.existenceInterval.overlaps(o.existenceInterval))) {
+        && this.getValues().anyMatch(o =>
+            !!value.existenceInterval && !!o.existenceInterval
+            && value.existenceInterval.overlaps(o.existenceInterval))) {
       throw new Error("Object’s existence interval overlaps another one’s");
     }
     super.addValue(value);

@@ -133,7 +133,7 @@ export class StreamImpl<T> implements types.Stream<T> {
 
   min(comparator: types.Comparator<T> = StreamImpl.DEFAULT_COMPARATOR): types.Optional<T> {
     let anyFound = false;
-    let min: T = null;
+    let min: T = null as T;
     for (const e of this.#pipeline) {
       if (!anyFound) {
         anyFound = true;
@@ -147,7 +147,7 @@ export class StreamImpl<T> implements types.Stream<T> {
 
   max(comparator: types.Comparator<T> = StreamImpl.DEFAULT_COMPARATOR): types.Optional<T> {
     let anyFound = false;
-    let max: T = null;
+    let max: T = null as T;
     for (const e of this.#pipeline) {
       if (!anyFound) {
         anyFound = true;
@@ -165,7 +165,7 @@ export class StreamImpl<T> implements types.Stream<T> {
     // Starting from the last pipeline, discard all that do not change the total number of elements,
     // until we find one that does or we get to the source pipeline.
     while (!(pipeline instanceof pl.SourcePipeline) && !pipeline.mayChangeNumberOfElements) {
-      pipeline = pipeline.previousPipeline;
+      pipeline = pipeline.previousPipeline as pl.Pipeline<unknown>;
     }
     // OPTIMIZATION:
     // If the pipeline is the source, we check if its iterable has either a "length" or "size" property.
@@ -264,10 +264,6 @@ export class StreamImpl<T> implements types.Stream<T> {
   }
 
   join(joiner: string): string {
-    const type = typeof joiner;
-    if (type !== "string") {
-      throw new TypeError(`Joiner argument must be a string, got ${type}`);
-    }
     let r = "";
     let first = true;
     for (const e of this.#pipeline) {

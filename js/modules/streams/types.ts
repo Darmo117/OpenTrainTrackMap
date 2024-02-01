@@ -311,7 +311,7 @@ export class Optional<T> {
    * @returns A new {@link Optional} instance if the value is non-null,
    * an empty {@link Optional} instance otherwise.
    */
-  static ofNullable<T>(v: T): Optional<T> {
+  static ofNullable<T>(v: T | null | undefined): Optional<T> {
     return v === null || v === undefined ? this.empty() : new this(v);
   }
 
@@ -332,7 +332,7 @@ export class Optional<T> {
    * If a value is present, returns the value, otherwise throws an {@link Error}.
    */
   get(): T {
-    if (this.isEmpty()) {
+    if (!this.#isPresent(this.#value)) {
       throw new TypeError("Value is null or undefined");
     }
     return this.#value;
@@ -353,13 +353,20 @@ export class Optional<T> {
   }
 
   /**
+   * Internal function used as an assert signature for type checking.
+   */
+  #isPresent(v: T | null | undefined): v is T {
+    return v !== null && v !== undefined;
+  }
+
+  /**
    * If a value is present, perform the given action with the value,
    * otherwise perform the given empty-based action if provided.
    * @param action The action to be performed, if a value is present.
    * @param emptyAction Optional. The empty-based action to be performed, if no value is present.
    */
   ifPresent(action: (v: T) => void, emptyAction?: () => void): void {
-    if (this.isPresent()) {
+    if (this.#isPresent(this.#value)) {
       action(this.#value);
     } else {
       emptyAction?.();
@@ -376,7 +383,7 @@ export class Optional<T> {
    * empty {@link Optional}.
    */
   filter(predicate: (v: T) => boolean): Optional<T> {
-    return this.isPresent() && predicate(this.#value) ? this : Optional.empty();
+    return this.#isPresent(this.#value) && predicate(this.#value) ? this : Optional.empty();
   }
 
   /**
@@ -392,7 +399,7 @@ export class Optional<T> {
    * is present, otherwise an empty {@link Optional}.
    */
   map<U>(mapper: (v: T) => U): Optional<U> {
-    return this.isPresent() ? Optional.ofNullable(mapper(this.#value)) : Optional.empty();
+    return this.#isPresent(this.#value) ? Optional.ofNullable(mapper(this.#value)) : Optional.empty();
   }
 
   /**
@@ -405,7 +412,7 @@ export class Optional<T> {
    * @throws {TypeError} If the value returned by the function is `null` or `undefined`.
    */
   flatMap<U>(mapper: (v: T) => Optional<U>): Optional<U> {
-    if (this.isEmpty()) {
+    if (!this.#isPresent(this.#value)) {
       return Optional.empty();
     }
     const optional = mapper(this.#value);
@@ -424,14 +431,7 @@ export class Optional<T> {
    * @throws {TypeError} If the value returned by the function is `null` or `undefined`.
    */
   or(supplier: () => Optional<T>): Optional<T> {
-    if (this.isPresent()) {
-      return this;
-    }
-    const optional = supplier();
-    if (!optional) {
-      throw new TypeError("Supplier function returned null or undefined")
-    }
-    return optional;
+    return this.isPresent() ? this : supplier();
   }
 
   /**
@@ -442,7 +442,7 @@ export class Optional<T> {
    * @return The value, if present, otherwise the provided value.
    */
   orElse(other: T | (() => T)): T {
-    if (this.isPresent()) {
+    if (this.#isPresent(this.#value)) {
       return this.#value;
     } else {
       return other instanceof Function ? other() : other;
@@ -458,7 +458,7 @@ export class Optional<T> {
    * @throws {TypeError} If the value returned by the function is `null` or `undefined`.
    */
   orElseThrow(supplier?: () => Error): T {
-    if (!this.isPresent()) {
+    if (!this.#isPresent(this.#value)) {
       if (!supplier) {
         throw new Error();
       }

@@ -9,7 +9,7 @@ declare global {
     ottm: OTTM;
     // Cf. PageContext class in ottm/page_handlers/_core.py for site-wide entries
     //  and get_js_config() in ottm/api/wiki/pages.py for wiki-related entries
-    OTTM_CONFIG: {
+    OTTM_CONFIG?: {
       config: Dict,
       page: Dict,
       user: Dict,
@@ -32,7 +32,7 @@ declare global {
   }
 }
 
-export type Dict<T = any> = {
+export type Dict<T = unknown> = {
   [key: string]: T;
 };
 
@@ -40,7 +40,7 @@ export type Dict<T = any> = {
  * Immutable object that maps keys to values.
  * @template T The type of this mapping’s values.
  */
-export class Mapping<T = any> {
+export class Mapping<T = unknown> {
   readonly #mappings: Dict<T>;
 
   /**
@@ -184,12 +184,12 @@ export class Language {
    * @param values List of values to format.
    * @return Formatted list.
    */
-  listToText(values: any[]): string {
+  listToText(values: unknown[]): string {
     if (values.length === 0) {
       return "";
     }
     if (values.length === 1) {
-      return values[0];
+      return "" + values[0];
     }
     let list = values.slice(0, values.length - 1).join(this.comma);
     return `${list}${this.and}${values[values.length - 1]}`;
@@ -215,6 +215,9 @@ export class OTTM {
   readonly Language = Language;
 
   constructor() {
+    if (!window.OTTM_CONFIG) {
+      throw new Error("Missing global OTTM_CONFIG object");
+    }
     this.config = new Mapping(window.OTTM_CONFIG.config);
     this.page = new Mapping(window.OTTM_CONFIG.page);
     this.user = new Mapping(window.OTTM_CONFIG.user);
@@ -254,7 +257,7 @@ export class OTTM {
         ?? key;
     if (text) {
       for (const [key, value] of Object.entries(formatArgs)) {
-        text = text.replaceAll(`{${key}}`, value);
+        text = text.replaceAll(`{${key}}`, "" + value);
       }
     }
     return text;
@@ -275,7 +278,7 @@ export class OTTM {
    * @return The language object of the current page.
    */
   getPageLanguage(): Language {
-    return this.languages.get(this.page.get("language"));
+    return this.languages.get(this.page.get("language") as string);
   }
 
   /**
@@ -328,7 +331,7 @@ export class OTTM {
     const params = new URLSearchParams({return_to: path});
     if (args) {
       for (const [k, v] of Object.entries(args)) {
-        params.append(k, v ?? "");
+        params.append(k, v ? "" + v : "");
       }
     }
     url.search = params.toString();
@@ -341,7 +344,7 @@ export class OTTM {
    * @param defaultValue A value to return if the cookie is undefined.
    * @returns The cookie’s value.
    */
-  getCookie(name: string, defaultValue?: string): string {
+  getCookie(name: string, defaultValue?: string): string | undefined {
     return Cookies.get(name) ?? defaultValue;
   }
 

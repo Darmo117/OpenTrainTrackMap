@@ -1,7 +1,7 @@
 import * as core from "../../test-framework";
 import * as assert from "../../test-framework/assert";
 
-import {Optional} from "../../modules/streams/types";
+import {Optional} from "../../modules/streams";
 
 core.options.showPassed = false;
 
@@ -150,10 +150,6 @@ core.doTests(
             core.test("returns the supplied optional if it the first optional is empty", () => {
               const or = Optional.of(1);
               assert.equal(or, Optional.empty<number>().or(() => or));
-            }),
-
-            core.test("throws an error if the supplied value is null", () => {
-              assert.throws(TypeError, () => Optional.empty().or(() => null));
             }),
         ),
 

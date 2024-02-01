@@ -73,7 +73,7 @@ export class WikiGadgetManager {
     }
     console.log(`Registering gadget "${gadgetName}…"`);
     this.#gadgetsQueueSize++;
-    const apiPath = window.ottm.config.get("wApiPath");
+    const apiPath = window.ottm.config.get("wApiPath") as string;
     $.get(
         apiPath,
         {
@@ -165,7 +165,7 @@ export class WikiAPI {
    */
   editPage(title: string, transformer: PageContentTransformer): Promise<PageEditResponse> {
     // TODO
-    return null;
+    return Promise.reject("Not implemented");
   }
 
   /**
@@ -175,7 +175,7 @@ export class WikiAPI {
    */
   getPage(title: string): Promise<string> {
     // TODO
-    return null;
+    return Promise.reject("Not implemented");
   }
 
   /**
@@ -186,7 +186,7 @@ export class WikiAPI {
    */
   getPageCategories(title: string, includeHidden: boolean = false): Promise<string[]> {
     // TODO
-    return null;
+    return Promise.reject("Not implemented");
   }
 
   /**
@@ -196,7 +196,7 @@ export class WikiAPI {
    */
   getCategories(prefix: string): Promise<string[]> {
     // TODO
-    return null;
+    return Promise.reject("Not implemented");
   }
 
   /**
@@ -206,7 +206,7 @@ export class WikiAPI {
    */
   parseWikicode(content: string): Promise<string> {
     // TODO
-    return null;
+    return Promise.reject("Not implemented");
   }
 
   /**
@@ -216,7 +216,7 @@ export class WikiAPI {
    */
   followPage(title: string): Promise<void> {
     // TODO
-    return null;
+    return Promise.reject("Not implemented");
   }
 
   /**
@@ -226,7 +226,7 @@ export class WikiAPI {
    */
   unfollowPage(title: string): Promise<void> {
     // TODO
-    return null;
+    return Promise.reject("Not implemented");
   }
 }
 
@@ -235,7 +235,7 @@ declare global {
     wiki: {
       gadgetsManager: WikiGadgetManager,
       api: WikiAPI,
-      editor: any,
+      editor: unknown,
     };
     // Actual object is defined by ottm/static/ottm/libs/highlight/highlight.js
     hljs: {

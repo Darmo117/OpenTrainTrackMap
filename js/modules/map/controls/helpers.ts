@@ -78,7 +78,8 @@ export function createControlButton(options: ButtonOptions = {}): HTMLButtonElem
     button.classList.add(options.className);
   }
   if (options.onClick) {
-    button.addEventListener("click", () => options.onClick(button));
+    const onClick = options.onClick; // Avoids options.onClick being modified by the caller
+    button.addEventListener("click", () => onClick(button));
   }
   return button;
 }

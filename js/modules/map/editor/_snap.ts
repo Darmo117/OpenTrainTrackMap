@@ -96,11 +96,12 @@ export function trySnapPoint(
       return {
         type: "segment",
         feature: res.feature,
-        path: res.path,
+        path: res.path as string,
         lngLat: res.lngLat,
       }
     }
   }
+  return null;
 }
 
 /**
@@ -116,6 +117,9 @@ function checkSnapToSegmentVertex(
     features: geom.MapFeature[],
     snapVertexPriorityDistance: number
 ): string | null {
+  if (!feature.segment || !feature.path) {
+    return null;
+  }
   const [A, B] = feature.segment;
   const aIncluded = features.includes(A);
   const bIncluded = features.includes(B);
@@ -189,7 +193,7 @@ type ClosestFeature = {
  * @see ClosestFeature
  */
 function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): ClosestFeature | null {
-  let closestFeature: ClosestFeature = null;
+  let closestFeature: ClosestFeature | null = null;
   for (const feature of features) {
     if (feature instanceof geom.Point) {
       const dist = distance(pos.toArray(), feature);
@@ -203,6 +207,9 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
 
     } else if (feature instanceof geom.LineString) {
       const nearestPoint = nearestPointOnLine(feature, pos.toArray());
+      if (!nearestPoint.properties.dist || !nearestPoint.properties.index) {
+        continue;
+      }
       if ((!closestFeature || nearestPoint.properties.dist < closestFeature.dist)
           // Segment index may be > than actual number of segments on line feature
           && nearestPoint.properties.index < feature.vertices.count() - 1) {
@@ -212,7 +219,7 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
           dist: nearestPoint.properties.dist,
           feature: feature,
           path: path, // Index of the nearest segment
-          segment: feature.getSegmentVertices(path),
+          segment: feature.getSegmentVertices(path) as [geom.Point, geom.Point],
         };
       }
 
@@ -223,10 +230,15 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
         coords = [lines.geometry.coordinates];
       } else if (lines.geometry.type === "MultiLineString") { // Polygon with holes
         coords = lines.geometry.coordinates;
+      } else {
+        return null;
       }
       for (let i = 0; i < coords.length; i++) {
         const lineCoords = coords[i];
         const nearestPoint = nearestPointOnLine(turfh.lineString(lineCoords), pos.toArray());
+        if (!nearestPoint.properties.dist || !nearestPoint.properties.index) {
+          continue;
+        }
         if (!closestFeature || nearestPoint.properties.dist < closestFeature.dist) {
           const path = `${i}.${nearestPoint.properties.index}`;
           closestFeature = {
@@ -234,7 +246,7 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
             dist: nearestPoint.properties.dist,
             feature: feature,
             path: path,
-            segment: feature.getSegmentVertices(path),
+            segment: feature.getSegmentVertices(path) as [geom.Point, geom.Point],
           };
         }
       }

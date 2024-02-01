@@ -31,7 +31,7 @@ export type CompassControlOptions = {
  * Clicking this control will reset both the bearing and pitch to 0°.
  */
 export default class CompassControl implements mgl.IControl {
-  #map: mgl.Map;
+  #map: mgl.Map | undefined;
   readonly #options: CompassControlOptions;
   readonly #container: HTMLDivElement;
   readonly #button: HTMLButtonElement;
@@ -50,14 +50,14 @@ export default class CompassControl implements mgl.IControl {
 
   #onControlButtonClick(): void {
     if (!this.#map) {
-      throw Error("map is undefined");
+      return;
     }
     this.#map.easeTo({bearing: 0, pitch: 0});
   }
 
   #onRotate(): void {
     if (!this.#map) {
-      throw Error("map is undefined");
+      return;
     }
     const angle = -this.#map.getBearing();
     if (!this.#options.instant) {

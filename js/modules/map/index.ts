@@ -14,7 +14,7 @@ declare global {
   interface Window {
     // Inject global properties
     // Cf. MapPageHandler class in ottm/page_handlers/_map_handler.py for values
-    OTTM_MAP_CONFIG: {
+    OTTM_MAP_CONFIG?: {
       edit: boolean,
     };
   }
@@ -51,6 +51,10 @@ export default function initMap(): void {
         18
     ),
   ];
+
+  if (!window.OTTM_MAP_CONFIG) {
+    throw new Error("Missing global OTTM_MAP_CONFIG object");
+  }
 
   const editMode = window.OTTM_MAP_CONFIG.edit;
   const defaultMapStyle = editMode ? mapStyles[1] : mapStyles[0];

@@ -59,7 +59,7 @@ export type TilesSourcesControlOptions = {
  * A control that allows switching between multiple tiles sources.
  */
 export default class TilesSourcesControl implements mgl.IControl {
-  #map: mgl.Map;
+  #map: mgl.Map | undefined;
   readonly #options: TilesSourcesControlOptions;
   readonly #container: HTMLDivElement;
   readonly #inputsContainer: HTMLDivElement;
@@ -117,6 +117,9 @@ export default class TilesSourcesControl implements mgl.IControl {
     });
 
     this.#map.on("load", () => {
+      if (!this.#map) {
+        return;
+      }
       // "id" property is added by buildStyle()
       const elementId = ((this.#map.getSource("tiles") as mgl.RasterTileSource)._options as RasterSourceSpecification).id;
       (document.getElementById(elementId) as HTMLInputElement).checked = true;
@@ -129,6 +132,9 @@ export default class TilesSourcesControl implements mgl.IControl {
   }
 
   #changeTilesSource(source: TilesSource): void {
+    if (!this.#map) {
+      return;
+    }
     this.#map.removeLayer("tiles");
     this.#map.removeSource("tiles");
     this.#map.addSource("tiles", source.source);

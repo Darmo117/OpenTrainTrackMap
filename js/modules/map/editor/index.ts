@@ -97,7 +97,7 @@ class MapEditor {
   /**
    * The feature currently being hovered by the mouse cursor.
    */
-  #hoveredFeature: geom.MapFeature = null;
+  #hoveredFeature: geom.MapFeature | null = null;
   /**
    * The current edit mode.
    */
@@ -105,7 +105,7 @@ class MapEditor {
   /**
    * The point currently being dragged.
    */
-  #draggedPoint: geom.Point = null;
+  #draggedPoint: geom.Point | null = null;
   /**
    * If a point is being dragged and snaps to another feature,
    * this field contains relevant data to that snapped feature.
@@ -145,7 +145,7 @@ class MapEditor {
   /**
    * The line string currently being drawn.
    */
-  #drawnLineString: geom.LineString = null;
+  #drawnLineString: geom.LineString | null = null;
   /**
    * When drawing a line, indicates where the next point will be added on that line:
    * * `true`: at the end.
@@ -155,7 +155,7 @@ class MapEditor {
   /**
    * The polygon currently being drawn.
    */
-  #drawnPolygon: geom.Polygon = null;
+  #drawnPolygon: geom.Polygon | null = null;
   /**
    * The points that were created when drawing the last linear feature.
    * This list is used for deleting all points that were drawn when the current drawing is cancelled.
@@ -164,7 +164,7 @@ class MapEditor {
   /**
    * The last known position of the mouse on the map.
    */
-  #mousePositionCache: mgl.LngLat = null;
+  #mousePositionCache: mgl.LngLat | null = null;
 
   /**
    * Internal cache of available data types.
@@ -294,7 +294,7 @@ class MapEditor {
     this.#map.on("zoomend", () => this.#onZoomChangeEnd());
     this.#map.on("load", () => this.#onZoomChangeEnd());
     $("body").on("keydown", e => {
-      if (!(this.#map instanceof Map) || !this.#map.textFieldHasFocus) {
+      if (e.originalEvent && (!(this.#map instanceof Map) || !this.#map.textFieldHasFocus)) {
         this.#onKeyDown(e.originalEvent);
       }
     });
@@ -328,17 +328,18 @@ class MapEditor {
    */
   createFeature(geomSpec: GeometrySpecification): void {
     const typeProvider: geom.DataTypeProvider = (n, t) => this.#getDataType(n, t);
+    const id = this.#getNextFeatureId();
     if (geomSpec.type === "Point") {
       const coords = new mgl.LngLat(geomSpec.lng, geomSpec.lat);
-      this.#addFeature(new geom.Point(typeProvider, coords, geomSpec.dbId, geomSpec.layer, geomSpec.dataObject))
+      this.#addFeature(new geom.Point(id, typeProvider, coords, geomSpec.dbId, geomSpec.layer, geomSpec.dataObject))
     } else if (geomSpec.type === "LineString") {
       const points = geomSpec.verticesDbIds
           .map(id => this.#dbIdToPoint[id]);
-      this.#addFeature(new geom.LineString(typeProvider, points, geomSpec.dbId, geomSpec.layer, geomSpec.dataObject));
+      this.#addFeature(new geom.LineString(id, typeProvider, points, geomSpec.dbId, geomSpec.layer, geomSpec.dataObject));
     } else if (geomSpec.type === "Polygon") {
       const points = geomSpec.verticesDbIds
           .map(ids => ids.map(id => this.#dbIdToPoint[id]));
-      this.#addFeature(new geom.Polygon(typeProvider, points, geomSpec.dbId, geomSpec.layer, geomSpec.dataObject));
+      this.#addFeature(new geom.Polygon(id, typeProvider, points, geomSpec.dbId, geomSpec.layer, geomSpec.dataObject));
     }
   }
 
@@ -356,7 +357,17 @@ class MapEditor {
         return this.#dataTypes.enums[typeName] as geom.DataTypes[K];
       case "ObjectType":
         return this.#dataTypes.objects[typeName] as geom.DataTypes[K];
+      default:
+        throw new Error(`Invalid value "${metaType}"`);
     }
+  }
+
+  /**
+   * Return the next available feature ID.
+   * Updates the global counter.
+   */
+  #getNextFeatureId(): string {
+    return "" + this.#lastFeatureId++;
   }
 
   /**
@@ -370,13 +381,11 @@ class MapEditor {
       return;
     }
 
-    if (!feature.id) {
-      feature.id = "" + this.#lastFeatureId++;
-    }
-
     this.#features[feature.id] = feature;
     if (feature instanceof geom.Point) {
-      this.#dbIdToPoint[feature.dbId] = feature;
+      if (feature.dbId) {
+        this.#dbIdToPoint[feature.dbId] = feature;
+      }
     } else if (feature instanceof geom.LineString) {
       // Add all vertices
       feature.vertices.forEach(v => this.#addFeature(v));
@@ -417,12 +426,14 @@ class MapEditor {
     if (!feature) {
       return;
     }
-    this.#getLayerIdStack(featureId).forEach(id => this.#map.removeLayer(id));
+    this.#getLayerIdStack(featureId)?.forEach(id => this.#map.removeLayer(id));
     // Remove now to avoid potential infinite recursions
     delete this.#features[featureId];
 
     if (feature instanceof geom.Point) {
-      delete this.#dbIdToPoint[feature.dbId];
+      if (feature.dbId) {
+        delete this.#dbIdToPoint[feature.dbId];
+      }
       this.#updateBoundFeaturesOfDeletedPoint(feature);
     } else if (feature instanceof geom.LineString) {
       this.#deleteVerticesOfDeletedLineString(feature);
@@ -570,7 +581,7 @@ class MapEditor {
       }
       this.#updateFeatureData(this.#drawnLineString);
     } else {
-      this.#drawnLineString = new geom.LineString((n, t) => this.#getDataType(n, t));
+      this.#drawnLineString = new geom.LineString(this.#getNextFeatureId(), (n, t) => this.#getDataType(n, t));
       this.#addFeature(this.#drawnLineString);
     }
     this.#setCanvasCursor(Cursor.DRAW);
@@ -582,6 +593,9 @@ class MapEditor {
    * @param mousePos The current mouse position.
    */
   #disableDrawLineMode(mousePos?: mgl.PointLike): void {
+    if (!this.#drawnLineString) {
+      return;
+    }
     this.#quitLinearDrawing(this.#drawnLineString, 1, mousePos);
     this.#drawnLineString = null;
   }
@@ -595,7 +609,7 @@ class MapEditor {
     }
     this.#disableCurrentEditMode();
     this.#editMode = EditMode.DRAW_POLYGON;
-    this.#drawnPolygon = new geom.Polygon((n, t) => this.#getDataType(n, t));
+    this.#drawnPolygon = new geom.Polygon(this.#getNextFeatureId(), (n, t) => this.#getDataType(n, t));
     this.#addFeature(this.#drawnPolygon);
     this.#setCanvasCursor(Cursor.DRAW);
   }
@@ -606,7 +620,10 @@ class MapEditor {
    * @param mousePos The current mouse position.
    */
   #disableDrawPolygonMode(mousePos?: mgl.PointLike): void {
-    this.#quitLinearDrawing(this.#drawnPolygon, 2, mousePos, () => this.#drawnPolygon.lockRing(0));
+    if (!this.#drawnPolygon) {
+      return;
+    }
+    this.#quitLinearDrawing(this.#drawnPolygon, 2, mousePos, () => this.#drawnPolygon?.lockRing(0));
     this.#drawnPolygon = null;
   }
 
@@ -625,7 +642,7 @@ class MapEditor {
   ): void {
     this.#editMode = EditMode.SELECT;
     if (feature) {
-      let action: geom.Action = null;
+      let action: geom.Action | null = null;
       if (this.#draggedPoint) {
         action = feature.removeVertex(this.#draggedPoint);
         this.#removeFeature(this.#draggedPoint.id);
@@ -677,7 +694,7 @@ class MapEditor {
   #getFeatureUnderMouse(mousePos: mgl.PointLike): geom.MapFeature | null {
     const layersOrder = this.#map.getLayersOrder();
     let selectedIndex = Infinity;
-    let selectedFeature: geom.MapFeature = null;
+    let selectedFeature: geom.MapFeature | null = null;
     this.#getFeatureIds(mousePos).forEach(featureId => {
       const currentIndex = layersOrder.indexOf(featureId);
       if (currentIndex === -1) {
@@ -702,8 +719,8 @@ class MapEditor {
    * @param exclude List of feature IDs to exclude from the results.
    * @returns {} A {@link st.Stream} of distinct feature IDs that correspond to the criteria.
    */
-  #getFeatureIds(at?: mgl.PointLike, exclude?: Set<string>): st.Stream<string> {
-    return st.stream(this.#map.queryRenderedFeatures(at))
+  #getFeatureIds(at?: mgl.PointLike | null, exclude?: Set<string> | null): st.Stream<string> {
+    return st.stream(this.#map.queryRenderedFeatures(at ?? undefined))
         .filter(f => !exclude?.has(f.source))
         .map(f => f.source)
         .distinct();
@@ -720,10 +737,10 @@ class MapEditor {
    */
   #moveLayers(featureId: string, beforeId?: string): void {
     if (beforeId) {
-      const bottomLayer = this.#getLayerIdStack(beforeId)[0];
-      this.#getLayerIdStack(featureId).forEach(id => this.#map.moveLayer(id, bottomLayer));
+      const bottomLayer = this.#getLayerIdStack(beforeId)?.[0];
+      this.#getLayerIdStack(featureId)?.forEach(id => this.#map.moveLayer(id, bottomLayer));
     } else {
-      this.#getLayerIdStack(featureId).forEach(id => this.#map.moveLayer(id));
+      this.#getLayerIdStack(featureId)?.forEach(id => this.#map.moveLayer(id));
     }
   }
 
@@ -915,7 +932,7 @@ class MapEditor {
       this.#onMoveFeatures(e);
       return;
     }
-    const hoveredFeature: geom.MapFeature = this.#getFeatureUnderMouse(e.point);
+    const hoveredFeature = this.#getFeatureUnderMouse(e.point);
     if (hoveredFeature) {
       if (!this.#draggedPoint) {
         this.#setHover(hoveredFeature);
@@ -936,6 +953,9 @@ class MapEditor {
    * @param e The mouse event.
    */
   #onDragPoint(e: mgl.MapMouseEvent | mgl.MapTouchEvent): void {
+    if (!this.#draggedPoint) {
+      return;
+    }
     this.#clearSelection();
     this.#setCanvasCursor(Cursor.DRAW);
 
@@ -948,11 +968,11 @@ class MapEditor {
       if (f instanceof geom.LineString) {
         const lastPath = "" + (f.vertices.count() - 1);
         // Allow other end point if #draggedPoint is at an end
-        if (!f.isLoop() && f.getVertexPath(this.#draggedPoint) === "0") {
+        if (!f.isLoop() && f.getVertexPath(this.#draggedPoint as geom.Point) === "0") {
           f.vertices
               .filter(v => f.getVertexPath(v) !== lastPath)
               .forEach(v => excludedIds.add(v.id));
-        } else if (!f.isLoop() && f.getVertexPath(this.#draggedPoint) === lastPath) {
+        } else if (!f.isLoop() && f.getVertexPath(this.#draggedPoint as geom.Point) === lastPath) {
           f.vertices
               .skip(1)
               .forEach(v => excludedIds.add(v.id));
@@ -980,10 +1000,11 @@ class MapEditor {
           point = snapResult.point;
         } else {
           const {feature, path} = snapResult;
-          point = feature.getVertex(path);
+          point = feature.getVertex(path) as geom.Point;
         }
         const canSnap = point.boundFeatures.allMatch(
-            f => f.canAcceptVertex(this.#draggedPoint, f.getVertexPath(point)));
+            f => f.canAcceptVertex(
+                this.#draggedPoint as geom.Point, f.getVertexPath(point) as string));
         if (canSnap) {
           this.#snapResult = snapResult;
           // Move dragged point to the snap position
@@ -997,7 +1018,7 @@ class MapEditor {
 
         let p1: geom.Point, p2: geom.Point;
         if (canSnap) {
-          [p1, p2] = feature.getSegmentVertices(path);
+          [p1, p2] = feature.getSegmentVertices(path) as [geom.Point, geom.Point];
           // Check if any excluded feature shares the same segment
           for (const id of excludedIds) {
             const f = this.#features[id];
@@ -1057,14 +1078,17 @@ class MapEditor {
    * and the last drawn vertex of the feature.
    */
   #canFinishLineDrawing(p: mgl.PointLike): [boolean, geom.Point | null] {
+    if (!this.#drawnLineString) {
+      return [false, null];
+    }
     const verticesNb = this.#drawnLineString.vertices.count();
     if (verticesNb <= 2) {
       return [false, null];
     }
     const features = this.#getFeatureIds(p);
-    const lastVertex = this.#drawnStringAppendEnd
-        && this.#drawnLineString.getVertex("" + (verticesNb - 2))
-        || this.#drawnLineString.getVertex("1");
+    const lastVertex = (this.#drawnStringAppendEnd
+        ? this.#drawnLineString.getVertex("" + (verticesNb - 2))
+        : this.#drawnLineString.getVertex("1")) as geom.Point;
     return [features.anyMatch(id => id === lastVertex.id), lastVertex];
   }
 
@@ -1075,13 +1099,16 @@ class MapEditor {
    * and the last drawn vertex of the feature.
    */
   #canFinishPolygonDrawing(p: mgl.PointLike): [boolean, geom.Point | null] {
+    if (!this.#drawnPolygon) {
+      return [false, null];
+    }
     const externalRing = this.#drawnPolygon.vertices.findFirst();
     if (externalRing.map(ring => ring.count() <= 3).orElse(true)) {
       return [false, null];
     }
     const features = this.#getFeatureIds(p);
     const lastVertex =
-        this.#drawnPolygon.getVertex("0." + (externalRing.get().count() - 2));
+        this.#drawnPolygon.getVertex("0." + (externalRing.get().count() - 2)) as geom.Point;
     return [features.anyMatch(id => id === lastVertex.id), lastVertex];
   }
 
@@ -1135,15 +1162,15 @@ class MapEditor {
     if (this.#editMode !== EditMode.SELECT) {
       return;
     }
-    if (this.#snapResult) {
+    if (this.#snapResult && this.#draggedPoint) {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
-        const point = this.#getSnappedPoint();
+        const point = this.#getSnappedPoint() as geom.Point;
         this.#draggedPoint.onDrag(point.lngLat);
         if (point.dataObject && !this.#draggedPoint.dataObject) {
           this.#draggedPoint.copyDataOf(point);
         }
         point.boundFeatures.forEach(
-            f => f.replaceVertex(this.#draggedPoint, point));
+            f => f.replaceVertex(this.#draggedPoint as geom.Point, point));
         this.#removeFeature(point.id);
       } else { // segment
         this.#addSnappedPointToSegment();
@@ -1170,10 +1197,14 @@ class MapEditor {
         this.#drawPoint(e);
         break;
       case EditMode.DRAW_LINE:
-        this.#drawLinearFeatureVertex(this.#drawnLineString, e);
+        if (this.#drawnLineString) {
+          this.#drawLinearFeatureVertex(this.#drawnLineString, e);
+        }
         break;
       case EditMode.DRAW_POLYGON:
-        this.#drawLinearFeatureVertex(this.#drawnPolygon, e);
+        if (this.#drawnPolygon) {
+          this.#drawLinearFeatureVertex(this.#drawnPolygon, e);
+        }
         break;
       case EditMode.MOVE_FEATURES:
         this.#placeMovedFeatures(e);
@@ -1248,9 +1279,9 @@ class MapEditor {
    * @param e The mouse event.
    */
   #drawLinearFeatureVertex(feature: geom.LinearFeature, e: mgl.MapMouseEvent): void {
-    if (this.#snapResult) {
+    if (this.#snapResult && this.#draggedPoint) {
       if (this.#snapResult.type === "point" || this.#snapResult.type === "segment_vertex") {
-        const point = this.#getSnappedPoint();
+        const point = this.#getSnappedPoint() as geom.Point;
         const atLineEnd = feature instanceof geom.LineString && feature.isEndVertex(point);
         // Keep already existing point
         feature.replaceVertex(point, this.#draggedPoint);
@@ -1276,7 +1307,7 @@ class MapEditor {
       const [canFinish, lastVertex] = feature instanceof geom.LineString
           ? this.#canFinishLineDrawing(e.point)
           : this.#canFinishPolygonDrawing(e.point);
-      if (canFinish) {
+      if (canFinish && lastVertex) {
         this.#setHover(lastVertex);
         this.#setCanvasCursor(Cursor.POINT);
         if (feature instanceof geom.LineString) {
@@ -1328,7 +1359,7 @@ class MapEditor {
    * @returns The newly created point or a pre-existing one.
    */
   #drawNewPoint(e: mgl.MapMouseEvent): geom.Point {
-    let point: geom.Point;
+    let point: geom.Point | null;
     if (this.#hoveredFeature instanceof geom.Point) {
       // Select existing point instead of creating a new one
       point = this.#hoveredFeature;
@@ -1344,9 +1375,9 @@ class MapEditor {
    * Otherwise null is returned.
    */
   #getSnappedPoint(): geom.Point | null {
-    if (this.#snapResult.type === "point") {
+    if (this.#snapResult?.type === "point") {
       return this.#snapResult.point;
-    } else if (this.#snapResult.type === "segment_vertex") {
+    } else if (this.#snapResult?.type === "segment_vertex") {
       const {feature, path} = this.#snapResult;
       return feature.getVertex(path);
     }
@@ -1358,13 +1389,14 @@ class MapEditor {
    * All features that share that same segment are updated.
    */
   #addSnappedPointToSegment(): void {
-    if (this.#snapResult.type === "segment") {
+    if (this.#snapResult?.type === "segment" && this.#draggedPoint) {
       const {feature, path, lngLat} = this.#snapResult;
       this.#draggedPoint.onDrag(lngLat);
       feature.insertVertexAfter(this.#draggedPoint, path);
       // Insert vertex to all features that share the same segment
       this.#snapResult.featuresWithSameSegment?.forEach(
-          ({feature, path}) => feature.insertVertexAfter(this.#draggedPoint, path));
+          ({feature, path}) =>
+              feature.insertVertexAfter(this.#draggedPoint as geom.Point, path));
       this.#moveLayers(this.#draggedPoint.id); // Put point on top
     }
   }
@@ -1386,8 +1418,10 @@ class MapEditor {
   #onDoubleClick(e: mgl.MapMouseEvent): void {
     if (this.#hoveredFeature instanceof geom.LinearFeature) {
       const point = this.#createNewPointOnHoveredSegment(e);
-      this.#setHover(point);
-      this.#setCanvasCursor(Cursor.POINT);
+      if (point) {
+        this.#setHover(point);
+        this.#setCanvasCursor(Cursor.POINT);
+      }
     }
   }
 
@@ -1463,7 +1497,7 @@ class MapEditor {
         const {feature, path, lngLat} = snapResult;
 
         const newPoint: geom.Point = this.#createNewPoint(lngLat);
-        const [p1, p2] = feature.getSegmentVertices(path);
+        const [p1, p2] = feature.getSegmentVertices(path) as [geom.Point, geom.Point];
         const update = (feature: geom.LinearFeature, path: string) => {
           feature.insertVertexAfter(newPoint, path);
           this.#updateFeatureData(feature);
@@ -1592,7 +1626,7 @@ class MapEditor {
    */
   #refreshCursor(mousePos?: mgl.PointLike): void {
     if (this.#editMode === EditMode.SELECT) {
-      let feature: geom.MapFeature;
+      let feature: geom.MapFeature | null;
       if (mousePos) {
         feature = this.#getFeatureUnderMouse(mousePos);
       } else {
@@ -1617,7 +1651,7 @@ class MapEditor {
    * @returns The newly created point.
    */
   #createNewPoint(lngLat: mgl.LngLat): geom.Point {
-    const newPoint = new geom.Point((n, t) => this.#getDataType(n, t), lngLat);
+    const newPoint = new geom.Point(this.#getNextFeatureId(), (n, t) => this.#getDataType(n, t), lngLat);
     this.#addFeature(newPoint);
     return newPoint;
   }
@@ -1643,6 +1677,9 @@ class MapEditor {
    * Move the selected features.
    */
   #moveSelectedFeatures(): void {
+    if (!this.#mousePositionCache) {
+      return;
+    }
     this.#movedPoints.splice(0);
     const points: Set<geom.Point> = new Set();
 
@@ -1651,7 +1688,7 @@ class MapEditor {
         points.add(f);
         this.#movedPoints.push({
           point: f,
-          offset: geom.LngLatVector.sub(f.lngLat, this.#mousePositionCache),
+          offset: geom.LngLatVector.sub(f.lngLat, this.#mousePositionCache as mgl.LngLat),
           startPos: f.lngLat,
         });
 
@@ -1662,7 +1699,7 @@ class MapEditor {
             points.add(v);
             this.#movedPoints.push({
               point: v,
-              offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache),
+              offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache as mgl.LngLat),
               startPos: v.lngLat,
             });
           }
@@ -1677,7 +1714,7 @@ class MapEditor {
                 points.add(v);
                 this.#movedPoints.push({
                   point: v,
-                  offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache),
+                  offset: geom.LngLatVector.sub(v.lngLat, this.#mousePositionCache as mgl.LngLat),
                   startPos: v.lngLat,
                 });
               }
@@ -1746,7 +1783,7 @@ class MapEditor {
     if (!(v instanceof geom.Point)) {
       return null;
     }
-    let line: geom.LineString;
+    let line: geom.LineString | null = null;
     // Vertex must be the first/last vertex of exactly one line
     for (const f of v.boundFeatures.toGenerator()) {
       if (f instanceof geom.LineString && f.isEndVertex(v)) {
@@ -1798,7 +1835,7 @@ class MapEditor {
     }
     return st.stream(this.#selectedFeatures)
         .filter(f => f instanceof geom.Point
-            && f.dataObject && f.boundFeatures.count() !== 0) as st.Stream<geom.Point>;
+            && !!f.dataObject && f.boundFeatures.count() !== 0) as st.Stream<geom.Point>;
   }
 
   #extractSelectedVertices(): void {

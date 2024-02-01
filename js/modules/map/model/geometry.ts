@@ -121,7 +121,7 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
   readonly type = "Feature";
   readonly geometry: G;
   readonly properties: P;
-  id: string = null;
+  id: string;
 
   /**
    * This feature’s database ID. Null if this feature does not exist in the database yet.
@@ -133,6 +133,7 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
 
   /**
    * Create a new map feature.
+   * @param id The ID for the map the feature belongs to.
    * @param dataTypesProvider A function that provides the given data type for a name and type string.
    * @param geometry The feature’s geometry object.
    * @param dbId The feature’s database ID.
@@ -141,13 +142,15 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
    * @throws {TypeError} If the data object’s geometry type is incompatible with this geometry.
    */
   protected constructor(
+      id: string,
       dataTypesProvider: DataTypeProvider,
       geometry: G,
       dbId?: number,
       layer?: number,
       dataObject?: dtypes.ObjectInstance,
   ) {
-    this.dbId = dbId;
+    this.id = id;
+    this.dbId = dbId ?? null;
     this.geometry = geometry;
     this.properties = {
       color: "#ffffff",
@@ -238,11 +241,13 @@ export abstract class MapFeature<G extends Geometry = Geometry, P extends MapFea
  * In the latter case, anytime a point is moved all its bound features are notified.
  */
 export class Point extends MapFeature<geojson.Point, PointProperties> {
+  // @ts-ignore
   #lngLat: mgl.LngLat;
   #boundFeatures: Set<LinearFeature> = new Set();
 
   /**
    * Create a new point.
+   * @param id The ID for the map the point belongs to.
    * @param dataTypesProvider A function that provides the given data type for a name and type string.
    * @param coords The point’s coordinates.
    * @param dbId The feature’s database ID.
@@ -250,15 +255,16 @@ export class Point extends MapFeature<geojson.Point, PointProperties> {
    * @param dataObject The attached object containing data.
    */
   constructor(
+      id: string,
       dataTypesProvider: DataTypeProvider,
       coords: mgl.LngLat,
       dbId?: number,
       layer?: number,
       dataObject?: dtypes.ObjectInstance
   ) {
-    super(dataTypesProvider, {
+    super(id, dataTypesProvider, {
       type: "Point",
-      coordinates: null, // Updated immediately by this.lngLat()
+      coordinates: [], // Updated immediately by this.lngLat()
     }, dbId, layer, dataObject);
     this.lngLat = coords;
     this.updateProperties();
@@ -464,9 +470,9 @@ export abstract class LinearFeature<G extends LinearGeometry = LinearGeometry, P
   /**
    * Increment the point index in the given path.
    * @param path The path.
-   * @returns The incremented path.
+   * @returns The incremented path or null if the given path is invalid.
    */
-  abstract incrementPath(path: string): string;
+  abstract incrementPath(path: string): string | null;
 
   /**
    * Return the path of the segment formed by the two given points.
@@ -594,6 +600,7 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
 
   /**
    * Create a line string.
+   * @param id The ID for the map the line belongs to.
    * @param dataTypesProvider A function that provides the given data type for a name and type string.
    * @param vertices Optional. A list of (at least 2) points. It must not contain any duplicates.
    * @param dbId The feature’s database ID.
@@ -602,13 +609,14 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
    * @throws {Error} If a point is present multiple times in the list of points or the list contains less than 2 points.
    */
   constructor(
+      id: string,
       dataTypesProvider: DataTypeProvider,
       vertices?: Point[],
       dbId?: number,
       layer?: number,
       dataObject?: dtypes.ObjectInstance
   ) {
-    super(dataTypesProvider, {
+    super(id, dataTypesProvider, {
       type: "LineString",
       coordinates: [],
     }, dbId, layer, dataObject);
@@ -682,7 +690,7 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
     this.updateGeometry();
   }
 
-  canAcceptVertex(vertex: Point, at?: string): boolean {
+  canAcceptVertex(vertex: Point, at?: string | null): boolean {
     const i = this.#vertices.indexOf(vertex);
     if (i === -1) {
       return true;
@@ -728,7 +736,7 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
     if (!this.canInsertVertex(vertex, path)) {
       return;
     }
-    this.#vertices.splice(this.#getVertexIndex(path) + 1, 0, vertex);
+    this.#vertices.splice((this.#getVertexIndex(path) as number) + 1, 0, vertex);
     vertex.bindFeature(this);
     this.updateGeometry();
   }
@@ -768,7 +776,7 @@ export class LineString extends LinearFeature<geojson.LineString, LineStringProp
     }
   }
 
-  incrementPath(path: string): string {
+  incrementPath(path: string): string | null {
     const index = this.#getVertexIndex(path);
     if (index !== null) {
       return "" + (index + 1) % this.#vertices.length;
@@ -951,6 +959,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
 
   /**
    * Create a polygon.
+   * @param id The ID for the map the polygon belongs to.
    * @param dataTypesProvider A function that provides the given data type for a name and type string.
    * @param vertices Optional. A list of point lists that should each contain at least 3 points.
    * It must not contain any duplicates. Each sublist represents a ring.
@@ -960,13 +969,14 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
    * @throws {Error} If a point is present multiple times in the lists or a list contains less than 3 points.
    */
   constructor(
+      id: string,
       dataTypesProvider: DataTypeProvider,
       vertices?: Point[][],
       dbId?: number,
       layer?: number,
       dataObject?: dtypes.ObjectInstance
   ) {
-    super(dataTypesProvider, {
+    super(id, dataTypesProvider, {
       type: "Polygon",
       coordinates: [[]],
     }, dbId, layer, dataObject);
@@ -1043,7 +1053,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     if (!this.canAppendVertex(vertex, path)) {
       return;
     }
-    const [ringI, vertexI] = this.#getVertexIndex(path);
+    const [ringI, vertexI] = this.#getVertexIndex(path) as [number, number];
     let ring: Point[];
     if (ringI === this.#vertices.length) {
       this.#vertices.push(ring = []);
@@ -1094,7 +1104,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     if (!this.canInsertVertex(vertex, path)) {
       return;
     }
-    const [ringI, vertexI] = this.#getVertexIndex(path);
+    const [ringI, vertexI] = this.#getVertexIndex(path) as [number, number];
     vertex.bindFeature(this);
     const ring = this.#vertices[ringI];
     if (vertexI === ring.length - 1) {
@@ -1122,6 +1132,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
         return {type: "do_nothing"};
       }
     }
+    return {type: "do_nothing"};
   }
 
   getVertex(path: string): Point | null {
@@ -1143,7 +1154,7 @@ export class Polygon extends LinearFeature<geojson.Polygon, PolygonProperties> {
     }
   }
 
-  incrementPath(path: string): string {
+  incrementPath(path: string): string | null {
     const indices = this.#getVertexIndex(path);
     if (indices !== null && indices[0] < this.#vertices.length) {
       return `${indices[0]}.${(indices[1] + 1) % this.#vertices[indices[0]].length}`;
