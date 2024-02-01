@@ -84,7 +84,7 @@ export function trySnapPoint(
       type: "point",
       point: res.feature,
     };
-  } else if (res.feature instanceof geom.LinearFeature) {
+  } else if (isLinearFeature(res.feature)) {
     const vertexPath = checkSnapToSegmentVertex(res, features, 0.0025);
     if (vertexPath) {
       return {
@@ -102,6 +102,12 @@ export function trySnapPoint(
     }
   }
   return null;
+}
+
+// This function exists because otherwise TS would put a warning
+// on the "instanceof" if "f" is a MapFeature for some reason
+function isLinearFeature(f: unknown): f is geom.LinearFeature {
+  return f instanceof geom.LinearFeature;
 }
 
 /**

@@ -1022,7 +1022,7 @@ class MapEditor {
           // Check if any excluded feature shares the same segment
           for (const id of excludedIds) {
             const f = this.#features[id];
-            if (f instanceof geom.LinearFeature && f.getSegmentPath(p1, p2)) {
+            if (isLinearFeature(f) && f.getSegmentPath(p1, p2)) {
               // An excluded feature shares the segment, cancel snapping
               canSnap = false;
               break
@@ -1034,7 +1034,7 @@ class MapEditor {
           const otherFeatures: { feature: geom.LinearFeature, path: string }[] = [];
           // Get all non-excluded features that share the same segment
           features.forEach(f => {
-            if (f instanceof geom.LinearFeature && f !== feature) {
+            if (isLinearFeature(f) && f !== feature) {
               const path = f.getSegmentPath(p1, p2);
               if (path) {
                 otherFeatures.push({
@@ -1416,7 +1416,7 @@ class MapEditor {
    * @param e The mouse event.
    */
   #onDoubleClick(e: mgl.MapMouseEvent): void {
-    if (this.#hoveredFeature instanceof geom.LinearFeature) {
+    if (isLinearFeature(this.#hoveredFeature)) {
       const point = this.#createNewPointOnHoveredSegment(e);
       if (point) {
         this.#setHover(point);
@@ -1484,11 +1484,11 @@ class MapEditor {
    * @returns The newly created point or null if none were.
    */
   #createNewPointOnHoveredSegment(e: mgl.MapMouseEvent): geom.Point | null {
-    if (this.#hoveredFeature instanceof geom.LinearFeature) {
+    if (isLinearFeature(this.#hoveredFeature)) {
       // Search which linear feature was clicked
       const features = this.#getFeatureIds(e.point)
           .map(id => this.#features[id])
-          .filter(f => f instanceof geom.LinearFeature)
+          .filter(f => isLinearFeature(f))
           .toArray()
 
       const snapResult = snap.trySnapPoint(e.lngLat, features, this.#map.getZoom());
@@ -1505,7 +1505,7 @@ class MapEditor {
         update(feature, path);
         // Update all features that share the same segment
         features.forEach(f => {
-          if (f instanceof geom.LinearFeature && f !== feature) {
+          if (isLinearFeature(f) && f !== feature) {
             const path = f.getSegmentPath(p1, p2);
             if (path) {
               update(f, path);
@@ -1889,7 +1889,7 @@ class MapEditor {
     }
     return st.stream(this.#selectedFeatures)
         .filter(f =>
-            f instanceof geom.LinearFeature && f.isNearlyCircular(0)) as st.Stream<geom.LinearFeature>;
+            isLinearFeature(f) && f.isNearlyCircular(0)) as st.Stream<geom.LinearFeature>;
   }
 
   #circularizeSelectedFeatures(): void {
@@ -1909,7 +1909,7 @@ class MapEditor {
     }
     return st.stream(this.#selectedFeatures)
         .filter(f =>
-            f instanceof geom.LinearFeature && f.isNearlySquare(0)) as st.Stream<geom.LinearFeature>;
+            isLinearFeature(f) && f.isNearlySquare(0)) as st.Stream<geom.LinearFeature>;
   }
 
   #squareSelectedFeatures(): void {
@@ -1960,7 +1960,7 @@ class MapEditor {
       return st.emptyStream();
     }
     return st.stream(this.#selectedFeatures)
-        .filter(f => f instanceof geom.LinearFeature) as st.Stream<geom.LineString>;
+        .filter(f => isLinearFeature(f)) as st.Stream<geom.LineString>;
   }
 
   /**
@@ -2019,6 +2019,12 @@ class MapEditor {
   #updateFeatureData(feature: geom.MapFeature): void {
     (this.#map.getSource(feature.id) as mgl.GeoJSONSource).setData(feature);
   }
+}
+
+// This function exists because otherwise TS would put a warning
+// on the "instanceof" if "f" is a MapFeature for some reason
+function isLinearFeature(f: unknown): f is geom.LinearFeature {
+  return f instanceof geom.LinearFeature;
 }
 
 /**
