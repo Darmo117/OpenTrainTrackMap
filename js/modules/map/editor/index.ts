@@ -1212,7 +1212,7 @@ class MapEditor {
       case EditMode.SELECT:
         if (this.#hoveredFeature) {
           const keepSelection = e.originalEvent.ctrlKey && this.#editMode === EditMode.SELECT;
-          if (this.#selectedFeatures.has(this.#hoveredFeature)) {
+          if (keepSelection && this.#selectedFeatures.has(this.#hoveredFeature)) {
             this.#deselectFeature(this.#hoveredFeature);
           } else {
             this.#selectFeature(this.#hoveredFeature, keepSelection);
