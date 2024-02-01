@@ -207,10 +207,9 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
 
     } else if (feature instanceof geom.LineString) {
       const nearestPoint = nearestPointOnLine(feature, pos.toArray());
-      if (!nearestPoint.properties.dist || !nearestPoint.properties.index) {
-        continue;
-      }
-      if ((!closestFeature || nearestPoint.properties.dist < closestFeature.dist)
+      if (typeof nearestPoint.properties.dist === "number"
+          && typeof nearestPoint.properties.index === "number"
+          && (!closestFeature || nearestPoint.properties.dist < closestFeature.dist)
           // Segment index may be > than actual number of segments on line feature
           && nearestPoint.properties.index < feature.vertices.count() - 1) {
         const path = "" + nearestPoint.properties.index;
@@ -231,15 +230,14 @@ function getClosestFeature(pos: mgl.LngLat, features: geom.MapFeature[]): Closes
       } else if (lines.geometry.type === "MultiLineString") { // Polygon with holes
         coords = lines.geometry.coordinates;
       } else {
-        return null;
+        continue;
       }
       for (let i = 0; i < coords.length; i++) {
         const lineCoords = coords[i];
         const nearestPoint = nearestPointOnLine(turfh.lineString(lineCoords), pos.toArray());
-        if (!nearestPoint.properties.dist || !nearestPoint.properties.index) {
-          continue;
-        }
-        if (!closestFeature || nearestPoint.properties.dist < closestFeature.dist) {
+        if (typeof nearestPoint.properties.dist === "number"
+            && typeof nearestPoint.properties.index === "number"
+            && (!closestFeature || nearestPoint.properties.dist < closestFeature.dist)) {
           const path = `${i}.${nearestPoint.properties.index}`;
           closestFeature = {
             lngLat: mgl.LngLat.convert(nearestPoint.geometry.coordinates as [number, number]),
