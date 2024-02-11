@@ -5,7 +5,7 @@ from ottm.api.wiki.modules import _exceptions as _ex, _parser
 p = _parser.WikiScriptParser('Test')
 parsed_tree = p.parse(r"""
 function join(s, it) is
-    return s.join((it));
+    return s.join(map(str, it));
 end
 
 try
