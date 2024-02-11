@@ -1,6 +1,6 @@
-import typing as _typ
+from __future__ import annotations
 
-from . import _scope
+import typing as _typ
 
 _BUILTINS_CACHE = {}
 
@@ -16,10 +16,11 @@ class Module:
         self._name = name
         self.__name__ = name
         self.__qualname__ = name
-        self._statements = statements
-        self._scope = _scope.Scope()
+        self._exported_names = []
+        self._statements = tuple(statements)
+        self._scope = Scope()
         for k, v in self._load_builtins().items():
-            self._scope.set_variable(k, v)
+            self._scope.declare_variable(k, False, v)
 
     @classmethod
     def _load_builtins(cls) -> dict[str, _typ.Any]:
@@ -52,8 +53,6 @@ class Module:
                     raise _st.GetPropertyExpression.get_error(o, name)
                 setattr(o, name, value)
 
-            # TODO import function
-
             # Override default qualified names to not expose the current module name
             attrs.__qualname__ = attrs.__name__
             doc.__qualname__ = doc.__name__
@@ -77,31 +76,27 @@ class Module:
         return _BUILTINS_CACHE
 
     def __dir__(self) -> _typ.Iterable[str]:
-        return self._properties.keys()
+        return [n for n in self._scope.get_variable_names() if n in self._exported_names]
 
-    def __getattr__(self, name: str) -> _typ.Any:
-        variable = self._scope.get_variable(name)
-        if not variable.public:
-            raise AttributeError(f'cannot access non-public variable "{name}" of module {self.name}')
+    def get_attr(self, name: str) -> _typ.Any:
+        try:
+            variable = self._scope.get_variable(name)
+        except NameError:
+            raise AttributeError(f'module {self._name} does not have a property named "{name}"')
+        if variable not in self._exported_names:
+            raise AttributeError(f'module {self._name} does not export name "{name}"')
         return variable.value
 
-    def __setattr__(self, name: str, value):
-        # __init__ calls this method, defer to parent version to avoid recursion loop
-        # Cannot use hasattr() as it would also cause a recursion loop
-        if '_scope' not in self.__dict__:
-            super().__setattr__(name, value)
-            return
-        if name not in self._scope or not self.scope.get_variable(name).public:
-            raise NameError('cannot define variables in other modules')
-        if not self.scope.get_variable(name).public:
-            raise AttributeError(f'cannot access non-public variable "{name}"')
-        self._scope.set_variable(name, value)
+    def set_exported_names(self, names: set[str]):
+        for name in names:
+            self._scope.get_variable(name)  # Check if variable exists
+            self._exported_names.append(name)
 
     def execute(self):
-        call_stack = _scope.CallStack(self._name)
+        call_stack = CallStack(str(self))
         # Execute statements
         for statement in self._statements:
-            if (result := statement.execute(self._scope, call_stack)) is not None:
+            if isinstance(result := statement.execute(self._scope, call_stack), list):
                 raise SyntaxError(f'unexpected statement "{result[0]}"')
 
     def __str__(self):
@@ -111,78 +106,259 @@ class Module:
         return f'Module[name={self._name!r},statements={self._statements}]'
 
 
-class ScriptFunction:
-    _NO_DEFAULT = object()
-
-    def __init__(self, name: str | None, arg_names: list[str], default_arg_names: dict[str, _typ.Any], vararg: bool,
-                 closure: _scope.Scope, *statements):
-        """Create a WikiScript function.
+class FunctionClosure:
+    def __init__(
+            self,
+            name: str | None,
+            arg_names: _typ.Sequence[str],
+            default_args: _typ.Sequence[tuple[str, _typ.Any]],
+            vararg: bool,
+            scope: Scope,
+            call_stack: CallStack,
+            *statements,
+    ):
+        """Create a WikiScript function closure.
 
         :param name: Function’s name. May be prefixed by the module’s name if in global scope. May be None if lambda.
         :param arg_names: Names of this function’s arguments.
+        :param default_args: The names of arguments and their default values.
         :param vararg: Whether the last argument is a vararg.
-        :param default_arg_names: Dict object containing the names of arguments and their default values.
-        :param closure: This function’s closure.
+        :param scope: The scope the function is defined in.
+        :param call_stack: The call stack when the function is defined.
         :param statements: This function’s statements.
         :type statements: ottm.api.wiki.modules._syntax_tree.Statement
         """
-        if vararg and default_arg_names:
+        if vararg and default_args:
             raise TypeError('vararg functions cannot have default arguments')
-        self._name = name
-        self._args = {name: self._NO_DEFAULT for name in arg_names}
-        for k, v in default_arg_names.items():
-            if k in arg_names:
-                raise TypeError(f'duplicate argument "{arg_names}" for function {self.name}')
-            self._args[k] = v
+        self._arg_names = tuple(arg_names)
+        self._default_args = tuple(default_args)
+        self._ensure_no_duplicates(self._arg_names + tuple(name for name, _ in self._default_args))
         self._vararg = vararg
-        self._closure = closure
+        self._closure = scope
         self._statements = statements
+        self.__name__ = name or '<anonymous>'
+        self.__qualname__ = scope.module.__qualname__ + '.' + call_stack.path + '.' + self.__name__
 
-    @property
-    def name(self) -> str:
-        return self._name or '<anonymous>'
+    def _ensure_no_duplicates(self, values: _typ.Iterable[str]):
+        seen = set()
+        for v in values:
+            if v in seen:
+                raise NameError(f'duplicate argument name "{v}"')
 
-    def __call__(self, call_stack: _scope.CallStack, *args, **kwargs) -> _typ.Any:
-        expected_args_len = len(self._args)
-        actual_pos_args_len = len(args)
+    def __call__(self, call_stack: CallStack, *args: _typ.Any) -> _typ.Any:
+        min_expected_args_nb = len(self._arg_names)
+        max_expected_args_nb = min_expected_args_nb + len(self._default_args)
+        actual_args_nb = len(args)
 
-        filled_args = []
-        scope = _scope.Scope(self._closure)
-        for i, arg_name in enumerate(self._args):
-            if self._vararg and i == expected_args_len - 1:
-                scope.set_variable(name=arg_name, value=args[i:])
-                filled_args.append(arg_name)
-            elif i >= actual_pos_args_len:
-                if arg_name in kwargs:
-                    if arg_name in filled_args:
-                        raise TypeError(f'duplicate argument "{arg_name}" passed to function {self.name}()')
-                    scope.set_variable(name=arg_name, value=kwargs[arg_name])
-                    filled_args.append(arg_name)
-                    del kwargs[arg_name]
-            else:
-                scope.set_variable(name=arg_name, value=args[i])
-                filled_args.append(arg_name)
-        if kwargs:
-            raise TypeError(f'undefined argument "{next(iter(kwargs))}" for function {self.name}()')
-        for k, v in self._args.items():
-            if k not in filled_args:
-                if v is not self._NO_DEFAULT:
-                    filled_args.append(k)
-                    scope.set_variable(name=k, value=v)
-                else:
-                    raise TypeError(f'missing required argument "{k}" for function {self.name}()')
+        if actual_args_nb < min_expected_args_nb:
+            raise RuntimeError(
+                f'function {self.__name__!r} expects at least {min_expected_args_nb} arguments, {actual_args_nb} given')
+        if actual_args_nb > max_expected_args_nb:
+            raise RuntimeError(
+                f'function {self.__name__!r} expects at most {max_expected_args_nb} arguments, {actual_args_nb} given')
 
-        call_stack = call_stack.push(_scope.CallStack(self.name))
+        scope = self._closure.push()
+        call_stack = call_stack.push(self.__name__)
+
+        # Unpack arguments
+        if self._vararg:
+            unpacked_values = self.unpack_values(actual_args_nb, True, args)
+            for var_name, v in zip(self._arg_names, unpacked_values):
+                scope.declare_variable(var_name, False, v, ignore_name_conflicts=True)
+        else:
+            start_i = len(args) - min_expected_args_nb
+            completed_args = args + tuple(default for _, default in self._default_args[start_i:])
+            unpacked_values = self.unpack_values(max_expected_args_nb, False, completed_args)
+            all_arg_names = self._arg_names + tuple(vname for vname, _ in self._default_args)
+            for var_name, v in zip(all_arg_names, unpacked_values):
+                scope.declare_variable(var_name, False, v, ignore_name_conflicts=True)
 
         # Execute statements
         for statement in self._statements:
             match statement.execute(scope, call_stack):
-                case ['return']:
-                    return
                 case ['return', value]:
                     return value
-                case result if result is not None:
-                    raise SyntaxError(f'unexpected statement "{result[0]}"')
+                case [stmt]:
+                    raise SyntaxError(f'unexpected statement "{stmt}"')
+        return None
 
     def __repr__(self):
-        return f'<function "{self.name}" at {id(self):#x}>' if self._name else f'<anonymous function at {id(self):#x}>'
+        return f'<function "{self.__qualname__}" at {id(self):#x}>'
+
+    @staticmethod
+    def unpack_values(vars_nb: int, last_takes_rest: bool, values: _typ.Any) -> list[_typ.Any]:
+        unpacked_values = []
+        iterator = iter(values)
+        for i in range(vars_nb):
+            if last_takes_rest and i == vars_nb - 1:
+                break
+            try:
+                value = next(iterator)
+            except StopIteration:
+                raise ValueError(f'not enough values to unpack (expected {vars_nb})')
+            else:
+                unpacked_values.append(value)
+        if last_takes_rest:
+            unpacked_values.append(list(iterator))
+        elif next(iterator):
+            raise ValueError(f'too many values to unpack (expected {vars_nb})')
+        return unpacked_values
+
+
+class CallStack:
+    MAX_DEPTH = 500
+
+    def __init__(self, name: str):
+        self._name = name
+        self._parent: CallStack | None = None
+
+    @property
+    def name(self) -> str:
+        return self._name
+
+    @property
+    def path(self) -> str:
+        if self._parent:
+            return self._parent.path + '.' + self.name
+        return self.name
+
+    def __len__(self):
+        return 1 + len(self._parent or [])
+
+    def push(self, name: str) -> CallStack:
+        if len(self) == self.MAX_DEPTH:
+            raise OverflowError(f'reached max call recursion depth of {self.MAX_DEPTH}')
+        element = CallStack(name)
+        element._parent = self
+        return element
+
+
+_NO_VALUE = object()
+
+
+class Scope:
+    MAX_DEPTH = 500
+
+    def __init__(self, module: Module = None, parent: Scope = None):
+        """Create a new scope.
+
+        :param module: The module the scope belongs to.
+        :param parent: The parent scope.
+        """
+        self._module = module
+        self._parent = parent
+        self._variables: dict[str, Variable] = {}
+
+    @property
+    def module(self) -> Module:
+        """This scope’s module.
+
+        :return: This scope’s module.
+        """
+        return self._module
+
+    def declare_variable(self, name: str, is_const: bool, value=_NO_VALUE, ignore_name_conflicts: bool = False):
+        """Declare a new variable.
+
+        :param name: The variable’s name.
+        :param is_const: If true, the variable’s value won’t be changeable.
+        :param value: Optional. The variable’s initial value.
+        :param ignore_name_conflicts: If true, name conflicts will be ignored.
+        :raise NameError: If a variable with the same name already exists.
+        :raise ValueError: If ``is_const`` is true and no value was provided.
+        """
+        if not ignore_name_conflicts:
+            try:
+                self.get_variable(name)
+            except NameError:
+                pass
+            else:
+                raise NameError(f'variable "{name}" is already defined')
+
+        if is_const and value is _NO_VALUE:
+            raise ValueError('const variables must have an initial value')
+        self._variables[name] = Variable(None if value is _NO_VALUE else value, is_const)
+
+    def get_variable_names(self) -> list[str]:
+        """Return the names of all variables from this scope and its parents.
+
+        :return: A sorted list of this scope’s and its parents’ variables names.
+        """
+        names = []
+        sc = self
+        while sc:
+            names += sc._variables.keys()
+            sc = sc._parent
+        return sorted(names)
+
+    def get_variable(self, name: str, current_only: bool = False) -> Variable:
+        """Return the Variable object for the given name.
+
+        :param name: Variable’s name.
+        :param current_only: Whether to only look into the current scope, not its parents.
+        :return: A Variable object.
+        :raise NameError: If no variable with this name is defined.
+        """
+        if name not in self._variables:
+            if current_only or not self._parent:
+                raise NameError(f'undefined variable "{name}"')
+            return self._parent.get_variable(name)
+        return self._variables[name]
+
+    def set_variable(self, name: str, value: _typ.Any):
+        """Set the value of the given variable.
+
+        :param name: Variable’s name.
+        :param value: Variable’s new value.
+        :raise NameError: If no variable with this name is defined.
+        :raise TypeError: If the variable is const.
+        """
+        if name not in self._variables:
+            raise NameError(f'undefined variable "{name}"')
+        else:
+            variable = self._variables[name]
+            if variable.is_const:
+                raise TypeError(f'cannot reassign const variable "{name}"')
+            variable.value = value
+
+    def copy(self) -> Scope:
+        """Return a copy of this scope object. Variables’ values are not copied."""
+        s = Scope()
+        s._variables = {k: v.copy() for k, v in self._variables.items()}
+        return s
+
+    def push(self) -> Scope:
+        return Scope(self.module, self)
+
+    def pop(self) -> Scope:
+        return self._parent
+
+
+class Variable:
+    def __init__(self, value: _typ.Any, is_const: bool):
+        """Create a new variable.
+
+        :param value: Variable’s value.
+        :param is_const: Whether the variable is constant.
+        """
+        self._value = value
+        self._is_const = is_const
+
+    @property
+    def value(self) -> _typ.Any:
+        """This variable’s value."""
+        return self._value
+
+    @value.setter
+    def value(self, value: _typ.Any):
+        """Set this variable’s value."""
+        self._value = value
+
+    @property
+    def is_const(self) -> bool:
+        """Whether this variable’s value is constant."""
+        return self._is_const
+
+    def copy(self) -> Variable:
+        """Return a shallow copy of this variable."""
+        return Variable(self.value, self.is_const)

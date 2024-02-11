@@ -1,10 +1,14 @@
+from __future__ import annotations
+
 import abc as _abc
 import typing as _typ
 
-from . import _scope, _types, _exceptions as _ex, _builtin_modules as _bm
+from . import _builtin_modules as _bm, _exceptions as _ex, _types
 
-
-# TODO wrap all exceptions in WikiScriptException
+# Sentinel object which indicates that a statement is not a return
+# and that the block statement should thus proceed
+NO_RETURN = object()
+type StatementResult = tuple[str] | tuple[str, _typ.Any] | NO_RETURN
 
 
 class Statement(_abc.ABC):
@@ -21,8 +25,37 @@ class Statement(_abc.ABC):
         return self._column
 
     @_abc.abstractmethod
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> tuple[str] | tuple[str, _typ.Any] | None:
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
         pass
+
+    def _unpack_variables(
+            self,
+            var_names: tuple[str, ...],
+            last_takes_rest: bool,
+            value: _typ.Any,
+            scope: _types.Scope,
+            declare_as_const: bool = None,
+    ):
+        unpacked_values = _types.FunctionClosure.unpack_values(len(var_names), last_takes_rest, iter(value))
+        for var_name, v in zip(var_names, unpacked_values):
+            if declare_as_const is not None:
+                self._declare_variable(var_name, declare_as_const, v, scope)
+            else:
+                scope.set_variable(var_name, v)
+
+    def _declare_variable(self, name: str, is_const: bool, value, scope: _types.Scope):
+        try:
+            scope.declare_variable(name, is_const, value)
+        except NameError as e:
+            raise _ex.WikiScriptException(str(e), self.line, self.column)
+
+    @classmethod
+    def _execute_statements(cls, scope: _types.Scope, call_stack: _types.CallStack,
+                            statements: tuple[Statement, ...]) -> StatementResult:
+        for statement in statements:
+            if (result := statement.execute(scope, call_stack)) is not NO_RETURN:
+                return result
+        return NO_RETURN
 
 
 class Expression(_abc.ABC):
@@ -31,7 +64,7 @@ class Expression(_abc.ABC):
         self._column = column
 
     @_abc.abstractmethod
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         pass
 
     @property
@@ -43,9 +76,271 @@ class Expression(_abc.ABC):
         return self._column
 
 
+type UnpackExpression = tuple['*', Expression]
+
+
 ##############
 # Statements #
 ##############
+
+
+class ImportStatement(Statement):
+    def __init__(self, line: int, column: int, module_name: str, alias: str | None, builtin: bool):
+        super().__init__(line, column)
+        if not alias and not builtin:
+            raise _ex.WikiScriptException('Missing alias for non-builtin module', line, column)
+        self._module_name = module_name
+        self._alias = alias
+        self._builtin = builtin
+
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        if self._builtin:
+            scope.set_variable(self._alias or self._module_name, _bm.get_module(self._module_name))
+        else:
+            raise NotImplementedError('load wiki module')  # TODO load wiki module
+        return NO_RETURN
+
+    def __repr__(self):
+        return f'Import[module_name={self._module_name!r},alias={self._alias!r},builtin={self._builtin}]'
+
+
+class ExportStatement(Statement):
+    def __init__(self, line: int, column: int, names: _typ.Sequence[str]):
+        super().__init__(line, column)
+        self._ensure_no_duplicates(names)
+        self._names = names
+
+    def _ensure_no_duplicates(self, values: _typ.Iterable[str]):
+        seen = set()
+        for v in values:
+            if v in seen:
+                raise _ex.WikiScriptException(f'name "{v}" exported multiple times', self.line, self.column)
+
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        try:
+            scope.module.set_exported_names(set(self._names))
+        except NameError as e:
+            raise _ex.WikiScriptException(str(e), self.line, self.column)
+        return NO_RETURN
+
+    def __repr__(self):
+        return f'Export[names={self._names!r}]'
+
+
+class DeclareFunctionStatement(Statement):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            name: str,
+            args: _typ.Sequence[str],
+            default_args: _typ.Sequence[tuple[str, Expression]],
+            vararg: bool,
+            statements: _typ.Sequence[Statement],
+    ):
+        super().__init__(line, column)
+        if vararg and default_args:
+            raise _ex.WikiScriptException('vararg functions cannot have default arguments', line, column)
+        self._name = name
+        self._arg_names = tuple(args)
+        self._default_args = tuple(default_args)
+        self.ensure_no_duplicates(self._arg_names + tuple(n for n, _ in self._default_args), line, column)
+        self._vararg = vararg
+        self._statements = tuple(statements)
+
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        function = _types.FunctionClosure(
+            self._name,
+            self._arg_names,
+            {name: default.evaluate(scope, call_stack) for name, default in self._default_args},
+            self._vararg,
+            scope,
+            call_stack,
+            *self._statements
+        )
+        self._declare_variable(self._name, False, function, scope)
+        return NO_RETURN
+
+    @staticmethod
+    def ensure_no_duplicates(values: _typ.Iterable[str], line: int, column: int):
+        seen = set()
+        for v in values:
+            if v in seen:
+                raise _ex.WikiScriptException(f'duplicate argument name "{v}"', line, column)
+
+    def __repr__(self):
+        return (f'DeclareFunction[name={self._name},args={self._arg_names},vararg={self._vararg},'
+                f'default_args={self._default_args},statements={self._statements}]')
+
+
+class ForLoopStatement(Statement):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            variables_names: _typ.Sequence[str],
+            last_variable_takes_rest: bool,
+            iterator: Expression,
+            statements: _typ.Sequence[Statement],
+    ):
+        super().__init__(line, column)
+        self._variables_names = tuple(variables_names)
+        self._last_variable_takes_rest = last_variable_takes_rest
+        self._iterator = iterator
+        self._statements = tuple(statements)
+
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        scope = scope.push()
+
+        for var_name in self._variables_names:
+            self._declare_variable(var_name, False, None, scope)
+
+        for element in self._iterator.evaluate(scope, call_stack):
+            scope = scope.push()
+            stop = False
+            self._unpack_variables(self._variables_names, self._last_variable_takes_rest, element, scope)
+            for statement in self._statements:
+                match statement.execute(scope, call_stack):
+                    case ['break']:
+                        stop = True
+                        break
+                    case ['continue']:
+                        break
+                    case ['return', result]:
+                        return result
+            scope = scope.pop()
+            if stop:
+                break
+
+        return NO_RETURN
+
+    def __repr__(self):
+        return (f'ForLoop[variables_names={self._variables_names!r},'
+                f'last_var_takes_rest={self._last_variable_takes_rest},'
+                f'iterator={self._iterator!r},'
+                f'statements={self._statements}]')
+
+
+class WhileLoopStatement(Statement):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            cond: Expression,
+            statements: _typ.Sequence[Statement],
+    ):
+        super().__init__(line, column)
+        self._cond = cond
+        self._statements = tuple(statements)
+
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        scope = scope.push()
+        cond = self._cond.evaluate(scope, call_stack)
+        while cond:
+            scope = scope.push()
+            stop = False
+            for statement in self._statements:
+                match statement.execute(scope, call_stack):
+                    case ['break']:
+                        stop = True
+                        break
+                    case ['continue']:
+                        break
+                    case ['return', result]:
+                        return result
+            scope = scope.pop()
+            if stop:
+                break
+            cond = self._cond.evaluate(scope, call_stack)
+        return NO_RETURN
+
+    def __repr__(self):
+        return f'WhileLoop[cond={self._cond!r},statements={self._statements}]'
+
+
+class BreakStatement(Statement):
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        return ('break',)
+
+    def __repr__(self):
+        return f'Break'
+
+
+class ContinueStatement(Statement):
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        return ('continue',)
+
+    def __repr__(self):
+        return f'Continue'
+
+
+class IfStatement(Statement):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            ifs_statements: _typ.Sequence[tuple[Expression, _typ.Sequence[Statement]]],
+            else_statements: _typ.Sequence[Statement],
+    ):
+        super().__init__(line, column)
+        self._ifs_statements = tuple((cond, tuple(statements)) for cond, statements in ifs_statements)
+        self._else_statements = tuple(else_statements)
+
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        for cond, statements in self._ifs_statements:
+            if cond.evaluate(scope, call_stack):
+                scope = scope.push()
+                return self._execute_statements(scope, call_stack, statements)
+        else:
+            if self._else_statements:
+                scope = scope.push()
+                value = self._execute_statements(scope, call_stack, self._else_statements)
+                return value
+        return NO_RETURN
+
+    def __repr__(self):
+        return f'If[ifs_stmts={self._ifs_statements},else_stmts={self._else_statements}]'
+
+
+class TryStatement(Statement):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            try_statements: _typ.Sequence[Statement],
+            except_parts: _typ.Sequence[tuple[_typ.Sequence[str], str | None, _typ.Sequence[Statement]]],
+    ):
+        super().__init__(line, column)
+        self._try_statements = tuple(try_statements)
+        self._except_parts = tuple((types, var_name, tuple(statements)) for types, var_name, statements in except_parts)
+
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        scope = scope.push()
+        try:
+            return self._execute_statements(scope, call_stack, self._try_statements)
+        except _ex.WikiScriptException:  # Uncatchable from scripts
+            raise
+        except SyntaxError | OverflowError as e:  # Uncatchable errors
+            raise _ex.WikiScriptException(str(e), self.line, self.column)
+        except Exception as e:
+            for exception_types, var_name, statements in self._except_parts:
+                try:
+                    ex_classes = tuple(scope.get_variable(ex).value for ex in exception_types)
+                except NameError as e:
+                    raise _ex.WikiScriptException(str(e), self.line, self.column)
+                if any(not isinstance(ex_class, type) or not issubclass(ex_class, BaseException)
+                       for ex_class in ex_classes):
+                    raise _ex.WikiScriptException(f'except clause only accepts subclasses of BaseException',
+                                                  self.line, self.column)
+                if isinstance(e, ex_classes):
+                    if var_name:
+                        # Do not pass actual exception object to avoid potential runtime leaks
+                        self._declare_variable(var_name, False, str(e), scope)
+                    return self._execute_statements(scope, call_stack, statements)
+        return NO_RETURN
+
+    def __repr__(self):
+        return f'Try[try_statements={self._try_statements},except_parts={self._except_parts}]'
 
 
 class ExpressionStatement(Statement):
@@ -53,49 +348,38 @@ class ExpressionStatement(Statement):
         super().__init__(line, column)
         self._expr = expr
 
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
         self._expr.evaluate(scope, call_stack)
+        return NO_RETURN
 
     def __repr__(self):
         return f'Expression[expr={self._expr!r}]'
 
 
-class ImportStatement(Statement):
-    def __init__(self, line: int, column: int, module_name: str, alias: str | None, builtin: bool):
+class DeclareVariableStatement(Statement):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            names: _typ.Sequence[str],
+            last_takes_rest: bool,
+            is_const: bool,
+            expr: Expression,
+    ):
         super().__init__(line, column)
-        self._module_name = module_name
-        self._alias = alias
-        self._builtin = builtin
-
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
-        if self._builtin:
-            scope.set_variable(self._alias or self._module_name, _bm.get_module(self._module_name))
-        else:
-            raise NotImplementedError('load wiki module')  # TODO load wiki module
-
-    def __repr__(self):
-        return f'Import[module_name={self._module_name!r},alias={self._alias!r},built-in={self._builtin!r}]'
-
-
-class UnpackVariablesStatement(Statement):
-    def __init__(self, line: int, column: int, names: list[str], expr: Expression):
-        super().__init__(line, column)
-        self._names = names
+        self._names = tuple(names)
+        self._last_takes_rest = last_takes_rest
+        self._is_const = is_const
         self._expr = expr
 
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
-        sequence = self._expr.evaluate(scope, call_stack)
-        left_len = len(self._names)
-        right_len = len(sequence)
-        if left_len < right_len:
-            raise _ex.WikiScriptException(f'too many values to unpack (expected {right_len})', self.line, self.column)
-        if left_len > right_len:
-            raise _ex.WikiScriptException(f'not enough values to unpack (expected {left_len})', self.line, self.column)
-        for i, value in enumerate(sequence):
-            scope.set_variable(self._names[i], value)
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        value = self._expr.evaluate(scope, call_stack)
+        self._unpack_variables(self._names, self._last_takes_rest, value, scope, declare_as_const=self._is_const)
+        return NO_RETURN
 
     def __repr__(self):
-        return f'UnpackVariables[names={self._names},expr={self._expr!r}]'
+        return (f'DeclareVariables[names={self._names!r},last_takes_rest={self._last_takes_rest},'
+                f'is_const={self._is_const},value={self._expr!r}]')
 
 
 class SetVariableStatement(Statement):
@@ -105,64 +389,102 @@ class SetVariableStatement(Statement):
         self._op = operator
         self._expr = expr
 
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
-        new_value = self._expr.evaluate(scope, call_stack)
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        right_value = self._expr.evaluate(scope, call_stack)
         if self._op == '=':
-            scope.set_variable(self._name, new_value)
-            return
+            try:
+                scope.set_variable(self._name, right_value)
+            except NameError | TypeError as e:
+                raise _ex.WikiScriptException(str(e), self.line, self.column)
+            return NO_RETURN
 
         try:
-            value = scope.get_variable(self._name, current_only=True).value
+            value = scope.get_variable(self._name).value
         except NameError as e:
-            raise _ex.WikiScriptException(str(e), self.line, self.column) from None
+            raise _ex.WikiScriptException(str(e), self.line, self.column)
 
         match self._op:
             case '**=':
-                value **= new_value
+                value **= right_value
             case '*=':
-                value *= new_value
+                value *= right_value
             case '/=':
-                value /= new_value
+                value /= right_value
             case '//=':
-                value //= new_value
+                value //= right_value
             case '%=':
-                value %= new_value
+                value %= right_value
             case '+=':
-                value += new_value
+                value += right_value
             case '-=':
-                value -= new_value
+                value -= right_value
             case '&=':
-                value &= new_value
+                value &= right_value
             case '|=':
-                value |= new_value
+                value |= right_value
             case '^=':
-                value ^= new_value
+                value ^= right_value
             case '<<=':
-                value <<= new_value
+                value <<= right_value
             case '>>=':
-                value >>= new_value
-        scope.set_variable(self._name, value)
+                value >>= right_value
+        try:
+            scope.set_variable(self._name, value)
+        except NameError as e:
+            raise _ex.WikiScriptException(str(e), self.line, self.column)
+        return NO_RETURN
 
     def __repr__(self):
         return f'SetVariable[name={self._name!r},op={self._op!r},expr={self._expr!r}]'
 
 
+class SetVariablesStatement(Statement):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            names: _typ.Sequence[str],
+            last_takes_rest: bool,
+            expr: Expression,
+    ):
+        super().__init__(line, column)
+        self._names = tuple(names)
+        self._last_takes_rest = last_takes_rest
+        self._expr = expr
+
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        right_value = self._expr.evaluate(scope, call_stack)
+        self._unpack_variables(self._names, self._last_takes_rest, right_value, scope)
+        return NO_RETURN
+
+    def __repr__(self):
+        return f'SetVariables[names={self._names!r},last_takes_rest={self._last_takes_rest},expr={self._expr!r}]'
+
+
 class SetPropertyStatement(Statement):
-    def __init__(self, line: int, column: int, target: Expression, property_name: str, operator: str, expr: Expression):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            target: Expression,
+            property_name: str,
+            operator: str,
+            expr: Expression,
+    ):
         super().__init__(line, column)
         self._target = target
         self._op = operator
         self._property_name = property_name
         self._expr = expr
 
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
         t = self._target.evaluate(scope, call_stack)
         if not GetPropertyExpression.is_attribute_allowed(self._property_name):
             raise GetPropertyExpression.get_error(t, self._property_name)
         v = self._expr.evaluate(scope, call_stack)
         if self._op == '=':
             setattr(t, self._property_name, v)
-            return
+            return NO_RETURN
         pv = getattr(t, self._property_name)
         match self._op:
             case '**=':
@@ -190,6 +512,7 @@ class SetPropertyStatement(Statement):
             case '>>=':
                 pv >>= v
         setattr(t, self._property_name, pv)
+        return NO_RETURN
 
     def __repr__(self):
         return f'SetProperty[target={self._target!r},property={self._property_name!r},op={self._op!r},' \
@@ -204,7 +527,7 @@ class SetItemStatement(Statement):
         self._key = key
         self._expr = expr
 
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
         t = self._target.evaluate(scope, call_stack)
         k = self._key.evaluate(scope, call_stack)
         v = self._expr.evaluate(scope, call_stack)
@@ -235,73 +558,18 @@ class SetItemStatement(Statement):
                 t[k] <<= v
             case '>>=':
                 t[k] >>= v
+        return NO_RETURN
 
     def __repr__(self):
         return f'SetItem[target={self._target!r},key={self._key!r},op={self._op!r},expr={self._expr!r}]'
 
 
-class DeleteVariableStatement(Statement):
-    def __init__(self, line: int, column: int, name: str):
-        super().__init__(line, column)
-        self._var_name = name
-
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
-        scope.delete_variable(self._var_name)
-
-    def __repr__(self):
-        return f'DeleteVariable[name={self._var_name!r}]'
-
-
-class DeleteItemStatement(Statement):
-    def __init__(self, line: int, column: int, target: Expression, key: Expression):
-        super().__init__(line, column)
-        self._target = target
-        self._key = key
-
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
-        del self._target.evaluate(scope, call_stack)[self._key.evaluate(scope, call_stack)]
-
-    def __repr__(self):
-        return f'DeleteItem[target={self._target!r},key={self._key!r}]'
-
-
-class TryStatement(Statement):
-    def __init__(self, line: int, column: int, try_statements: list[Statement],
-                 except_parts: list[tuple[list[Expression], str | None, list[Statement]]]):
-        super().__init__(line, column)
-        self._try_statements = try_statements
-        self._except_parts = except_parts
-
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> tuple[str] | tuple[str, _typ.Any] | None:
-        try:
-            for statement in self._try_statements:
-                if (result := statement.execute(scope, call_stack)) is not None:
-                    return result
-        except Exception as e:
-            for exception_classes, variable_name, statements in self._except_parts:
-                ex_classes = tuple(ex.evaluate(scope, call_stack) for ex in exception_classes)
-                if any(not isinstance(ex_classes, type) or not issubclass(ex_class, BaseException)
-                       for ex_class in ex_classes):
-                    raise _ex.WikiScriptException(f'except clause only accepts subclasses of BaseException',
-                                                  self.line, self.column)
-                if isinstance(e, ex_classes):
-                    if variable_name:
-                        scope.set_variable(variable_name, str(e))
-                    for statement in statements:
-                        if (result := statement.execute(scope, call_stack)) is not None:
-                            return result
-                    break
-
-    def __repr__(self):
-        return f'Try[try_statements={self._try_statements},except_parts={self._except_parts}]'
-
-
 class RaiseStatement(Statement):
-    def __init__(self, line: int, column: int, expr: Expression = None):
+    def __init__(self, line: int, column: int, expr: Expression):
         super().__init__(line, column)
         self._expr = expr
 
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
         v = self._expr.evaluate(scope, call_stack)
         if not isinstance(v, BaseException):
             raise _ex.WikiScriptException('attempt to raise value that is not an instance of BaseException',
@@ -312,146 +580,18 @@ class RaiseStatement(Statement):
         return f'Raise[expr={self._expr!r}]'
 
 
-class IfStatement(Statement):
-    def __init__(self, line: int, column: int, cond: Expression, if_statements: list[Statement],
-                 elif_parts: list[tuple[Expression, list[Statement]]],
-                 else_statements: list[Statement]):
+class DeleteItemStatement(Statement):
+    def __init__(self, line: int, column: int, target: Expression, key: Expression):
         super().__init__(line, column)
-        self._cond = cond
-        self._if_statements = if_statements
-        self._elif_parts = elif_parts
-        self._else_statements = else_statements
+        self._target = target
+        self._key = key
 
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> tuple[str] | tuple[str, _typ.Any] | None:
-        if self._cond.evaluate(scope, call_stack):
-            for statement in self._if_statements:
-                if (result := statement.execute(scope, call_stack)) is not None:
-                    return result
-        else:
-            for elif_cond, elif_statements in self._elif_parts:
-                if elif_cond.evaluate(scope, call_stack):
-                    for statement in elif_statements:
-                        if (result := statement.execute(scope, call_stack)) is not None:
-                            return result
-                    break
-            else:
-                for statement in self._else_statements:
-                    if (result := statement.execute(scope, call_stack)) is not None:
-                        return result
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        del self._target.evaluate(scope, call_stack)[self._key.evaluate(scope, call_stack)]
+        return NO_RETURN
 
     def __repr__(self):
-        return f'If[cond={self._cond!r},if_stmts={self._if_statements},elifs={self._elif_parts},' \
-               f'else_stmts={self._else_statements}]'
-
-
-class ForLoopStatement(Statement):
-    def __init__(self, line: int, column: int, variables_names: str | list[str], iterator: Expression,
-                 statements: list[Statement]):
-        super().__init__(line, column)
-        self._variables_names = variables_names
-        self._iterator = iterator
-        self._statements = statements
-
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> tuple[str] | tuple[str, _typ.Any] | None:
-        for element in self._iterator.evaluate(scope, call_stack):
-            stop = False
-            # Assign loop variable(s)
-            if isinstance(self._variables_names, list):
-                left_len = len(self._variables_names)
-                right_len = len(element)
-                if left_len < right_len:
-                    raise _ex.WikiScriptException(f'too many values to unpack (expected {right_len})',
-                                                  self.line, self.column)
-                if left_len > right_len:
-                    raise _ex.WikiScriptException(f'not enough values to unpack (expected {left_len})',
-                                                  self.line, self.column)
-                for i, value in enumerate(element):
-                    scope.set_variable(self._variables_names[i], value)
-            else:
-                scope.set_variable(self._variables_names, element)
-            # Execute statements
-            for statement in self._statements:
-                match statement.execute(scope, call_stack):
-                    case ['break']:
-                        stop = True
-                        break
-                    case ['continue']:
-                        break
-                    case result if result is not None:
-                        return result
-            if stop:
-                break
-
-    def __repr__(self):
-        return f'ForLoop[variables_names={self._variables_names!r},iterator={self._iterator!r},' \
-               f'statements={self._statements}]'
-
-
-class WhileLoopStatement(Statement):
-    def __init__(self, line: int, column: int, cond: Expression, statements: list[Statement]):
-        super().__init__(line, column)
-        self._cond = cond
-        self._statements = statements
-
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> tuple[str] | tuple[str, _typ.Any] | None:
-        cond = self._cond.evaluate(scope, call_stack)
-        while cond:
-            stop = False
-            for statement in self._statements:
-                match statement.execute(scope, call_stack):
-                    case ['break']:
-                        stop = True
-                        break
-                    case ['continue']:
-                        break
-                    case result if result is not None:
-                        return result
-            if stop:
-                break
-            cond = self._cond.evaluate(scope, call_stack)
-
-    def __repr__(self):
-        return f'WhileLoop[cond={self._cond!r},statements={self._statements}]'
-
-
-class BreakStatement(Statement):
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> tuple[str]:
-        return 'break',
-
-    def __repr__(self):
-        return f'Break'
-
-
-class ContinueStatement(Statement):
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> tuple[str]:
-        return 'continue',
-
-    def __repr__(self):
-        return f'Continue'
-
-
-class DefineFunctionStatement(Statement):
-    def __init__(self, line: int, column: int, name: str, args: list[str], vararg: bool, kwargs: dict[str, Expression],
-                 statements: list[Statement]):
-        super().__init__(line, column)
-        if vararg and kwargs:
-            raise TypeError('vararg functions cannot have default arguments')
-        self._name = name
-        self._args = args
-        self._vararg = vararg
-        self._kwargs = kwargs
-        self._statements = statements
-
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> None:
-        # The function’s closure
-        scope.set_variable(self._name, _types.ScriptFunction(
-            self._name, self._args, {k: v.evaluate(scope, call_stack) for k, v in self._kwargs.items()}, self._vararg,
-            scope, *self._statements
-        ))
-
-    def __repr__(self):
-        return f'DefineFunction[name={self._name},args={self._args},vararg={self._vararg},kwargs={self._kwargs},' \
-               f'statements={self._statements}]'
+        return f'DeleteItem[target={self._target!r},key={self._key!r}]'
 
 
 class ReturnStatement(Statement):
@@ -459,8 +599,8 @@ class ReturnStatement(Statement):
         super().__init__(line, column)
         self._expr = expr
 
-    def execute(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> tuple[str, _typ.Any]:
-        return 'return', self._expr.evaluate(scope, call_stack)
+    def execute(self, scope: _types.Scope, call_stack: _types.CallStack) -> StatementResult:
+        return 'return', self._expr.evaluate(scope, call_stack) if self._expr else None
 
     def __repr__(self):
         return f'Return[expr={self._expr!r}]'
@@ -472,14 +612,20 @@ class ReturnStatement(Statement):
 
 
 class UnaryOperatorExpression(Expression):
-    def __init__(self, line: int, column: int, symbol: str, operator: _typ.Callable[[_typ.Any], _typ.Any],
-                 expr: Expression):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            symbol: str,
+            operator: _typ.Callable[[_typ.Any], _typ.Any],
+            expr: Expression,
+    ):
         super().__init__(line, column)
         self._symbol = symbol
         self._op = operator
         self._expr = expr
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         return self._op(self._expr.evaluate(scope, call_stack))
 
     def __repr__(self):
@@ -487,25 +633,32 @@ class UnaryOperatorExpression(Expression):
 
 
 class BinaryOperatorExpression(Expression):
-    def __init__(self, line: int, column: int, symbol: str, operator: _typ.Callable[[_typ.Any, _typ.Any], _typ.Any],
-                 expr1: Expression, expr2: Expression):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            symbol: str,
+            operator: _typ.Callable[[_typ.Any, _typ.Any], _typ.Any],
+            expr1: Expression,
+            expr2: Expression,
+    ):
         super().__init__(line, column)
         self._symbol = symbol
         self._op = operator
         self._expr1 = expr1
         self._expr2 = expr2
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         v1 = self._expr1.evaluate(scope, call_stack)
         match self._symbol:
             case 'and':
                 if not v1:  # Short circuit
                     return v1
-                return self._op(v1, self._expr2.evaluate(scope, call_stack))
+                return self._expr2.evaluate(scope, call_stack)
             case 'or':
                 if v1:  # Short circuit
                     return v1
-                return self._op(v1, self._expr2.evaluate(scope, call_stack))
+                return self._expr2.evaluate(scope, call_stack)
             case _:
                 return self._op(v1, self._expr2.evaluate(scope, call_stack))
 
@@ -514,9 +667,16 @@ class BinaryOperatorExpression(Expression):
 
 
 class TernaryOperatorExpression(Expression):
-    def __init__(self, line: int, column: int, symbol: str,
-                 operator: _typ.Callable[[_typ.Any, _typ.Any, _typ.Any], _typ.Any],
-                 expr1: Expression, expr2: Expression, expr3: Expression):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            symbol: str,
+            operator: _typ.Callable[[_typ.Any, _typ.Any, _typ.Any], _typ.Any],
+            expr1: Expression,
+            expr2: Expression,
+            expr3: Expression,
+    ):
         super().__init__(line, column)
         self._symbol = symbol
         self._op = operator
@@ -524,7 +684,7 @@ class TernaryOperatorExpression(Expression):
         self._expr2 = expr2
         self._expr3 = expr3
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         return self._op(self._expr1.evaluate(scope, call_stack),
                         self._expr2.evaluate(scope, call_stack),
                         self._expr3.evaluate(scope, call_stack))
@@ -538,11 +698,11 @@ class GetVariableExpression(Expression):
         super().__init__(line, column)
         self._variable_name = variable_name
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         try:
             return scope.get_variable(self._variable_name).value
         except NameError as e:
-            raise _ex.WikiScriptException(str(e), self.line, self.column) from None
+            raise _ex.WikiScriptException(str(e), self.line, self.column)
 
     def __repr__(self):
         return f'GetVariable[name={self._variable_name!r}]'
@@ -554,7 +714,7 @@ class GetPropertyExpression(Expression):
         self._target = target
         self._property_name = property_name
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         target = self._target.evaluate(scope, call_stack)
         return self.get_attr(target, self._property_name)
 
@@ -582,7 +742,7 @@ class GetPropertyExpression(Expression):
         try:
             return getattr(o, attr_name)
         except AttributeError:
-            raise cls.get_error(o, attr_name) from None  # Cut stack trace
+            raise cls.get_error(o, attr_name)
 
     @staticmethod
     def get_error(target, attr_name: str) -> AttributeError:
@@ -604,50 +764,79 @@ class GetItemExpression(Expression):
         self._target = target
         self._key = key
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         return self._target.evaluate(scope, call_stack)[self._key.evaluate(scope, call_stack)]
 
     def __repr__(self):
         return f'GetItem[target={self._target!r},key={self._key!r}]'
 
 
-class DefineAnonymousFunctionExpression(Expression):
-    def __init__(self, line: int, column: int, args: list[str], vararg: bool, kwargs: dict[str, Expression],
-                 statements: list[Statement]):
+class DeclareAnonymousFunctionExpression(Expression):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            args: _typ.Sequence[str],
+            default_args: _typ.Sequence[tuple[str, Expression]],
+            vararg: bool,
+            statements: _typ.Sequence[Statement],
+    ):
         super().__init__(line, column)
-        if vararg and kwargs:
-            raise TypeError('vararg functions cannot have default arguments')
-        self._args = args
+        if vararg and default_args:
+            raise _ex.WikiScriptException('vararg functions cannot have default arguments', self.line, self.column)
+        self._arg_names = tuple(args)
+        self._default_args = tuple(default_args)
+        DeclareFunctionStatement.ensure_no_duplicates(
+            self._arg_names + tuple(n for n, _ in self._default_args), line, column)
         self._vararg = vararg
-        self._kwargs = kwargs
-        self._statements = statements
+        self._statements = tuple(statements)
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
-        return _types.ScriptFunction(None, self._args, self._kwargs, self._vararg, scope.copy(), *self._statements)
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
+        return _types.FunctionClosure(
+            None,
+            self._arg_names,
+            {name: default.evaluate(scope, call_stack) for name, default in self._default_args},
+            self._vararg,
+            scope,
+            call_stack,
+            *self._statements
+        )
 
     def __repr__(self):
-        return f'DefineAnonymousFunction[args={self._args},vararg={self._vararg},kwargs={self._kwargs},' \
-               f'statements={self._statements}]'
+        return (f'DefineAnonymousFunction[args={self._arg_names},vararg={self._vararg},'
+                f'default_args={self._default_args},statements={self._statements}]')
 
 
 class FunctionCallExpression(Expression):
-    def __init__(self, line: int, column: int, target: Expression,
-                 args: list[Expression], kwargs: dict[str, Expression]):
+    def __init__(self, line: int, column: int, target: Expression, args: _typ.Sequence[Expression | UnpackExpression]):
         super().__init__(line, column)
         self._target = target
-        self._args = args
-        self._kwargs = kwargs
+        self._args = tuple(args)
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> _typ.Any:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         function = self._target.evaluate(scope, call_stack)
-        args = [arg.evaluate(scope, call_stack) for arg in self._args]
-        kwargs = {k: v.evaluate(scope, call_stack) for k, v in self._kwargs.items()}
-        if isinstance(function, _types.ScriptFunction):
-            return function(call_stack, *args, **kwargs)
-        return function(*args, **kwargs)
+        args = self.unpack_values(self._args, scope, call_stack)
+        if isinstance(function, _types.FunctionClosure):
+            return function(call_stack, *args)
+        return function(*args)
+
+    @staticmethod
+    def unpack_values(
+            values: _typ.Sequence[Expression | UnpackExpression],
+            scope: _types.Scope,
+            call_stack: _types.CallStack,
+    ) -> list[_typ.Any]:
+        vals = []
+        for arg in values:
+            match arg:
+                case ['*', e]:
+                    vals.extend(v for v in e.evaluate(scope, call_stack))
+                case e:
+                    vals.append(e.evaluate(scope, call_stack))
+        return vals
 
     def __repr__(self):
-        return f'FunctionCall[target={self._target!r},args={self._args}]'
+        return f'FunctionCall[target={self._target!r},args={self._args!r}]'
 
 
 class SimpleLiteralExpression(Expression):
@@ -655,7 +844,7 @@ class SimpleLiteralExpression(Expression):
         super().__init__(line, column)
         self._value = value
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> int | float | bool | str | None:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         return self._value
 
     def __repr__(self):
@@ -667,58 +856,64 @@ class DictLiteralExpression(Expression):
         super().__init__(line, column)
         self._entries = entries
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> dict:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         return {k.evaluate(scope, call_stack): v.evaluate(scope, call_stack) for k, v in self._entries}
 
     def __repr__(self):
-        return f'DictLiteral{list(self._entries)}'
+        return f'DictLiteral{list(self._entries)!r}'
 
 
 class ListLiteralExpression(Expression):
-    def __init__(self, line: int, column: int, *entries: Expression):
+    def __init__(self, line: int, column: int, *entries: Expression | UnpackExpression):
         super().__init__(line, column)
         self._entries = entries
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> list:
-        return [e.evaluate(scope, call_stack) for e in self._entries]
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
+        return FunctionCallExpression.unpack_values(self._entries, scope, call_stack)
 
     def __repr__(self):
-        return f'ListLiteral{list(self._entries)}'
+        return f'ListLiteral{list(self._entries)!r}'
 
 
 class TupleLiteralExpression(Expression):
-    def __init__(self, line: int, column: int, *entries: Expression):
+    def __init__(self, line: int, column: int, *entries: Expression | UnpackExpression):
         super().__init__(line, column)
         self._entries = entries
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> tuple:
-        return tuple(e.evaluate(scope, call_stack) for e in self._entries)
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
+        return tuple(FunctionCallExpression.unpack_values(self._entries, scope, call_stack))
 
     def __repr__(self):
-        return f'TupleLiteral{list(self._entries)}'
+        return f'TupleLiteral{list(self._entries)!r}'
 
 
 class SetLiteralExpression(Expression):
-    def __init__(self, line: int, column: int, *entries: Expression):
+    def __init__(self, line: int, column: int, *entries: Expression | UnpackExpression):
         super().__init__(line, column)
         self._entries = entries
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> set:
-        return {e.evaluate(scope, call_stack) for e in self._entries}
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
+        return set(FunctionCallExpression.unpack_values(self._entries, scope, call_stack))
 
     def __repr__(self):
-        return f'SetLiteral{list(self._entries)}'
+        return f'SetLiteral{list(self._entries)!r}'
 
 
 class SliceLiteralExpression(Expression):
-    def __init__(self, line: int, column: int, start: Expression = None, end: Expression = None,
-                 step: Expression = None):
+    def __init__(
+            self,
+            line: int,
+            column: int,
+            start: Expression = None,
+            end: Expression = None,
+            step: Expression = None,
+    ):
         super().__init__(line, column)
         self._start = start
         self._end = end
         self._step = step
 
-    def evaluate(self, scope: _scope.Scope, call_stack: _scope.CallStack) -> slice:
+    def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         return slice(
             self._start.evaluate(scope, call_stack) if self._start else None,
             self._end.evaluate(scope, call_stack) if self._end else None,

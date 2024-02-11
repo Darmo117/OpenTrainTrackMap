@@ -1,28 +1,30 @@
-import typing as _typ
+import operator as _op
 import pathlib as _pl
 import re as _re
-import operator as _op
+import typing as _typ
 
-import lark
 import lark as _lark
 
-from . import _syntax_tree as _st, _types, _exceptions as _ex
+from . import _exceptions as _ex, _syntax_tree as _st, _types
+
+type UnpackedVars = tuple[list[str], bool, tuple[int, int]]
 
 
 # noinspection PyMethodMayBeStatic
 class WikiScriptParser(_lark.Transformer):
     KEYWORDS = (
-        'True', 'False', 'None',
-        'not', 'and', 'or', 'is', 'is_not', 'in', 'not_in',
-        'import', 'as',
-        'fun', 'is',
-        'for', 'while', 'break', 'continue',
+        'const', 'var',
+        'not', 'is', 'in', 'and', 'or',
+        'import', 'as', 'export',
+        'function', 'end',
+        'for', 'while', 'do',
+        'break', 'continue',
         'if', 'then', 'elif', 'else',
         'try', 'except',
-        'end',
         'raise',
         'del',
         'return',
+        'True', 'False', 'None',
     )
     UNARY_OPS: dict[str, _typ.Callable[[_typ.Any], _typ.Any]] = {
         '-': _op.neg,
@@ -43,9 +45,9 @@ class WikiScriptParser(_lark.Transformer):
         '<<': _op.lshift,
         '>>': _op.rshift,
         'is': _op.is_,
-        'is_not': _op.is_not,
+        'is not': _op.is_not,
         'in': lambda a, b: a in b,
-        'not_in': lambda a, b: a not in b,
+        'not in': lambda a, b: a not in b,
         '==': _op.eq,
         '!=': _op.ne,
         '>': _op.gt,
@@ -56,21 +58,7 @@ class WikiScriptParser(_lark.Transformer):
         'or': lambda a, b: a or b,
     }
     TERNARY_OPS: dict[str, _typ.Callable[[_typ.Any, _typ.Any, _typ.Any], _typ.Any]] = {
-        'ifelse': lambda a, b, c: a if b else c,
-    }
-    ASSIGN_OPS: dict[str, _typ.Callable[[_typ.Any, _typ.Any], None]] = {
-        '**=': _op.ipow,
-        '*=': _op.imul,
-        '/=': _op.itruediv,
-        '//=': _op.ifloordiv,
-        '%=': _op.imod,
-        '+=': _op.iadd,
-        '-=': _op.isub,
-        '&=': _op.iand,
-        '|=': _op.ior,
-        '^=': _op.ixor,
-        '<<=': _op.ilshift,
-        '>>=': _op.irshift,
+        'if else': lambda a, b, c: a if b else c,
     }
 
     def __init__(self, module_name: str):
@@ -88,219 +76,318 @@ class WikiScriptParser(_lark.Transformer):
     def transform(self, tree: _lark.Tree) -> _types.Module:
         return super().transform(tree)
 
-    def module(self, items) -> _types.Module:
-        return _types.Module(self._module_name, items)
+    def module(self, tokens) -> _types.Module:
+        return _types.Module(self._module_name, tokens)
 
     # Statements
 
-    def unpack_values(self, items) -> tuple[list[str], int, int]:
-        return list(map(self._ident, items)), items[0].line, items[0].column
-
-    def expr_stmt(self, items) -> _st.ExpressionStatement:
-        return _st.ExpressionStatement(items[0].line, items[0].column, items[0])
-
-    def import_builtin_stmt(self, items) -> _st.ImportStatement:
-        keyword, *names = items
-        return _st.ImportStatement(keyword.line, keyword.column, self._ident(names[0]),
-                                   alias=self._ident(names[1]) if len(names) == 2 else None,
-                                   builtin=True)
-
-    def import_wiki_module_stmt(self, items) -> _st.ImportStatement:
-        keyword, *names = items
-        return _st.ImportStatement(keyword.line, keyword.column, names[0], alias=self._ident(names[1]), builtin=False)
-
-    def unpack_variables_stmt(self, items) -> _st.UnpackVariablesStatement:
-        names, line, column = items[0]
-        return _st.UnpackVariablesStatement(line, column, names=names, expr=items[2])
-
-    def set_variable_stmt(self, items) -> _st.SetVariableStatement:
-        return _st.SetVariableStatement(items[0].line, items[0].column, name=self._ident(items[0]),
-                                        operator=str(items[1]), expr=items[2])
-
-    def set_property_stmt(self, items) -> _st.SetPropertyStatement:
-        return _st.SetPropertyStatement(
-            items[0].line, items[0].column,
-            target=items[0], property_name=self._ident(items[1]), operator=str(items[2]), expr=items[3]
+    def import_builtin_stmt(self, tokens) -> _st.ImportStatement:
+        keyword, name, *alias = tokens
+        return _st.ImportStatement(
+            keyword.line,
+            keyword.column,
+            self._ident(name),
+            alias=self._ident(alias[0]) if alias else None,
+            builtin=True,
         )
 
-    def set_item_stmt(self, items) -> _st.SetItemStatement:
-        return _st.SetItemStatement(items[0].line, items[0].column, target=items[0], key=items[1],
-                                    operator=str(items[2]), expr=items[3])
+    def import_wiki_module_stmt(self, tokens) -> _st.ImportStatement:
+        keyword, name, alias = tokens
+        return _st.ImportStatement(
+            keyword.line,
+            keyword.column,
+            name,
+            alias=self._ident(alias),
+            builtin=False,
+        )
 
-    def delete_var_stmt(self, items) -> _st.DeleteVariableStatement:
-        return _st.DeleteVariableStatement(items[0].line, items[0].column, name=self._ident(items[1]))
+    def export_stmt(self, tokens) -> _st.ExportStatement:
+        keyword, *names = tokens
+        return _st.ExportStatement(keyword.line, keyword.column, [self._ident(n) for n in names])
 
-    def delete_item_stmt(self, items) -> _st.DeleteItemStatement:
-        return _st.DeleteItemStatement(items[0].line, items[0].column, target=items[1], key=items[2])
+    def decl_function_stmt(self, tokens) -> _st.DeclareFunctionStatement:
+        keyword = tokens[0]
+        name = tokens[1]
+        statements = []
+        args, vararg, default_args = [], False, []
+        for token in tokens[2:]:
+            match token:
+                case [list(args_), list(def_args), bool(var_arg)]:
+                    args = args_
+                    vararg = var_arg
+                    default_args = def_args
+                case t:
+                    statements = t
+        return _st.DeclareFunctionStatement(
+            keyword.line,
+            keyword.column,
+            self._ident(name),
+            args,
+            default_args,
+            vararg,
+            statements,
+        )
 
-    def try_stmt(self, items):
-        keyword, try_statements, *except_parts = items
-        return _st.TryStatement(keyword.line, keyword.column, try_statements, except_parts)
-
-    def try_stmt_try_part(self, items) -> list[_st.Statement]:
-        return items
-
-    def try_stmt_except_part(self, items) -> tuple[list[_st.Expression], str | None, list[_st.Statement]]:
-        return items[0][0], items[0][1], items[1:]
-
-    def try_stmt_except_errors_part(self, items) -> tuple[list[_st.Expression], str | None]:
-        if isinstance(items[-1], _lark.Token):
-            return items[:-1], self._ident(items[-1])
-        return items, None
-
-    def raise_stmt(self, items) -> _st.RaiseStatement:
-        return _st.RaiseStatement(items[0].line, items[0].column, items[1])
-
-    def if_stmt(self, items):
-        keyword = items[0]
-        if_cond, if_stmts = items[1]
-        elifs = []
-        else_part = []
-        for item in items[2:]:
-            if item[0] == 'elif':
-                elifs.append(item[1:])
-            else:
-                else_part = item[1]
-        return _st.IfStatement(keyword.line, keyword.column, if_cond, if_stmts, elifs, else_part)
-
-    def if_stmt_if_part(self, items) -> tuple[_st.Expression, tuple[_st.Expression, ...]]:
-        return items[0], items[1:]
-
-    def if_stmt_elif_part(self, items) -> tuple[str, _st.Expression, tuple[_st.Expression, ...]]:
-        return 'elif', items[0], items[1:]
-
-    def if_stmt_else_part(self, items) -> tuple[str, tuple[_st.Expression, ...]]:
-        return 'else', items
-
-    def for_loop_stmt(self, items):
-        keyword = items[0]
-        if isinstance(items[1], tuple):
-            var_names = items[1]
-        else:
-            var_names = self._ident(items[1])
-        return _st.ForLoopStatement(keyword.line, keyword.column, variables_names=var_names, iterator=items[2],
-                                    statements=items[3:])
-
-    def while_loop_stmt(self, items) -> _st.WhileLoopStatement:
-        return _st.WhileLoopStatement(items[0].line, items[0].column, cond=items[1], statements=items[2:])
-
-    def break_stmt(self, items) -> _st.BreakStatement:
-        return _st.BreakStatement(items[0].line, items[0].column)
-
-    def continue_stmt(self, items) -> _st.ContinueStatement:
-        return _st.ContinueStatement(items[0].line, items[0].column)
-
-    def def_function_vararg(self, items) -> tuple[str, str]:
-        return 'vararg', self._ident(items[0])
-
-    def function_kwarg(self, items) -> tuple[str, str, _st.Expression]:
-        return 'kwarg', self._ident(items[0]), items[1]
-
-    def def_function_params(self, items) -> tuple[list[str], bool, dict[str, _st.Expression]]:
-        args = []
-        vararg = False
-        kwargs = {}
-        for item in items:
-            match item:
-                case ['vararg', name]:
-                    if name in args:
-                        raise SyntaxError(f'duplicate argument "{name}"')
-                    args.append(name)
+    def decl_function_params(self, tokens) -> tuple[list[str], list[tuple[str, _typ.Any]], bool]:
+        args, vararg, default_args = [], False, []
+        for token in tokens:
+            match token:
+                case ['*', str(name)]:
+                    args.append(self._ident(name))
                     vararg = True
-                case ['kwarg', name, default]:
-                    if name in args or name in kwargs:
-                        raise SyntaxError(f'duplicate argument "{name}"')
-                    kwargs[name] = default
+                case [str(name), default]:
+                    default_args.append((name, default))
                 case name:
                     args.append(self._ident(name))
-        return args, vararg, kwargs
+        return args, default_args, vararg
 
-    def def_function_stmt(self, items) -> _st.DefineFunctionStatement:
-        fun, name = items[:2]
-        args, vararg, kwargs = [], False, {}
+    def decl_function_default_arg(self, tokens) -> tuple[str, _typ.Any]:
+        return self._ident(tokens[0]), tokens[1]
+
+    def for_loop_stmt(self, tokens) -> _st.ForLoopStatement:
+        keyword, (variables, last_takes_rest, _), iterator, *statements = tokens
+        return _st.ForLoopStatement(
+            keyword.line,
+            keyword.column,
+            variables_names=variables,
+            last_variable_takes_rest=last_takes_rest,
+            iterator=iterator,
+            statements=statements,
+        )
+
+    def while_loop_stmt(self, tokens) -> _st.WhileLoopStatement:
+        keyword, cond, *statements = tokens
+        return _st.WhileLoopStatement(keyword.line, keyword.column, cond=cond, statements=statements)
+
+    def break_stmt(self, tokens) -> _st.BreakStatement:
+        keyword, = tokens
+        return _st.BreakStatement(keyword.line, keyword.column)
+
+    def continue_stmt(self, tokens) -> _st.ContinueStatement:
+        keyword, = tokens
+        return _st.ContinueStatement(keyword.line, keyword.column)
+
+    def if_stmt(self, tokens) -> _st.IfStatement:
+        keyword = tokens[0]
+        ifs = [tokens[1]]
+        else_ = []
+        for token in tokens[2:]:
+            match token:
+                case ['elif', cond, statements]:
+                    ifs.append((cond, statements))
+                case ['else', statements]:
+                    else_ = statements
+        return _st.IfStatement(keyword.line, keyword.column, ifs, else_)
+
+    def if_stmt_if_part(self, tokens) -> tuple[_st.Expression, list[_st.Statement]]:
+        cond, *statements = tokens
+        return cond, statements
+
+    def if_stmt_elif_part(self, tokens) -> tuple[str, _st.Expression, list[_st.Statement]]:
+        cond, *statements = tokens
+        return 'elif', cond, statements
+
+    def if_stmt_else_part(self, tokens) -> tuple[str, list[_st.Statement]]:
+        return 'else', list(tokens)
+
+    def try_stmt(self, tokens) -> _st.TryStatement:
+        keyword, try_statements, *except_parts = tokens
+        return _st.TryStatement(keyword.line, keyword.column, try_statements, except_parts)
+
+    def try_stmt_try_part(self, tokens) -> list[_st.Statement]:
+        return list(tokens)
+
+    def try_stmt_except_part(self, tokens) -> tuple[list[str], str | None, list[_st.Statement]]:
+        names = []
+        alias = None
         statements = []
-        if items[2:]:
-            if isinstance(items[2], tuple):
-                args, vararg, kwargs = items[2]
-                statements = items[3:]
-            else:
-                statements = items[2:]
-        return _st.DefineFunctionStatement(fun.line, fun.column, self._ident(name), args, vararg, kwargs, statements)
+        for token in tokens:
+            match token:
+                case ['as', str(s)]:
+                    alias = s
+                case t if isinstance(t, _lark.Token):
+                    names.append(self._ident(t))
+                case statement:
+                    statements.append(statement)
+        return names, alias, statements
 
-    def return_stmt(self, items) -> _st.ReturnStatement:
-        return _st.ReturnStatement(items[0].line, items[0].column, items[1] if len(items) == 2 else None)
+    def try_stmt_except_alias_part(self, tokens) -> tuple[str, str]:
+        return 'as', self._ident(tokens)
+
+    def decl_var_stmt(self, tokens) -> _st.DeclareVariableStatement:
+        keyword, ((var_names, vararg, _), expr) = tokens
+        return _st.DeclareVariableStatement(
+            keyword.line,
+            keyword.column,
+            names=var_names,
+            last_takes_rest=vararg,
+            is_const=str(keyword) == 'const',
+            expr=expr,
+        )
+
+        # Common
+
+    def set_variable_stmt(self, tokens) -> _st.SetVariableStatement | _st.SetVariablesStatement:
+        match tokens:
+            case [str(name), str(op), expr, [int(line), int(column)]]:
+                return _st.SetVariableStatement(line, column, name, op, expr)
+            case [[list(names), bool(vararg), [int(line), int(column)]], expr]:
+                return _st.SetVariablesStatement(line, column, names, vararg, expr)
+
+    def set_single_var_stmt(self, tokens) -> tuple[str, str, _st.Expression, tuple[int, int]]:
+        name, op, expr = tokens
+        return self._ident(name), op, expr, (name.line, name.column)
+
+    def set_multiple_vars_stmt(self, tokens) -> tuple[UnpackedVars, _st.Expression]:
+        unpacked_var_names, expr = tokens
+        return unpacked_var_names, expr
+
+    def expr_stmt(self, tokens) -> _st.ExpressionStatement:
+        expr, = tokens
+        return _st.ExpressionStatement(expr.line, expr.column, expr)
+
+    def set_property_stmt(self, tokens) -> _st.SetPropertyStatement:
+        target, name, op, expr = tokens
+        return _st.SetPropertyStatement(
+            target.line,
+            target.column,
+            target=target,
+            property_name=self._ident(name),
+            operator=str(op),
+            expr=expr,
+        )
+
+    def set_item_stmt(self, tokens) -> _st.SetItemStatement:
+        target, key, op, expr = tokens
+        return _st.SetItemStatement(
+            target.line,
+            target.column,
+            target=target,
+            key=key,
+            operator=str(op),
+            expr=expr,
+        )
+
+    def raise_stmt(self, tokens) -> _st.RaiseStatement:
+        keyword, expr = tokens
+        return _st.RaiseStatement(keyword.line, keyword.column, expr)
+
+    def delete_item_stmt(self, tokens) -> _st.DeleteItemStatement:
+        keyword, target, key = tokens
+        return _st.DeleteItemStatement(keyword.line, keyword.column, target, key)
+
+    def return_stmt(self, tokens) -> _st.ReturnStatement:
+        keyword, *expr = tokens
+        return _st.ReturnStatement(keyword.line, keyword.column, expr[0] if expr else None)
 
     # Expressions
 
-    def unary_op(self, items) -> _st.UnaryOperatorExpression:
-        op, expr = items
-        return _st.UnaryOperatorExpression(op.line, op.column, symbol=str(op), operator=self.UNARY_OPS[str(op)],
-                                           expr=expr)
+    def ternary_op(self, tokens) -> _st.TernaryOperatorExpression:
+        expr1, expr2, expr3 = tokens
+        return _st.TernaryOperatorExpression(
+            expr1.line,
+            expr1.column,
+            symbol='ifelse',
+            operator=self.TERNARY_OPS['ifelse'],
+            expr1=expr1,
+            expr2=expr2,
+            expr3=expr3,
+        )
 
-    def binary_op(self, items) -> _st.BinaryOperatorExpression:
-        expr1, op, expr2 = items
-        return _st.BinaryOperatorExpression(op.line, op.column, symbol=str(op), operator=self.BINARY_OPS[str(op)],
-                                            expr1=expr1, expr2=expr2)
+    def binary_op(self, tokens) -> _st.BinaryOperatorExpression:
+        expr1, op, expr2 = tokens
+        match tokens:
+            case [e1, o, e2]:
+                expr1 = e1
+                op = str(o)
+                expr2 = e2
+            case [e1, o1, o2, e2]:
+                expr1 = e1
+                op = f'{o1} {o2}'
+                expr2 = e2
+        return _st.BinaryOperatorExpression(
+            op.line,
+            op.column,
+            symbol=op,
+            operator=self.BINARY_OPS[op],
+            expr1=expr1,
+            expr2=expr2,
+        )
 
-    def ternary_op(self, items) -> _st.TernaryOperatorExpression:
-        expr1, expr2, expr3 = items
-        return _st.TernaryOperatorExpression(expr1.line, expr1.column, symbol='ifelse',
-                                             operator=self.TERNARY_OPS['ifelse'],
-                                             expr1=expr1, expr2=expr2, expr3=expr3)
+    def unary_op(self, tokens) -> _st.UnaryOperatorExpression:
+        op, expr = tokens
+        return _st.UnaryOperatorExpression(
+            op.line,
+            op.column,
+            symbol=str(op),
+            operator=self.UNARY_OPS[str(op)],
+            expr=expr,
+        )
 
-    def get_variable(self, items) -> _st.GetVariableExpression:
-        return _st.GetVariableExpression(items[0].line, items[0].column, self._ident(items[0]))
+    def get_variable(self, tokens) -> _st.GetVariableExpression:
+        name, = tokens
+        return _st.GetVariableExpression(name.line, name.column, self._ident(name))
 
-    def get_property(self, items) -> _st.GetPropertyExpression:
-        return _st.GetPropertyExpression(items[0].line, items[0].column, target=items[0],
-                                         property_name=self._ident(items[1]))
+    def get_property(self, tokens) -> _st.GetPropertyExpression:
+        target, name = tokens
+        return _st.GetPropertyExpression(target.line, target.column, target=target, property_name=self._ident(name))
 
-    def get_item(self, items) -> _st.GetItemExpression:
-        return _st.GetItemExpression(items[0].line, items[0].column, target=items[0], key=items[1])
+    def get_item(self, tokens) -> _st.GetItemExpression:
+        target, key = tokens
+        return _st.GetItemExpression(target.line, target.column, target, key)
 
-    def def_anon_function(self, items) -> _st.DefineAnonymousFunctionExpression:
-        fun = items[0]
-        args, vararg, kwargs = [], False, {}
+    def function_call(self, tokens) -> _st.FunctionCallExpression:
+        target, *args = tokens
+        return _st.FunctionCallExpression(target.line, target.column, target, args)
+
+    def def_anon_function(self, tokens) -> _st.DeclareAnonymousFunctionExpression:
+        keyword = tokens[0]
         statements = []
-        if items[1:]:
-            if isinstance(items[1], tuple):
-                args, vararg, kwargs = items[1]
-                statements = items[2:]
-            else:
-                statements = items[1:]
-        return _st.DefineAnonymousFunctionExpression(fun.line, fun.column, args, vararg, kwargs, statements)
-
-    def function_call(self, items) -> _st.FunctionCallExpression:
-        args = []
-        kwargs = {}
-        for item in items[1:]:
-            if isinstance(item, tuple):
-                kwargs[item[1]] = item[2]
-            else:
-                args.append(item)
-        return _st.FunctionCallExpression(items[0].line, items[0].column, target=items[0], args=args, kwargs=kwargs)
-
-    def string(self, items) -> _st.SimpleLiteralExpression:
-        return _st.SimpleLiteralExpression(
-            items[0].line, items[0].column,
-            self._parse_string(str(items[0])[1:-1])
+        args, vararg, default_args = [], False, []
+        for token in tokens[1:]:
+            match token:
+                case [list(args_), list(def_args), bool(var_arg)]:
+                    args = args_
+                    vararg = var_arg
+                    default_args = def_args
+                case t:
+                    statements = t
+        return _st.DeclareAnonymousFunctionExpression(
+            keyword.line,
+            keyword.column,
+            args,
+            default_args,
+            vararg,
+            statements,
         )
 
-    def multiline_string(self, items) -> _st.SimpleLiteralExpression:
+    def string(self, token) -> _st.SimpleLiteralExpression:
+        literal, = token
         return _st.SimpleLiteralExpression(
-            items[0].line, items[0].column,
-            self._parse_string(str(items[0])[3:-3], multiline=True)
+            literal.line,
+            literal.column,
+            self._subst_escape_sequences(str(literal)[1:-1])
         )
 
-    def _parse_string(self, s: str, multiline: bool = False) -> str:
+    def multiline_string_lit(self, token) -> _st.SimpleLiteralExpression:
+        literal, = token
+        return _st.SimpleLiteralExpression(
+            literal.line,
+            literal.column,
+            self._subst_escape_sequences(str(literal)[1:-1], multiline=True),
+        )
+
+    def _subst_escape_sequences(self, s: str, multiline: bool = False) -> str:
         def repl(m: _re.Match) -> str:
             match m.groups():
-                case [str(v), None, None]:  # \n, \t, \" and \\
+                case [str(v), None, None]:  # \\, \n, \t, \", \' and \`
                     return {
+                        '\\': '\\',
                         'n': '\n',
                         't': '\t',
                         '"': '"',
-                        '\\': '\\',
+                        "'": "'",
+                        '`': '`',
                     }[v]
                 case [None, str(v), None] | [None, None, str(v)]:  # \uXXXX and \uXXXXXXXX
                     return chr(int(v, 16))
@@ -308,69 +395,115 @@ class WikiScriptParser(_lark.Transformer):
                     return ''
 
         if multiline:
-            return _re.sub(r'\\(?:([nt"\\])|u([\da-fA-F]{4})|U([\da-fA-F]{8})|\n[ \t]*)', repl, s)
-        return _re.sub(r'\\(?:([nt"\\])|u([\da-fA-F]{4})|U([\da-fA-F]{8}))', repl, s)
+            return _re.sub(r'\\(?:([\\nt\'"`])|u([\da-fA-F]{4})|U([\da-fA-F]{8})|\n[ \t]*)', repl, s)
+        return _re.sub(r'\\(?:([\\nt\'"`])|u([\da-fA-F]{4})|U([\da-fA-F]{8}))', repl, s)
 
-    def int(self, items) -> _st.SimpleLiteralExpression:
-        n = str(items[0])
-        if n.startswith('0x'):
-            nb = int(n, 16)
-        elif n.startswith('0o'):
-            nb = int(n, 8)
-        elif n.startswith('0b'):
-            nb = int(n, 2)
+    def int_lit(self, tokens) -> _st.SimpleLiteralExpression:
+        literal, = tokens
+        string = str(literal)
+        if string.startswith('0x'):
+            nb = int(string, 16)
+        elif string.startswith('0o'):
+            nb = int(string, 8)
+        elif string.startswith('0b'):
+            nb = int(string, 2)
         else:
-            nb = complex(n) if n[-1] == 'j' else int(n)
-        return _st.SimpleLiteralExpression(items[0].line, items[0].column, nb)
+            nb = int(string)
+        return _st.SimpleLiteralExpression(literal.line, literal.column, nb)
 
-    def float(self, items) -> _st.SimpleLiteralExpression:
-        n = str(items[0])
-        return _st.SimpleLiteralExpression(items[0].line, items[0].column, complex(n) if n[-1] == 'j' else float(n))
+    def float_lit(self, tokens) -> _st.SimpleLiteralExpression:
+        literal = tokens[0]
+        return _st.SimpleLiteralExpression(literal.line, literal.column, float(str(literal)))
 
-    def boolean_true(self, items) -> _st.SimpleLiteralExpression:
-        return _st.SimpleLiteralExpression(items[0].line, items[0].column, True)
+    def boolean_true(self, tokens) -> _st.SimpleLiteralExpression:
+        keyword, = tokens
+        return _st.SimpleLiteralExpression(keyword.line, keyword.column, True)
 
-    def boolean_false(self, items) -> _st.SimpleLiteralExpression:
-        return _st.SimpleLiteralExpression(items[0].line, items[0].column, False)
+    def boolean_false(self, tokens) -> _st.SimpleLiteralExpression:
+        keyword, = tokens
+        return _st.SimpleLiteralExpression(keyword.line, keyword.column, False)
 
-    def null(self, items) -> _st.SimpleLiteralExpression:
-        return _st.SimpleLiteralExpression(items[0].line, items[0].column, None)
+    def none_lit(self, tokens) -> _st.SimpleLiteralExpression:
+        keyword, = tokens
+        return _st.SimpleLiteralExpression(keyword.line, keyword.column, None)
 
-    def dict(self, items) -> _st.DictLiteralExpression:
-        lcurl, *entries = items[0]
-        return _st.DictLiteralExpression(lcurl.line, lcurl.column, *[(k, v) for k, v in entries])
+    def list_lit(self, tokens) -> _st.ListLiteralExpression:
+        bracket, *values = tokens
+        return _st.ListLiteralExpression(bracket.line, bracket.column, *values)
 
-    def dict_entry(self, items) -> tuple[_st.Expression, _st.Expression]:
-        return items[0], items[1]
+    def tuple_lit(self, tokens) -> _st.TupleLiteralExpression:
+        parenthesis, *values = tokens
+        return _st.TupleLiteralExpression(parenthesis.line, parenthesis.column, *values)
 
-    def list(self, items) -> _st.ListLiteralExpression:
-        lbrac, *values = items
-        return _st.ListLiteralExpression(lbrac.line, lbrac.column, *values)
+    def set_lit(self, tokens) -> _st.SetLiteralExpression:
+        curly_brace, *values = tokens
+        return _st.SetLiteralExpression(curly_brace.line, curly_brace.column, *values)
 
-    def tuple(self, items) -> _st.TupleLiteralExpression:
-        lpar, *values = items
-        return _st.TupleLiteralExpression(lpar.line, lpar.column, *values)
+    def dict_lit(self, tokens) -> _st.DictLiteralExpression:
+        curly_brace, *entries = tokens
+        return _st.DictLiteralExpression(curly_brace.line, curly_brace.column, *[(k, v) for k, v in entries])
 
-    def set(self, items) -> _st.SetLiteralExpression:
-        lcurl, *values = items
-        return _st.SetLiteralExpression(lcurl.line, lcurl.column, *values)
+    def dict_entry(self, tokens) -> tuple[_st.Expression, _st.Expression]:
+        key, value = tokens
+        return key, value
 
-    def slice_both(self, items) -> _st.SliceLiteralExpression:
+    # Common
+
+    def unpack_values(self, tokens) -> UnpackedVars:
+        line_col = None
+        var_names = []
+        vararg = False
+        for token in tokens:
+            match token:
+                case ['*', str(name)]:
+                    var_names.append(name)
+                    vararg = True
+                case name:
+                    var_names.append(self._ident(name))
+                    line_col = (name.line, name.column)
+        return var_names, vararg, line_col
+
+    def unpack_value(self, tokens) -> tuple[str, _st.Expression]:
+        value, = tokens
+        return '*', value
+
+    def remaining_values(self, tokens) -> tuple[str, str]:
+        name, = tokens
+        return '*', self._ident(name)
+
+    def slice_both(self, tokens) -> _st.SliceLiteralExpression:
+        expr1, expr2, *expr3 = tokens
         return _st.SliceLiteralExpression(
-            items[0].line, items[0].column, start=items[0], end=items[1], step=items[2] if len(items) == 3 else None)
+            expr1.line,
+            expr1.column,
+            start=expr1,
+            end=expr2,
+            step=expr3[0] if expr3 else None,
+        )
 
-    def slice_end(self, items) -> _st.SliceLiteralExpression:
-        return _st.SliceLiteralExpression(items[0].line, items[0].column,
-                                          end=items[1], step=items[2] if len(items) == 3 else None)
+    def slice_end(self, tokens) -> _st.SliceLiteralExpression:
+        colon, expr1, *expr2 = tokens
+        return _st.SliceLiteralExpression(
+            colon.line,
+            colon.column,
+            end=expr1,
+            step=expr2[0] if expr2 else None,
+        )
 
-    def slice_start(self, items) -> _st.SliceLiteralExpression:
-        return _st.SliceLiteralExpression(items[0].line, items[0].column,
-                                          start=items[0], step=items[1] if len(items) == 2 else None)
+    def slice_start(self, tokens) -> _st.SliceLiteralExpression:
+        expr1, *expr2 = tokens
+        return _st.SliceLiteralExpression(
+            expr1.line,
+            expr1.column,
+            start=expr1,
+            step=expr2[0] if expr2 else None,
+        )
 
-    def slice_none(self, items) -> _st.SliceLiteralExpression:
-        return _st.SliceLiteralExpression(items[0].line, items[0].column, step=items[1] if len(items) == 2 else None)
+    def slice_none(self, tokens) -> _st.SliceLiteralExpression:
+        colon, *expr = tokens
+        return _st.SliceLiteralExpression(colon.line, colon.column, step=expr[0] if expr else None)
 
-    def _ident(self, token: lark.Token) -> str:
+    def _ident(self, token: _lark.Token) -> str:
         name = str(token)
         if name in self.KEYWORDS:
             raise _ex.WikiScriptException(f'invalid identifier: {name!r}', token.line, token.column)

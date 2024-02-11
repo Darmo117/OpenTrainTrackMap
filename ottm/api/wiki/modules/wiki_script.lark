@@ -3,24 +3,30 @@
 
 IDENT: /[a-zA-Z_]\w*/
 
-TRUE: "True"
-FALSE: "False"
-NONE: "None"
-LPAR: "("
-LBRAC: "["
-LCURL: "{"
-FUN: "fun"
+CONST: "const"
+VAR: "var"
+AS: "as"
+
+IMPORT: "import"
+EXPORT: "export"
 FOR: "for"
 WHILE: "while"
 BREAK: "break"
 CONTINUE: "continue"
+FUNCTION: "function"
 IF: "if"
 TRY: "try"
 RAISE: "raise"
 DEL: "del"
 RETURN: "return"
+TRUE: "True"
+FALSE: "False"
+NONE: "None"
+
 COLON: ":"
-IMPORT: "import"
+LBRAC: "["
+LPAREN: "("
+LCURL: "{"
 
 NEG: "-"
 INV: "~"
@@ -33,23 +39,21 @@ FDIV: "//"
 MOD: "%"
 ADD: "+"
 SUB: "-"
-AND: "&"
-OR: "|"
+IAND: "&"
+IOR: "|"
 XOR: "^"
 LSHIFT: "<<"
 RSHIFT: ">>"
 IS: "is"
-ISNOT: "is_not"
 IN: "in"
-NOTIN: "not_in"
 EQ: "=="
 NE: "!="
 GT: ">"
 GE: ">="
 LT: "<"
 LE: "<="
-BAND: "and"
-BOR: "or"
+AND: "and"
+OR: "or"
 
 ASSIGN: "="
 POWA: "**="
@@ -65,96 +69,122 @@ XORA: "^="
 LSHIFTA: "<<="
 RSHIFTA: ">>="
 
-module: statement*
+module: import_stmt* statement* [export_stmt]
 
 // Statements
 
-?statement: def_function_stmt
+?import_stmt: IMPORT IDENT ["as" IDENT] ";" -> import_builtin_stmt
+  | IMPORT string "as" IDENT ";" -> import_wiki_module_stmt
+
+?statement: decl_func_stmt
   | loop_stmt
   | if_stmt
   | try_stmt
-  | terminated_stmt
-?terminated_stmt: (expr_stmt
-  | import_stmt
-  | set_variable_stmt
-  | unpack_variables_stmt
-  | set_property_stmt
-  | set_item_stmt
-  | raise_stmt
-  | loop_flow_stmt
-  | delete_stmt
-  | return_stmt) ";"
+  | (expr_stmt
+    | decl_var_stmt
+    | set_variable_stmt
+    | set_property_stmt
+    | set_item_stmt
+    | raise_stmt
+    | loop_flow_stmt
+    | delete_item_stmt
+    | return_stmt) ";"
 
-expr_stmt: expr
+export_stmt: EXPORT IDENT ("," IDENT)* ";"
 
-import_stmt: IMPORT IDENT ["as" IDENT] -> import_builtin_stmt
-  | IMPORT string "as" IDENT -> import_wiki_module_stmt
+// Function
 
-set_variable_stmt: IDENT (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
+decl_func_stmt: FUNCTION IDENT "(" [decl_function_params] ")" "is" statement* "end"
 
-unpack_variables_stmt: unpack_values ASSIGN expr
+decl_function_params: IDENT ("," IDENT)* ["," remaining_values | ("," decl_function_default_arg)+]
+  | remaining_values
+  | decl_function_default_arg ("," decl_function_default_arg)*
 
-unpack_values: IDENT "," IDENT ("," IDENT)* [","] | IDENT ","
+decl_function_default_arg: IDENT "=" expr
 
-set_property_stmt: value "." IDENT (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
+// Loop
 
-set_item_stmt: value "[" (expr | slice) "]" (ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA) expr
-
-def_function_stmt: FUN IDENT "(" [def_function_params] ")" "is" statement* "end"
-
-def_function_params: (IDENT ("," IDENT)* ( | "," def_function_vararg | ("," function_kwarg)*)
-  | def_function_vararg
-  | function_kwarg ("," function_kwarg)*) [","]
-
-def_function_vararg: IDENT "..."
-
-function_kwarg: IDENT "=" expr
-
-loop_stmt: FOR (IDENT | unpack_values) "in" expr "do" statement* "end" -> for_loop_stmt
+?loop_stmt: FOR unpack_values "in" expr "do" statement* "end" -> for_loop_stmt
   | WHILE expr "do" statement* "end" -> while_loop_stmt
 
 loop_flow_stmt: BREAK -> break_stmt
   | CONTINUE -> continue_stmt
 
-if_stmt: if_stmt_if_part if_stmt_elif_part* [if_stmt_else_part] "end"
-if_stmt_if_part: IF expr "then" statement*
+// If
+
+if_stmt: IF if_stmt_if_part if_stmt_elif_part* [if_stmt_else_part] "end"
+if_stmt_if_part: expr "then" statement*
 if_stmt_elif_part: "elif" expr "then" statement*
 if_stmt_else_part: "else" statement*
 
+// Try-catch
+
 try_stmt: TRY try_stmt_try_part try_stmt_except_part+ "end"
 try_stmt_try_part: statement*
-try_stmt_except_part: "except" try_stmt_except_errors_part "then" statement*
-try_stmt_except_errors_part: get_variable ("|" get_variable)* ["as" IDENT]
+try_stmt_except_part: "except" IDENT ("|" IDENT)* [try_stmt_except_alias_part] "then" statement*
+try_stmt_except_alias_part: AS IDENT
+
+// Variable declaration
+
+decl_var_stmt: (CONST | VAR) set_multiple_vars_stmt
+
+// Assign variable(s)
+
+?set_variable_stmt: set_single_var_stmt | set_multiple_vars_stmt
+
+set_single_var_stmt: IDENT assign_op expr
+
+set_multiple_vars_stmt: unpack_values "=" expr
+
+// Assign property
+
+set_property_stmt: property_access assign_op expr
+
+// Assign item
+
+set_item_stmt: item_access assign_op expr
+
+// Raise error
 
 raise_stmt: RAISE expr
 
-delete_stmt: DEL IDENT -> delete_var
-  | DEL value "[" expr | slice "]" -> delete_item
+// Delete item
+
+delete_item_stmt: DEL item_access
+
+// Return
 
 return_stmt: RETURN [expr]
 
+// Expression
+
+expr_stmt: expr
+
 // Expressions
 
-?expr: b_or
-  | expr "if" expr "else" b_or -> ternary_op
+?arg_expr: expr
+  | "*" value -> unpack_value
 
-?b_or: b_and
-  | b_or BOR b_and -> binary_op
-
-?b_and: comp
-  | b_and BAND comp -> binary_op
-
-?comp: shift
-  | comp (IS | ISNOT | IN | NOTIN | EQ | NE | GT | GE | LT | LE) shift -> binary_op
-
-?shift: or
-  | shift (LSHIFT | RSHIFT) or -> binary_op
+?expr: or
+  | expr "if" expr "else" or -> ternary_op
 
 ?or: and
-  | or (OR | XOR) and -> binary_op
+  | or OR and -> binary_op
 
-?and: add
-  | and AND add -> binary_op
+?and: comp
+  | and AND comp -> binary_op
+
+?comp: shift
+  | comp (IS [NOT] | [NOT] IN | EQ | NE | GT | GE | LT | LE) shift -> binary_op
+
+?shift: ior
+  | shift (LSHIFT | RSHIFT) ior -> binary_op
+
+?ior: iand
+  | ior (IOR | XOR) iand -> binary_op
+
+?iand: add
+  | iand IAND add -> binary_op
 
 ?add: mul
   | add (ADD | SUB) mul -> binary_op
@@ -168,44 +198,64 @@ return_stmt: RETURN [expr]
 ?unary: value
   | (NEG | INV | NOT) unary -> unary_op
 
-?value: literal | get_variable | get_item | get_property | function_call | def_anon_function | "(" expr ")"
+?value: literal | get_variable | get_property | get_item | function_call | decl_anon_function | "(" expr ")"
 
 get_variable: IDENT
 
-get_item: value "[" (expr | slice) "]"
+get_property: property_access
 
-get_property: value "." IDENT
+get_item: item_access
 
-function_call: value "(" [expr ("," expr)* ("," function_kwarg)* | function_kwarg ("," function_kwarg)* [","]] ")"
+function_call: value "(" [arg_expr ("," arg_expr)* [","]] ")"
 
-def_anon_function: FUN "(" [def_function_params] ")" "is" statement* "end"
+decl_anon_function: FUNCTION "(" [decl_function_params] ")" "is" statement* "end"
 
-?literal: multiline_string | string | int | float | boolean | list | tuple | dict | set | null
+?literal: multiline_string_lit
+  | string_lit
+  | float_lit
+  | int_lit
+  | bool_lit
+  | list_lit
+  | tuple_lit
+  | dict_lit
+  | set_lit
+  | none_lit
 
-// Ignore displayed errors with backslash in PyCharm
-string: /"(\\([\\nt"]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^"\n\\])*?"/
+// Ignore displayed errors with backslashes/unclosed character classes in PyCharm
+string_lit: /(["'])(\\(?:[\\nt'"`]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\n\\])*?\2/
+multiline_string_lit: /`(\\([\\nt'"`\n]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\\])*?`/
 
-multiline_string: /"""(\\([\\nt"\n]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\\])*?"""/
+float_lit: /(\d(_?\d)*\.(\d(_?\d)*)?|\.\d(_?\d)*)([eE][+-]?\d(_?\d)*)?|\d(_?\d)*[eE][+-]?\d(_?\d)*/
+int_lit: /0(x[\da-fA-F](_?[\da-fA-F])*|o[0-7](_?[0-7])*|b[01](_?[01])*)|\d(_?\d)*/
 
-float.2: /((\d(_?\d)*\.(\d(_?\d)*)?|\.\d(_?\d)*)([eE]-?\d(_?\d)*)?|\d(_?\d)*[eE]-?\d(_?\d)*)j?/
-
-int.1: /0x[\da-fA-F](_?[\da-fA-F])*|0o[0-7](_?[0-7])*|0b[01](_?[01])*|\d(_?\d)*j?/
-
-boolean: TRUE -> boolean_true
+?bool_lit: TRUE -> boolean_true
   | FALSE -> boolean_false
 
-null: NONE -> null
+none_lit: NONE
 
-list: LBRAC [expr ("," expr)* [","]] "]" -> list
+list_lit: LBRAC [arg_expr ("," arg_expr)* [","]] "]"
 
-tuple: LPAR (expr "," expr ("," expr)* [","] | expr ",") ")" -> tuple
+tuple_lit: LPAREN (arg_expr "," arg_expr ("," arg_expr)* [","] | arg_expr ",") ")"
 
-set: LCURL expr ("," expr)* [","] "}" -> set
+set_lit: LCURL arg_expr ("," arg_expr)* [","] "}"
 
-dict.1: LCURL [dict_entry ("," dict_entry)* [","]] "}" -> dict
-dict_entry: expr ":" expr -> dict_entry
+dict_lit: LCURL [dict_entry ("," dict_entry)* [","]] "}"
+dict_entry: dict_key ":" expr
+?dict_key: literal | get_variable | "(" expr ")"
 
-slice: expr ":" expr [":" [expr]] -> slice_both
+// Common
+
+?unpack_values: IDENT ("," IDENT)* ["," remaining_values]
+  | remaining_values
+remaining_values: "*" IDENT
+
+?slice: expr ":" expr [":" [expr]] -> slice_both
   | COLON expr [":" [expr]] -> slice_end
   | expr ":" [":" [expr]] -> slice_start
   | COLON [":" [expr]] -> slice_none
+
+?item_access: value "[" (expr | slice) "]"
+
+?property_access: value "." IDENT
+
+?assign_op: ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA
