@@ -10,7 +10,7 @@ end
 
 try
     print(any([0, 1, 3], function (v) is return v > 2; end));
-    print(join(`;`, [2, 3, 5, 6]));
+    print(join(`%n`, [2, 3, 5, 6]));
 except ValueError | TypeError as e then
     print(e);
 end

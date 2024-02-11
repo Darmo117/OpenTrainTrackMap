@@ -382,23 +382,23 @@ class WikiScriptParser(_lark.Transformer):
     def _subst_escape_sequences(self, s: str, multiline: bool = False) -> str:
         def repl(m: _re.Match) -> str:
             match m.groups():
-                case [str(v), None, None]:  # \\, \n, \t, \", \' and \`
+                case [str(v), None, None]:  # %%, %n, %t, %", %' and %`
                     return {
-                        '\\': '\\',
+                        '%': '%',
                         'n': '\n',
                         't': '\t',
                         '"': '"',
                         "'": "'",
                         '`': '`',
                     }[v]
-                case [None, str(v), None] | [None, None, str(v)]:  # \uXXXX and \uXXXXXXXX
+                case [None, str(v), None] | [None, None, str(v)]:  # %uXXXX and %uXXXXXXXX
                     return chr(int(v, 16))
-                case [None, None, None]:  # \ at the end of a line
+                case [None, None, None]:  # % at the end of a line
                     return ''
 
         if multiline:
-            return _re.sub(r'\\(?:([\\nt\'"`])|u([\da-fA-F]{4})|U([\da-fA-F]{8})|\n[ \t]*)', repl, s)
-        return _re.sub(r'\\(?:([\\nt\'"`])|u([\da-fA-F]{4})|U([\da-fA-F]{8}))', repl, s)
+            return _re.sub(r'%(?:([%nt\'"`])|u([\da-fA-F]{4})|U([\da-fA-F]{8})|\n[ \t]*)', repl, s)
+        return _re.sub(r'%(?:([%nt\'"`])|u([\da-fA-F]{4})|U([\da-fA-F]{8}))', repl, s)
 
     def int_lit(self, tokens) -> _st.SimpleLiteralExpression:
         literal, = tokens

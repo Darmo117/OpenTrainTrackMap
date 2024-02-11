@@ -222,9 +222,8 @@ decl_anon_function: FUNCTION "(" [decl_function_params] ")" "is" statement* "end
   | set_lit
   | none_lit
 
-// Ignore displayed errors with backslashes/unclosed character classes in PyCharm
-string_lit: /(["'])(\\(?:[\\nt'"`]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\n\\])*?\1/
-multiline_string_lit: /`(\\([\\nt'"`\n]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\\])*?`/
+string_lit: /(["'])(%([%nt'"`]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\n%])*?\1/
+multiline_string_lit: /`(%([%nt'"`\n]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^%])*?`/
 
 float_lit: /(\d(_?\d)*\.(\d(_?\d)*)?|\.\d(_?\d)*)([eE][+-]?\d(_?\d)*)?|\d(_?\d)*[eE][+-]?\d(_?\d)*/
 int_lit: /0(x[\da-fA-F](_?[\da-fA-F])*|o[0-7](_?[0-7])*|b[01](_?[01])*)|\d(_?\d)*/
