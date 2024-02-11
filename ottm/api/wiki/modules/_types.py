@@ -18,7 +18,7 @@ class Module:
         self.__qualname__ = name
         self._exported_names = []
         self._statements = tuple(statements)
-        self._scope = Scope()
+        self._scope = Scope(self)
         for k, v in self._load_builtins().items():
             self._scope.declare_variable(k, False, v)
 
@@ -27,6 +27,16 @@ class Module:
         global _BUILTINS_CACHE
         if not _BUILTINS_CACHE:
             from . import _syntax_tree as _st
+
+            def all_(o, f: _typ.Callable[[...], bool]):
+                """Return True if f(x) is True for all values x in the iterable.
+                If the iterable is empty, return True."""
+                return all(f(e) for e in o)
+
+            def any_(o, f: _typ.Callable[[...], bool]):
+                """Return True if f(x) is True for any x in the iterable.
+                If the iterable is empty, return False."""
+                return any(f(e) for e in o)
 
             def attrs(o):
                 """Return a list of the names of all public attributes of the given object."""
@@ -54,6 +64,9 @@ class Module:
                 setattr(o, name, value)
 
             # Override default qualified names to not expose the current module name
+            all_.__qualname__ = all_.__name__ = 'all'
+            any_.__qualname__ = any_.__name__ = 'any'
+            attrs.__qualname__ = attrs.__name__
             attrs.__qualname__ = attrs.__name__
             doc.__qualname__ = doc.__name__
             has_attr.__qualname__ = has_attr.__name__
@@ -63,7 +76,7 @@ class Module:
             # TODO redefine print() function to print in the debug console of "Module:" pages instead of stdout
             properties = [
                 # functions and types
-                abs, all, any, ascii, attrs, bin, callable, complex, doc, format, get_attr, has_attr, hash, hex, id,
+                abs, all_, any_, ascii, attrs, bin, callable, complex, doc, format, get_attr, has_attr, hash, hex, id,
                 isinstance, issubclass, iter, len, max, min, next, oct, ord, pow, print, repr, round, set_attr, sorted,
                 sum, object, int, bool, bytearray, bytes, dict, enumerate, filter, float, frozenset, list, map, range,
                 reversed, set, slice, str, tuple, type, zip,
@@ -93,7 +106,7 @@ class Module:
             self._exported_names.append(name)
 
     def execute(self):
-        call_stack = CallStack(str(self))
+        call_stack = CallStack(self._name)
         # Execute statements
         for statement in self._statements:
             if isinstance(result := statement.execute(self._scope, call_stack), list):
@@ -134,10 +147,11 @@ class FunctionClosure:
         self._default_args = tuple(default_args)
         self._ensure_no_duplicates(self._arg_names + tuple(name for name, _ in self._default_args))
         self._vararg = vararg
-        self._closure = scope
+        self._scope = scope
+        self._call_stack = call_stack
         self._statements = statements
         self.__name__ = name or '<anonymous>'
-        self.__qualname__ = scope.module.__qualname__ + '.' + call_stack.path + '.' + self.__name__
+        self.__qualname__ = call_stack.path + '.' + self.__name__
 
     def _ensure_no_duplicates(self, values: _typ.Iterable[str]):
         seen = set()
@@ -145,7 +159,7 @@ class FunctionClosure:
             if v in seen:
                 raise NameError(f'duplicate argument name "{v}"')
 
-    def __call__(self, call_stack: CallStack, *args: _typ.Any) -> _typ.Any:
+    def __call__(self, *args: _typ.Any) -> _typ.Any:
         min_expected_args_nb = len(self._arg_names)
         max_expected_args_nb = min_expected_args_nb + len(self._default_args)
         actual_args_nb = len(args)
@@ -157,8 +171,8 @@ class FunctionClosure:
             raise RuntimeError(
                 f'function {self.__name__!r} expects at most {max_expected_args_nb} arguments, {actual_args_nb} given')
 
-        scope = self._closure.push()
-        call_stack = call_stack.push(self.__name__)
+        scope = self._scope.push()
+        call_stack = self._call_stack.push(self.__name__)
 
         # Unpack arguments
         if self._vararg:
@@ -200,8 +214,13 @@ class FunctionClosure:
                 unpacked_values.append(value)
         if last_takes_rest:
             unpacked_values.append(list(iterator))
-        elif next(iterator):
-            raise ValueError(f'too many values to unpack (expected {vars_nb})')
+        else:
+            try:
+                next(iterator)
+            except StopIteration:
+                pass
+            else:
+                raise ValueError(f'too many values to unpack (expected {vars_nb})')
         return unpacked_values
 
 
@@ -239,7 +258,7 @@ _NO_VALUE = object()
 class Scope:
     MAX_DEPTH = 500
 
-    def __init__(self, module: Module = None, parent: Scope = None):
+    def __init__(self, module: Module, parent: Scope = None):
         """Create a new scope.
 
         :param module: The module the scope belongs to.
@@ -320,12 +339,6 @@ class Scope:
             if variable.is_const:
                 raise TypeError(f'cannot reassign const variable "{name}"')
             variable.value = value
-
-    def copy(self) -> Scope:
-        """Return a copy of this scope object. Variables’ values are not copied."""
-        s = Scope()
-        s._variables = {k: v.copy() for k, v in self._variables.items()}
-        return s
 
     def push(self) -> Scope:
         return Scope(self.module, self)

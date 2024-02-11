@@ -29,7 +29,7 @@ class WikiScriptParser(_lark.Transformer):
     UNARY_OPS: dict[str, _typ.Callable[[_typ.Any], _typ.Any]] = {
         '-': _op.neg,
         '~': _op.inv,
-        'not': _op.not_,
+        '!': _op.not_,
     }
     BINARY_OPS: dict[str, _typ.Callable[[_typ.Any, _typ.Any], _typ.Any]] = {
         '**': _op.pow,
@@ -116,8 +116,8 @@ class WikiScriptParser(_lark.Transformer):
                     args = args_
                     vararg = var_arg
                     default_args = def_args
-                case t:
-                    statements = t
+                case s:
+                    statements.append(s)
         return _st.DeclareFunctionStatement(
             keyword.line,
             keyword.column,
@@ -212,7 +212,8 @@ class WikiScriptParser(_lark.Transformer):
         return names, alias, statements
 
     def try_stmt_except_alias_part(self, tokens) -> tuple[str, str]:
-        return 'as', self._ident(tokens)
+        name, = tokens
+        return 'as', self._ident(name)
 
     def decl_var_stmt(self, tokens) -> _st.DeclareVariableStatement:
         keyword, ((var_names, vararg, _), expr) = tokens
@@ -295,7 +296,6 @@ class WikiScriptParser(_lark.Transformer):
         )
 
     def binary_op(self, tokens) -> _st.BinaryOperatorExpression:
-        expr1, op, expr2 = tokens
         match tokens:
             case [e1, o, e2]:
                 expr1 = e1
@@ -305,9 +305,11 @@ class WikiScriptParser(_lark.Transformer):
                 expr1 = e1
                 op = f'{o1} {o2}'
                 expr2 = e2
+            case _:
+                raise ValueError(f'invalid tokens: {tokens}')
         return _st.BinaryOperatorExpression(
-            op.line,
-            op.column,
+            expr1.line,
+            expr1.column,
             symbol=op,
             operator=self.BINARY_OPS[op],
             expr1=expr1,
@@ -340,7 +342,7 @@ class WikiScriptParser(_lark.Transformer):
         target, *args = tokens
         return _st.FunctionCallExpression(target.line, target.column, target, args)
 
-    def def_anon_function(self, tokens) -> _st.DeclareAnonymousFunctionExpression:
+    def decl_anon_function(self, tokens) -> _st.DeclareAnonymousFunctionExpression:
         keyword = tokens[0]
         statements = []
         args, vararg, default_args = [], False, []
@@ -350,8 +352,8 @@ class WikiScriptParser(_lark.Transformer):
                     args = args_
                     vararg = var_arg
                     default_args = def_args
-                case t:
-                    statements = t
+                case s:
+                    statements.append(s)
         return _st.DeclareAnonymousFunctionExpression(
             keyword.line,
             keyword.column,
@@ -361,7 +363,7 @@ class WikiScriptParser(_lark.Transformer):
             statements,
         )
 
-    def string(self, token) -> _st.SimpleLiteralExpression:
+    def string_lit(self, token) -> _st.SimpleLiteralExpression:
         literal, = token
         return _st.SimpleLiteralExpression(
             literal.line,

@@ -320,7 +320,7 @@ class TryStatement(Statement):
             return self._execute_statements(scope, call_stack, self._try_statements)
         except _ex.WikiScriptException:  # Uncatchable from scripts
             raise
-        except SyntaxError | OverflowError as e:  # Uncatchable errors
+        except (SyntaxError, OverflowError) as e:  # Uncatchable errors
             raise _ex.WikiScriptException(str(e), self.line, self.column)
         except Exception as e:
             for exception_types, var_name, statements in self._except_parts:
@@ -337,7 +337,8 @@ class TryStatement(Statement):
                         # Do not pass actual exception object to avoid potential runtime leaks
                         self._declare_variable(var_name, False, str(e), scope)
                     return self._execute_statements(scope, call_stack, statements)
-        return NO_RETURN
+
+            raise  # Re-raise error if no "except" clause matched
 
     def __repr__(self):
         return f'Try[try_statements={self._try_statements},except_parts={self._except_parts}]'
@@ -803,7 +804,7 @@ class DeclareAnonymousFunctionExpression(Expression):
         )
 
     def __repr__(self):
-        return (f'DefineAnonymousFunction[args={self._arg_names},vararg={self._vararg},'
+        return (f'DeclareAnonymousFunction[args={self._arg_names},vararg={self._vararg},'
                 f'default_args={self._default_args},statements={self._statements}]')
 
 
@@ -816,8 +817,6 @@ class FunctionCallExpression(Expression):
     def evaluate(self, scope: _types.Scope, call_stack: _types.CallStack) -> _typ.Any:
         function = self._target.evaluate(scope, call_stack)
         args = self.unpack_values(self._args, scope, call_stack)
-        if isinstance(function, _types.FunctionClosure):
-            return function(call_stack, *args)
         return function(*args)
 
     @staticmethod
