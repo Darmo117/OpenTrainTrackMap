@@ -5,7 +5,6 @@ IDENT: /[a-zA-Z_]\w*/
 
 CONST: "const"
 VAR: "var"
-AS: "as"
 
 IMPORT: "import"
 EXPORT: "export"
@@ -19,6 +18,7 @@ TRY: "try"
 RAISE: "raise"
 DEL: "del"
 RETURN: "return"
+
 TRUE: "True"
 FALSE: "False"
 NONE: "None"
@@ -30,7 +30,7 @@ LCURL: "{"
 
 NEG: "-"
 INV: "~"
-NOT: "not"
+BNOT: "!"
 
 POW: "**"
 MUL: "*"
@@ -46,6 +46,7 @@ LSHIFT: "<<"
 RSHIFT: ">>"
 IS: "is"
 IN: "in"
+NOT: "not"
 EQ: "=="
 NE: "!="
 GT: ">"
@@ -74,9 +75,9 @@ module: import_stmt* statement* [export_stmt]
 // Statements
 
 ?import_stmt: IMPORT IDENT ["as" IDENT] ";" -> import_builtin_stmt
-  | IMPORT string "as" IDENT ";" -> import_wiki_module_stmt
+  | IMPORT string_lit "as" IDENT ";" -> import_wiki_module_stmt
 
-?statement: decl_func_stmt
+?statement: decl_function_stmt
   | loop_stmt
   | if_stmt
   | try_stmt
@@ -94,7 +95,7 @@ export_stmt: EXPORT IDENT ("," IDENT)* ";"
 
 // Function
 
-decl_func_stmt: FUNCTION IDENT "(" [decl_function_params] ")" "is" statement* "end"
+decl_function_stmt: FUNCTION IDENT "(" [decl_function_params] ")" "is" statement* "end"
 
 decl_function_params: IDENT ("," IDENT)* ["," remaining_values | ("," decl_function_default_arg)+]
   | remaining_values
@@ -122,7 +123,7 @@ if_stmt_else_part: "else" statement*
 try_stmt: TRY try_stmt_try_part try_stmt_except_part+ "end"
 try_stmt_try_part: statement*
 try_stmt_except_part: "except" IDENT ("|" IDENT)* [try_stmt_except_alias_part] "then" statement*
-try_stmt_except_alias_part: AS IDENT
+try_stmt_except_alias_part: "as" IDENT
 
 // Variable declaration
 
@@ -132,17 +133,17 @@ decl_var_stmt: (CONST | VAR) set_multiple_vars_stmt
 
 ?set_variable_stmt: set_single_var_stmt | set_multiple_vars_stmt
 
-set_single_var_stmt: IDENT assign_op expr
+set_single_var_stmt: IDENT _assign_op expr
 
 set_multiple_vars_stmt: unpack_values "=" expr
 
 // Assign property
 
-set_property_stmt: property_access assign_op expr
+set_property_stmt: _property_access _assign_op expr
 
 // Assign item
 
-set_item_stmt: item_access assign_op expr
+set_item_stmt: _item_access _assign_op expr
 
 // Raise error
 
@@ -150,7 +151,7 @@ raise_stmt: RAISE expr
 
 // Delete item
 
-delete_item_stmt: DEL item_access
+delete_item_stmt: DEL _item_access
 
 // Return
 
@@ -196,15 +197,15 @@ expr_stmt: expr
   | pow POW unary -> binary_op
 
 ?unary: value
-  | (NEG | INV | NOT) unary -> unary_op
+  | (NEG | INV | BNOT) unary -> unary_op
 
 ?value: literal | get_variable | get_property | get_item | function_call | decl_anon_function | "(" expr ")"
 
 get_variable: IDENT
 
-get_property: property_access
+get_property: _property_access
 
-get_item: item_access
+get_item: _item_access
 
 function_call: value "(" [arg_expr ("," arg_expr)* [","]] ")"
 
@@ -222,7 +223,7 @@ decl_anon_function: FUNCTION "(" [decl_function_params] ")" "is" statement* "end
   | none_lit
 
 // Ignore displayed errors with backslashes/unclosed character classes in PyCharm
-string_lit: /(["'])(\\(?:[\\nt'"`]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\n\\])*?\2/
+string_lit: /(["'])(\\(?:[\\nt'"`]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\n\\])*?\1/
 multiline_string_lit: /`(\\([\\nt'"`\n]|u[\da-fA-F]{4}|U[\da-fA-F]{8})|[^\\])*?`/
 
 float_lit: /(\d(_?\d)*\.(\d(_?\d)*)?|\.\d(_?\d)*)([eE][+-]?\d(_?\d)*)?|\d(_?\d)*[eE][+-]?\d(_?\d)*/
@@ -254,8 +255,8 @@ remaining_values: "*" IDENT
   | expr ":" [":" [expr]] -> slice_start
   | COLON [":" [expr]] -> slice_none
 
-?item_access: value "[" (expr | slice) "]"
+_item_access: value "[" (expr | slice) "]"
 
-?property_access: value "." IDENT
+_property_access: value "." IDENT
 
-?assign_op: ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA
+_assign_op: ASSIGN | POWA | MULA | DIVA | FDIVA | MODA | ADDA | SUBA | ANDA | ORA | XORA | LSHIFTA | RSHIFTA
