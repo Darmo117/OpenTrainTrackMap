@@ -23,7 +23,7 @@ class UILanguage:
             abbr_day_names: tuple[str, ...],
             month_names: tuple[str, ...],
             abbr_month_names: tuple[str, ...],
-            am_pm: tuple[str, str],
+            am_pm: tuple[str, ...],
             day_suffixes: dict[str, str],
             decimal_sep: str,
             thousands_sep: str,
@@ -64,7 +64,8 @@ class UILanguage:
         self._abbr_day_names = abbr_day_names
         self._month_names = month_names
         self._abbr_month_names = abbr_month_names
-        self._am_pm = am_pm
+        # noinspection PyTypeChecker
+        self._am_pm: tuple[str, str] = am_pm
         self._day_suffixes: dict[_re.Pattern, str] = {_re.compile(k): v for k, v in day_suffixes.items()}
         self._decimal_sep = decimal_sep
         self._thousands_sep = thousands_sep
