@@ -3,11 +3,11 @@ import datetime as _dt
 import json
 import json as _json
 import logging as _logging
-import math as _math
 import pathlib as _pathlib
 import re as _re
 
 import markdown as _md
+
 from ..api import data_types as _data_types
 
 
@@ -212,7 +212,7 @@ class UILanguage:
         """
         s = str(n)
         dec_part = s.split('.')[1] if '.' in s else ''
-        int_part = ('{:,}'.format(_math.floor(n))).replace(',', self._thousands_sep).replace('-', '−')
+        int_part = f'{int(n):,}'.replace(',', self._thousands_sep).replace('-', '−')
         return int_part + (self._decimal_sep + dec_part if dec_part else '')
 
 
