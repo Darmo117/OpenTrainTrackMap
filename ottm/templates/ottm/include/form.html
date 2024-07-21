@@ -13,7 +13,7 @@
       </ul>
     </div>
   {% endif %}
-  {% if not form.sections|length_is:1 %}
+  {% if not form.sections|length == 1 %}
     <ul class="nav nav-tabs" role="tablist">
       {% for section_name, fields in form.sections.items %}
         <li class="nav-item" role="presentation">
@@ -46,7 +46,7 @@
         {% for field in fieldset %}
           {% with trans_field_prefix=trans_prefix|add:field.label|add:'.' %}
             <div class="form-group">
-              {% if field.field.widget.input_type == 'checkbox' and field|length_is:1 %}{# If only one checkbox #}
+              {% if field.field.widget.input_type == 'checkbox' and field|length == 1 %}{# If only one checkbox #}
                 <div class="custom-control custom-checkbox">
                   {{ field }}
                   <label for="{{ field.id_for_label }}" class="custom-control-label">

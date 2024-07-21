@@ -1,4 +1,6 @@
 """This module defines a command that initializes the database."""
+import secrets
+
 import django.core.management.base as dj_mngmt
 import django.db.transaction as dj_db_trans
 
@@ -106,15 +108,18 @@ class Command(dj_mngmt.BaseCommand):
         self.stdout.write('Done.')
 
     def _create_superuser(self):
-        from ... import models
         self.stdout.write('Creating superuser…')
 
-        password = models.CustomUser.objects.make_random_password(length=50)
+        password = self._generate_password()
         self.stdout.write(f'Generated temporary password: {password}')
         superuser = auth.create_user('Admin', password=password, ignore_email=True)
         auth.add_user_to_groups(superuser, *GROUPS)
 
         self.stdout.write('Done.')
+
+    @staticmethod
+    def _generate_password():
+        return secrets.token_hex()
 
     def _init_ottm_model(self):
         pass  # TODO
@@ -124,7 +129,7 @@ class Command(dj_mngmt.BaseCommand):
         self.stdout.write('Initializing wiki default pages…')
 
         # Create dummy user with throwaway password
-        password = models.CustomUser.objects.make_random_password(length=50)
+        password = self._generate_password()
         wiki_user = auth.create_user(settings.WIKI_SETUP_USERNAME, password=password, ignore_email=True, is_bot=True)
         auth.add_user_to_groups(wiki_user, GROUP_WIKI_AUTOPATROLLED, GROUP_WIKI_ADMINISTRATORS)
         edit_comment = 'Wiki setup.'
