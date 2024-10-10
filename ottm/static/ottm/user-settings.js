@@ -16,12 +16,12 @@
   $("#user-settings-form-preferred-timezone").on("change", e => {
     const date = new Date();
     // Convert date to selected timezone
-    const localTime = ottm.formatTime(ottm.convertDateTimezone(date, $(e.target).val()));
+    const localTime = window.ottm.formatTime(window.ottm.convertDateTimezone(date, $(e.target).val()));
     const $localTime = $("#local-time time");
     $localTime.text(localTime);
     $localTime.attr("datetime", localTime);
     // Convert server time to keep coherent
-    const serverTime = ottm.formatTime(ottm.convertDateTimezone(date, ottm.config.get("serverTimezone")));
+    const serverTime = window.ottm.formatTime(window.ottm.convertDateTimezone(date, window.ottm.config.get("serverTimezone")));
     const $serverTime = $("#server-time time");
     $serverTime.text(serverTime);
     $serverTime.attr("datetime", serverTime);

@@ -306,6 +306,9 @@ class FloatProperty(NumberProperty):
 
 
 class StringProperty(ObjectProperty):
+    multiline = _dj_models.BooleanField(
+        default=False,
+    )
     translatable = _dj_models.BooleanField(
         default=False,
     )
@@ -515,6 +518,13 @@ class StringPropertyValue(ObjectPropertyValue):
             raise _dj_exc.ValidationError(
                 'Invalid string property type',
                 code='StringPropertyValue_invalid_property_type'
+            )
+        if ((not exclude or 'value' not in exclude)
+                and not self.property_type.multiline
+                and ('\r' in self.value or '\n' in self.value)):
+            raise _dj_exc.ValidationError(
+                r'String value cannot contain \n nor \r',
+                code='StringPropertyValue_forbidden_new_lines'
             )
 
 

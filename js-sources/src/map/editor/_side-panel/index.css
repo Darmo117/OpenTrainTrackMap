@@ -1,0 +1,23 @@
+#editor-panel {
+  padding: 0.5em;
+}
+
+#feature-type-btn {
+  width: 100%;
+  text-align: left;
+}
+
+#feature-type-btn > img {
+  display: inline;
+  height: 3em;
+  width: 3em;
+  margin-right: 0.75em;
+}
+
+#feature-type-btn > span {
+  font-size: 1.5em;
+}
+
+#editor-panel textarea {
+  resize: vertical;
+}

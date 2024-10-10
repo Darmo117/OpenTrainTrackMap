@@ -4,9 +4,9 @@ import re
 import typing as typ
 
 import cssmin
-from django.conf import settings
 import django.core.management.base as dj_mngmt
 import rjsmin
+from django.conf import settings
 
 
 class Command(dj_mngmt.BaseCommand):
@@ -75,4 +75,4 @@ class Command(dj_mngmt.BaseCommand):
         return nb
 
     def _test_file_name(self, fname: str) -> bool:
-        return '.min.' not in fname and '-bundle' not in fname
+        return '.min.' not in fname and 'bundle-' not in fname

@@ -15,7 +15,8 @@ from ..api.wiki import constants as _w_cons, menus as _menus, namespaces as _w_n
 
 register = _dj_template.Library()
 
-JS_TEMPLATE_FILE = _pl.Path(__file__).parent / 'gadgets-loading-template.min.js'
+with (_pl.Path(__file__).parent / 'gadgets-loading-template.js').open(encoding='utf-8') as f:
+    JS_GADGETS_INIT_TEMPLATE_CODE = f.read()
 
 
 @register.simple_tag(takes_context=True)
@@ -144,16 +145,15 @@ def wiki_static(page_title: str) -> str:
     tag = ''
     if page_title == 'gadgets':
         gadgetNames = []  # TODO get from user object
-        with JS_TEMPLATE_FILE.open(encoding='utf-8') as f:
-            js_code = f.read().replace('"`<PLACEHOLDER>`"', ','.join(repr(g) for g in gadgetNames))
-        tag = f'<script>{_w_pages.minify_js(js_code)}</script>'
+        js_code = JS_GADGETS_INIT_TEMPLATE_CODE.replace('`<PLACEHOLDER>`', ','.join(repr(g) for g in gadgetNames))
+        tag = f'<script type="module">{_w_pages.minify_js(js_code)}</script>'
     else:
         page = _w_pages.get_page(*_w_pages.split_title(page_title))
         if page.exists:
             link = _dj_scut.reverse('ottm:wiki_api')
             title = _url_parse.urlencode({'title': _w_pages.url_encode_page_title(page.full_title)})
             if page.content_type == _w_cons.CT_JS:
-                tag = f'<script src="{link}?action=query&query=static&{title}"></script>'
+                tag = f'<script type="module" src="{link}?action=query&query=static&{title}"></script>'
             elif page.content_type == _w_cons.CT_CSS:
                 tag = f'<link href="{link}?action=query&query=static&{title}" rel="stylesheet">'
     return _dj_safe.mark_safe(tag)

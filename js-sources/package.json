@@ -1,0 +1,33 @@
+{
+  "name": "js-vite",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "eslint": "^9.12.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.2.1",
+    "@eslint/js": "^9.12.0",
+    "typescript-eslint": "^8.8.1",
+    "prettier": "^3.3.3",
+    "globals": "^15.11.0",
+    "typescript": "^5.5.3",
+    "vite": "^5.4.8",
+    "@types/ace": "^0.0.52",
+    "@types/jquery": "^3.5.29",
+    "@types/js-cookie": "^3.0.6"
+  },
+  "dependencies": {
+    "@turf/turf": "^7.1.0",
+    "jquery": "^3.7.1",
+    "js-cookie": "^3.0.5",
+    "maplibre-gl": "^3.6.2",
+    "split.js": "^1.6.5"
+  }
+}

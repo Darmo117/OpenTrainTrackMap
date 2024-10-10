@@ -21,7 +21,3 @@
   {{ block.super }}
   <script id="ottm-map-config-script">window.OTTM_MAP_CONFIG = {{ context.map_js_config|safe }};</script>
 {% endblock %}
-
-{% block global-script %}
-  <script src="{% static 'ottm/map/index-bundle.js' %}"></script>
-{% endblock %}

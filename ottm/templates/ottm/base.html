@@ -28,6 +28,7 @@
   {% else %}
     <link href="{% static 'ottm/light.min.css' %}" rel="stylesheet">
   {% endif %}
+  <link href="{% static 'ottm/bundle-index.css' %}" rel="stylesheet">
   {% block styles %}{% endblock styles %}
 </head>
 <body>
@@ -138,13 +139,13 @@
   {% block page-content %}{% endblock %}
 
   {# Needed for Bootstrap #}
-  <script src="{% static 'ottm/libs/jquery-3.6.0.min.js' %}"></script>
+  <script src="{% static 'ottm/libs/jquery-3.6.0.min.js' %}"></script>{# FIXME duplicate jquery import with bundle #}
   <script src="{% static 'ottm/libs/popper.min.js' %}"></script>
   <script src="{% static 'ottm/libs/bootstrap-4.5.2-dist/js/bootstrap.min.js' %}"></script>
   <script id="ottm-config-script">window.OTTM_CONFIG = {{ context.js_config|safe }};</script>
   {% block pre-global-script %}{% endblock %}
   {% block global-script %}
-    <script src="{% static 'ottm/index-bundle.js' %}"></script>
+    <script type="module" src="{% static 'ottm/bundle-index.js' %}"></script>
   {% endblock %}
   {% block post-global-script %}{% endblock %}
 </body>

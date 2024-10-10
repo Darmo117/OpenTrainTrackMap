@@ -46,11 +46,12 @@ label = "wikidata_qid"</panel_attributes>
       <x>2770</x>
       <y>3140</y>
       <w>210</w>
-      <h>50</h>
+      <h>60</h>
     </coordinates>
     <panel_attributes>_*sources_prop: StringProperty*_
 -
-label = "sources"</panel_attributes>
+label = "sources"
+multiline = True</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -59,11 +60,12 @@ label = "sources"</panel_attributes>
       <x>2770</x>
       <y>3210</y>
       <w>220</w>
-      <h>50</h>
+      <h>60</h>
     </coordinates>
     <panel_attributes>_*comment_prop: StringProperty*_
 -
-label = "comment"</panel_attributes>
+label = "comment"
+multiline = True</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
@@ -2775,7 +2777,7 @@ r1=object_type</panel_attributes>
     </coordinates>
     <panel_attributes>lt=&lt;-
 r1=enum_type</panel_attributes>
-    <additional_attributes>10.0;20.0;400.0;20.0;540.0;240.0</additional_attributes>
+    <additional_attributes>10.0;20.0;400.0;20.0;400.0;240.0;540.0;240.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
@@ -4201,7 +4203,7 @@ label = "relation"</panel_attributes>
     </coordinates>
     <panel_attributes>_*geometries_prop: TypeProperty*_
 -
-label = "crossing_has_markings"
+label = "geometries"
 unique = False</panel_attributes>
     <additional_attributes/>
   </element>

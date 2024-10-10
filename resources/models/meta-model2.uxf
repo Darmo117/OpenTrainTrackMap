@@ -483,14 +483,15 @@ m2=*</panel_attributes>
   <element>
     <id>UMLClass</id>
     <coordinates>
-      <x>1970</x>
+      <x>1920</x>
       <y>1150</y>
-      <w>140</w>
-      <h>50</h>
+      <w>190</w>
+      <h>60</h>
     </coordinates>
     <panel_attributes>StringProperty
 -
-+ translatable: bool</panel_attributes>
++ multiline: bool (= False)
++ translatable: bool (= False)</panel_attributes>
     <additional_attributes/>
   </element>
   <element>
