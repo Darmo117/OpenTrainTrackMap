@@ -172,12 +172,14 @@ export default class GeocoderControl implements IControl {
           prefixName = this.#options.translator(
             `osm_feature_type.prefix.place.${result.addresstype}`,
             // Fallback on a generic administrative name
-            () =>
-              this.#options.translator(
-                `osm_feature_type.admin_levels.level${Math.floor((result.place_rank + 1) / 2)}`,
+            () => {
+              const level = Math.floor((result.place_rank + 1) / 2);
+              return this.#options.translator(
+                `osm_feature_type.admin_levels.level${level}`,
                 // Fallback on the initial translation
                 prefixName,
-              ),
+              );
+            },
           );
         }
 
