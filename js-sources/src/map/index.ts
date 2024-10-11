@@ -5,7 +5,10 @@ import $ from "jquery";
 import OttmMap from "./map";
 import CompassControl from "./controls/compass";
 import GeocoderControl from "./controls/geocoder";
-import TilesSourcesControl, * as cts from "./controls/tiles-sources";
+import TilesSourcesControl, {
+  TilesChangedEvent,
+  TilesSource,
+} from "./controls/tiles-sources";
 import OpenExternalMapControl from "./controls/open-external-map";
 import ZoomControl from "./controls/zoom";
 import initMapEditor from "./editor/index";
@@ -254,7 +257,7 @@ export default function initMap(): void {
     delete window.OTTM_MAP_CONFIG;
     $("#ottm-map-config-script").remove();
   });
-  map.on("controls.styles.tiles_changed", (e: cts.TilesChangedEvent) => {
+  map.on("controls.styles.tiles_changed", (e: TilesChangedEvent) => {
     onTilesSourceChanged(e.source, true);
   });
 
@@ -297,7 +300,7 @@ export default function initMap(): void {
     tilesUrlPattern: string,
     attribution: string,
     maxZoom = 19,
-  ): cts.TilesSource {
+  ): TilesSource {
     return {
       label: name,
       id: id,
@@ -318,7 +321,7 @@ export default function initMap(): void {
    * @param shouldUpdateUrlHash Whether to update the URL hash.
    */
   function onTilesSourceChanged(
-    source: cts.TilesSource,
+    source: TilesSource,
     shouldUpdateUrlHash = false,
   ): void {
     map.setMaxZoom(source.source.maxzoom);

@@ -2,7 +2,7 @@ import {
   IControl,
   Map,
   MapLibreEvent,
-  RasterSourceSpecification as MglRasterSourceSpecification,
+  RasterSourceSpecification,
   RasterTileSource,
 } from "maplibre-gl";
 
@@ -24,9 +24,9 @@ export type TilesChangedEvent = MapLibreEvent & {
 };
 
 /**
- * This type adds an ID to MapLibre’s {@link MglRasterSourceSpecification} type.
+ * This type adds an ID to MapLibre’s {@link RasterSourceSpecification} type.
  */
-export type RasterSourceSpecification = MglRasterSourceSpecification & {
+export type RasterSourceSpecification_ = RasterSourceSpecification & {
   /**
    * The internal ID of the tiles source.
    */
@@ -48,7 +48,7 @@ export interface TilesSource {
   /**
    * A MapLibre raster tiles source specification object.
    */
-  source: RasterSourceSpecification;
+  source: RasterSourceSpecification_;
 }
 
 /**
@@ -90,7 +90,8 @@ export default class TilesSourcesControl implements IControl {
   }
 
   #setup(): void {
-    if (!this.#map) throw Error("map is undefined");
+    const map = this.#map;
+    if (!map) throw Error("Map is undefined");
     const button = createControlButton({
       title: this.#options.title ?? "Backgrounds",
       icon: createMdiIcon("layers-outline"),
@@ -100,7 +101,7 @@ export default class TilesSourcesControl implements IControl {
         else this.#inputsContainer.style.display = "none";
       },
     });
-    this.#map.on("click", () => (this.#inputsContainer.style.display = "none"));
+    map.on("click", () => (this.#inputsContainer.style.display = "none"));
     this.#container.appendChild(button);
     this.#container.appendChild(this.#inputsContainer);
 
@@ -124,13 +125,11 @@ export default class TilesSourcesControl implements IControl {
       inputsList.appendChild(item);
     });
 
-    this.#map.on("load", () => {
-      if (!this.#map) return;
-      // "id" property is added by buildStyle()
-      const elementId = (
-        (this.#map.getSource("tiles") as RasterTileSource)
-          ._options as RasterSourceSpecification
-      ).id;
+    map.on("load", () => {
+      const source = map.getSource("tiles");
+      if (!(source instanceof RasterTileSource))
+        throw new TypeError("Invalid tiles source");
+      const elementId = (source._options as RasterSourceSpecification_).id;
       (document.getElementById(elementId) as HTMLInputElement).checked = true;
     });
   }
@@ -141,18 +140,19 @@ export default class TilesSourcesControl implements IControl {
   }
 
   #changeTilesSource(source: TilesSource): void {
-    if (!this.#map) return;
-    this.#map.removeLayer("tiles");
-    this.#map.removeSource("tiles");
-    this.#map.addSource("tiles", source.source);
-    this.#map.addLayer({
+    const map = this.#map;
+    if (!map) return;
+    map.removeLayer("tiles");
+    map.removeSource("tiles");
+    map.addSource("tiles", source.source);
+    map.addLayer({
       id: "tiles",
       type: "raster",
       source: "tiles",
     });
-    this.#map.fire("controls.styles.tiles_changed", {
+    map.fire("controls.styles.tiles_changed", {
       type: "tiles",
-      target: this.#map,
+      target: map,
       originalEvent: null,
       source: source,
     });
