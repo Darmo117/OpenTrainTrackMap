@@ -6,7 +6,9 @@ import Cookies from "js-cookie";
 
 import { OTTM } from "./types";
 import hookExitConfirm from "./_confirm-form-exit";
-import setupUserSettings from "./user-settings";
+import setupUserSettings, {
+  USER_SETTINGS_FORM_SELECTOR,
+} from "./user-settings";
 import initMap from "./map";
 import initWiki from "./wiki";
 
@@ -17,7 +19,7 @@ hookDarkModeCallback();
 hookLanguageSelectorCallback();
 
 initForms();
-if ($("#user-settings").length !== 0) setupUserSettings();
+if ($(USER_SETTINGS_FORM_SELECTOR).length !== 0) setupUserSettings();
 if (window.OTTM_MAP_CONFIG) initMap();
 if (window.location.pathname.startsWith("/wiki/")) initWiki();
 
