@@ -1,0 +1,8 @@
+{
+  "prefix": {
+    "place": {
+      "continent": "Continent",
+      "ocean": "Océan"
+    }
+  }
+}
