@@ -737,12 +737,22 @@
         "controls": {
           "layers": {
             "tooltip": "Fonds de carte",
-            "value": {
-              "osm": "Carte",
-              "satellite_maptiler": "Satellite (MapTiler)",
-              "satellite_esri": "Satellite (Esri)",
-              "satellite_google": "Satellite (Google)"
+            "categories": {
+              "map": "Cartes",
+              "photo": "Photos satellites et aériennes",
+              "historicphoto": "Photos satellites et aériennes historiques",
+              "elevation": "Cartes d’élévation",
+              "other": "Autres",
+              "osmbasedmap": "Cartes basées sur OpenStreetMap",
+              "historicmap": "Cartes historiques"
             }
+          },
+          "toggle_attribution":{
+            "tooltip": "Basculer l’attribution"
+          },
+          "geolocation": {
+            "find_my_location": "Trouver ma position",
+            "location_unavailable": "Position indisponible"
           },
           "zoom_in": {
             "tooltip": "Zoomer"

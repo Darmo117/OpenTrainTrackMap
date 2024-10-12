@@ -1,9 +1,31 @@
+.maplibregl-ctrl-tiles-sources {
+  overflow-y: scroll;
+  max-height: 50vh;
+}
+
+.maplibregl-ctrl-tiles-sources .sources-categories {
+  padding: 0 1em 0.5em;
+}
+
+.maplibregl-ctrl-tiles-sources .sources-category-box {
+  margin-top: 1em;
+}
+
+.maplibregl-ctrl-tiles-sources .sources-category-title {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
 .maplibregl-ctrl-tiles-sources ul {
   margin: 0;
-  padding: 0.5em 1em;
+  padding: 0.5em 0 0 1em;
   list-style: none;
 }
 
 .maplibregl-ctrl-tiles-sources li > * {
   cursor: pointer;
+}
+
+.maplibregl-ctrl-tiles-sources li > label {
+  margin: 0;
 }

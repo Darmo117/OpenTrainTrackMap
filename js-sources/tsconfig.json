@@ -23,7 +23,11 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+
+    /* JSON files importing */
+    "resolveJsonModule": true,
+    "esModuleInterop": true
   },
   "include": [
     "src",

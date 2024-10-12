@@ -1,16 +1,56 @@
 {
   "comma": ", ",
   "and": " kaj ",
-  "day_names": ["lundo", "mardo", "merkredo", "ĵaŭdo", "vendredo", "sabato", "dimanĉo"],
-  "abbr_day_names": ["lun.", "mar.", "mer.", "ĵaŭ.", "ven.", "sab.", "dim."],
+  "day_names": [
+    "lundo",
+    "mardo",
+    "merkredo",
+    "ĵaŭdo",
+    "vendredo",
+    "sabato",
+    "dimanĉo"
+  ],
+  "abbr_day_names": [
+    "lun.",
+    "mar.",
+    "mer.",
+    "ĵaŭ.",
+    "ven.",
+    "sab.",
+    "dim."
+  ],
   "month_names": [
-    "januaro", "februaro", "marto", "aprilo", "majo", "junio", "julio", "aŭgusto", "septembro", "oktobro", "novembro",
+    "januaro",
+    "februaro",
+    "marto",
+    "aprilo",
+    "majo",
+    "junio",
+    "julio",
+    "aŭgusto",
+    "septembro",
+    "oktobro",
+    "novembro",
     "decembro"
   ],
   "abbr_month_names": [
-    "jan.", "feb.", "mar.", "apr.", "maj.", "jun.", "jul.", "aŭg.", "sep.", "okt.", "nov.", "dec."
+    "jan.",
+    "feb.",
+    "mar.",
+    "apr.",
+    "maj.",
+    "jun.",
+    "jul.",
+    "aŭg.",
+    "sep.",
+    "okt.",
+    "nov.",
+    "dec."
   ],
-  "am_pm": ["atm.", "ptm."],
+  "am_pm": [
+    "atm.",
+    "ptm."
+  ],
   "day_suffixes": {
     ".": "a"
   },
@@ -716,12 +756,22 @@
         "controls": {
           "layers": {
             "tooltip": "Mapfonoj",
-            "value": {
-              "osm": "Mapo",
-              "satellite_maptiler": "Satelita (MapTiler)",
-              "satellite_esri": "Satelita (Esri)",
-              "satellite_google": "Satelita (Google)"
+            "categories": {
+              "map": "Mapoj",
+              "photo": "Satelitaj kaj aeraj fotoj",
+              "historicphoto": "Historiaj satelitaj kaj aeraj fotoj",
+              "elevation": "Elevation maps",
+              "other": "Alioj",
+              "osmbasedmap": "Mapoj bazitaj sur OpenStreetMap",
+              "historicmap": "Historiaj mapoj"
             }
+          },
+          "toggle_attribution": {
+            "tooltip": "Baskuli la atribuon"
+          },
+          "geolocation": {
+            "find_my_location": "Trovi mian pozicion",
+            "location_unavailable": "Via pozicio ne disponeblas"
           },
           "zoom_in": {
             "tooltip": "Zomi"

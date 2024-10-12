@@ -1,4 +1,4 @@
-import { ScaleControl } from "maplibre-gl";
+import { GeolocateControl, ScaleControl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import $ from "jquery";
 
@@ -6,11 +6,12 @@ import OttmMap from "./map";
 import CompassControl from "./controls/compass";
 import GeocoderControl from "./controls/geocoder";
 import TilesSourcesControl, {
-  TilesChangedEvent,
   TilesSource,
+  TilesSourceChangedEvent,
 } from "./controls/tiles-sources";
 import OpenExternalMapControl from "./controls/open-external-map";
 import ZoomControl from "./controls/zoom";
+import loadTilesSources from "./tiles-sources.ts";
 import initMapEditor from "./editor/index";
 
 declare global {
@@ -27,62 +28,35 @@ declare global {
  * Initalize the map view.
  */
 export default function initMap(): void {
-  const mapStyles = [
-    buildTilesSource(
-      window.ottm.translate("map.controls.layers.value.osm"),
-      "osm",
-      "https://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
-      'Map data © <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors',
-    ),
-    buildTilesSource(
-      window.ottm.translate("map.controls.layers.value.satellite_esri"),
-      "arcgis",
-      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-      "Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community",
-    ),
-    // buildStyle(
-    //     window.ottm.translate("map.controls.layers.value.satellite_maptiler"),
-    //     "maptiler",
-    //     "/tile?provider=maptiler&x={x}&y={y}&z={z}",
-    //     'Tiles © <a href="https://www.maptiler.com/copyright/" target="_blank">MapTiler</a>, Map data © <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
-    // ),
-    buildTilesSource(
-      window.ottm.translate("map.controls.layers.value.satellite_google"),
-      "google",
-      "http://www.google.com/maps/vt?lyrs=s@189&x={x}&y={y}&z={z}", // lyrs=s@189 -> satellite images
-      "Tiles © Google",
-      18,
-    ),
-  ];
-
   if (!window.OTTM_MAP_CONFIG)
     throw new Error("Missing global OTTM_MAP_CONFIG object");
 
   const editMode = window.OTTM_MAP_CONFIG.edit;
-  const defaultMapStyle = editMode ? mapStyles[1] : mapStyles[0];
   const map = new OttmMap({
     container: "map",
     antialias: true,
+    locale: {
+      "AttributionControl.ToggleAttribution": window.ottm.translate(
+        "map.controls.toggle_attribution.tooltip",
+      ),
+      "GeolocateControl.FindMyLocation": window.ottm.translate(
+        "map.controls.geolocation.find_my_location",
+      ),
+      "GeolocateControl.LocationNotAvailable": window.ottm.translate(
+        "map.controls.geolocation.location_unavailable",
+      ),
+    },
     style: {
       name: "base",
       version: 8,
-      sources: {
-        tiles: defaultMapStyle.source,
-      },
-      layers: [
-        {
-          id: "tiles",
-          type: "raster",
-          source: "tiles",
-        },
-      ],
+      sources: {},
+      layers: [],
       transition: {
         duration: 0,
-      }, // Custom fonts: https://maplibre.org/maplibre-style-spec/glyphs/
+      },
+      // Custom fonts: https://maplibre.org/maplibre-style-spec/glyphs/
       // Custom fonts generator: https://maplibre.org/font-maker/
     },
-    center: [0, 0],
-    zoom: 1,
   });
   map.keyboard.disable(); // Disable default keyboard actions
 
@@ -132,19 +106,17 @@ export default function initMap(): void {
   map.addControl(
     new TilesSourcesControl({
       title: window.ottm.translate("map.controls.layers.tooltip"),
-      sources: mapStyles,
+      sources: loadTilesSources(),
+      editMode: editMode,
     }),
     "top-left",
   );
 
-  let zoomControl: ZoomControl;
-  map.addControl(
-    (zoomControl = new ZoomControl({
-      zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip"),
-      zoomOutTitle: window.ottm.translate("map.controls.zoom_out.tooltip"),
-    })),
-    "top-right",
-  );
+  const zoomControl = new ZoomControl({
+    zoomInTitle: window.ottm.translate("map.controls.zoom_in.tooltip"),
+    zoomOutTitle: window.ottm.translate("map.controls.zoom_out.tooltip"),
+  });
+  map.addControl(zoomControl, "top-right");
   map.boxZoom.disable();
   map.doubleClickZoom.disable();
 
@@ -224,6 +196,16 @@ export default function initMap(): void {
   );
 
   map.addControl(
+    new GeolocateControl({
+      positionOptions: {
+        enableHighAccuracy: true,
+      },
+      showUserLocation: false,
+    }),
+    "top-right",
+  );
+
+  map.addControl(
     new CompassControl({
       title: window.ottm.translate("map.controls.compass.tooltip"),
     }),
@@ -250,14 +232,11 @@ export default function initMap(): void {
     updateUrlHash();
   });
   map.on("load", () => {
-    onTilesSourceChanged(defaultMapStyle);
-    if (getPositionFromURL().found) centerViewFromUrl();
-    else centerViewToUserLocation();
     // Delete config object and script tag
     delete window.OTTM_MAP_CONFIG;
     $("#ottm-map-config-script").remove();
   });
-  map.on("controls.styles.tiles_changed", (e: TilesChangedEvent) => {
+  map.on("controls.styles.tiles_changed", (e: TilesSourceChangedEvent) => {
     onTilesSourceChanged(e.source, true);
   });
 
@@ -281,39 +260,20 @@ export default function initMap(): void {
 
   map.hookTextFieldsFocusEvents();
 
+  /**
+   * Indicates whether the map’s view is being updated from the page’s URL hash.
+   */
+  let updatingView = false;
+  /**
+   * Indicates whether the page’s URL hash is being updated from the map’s view.
+   */
+  let updatingHash = false;
+
+  if (getPositionFromURL().found) centerViewFromUrl();
+
   /*
    * Functions
    */
-
-  /**
-   * Create a tiles source object with the given data.
-   * @param name Source’s readable name.
-   * @param id Source’s internal ID.
-   * @param tilesUrlPattern URL pattern to get map tiles.
-   * @param attribution String to display in the bottom right of the map.
-   * @param maxZoom Max zoom value.
-   * @return The tiles source object.
-   */
-  function buildTilesSource(
-    name: string,
-    id: string,
-    tilesUrlPattern: string,
-    attribution: string,
-    maxZoom = 19,
-  ): TilesSource {
-    return {
-      label: name,
-      id: id,
-      source: {
-        id: id,
-        type: "raster",
-        tiles: [tilesUrlPattern],
-        tileSize: 256,
-        attribution: attribution,
-        maxzoom: maxZoom,
-      },
-    };
-  }
 
   /**
    * Called when the map tiles source has changed.
@@ -326,59 +286,6 @@ export default function initMap(): void {
   ): void {
     map.setMaxZoom(source.source.maxzoom);
     if (shouldUpdateUrlHash) updateUrlHash(); // In case the new max zoom is less than the current one
-  }
-
-  /**
-   * Indicates whether the map’s view is being updated from the page’s URL hash.
-   */
-  let updatingView = false;
-  /**
-   * Indicates whether the page’s URL hash is being updated from the map’s view.
-   */
-  let updatingHash = false;
-
-  /**
-   * Ask the client if they want to allow geolocation.
-   * If yes, the map view is centered on the position returned by the browser.
-   * @async
-   */
-  function centerViewToUserLocation(): void {
-    navigator.permissions.query({ name: "geolocation" }).then(
-      (result) => {
-        switch (result.state) {
-          case "granted":
-          case "prompt":
-            navigator.geolocation.getCurrentPosition(
-              (p) => {
-                map.setZoom(13);
-                map.setCenter({
-                  lat: p.coords.latitude,
-                  lng: p.coords.longitude,
-                });
-              },
-              (e) => {
-                console.log(e.message);
-                updateUrlHash();
-              },
-              {
-                enableHighAccuracy: false,
-                maximumAge: 30000,
-                timeout: 20000,
-              },
-            );
-            break;
-          default:
-          case "denied":
-            console.log("User does not allow geolocation");
-            updateUrlHash();
-            break;
-        }
-      },
-      (reason: unknown) => {
-        console.log(`Could not get geolocation: ${reason}`);
-        updateUrlHash();
-      },
-    );
   }
 
   /**
@@ -449,7 +356,7 @@ export default function initMap(): void {
       if (found) {
         updatingView = true;
         map.setZoom(zoom);
-        map.setCenter({ lat: lat, lng: lng });
+        map.setCenter({ lat, lng });
       } else {
         updateUrlHash();
       }

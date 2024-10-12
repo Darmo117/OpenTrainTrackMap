@@ -709,12 +709,22 @@
         "controls": {
           "layers": {
             "tooltip": "Map Backgrounds",
-            "value": {
-              "osm": "Map",
-              "satellite_esri": "Satellite (Esri)",
-              "satellite_maptiler": "Satellite (MapTiler)",
-              "satellite_google": "Satellite (Google)"
+            "categories": {
+              "map": "Maps",
+              "photo": "Satellite and aerial photos",
+              "historicphoto": "Historic satellite and aerial photos",
+              "elevation": "Elevation maps",
+              "other": "Other",
+              "osmbasedmap": "OpenStreetMap-based maps",
+              "historicmap": "Historic maps"
             }
+          },
+          "toggle_attribution": {
+            "tooltip": "Toggle attribution"
+          },
+          "geolocation": {
+            "find_my_location": "Find my location",
+            "location_unavailable": "Location not available"
           },
           "zoom_in": {
             "tooltip": "Zoom in"
