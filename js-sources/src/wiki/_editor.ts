@@ -39,11 +39,9 @@ export default function initEditor(): void {
   );
   editor.getSession().setValue($textarea.val() as string);
   // Update form’s textarea on each change in the editor
-  editor
-    .getSession()
-    .on("change", () =>
-      $textarea.val(editor.getSession().getValue()).trigger("change"),
-    );
+  editor.getSession().on("change", () => {
+    $textarea.val(editor.getSession().getValue()).trigger("change");
+  });
   $("#wiki-edit-form").on("submit", (e) => {
     const comment = ($("#wiki-edit-form-comment").val() as string).trim();
     if (!comment && window.ottm.user.get("warnWhenNoWikiEditComment")) {

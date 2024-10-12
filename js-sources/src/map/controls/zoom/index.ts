@@ -49,13 +49,17 @@ export default class ZoomControl implements IControl {
     this.#buttonIn = createControlButton({
       title: options.zoomInTitle ?? "Zoom In",
       icon: PLUS_ICON,
-      onClick: () => this.#map?.zoomIn(),
+      onClick: () => {
+        this.#map?.zoomIn();
+      },
       shortcut: ["+"],
     });
     this.#buttonOut = createControlButton({
       title: options.zoomOutTitle ?? "Zoom Out",
       icon: MINUS_ICON,
-      onClick: () => this.#map?.zoomOut(),
+      onClick: () => {
+        this.#map?.zoomOut();
+      },
       shortcut: ["-"],
     });
   }

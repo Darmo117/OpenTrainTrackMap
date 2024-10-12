@@ -26,13 +26,14 @@ export default class EditorPanel {
     this.#$panel.append(this.#featureTypeButton.container);
     map.on(FeatureSelectionEvent.TYPE, (e: FeatureSelectionEvent) => {
       this.#selectedFeatures.clear();
-      e.features.forEach((f) => this.#selectedFeatures.add(f));
+      e.features.forEach((f) => {
+        this.#selectedFeatures.add(f);
+      });
       this.#setupForm(e.features, true);
     });
     map.on(FeatureHoverEvent.TYPE, (e: FeatureHoverEvent) => {
-      if (!this.#selectedFeatures.size) {
+      if (!this.#selectedFeatures.size)
         this.#setupForm(e.feature ? [e.feature] : [], false);
-      }
     });
   }
 

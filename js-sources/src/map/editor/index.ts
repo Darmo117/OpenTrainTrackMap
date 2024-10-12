@@ -427,9 +427,9 @@ class MapEditor {
   <span class="mdi mdi-plus"></span> ${message}
 </div>
 `);
-    this.#$editZoomNoticePanel.on("click", () =>
-      this.#map.easeTo({ zoom: MapEditor.#EDIT_MIN_ZOOM }),
-    );
+    this.#$editZoomNoticePanel.on("click", () => {
+      this.#map.easeTo({ zoom: MapEditor.#EDIT_MIN_ZOOM });
+    });
     canvasContainerParent.append(this.#$editZoomNoticePanel);
   }
 
@@ -573,9 +573,9 @@ class MapEditor {
     const feature = this.#features.get(featureId);
     if (!feature) return;
 
-    this.#getLayerIdStack(featureId)?.forEach((id) =>
-      this.#map.removeLayer(id),
-    );
+    this.#getLayerIdStack(featureId)?.forEach((id) => {
+      this.#map.removeLayer(id);
+    });
     // Remove now to avoid potential infinite recursions
     this.#features.delete(featureId);
 
@@ -762,9 +762,9 @@ class MapEditor {
    */
   #disableDrawPolygonMode(mousePos?: PointLike): void {
     if (!this.#drawnPolygon) return;
-    this.#quitLinearDrawing(this.#drawnPolygon, 2, mousePos, () =>
-      this.#drawnPolygon?.lockRing(0),
-    );
+    this.#quitLinearDrawing(this.#drawnPolygon, 2, mousePos, () => {
+      this.#drawnPolygon?.lockRing(0);
+    });
     this.#drawnPolygon = null;
   }
 
@@ -818,7 +818,9 @@ class MapEditor {
     this.#movedPoints.forEach(({ point, startPos }) => {
       point.lngLat = startPos;
       this.#updateFeatureData(point);
-      point.boundFeatures.forEach((f) => features.add(f));
+      point.boundFeatures.forEach((f) => {
+        features.add(f);
+      });
     });
     features.forEach((f) => {
       this.#updateFeatureData(f);
@@ -883,13 +885,13 @@ class MapEditor {
   #moveLayers(featureId: string, beforeId?: string): void {
     if (beforeId) {
       const bottomLayer = this.#getLayerIdStack(beforeId)?.[0];
-      this.#getLayerIdStack(featureId)?.forEach((id) =>
-        this.#map.moveLayer(id, bottomLayer),
-      );
+      this.#getLayerIdStack(featureId)?.forEach((id) => {
+        this.#map.moveLayer(id, bottomLayer);
+      });
     } else {
-      this.#getLayerIdStack(featureId)?.forEach((id) =>
-        this.#map.moveLayer(id),
-      );
+      this.#getLayerIdStack(featureId)?.forEach((id) => {
+        this.#map.moveLayer(id);
+      });
     }
   }
 
@@ -1123,14 +1125,24 @@ class MapEditor {
         if (!f.isLoop() && f.getVertexPath(draggedPoint) === "0") {
           f.vertices
             .filter((v) => f.getVertexPath(v) !== lastPath)
-            .forEach((v) => excludedIds.add(v.id));
+            .forEach((v) => {
+              excludedIds.add(v.id);
+            });
         } else if (!f.isLoop() && f.getVertexPath(draggedPoint) === lastPath) {
-          f.vertices.slice(1).forEach((v) => excludedIds.add(v.id));
+          f.vertices.slice(1).forEach((v) => {
+            excludedIds.add(v.id);
+          });
         } else {
-          f.vertices.forEach((v) => excludedIds.add(v.id));
+          f.vertices.forEach((v) => {
+            excludedIds.add(v.id);
+          });
         }
       } else if (f instanceof Polygon) {
-        f.vertices.flatMap((s) => s).forEach((v) => excludedIds.add(v.id));
+        f.vertices
+          .flatMap((s) => s)
+          .forEach((v) => {
+            excludedIds.add(v.id);
+          });
       }
     });
     // Exclude point itself
@@ -1285,7 +1297,9 @@ class MapEditor {
     this.#movedPoints.forEach(({ point, offset }) => {
       point.onDrag(e.lngLat, offset);
       this.#updateFeatureData(point);
-      point.boundFeatures.forEach((f) => features.add(f));
+      point.boundFeatures.forEach((f) => {
+        features.add(f);
+      });
     });
     // Update each bound feature only once
     features.forEach((f) => {

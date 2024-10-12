@@ -23,7 +23,11 @@ export default class OttmMap extends Map {
    */
   hookTextFieldsFocusEvents(): void {
     const $textInputs = $("input[type='text'], textarea");
-    $textInputs.on("focusin", () => (this.#textFieldHasFocus = true));
-    $textInputs.on("focusout", () => (this.#textFieldHasFocus = false));
+    $textInputs.on("focusin", () => {
+      this.#textFieldHasFocus = true;
+    });
+    $textInputs.on("focusout", () => {
+      this.#textFieldHasFocus = false;
+    });
   }
 }
