@@ -98,7 +98,6 @@ export default class ZoomControl implements IControl {
     return this.#container;
   }
 
-  onRemove(): void {
-    this.#container.parentNode?.removeChild(this.#container);
-  }
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  onRemove(): void {}
 }
