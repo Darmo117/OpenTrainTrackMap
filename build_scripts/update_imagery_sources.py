@@ -147,7 +147,7 @@ def invalid_value_error(key: str, value) -> ValueError:
     return ValueError(f'invalid {key}: {value}')
 
 
-def parse_entry(entry_tag: ElementTree.Element) -> dict:
+def parse_entry(entry_tag: ElementTree.Element, ignored_tiles_sources: dict[str, str]) -> dict:
     """Parse the given <entry> tag.
 
     :param entry_tag: The tag to parse.
@@ -181,6 +181,8 @@ def parse_entry(entry_tag: ElementTree.Element) -> dict:
             case 'id' as key:
                 ensure_unique(key, entry)
                 text = child.text
+                if text in ignored_tiles_sources:
+                    raise Skip(f'ignored tiles source {text!r}: {ignored_tiles_sources[text]}')
                 entry[key] = text
                 if text in DEFAULT_IDS:
                     entry['defaultForType'] = True
@@ -266,13 +268,16 @@ def parse_entry(entry_tag: ElementTree.Element) -> dict:
 def main() -> None:
     response = requests.get('https://github.com/osmlab/editor-layer-index/raw/refs/heads/gh-pages/imagery.xml')
 
+    with open('ignored_tiles_sources.json') as f:
+        ignored_tiles_sources = json.load(f)
+
     entries = []
     i = 1
     for entry in ElementTree.fromstring(response.text):
         if tag_name(entry) != 'entry':
             continue
         try:
-            entries.append(parse_entry(entry))
+            entries.append(parse_entry(entry, ignored_tiles_sources))
         except Skip as e:
             print(f'Skipping entry #{i}:', e)
         except Exception as e:
