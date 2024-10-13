@@ -5,15 +5,31 @@ import { TilesSource, TilesSourceChangedEvent } from "../tiles-sources";
 import "./_index.css";
 
 /**
- * Options for the {@link GeocoderControl} class.
+ * Options for the {@link ImageryDateControl} class.
  */
 export interface ImageryDateControlOptions {
+  /**
+   * Text to show for a single date. Should contain a {} placeholder for the date.
+   */
   singleDateText?: string;
+  /**
+   * Text to show when only the start date is available. Should contain a {} placeholder for the date.
+   */
   onlyStartDateText?: string;
+  /**
+   * Text to show when only the end date is available. Should contain a {} placeholder for the date.
+   */
   onlyEndDateText?: string;
+  /**
+   * Text to show when only both start and end date are available.
+   * Should contain {0} and {1} placeholders for the start and end dates respectively.
+   */
   twoDatesText?: string;
 }
 
+/**
+ * A control that indicates the date(s) of the current imagery.
+ */
 export default class ImageryDateControl implements IControl {
   readonly #options: ImageryDateControlOptions;
   readonly #$container: JQuery;
