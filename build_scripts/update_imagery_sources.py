@@ -151,6 +151,7 @@ def parse_entry(entry_tag: ElementTree.Element, ignored_tiles_sources: dict[str,
     """Parse the given <entry> tag.
 
     :param entry_tag: The tag to parse.
+    :param ignored_tiles_sources: A dict mapping tiles source IDs to the reason why they should be skipped.
     :return: A dict containing the parsed entry.
     """
     if (attr := 'overlay') in entry_tag.attrib and entry_tag.attrib[attr] == 'true':
