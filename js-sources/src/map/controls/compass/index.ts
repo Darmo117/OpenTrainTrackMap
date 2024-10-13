@@ -55,8 +55,7 @@ export default class CompassControl implements IControl {
   }
 
   #onControlButtonClick(): void {
-    if (!this.#map) return;
-    this.#map.easeTo({ bearing: 0, pitch: 0 });
+    this.#map?.easeTo({ bearing: 0, pitch: 0 });
   }
 
   #onRotate(): void {
@@ -71,7 +70,7 @@ export default class CompassControl implements IControl {
     if (!this.#options.instant) this.#container.hidden = true;
     this.#container.appendChild(this.#button);
     this.#onRotate();
-    this.#map.on("rotate", () => {
+    map.on("rotate", () => {
       this.#onRotate();
     });
     return this.#container;

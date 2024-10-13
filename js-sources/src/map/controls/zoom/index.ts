@@ -85,7 +85,7 @@ export default class ZoomControl implements IControl {
     this.#container.appendChild(this.#buttonIn);
     this.#container.appendChild(this.#buttonOut);
     $(map.getContainer()).on("keydown", (e) => {
-      if (this.#map instanceof OttmMap && this.#map.textFieldHasFocus) return;
+      if (map instanceof OttmMap && map.textFieldHasFocus) return;
       switch (e.key) {
         case "+":
           map.zoomIn();

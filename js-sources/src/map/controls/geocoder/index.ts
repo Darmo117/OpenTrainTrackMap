@@ -243,12 +243,14 @@ export default class GeocoderControl implements IControl {
     lng: number,
     boundingBox: LngLatBoundsLike,
   ): void {
-    if (!this.#map) return;
+    const map = this.#map;
+    if (!map) return;
     this.#marker?.remove();
-    this.#map.fitBounds(boundingBox);
-    this.#marker = new Marker({});
-    this.#marker.setLngLat({ lat: lat, lng: lng });
-    this.#marker.addTo(this.#map);
+    map.fitBounds(boundingBox);
+    const marker = new Marker({});
+    marker.setLngLat({ lat: lat, lng: lng });
+    marker.addTo(map);
+    this.#marker = marker;
   }
 
   #showResultsPanel(): void {
