@@ -9,6 +9,7 @@ import {
 } from "maplibre-gl";
 import { intersect } from "@turf/intersect";
 import { featureCollection, polygon } from "@turf/helpers";
+import { Feature, Polygon } from "geojson";
 
 import {
   createControlButton,
@@ -16,6 +17,7 @@ import {
   createMdiIcon,
 } from "../helpers";
 import {
+  Shape,
   TilesSourceBounds,
   TilesSourceCategory,
   TilesSourceDate,
@@ -170,8 +172,9 @@ export default class TilesSourcesControl implements IControl {
       $listContainer.append($inputsList);
 
       for (const source of sources) {
+        const sourceId = this.#getSourceInputId(source.id);
         const $input: JQuery<HTMLInputElement> = $(
-          `<input type="radio" name="tiles-sources" value="${source.id}" id="source-${source.id}">`,
+          `<input type="radio" name="tiles-sources" value="${source.id}" id="${sourceId}">`,
         );
         $input.on("change", (e) => {
           this.#changeTilesSource(this.#findTilesSourceById(e.target.value));
@@ -179,7 +182,7 @@ export default class TilesSourcesControl implements IControl {
         const $item: JQuery<HTMLLIElement> = $("<li>");
         $item.append(
           $input,
-          ` <label for="source-${source.id}">${source.label}</label>`,
+          ` <label for="${sourceId}">${source.label}</label>`,
         );
         $inputsList.append($item);
       }
@@ -207,6 +210,12 @@ export default class TilesSourcesControl implements IControl {
     });
   }
 
+  /**
+   * Find the {@link TilesSource} object with the given ID.
+   * @param id A {@link TilesSource} ID.
+   * @return The corresponding {@link TilesSource} object.
+   * @throws Error If no {@link TilesSource} has that ID.
+   */
   #findTilesSourceById(id: string): TilesSource {
     let tilesSource: TilesSource | undefined;
     for (const sources of this.#sourcesByCategory.values()) {
@@ -244,52 +253,38 @@ export default class TilesSourcesControl implements IControl {
     map.fire("controls.styles.tiles_changed", event);
 
     // Source may not have been changed by interacting with this control, select the corresponding radio button
-    const $input = $("#source-" + source.id);
+    const $input = $("#" + this.#getSourceInputId(source.id, true));
     if (!$input.prop("checked")) $input.prop("checked", true);
   }
 
   /**
-   * Filter which sources are shown in the control depending on the current zoom and viewport bounds.
+   * Filter which sources are shown in the control depending on the current map zoom and viewport bounds.
    *
    * Sources (that are not selected) that match any of the following criteria are hidden:
    * * Its min zoom is less than the current zoom.
    * * Its max zoom is greater than the current zoom.
-   * * It has bounds and they do not intersect the current viewport bounds.
+   * * It has bounds and it does not, nor any of its shapes, intersect the current map viewport bounds.
    */
   #filterSources(): void {
     const map = this.#map;
     if (!map) return;
 
     const zoom = map.getZoom();
-
-    const viewportBounds = map.getBounds();
-    const viewportBoundsVertices = [
-      viewportBounds.getNorthWest().toArray(),
-      viewportBounds.getNorthEast().toArray(),
-      viewportBounds.getSouthEast().toArray(),
-      viewportBounds.getSouthWest().toArray(),
-      viewportBounds.getNorthWest().toArray(), // GeoJSON expects the first vertex to also be the last
-    ];
+    const bounds = map.getBounds();
 
     for (const [category, sources] of this.#sourcesByCategory.entries()) {
       let count = 0;
 
       for (const source of sources) {
-        const $input = $("#source-" + source.id);
+        const sourceId = this.#getSourceInputId(source.id, true);
+        const $input = $("#" + sourceId);
 
         const sourceBounds = source.bounds;
         const hide =
           !$input.prop("checked") &&
           ((!!source.source.minzoom && zoom < source.source.minzoom) ||
             (!!source.source.maxzoom && zoom > source.source.maxzoom) ||
-            (!!sourceBounds &&
-              !intersect(
-                // TODO check shapes intersections instead of sourceBounds if available
-                featureCollection([
-                  polygon([getPolygon(sourceBounds)]),
-                  polygon([viewportBoundsVertices]),
-                ]),
-              )));
+            (!!sourceBounds && !this.#intersects(sourceBounds, bounds)));
 
         const $listItem = $input.parent();
         if (hide) $listItem.hide();
@@ -303,22 +298,61 @@ export default class TilesSourcesControl implements IControl {
       if (count === 0) $categoryDiv.hide();
       else $categoryDiv.show();
     }
+  }
 
-    function getPolygon(sourceBounds: TilesSourceBounds): [number, number][] {
-      const bounds = new LngLatBounds([
-        sourceBounds.bbox.minLon,
-        sourceBounds.bbox.minLat,
-        sourceBounds.bbox.maxLon,
-        sourceBounds.bbox.maxLat,
-      ]);
-      return [
+  /**
+   * Check whether the given tiles source bounds intersect the given map viewport bounds.
+   * @param sourceBounds The bounds of a {@link TilesSource}.
+   * @param viewportBounds The viewport bounds of the map.
+   * @return True if the viewport bounds intersect the source bounds’ bbox *and* any of its shapes, false otherwise.
+   */
+  #intersects(
+    sourceBounds: TilesSourceBounds,
+    viewportBounds: LngLatBounds,
+  ): boolean {
+    const bounds = new LngLatBounds([
+      sourceBounds.bbox.minLon,
+      sourceBounds.bbox.minLat,
+      sourceBounds.bbox.maxLon,
+      sourceBounds.bbox.maxLat,
+    ]);
+    const sourceBoundsPolygon = polygon([
+      [
         bounds.getNorthWest().toArray(),
         bounds.getNorthEast().toArray(),
         bounds.getSouthEast().toArray(),
         bounds.getSouthWest().toArray(),
         bounds.getNorthWest().toArray(), // GeoJSON expects the first vertex to also be the last
-      ];
+      ],
+    ]);
+
+    const viewportBoundsPolygon = polygon([
+      [
+        viewportBounds.getNorthWest().toArray(),
+        viewportBounds.getNorthEast().toArray(),
+        viewportBounds.getSouthEast().toArray(),
+        viewportBounds.getSouthWest().toArray(),
+        viewportBounds.getNorthWest().toArray(),
+      ],
+    ]);
+
+    function shapeToPolygon(shape: Shape): Feature<Polygon> {
+      const shape_ = shape.map((point) => [point.lon, point.lat]);
+      return polygon([[...shape_, shape_[0]]]);
     }
+
+    return (
+      intersect(
+        featureCollection([sourceBoundsPolygon, viewportBoundsPolygon]),
+      ) !== null &&
+      (sourceBounds.shapes.length === 0 ||
+        sourceBounds.shapes.some(
+          (shape) =>
+            intersect(
+              featureCollection([viewportBoundsPolygon, shapeToPolygon(shape)]),
+            ) !== null,
+        ))
+    );
   }
 
   #transformRequest(
@@ -329,12 +363,24 @@ export default class TilesSourcesControl implements IControl {
     const map = this.#map;
     if (!map) return undefined;
 
+    // Evaluate any {switch:…} placeholder.
     const match = /{switch:(\w*(?:,\w*)*)}/.exec(url);
     if (match) {
       const parts = match[1].split(",");
       url = url.replace(match[0], encodeURIComponent(parts[0])); // TODO select random value for each user?
     }
     return { url };
+  }
+
+  /**
+   * Get the CSS ID for the given tiles source ID.
+   * @param sourceId A tiles source ID.
+   * @param escapeCssSelector If true, the returned ID will be escaped to be a valid CSS selector.
+   * @return The CSS ID.
+   */
+  #getSourceInputId(sourceId: string, escapeCssSelector?: boolean): string {
+    if (escapeCssSelector) sourceId = CSS.escape(sourceId);
+    return "source-" + sourceId;
   }
 
   onAdd(map: MglMap): HTMLElement {
