@@ -49,6 +49,10 @@
   color: inherit !important;
 }
 
+.maplibregl-ctrl-attrib-inner {
+  vertical-align: top;
+}
+
 /*
  * Map editor
  */

@@ -142,13 +142,17 @@ export default function loadTilesSources(): TilesSource[] {
       tileSize: sourceDef.tileSize ?? 256,
     };
 
+    let attrib = "";
+    if (sourceDef.icon)
+      attrib = `<img style="max-height: 2em" alt="Logo" src="${sourceDef.icon}"> `;
     if (sourceDef.attributionText) {
-      let attrib = sourceDef.attributionText;
+      attrib += sourceDef.attributionText;
       if (sourceDef.attributionUrl)
         attrib = `<a href="${sourceDef.attributionUrl}" target="_blank">${attrib}</a>`;
-      sourceSpec.attribution = attrib;
     } else if (sourceDef.attributionUrl)
-      sourceSpec.attribution = `<a href="${sourceDef.attributionUrl}" target="_blank">${sourceDef.attributionUrl}</a>`;
+      attrib = `<a href="${sourceDef.attributionUrl}" target="_blank">${attrib}${sourceDef.attributionUrl}</a>`;
+    if (attrib !== "") sourceSpec.attribution = attrib;
+
     if (sourceDef.minZoom) sourceSpec.minzoom = sourceDef.minZoom;
     if (sourceDef.maxZoom) sourceSpec.maxzoom = sourceDef.maxZoom;
 

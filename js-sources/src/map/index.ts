@@ -301,7 +301,6 @@ export default function initMap(): void {
   function onTilesSourceChanged(source: TilesSource): void {
     map.setMaxZoom(source.source.maxzoom);
     updateUrlHash(); // In case the new max zoom is less than the current one
-    // TODO show source icon if available
   }
 
   /**
