@@ -750,6 +750,12 @@
           "toggle_attribution":{
             "tooltip": "Basculer l’attribution"
           },
+          "imagery_date": {
+            "single_date": "Date de l’image\u00a0: {}",
+            "only_start_date": "Date de l’image\u00a0: {} et après",
+            "only_end_date": "Date de l’image\u00a0: {} et avant",
+            "two_dates": "Date de l’image\u00a0: {0} à {1}"
+          },
           "geolocation": {
             "find_my_location": "Trouver ma position",
             "location_unavailable": "Position indisponible"

@@ -11,6 +11,7 @@ import TilesSourcesControl, {
 } from "./controls/tiles-sources";
 import OpenExternalMapControl from "./controls/open-external-map";
 import ZoomControl from "./controls/zoom";
+import ImageryDateControl from "./controls/imagery-date";
 import loadTilesSources from "./tiles-sources.ts";
 import initMapEditor from "./editor/index";
 
@@ -212,6 +213,24 @@ export default function initMap(): void {
     "top-right",
   );
 
+  map.addControl(
+    new ImageryDateControl({
+      singleDateText: window.ottm.translate(
+        "map.controls.imagery_date.single_date",
+      ),
+      onlyStartDateText: window.ottm.translate(
+        "map.controls.imagery_date.only_start_date",
+      ),
+      onlyEndDateText: window.ottm.translate(
+        "map.controls.imagery_date.only_end_date",
+      ),
+      twoDatesText: window.ottm.translate(
+        "map.controls.imagery_date.two_dates",
+      ),
+    }),
+    "bottom-right",
+  );
+
   /*
    * Hook events
    */
@@ -237,7 +256,7 @@ export default function initMap(): void {
     $("#ottm-map-config-script").remove();
   });
   map.on("controls.styles.tiles_changed", (e: TilesSourceChangedEvent) => {
-    onTilesSourceChanged(e.source, true);
+    onTilesSourceChanged(e.source);
   });
 
   $("body").on("keydown", (e) => {
@@ -278,14 +297,11 @@ export default function initMap(): void {
   /**
    * Called when the map tiles source has changed.
    * @param source The new tiles source.
-   * @param shouldUpdateUrlHash Whether to update the URL hash.
    */
-  function onTilesSourceChanged(
-    source: TilesSource,
-    shouldUpdateUrlHash = false,
-  ): void {
+  function onTilesSourceChanged(source: TilesSource): void {
     map.setMaxZoom(source.source.maxzoom);
-    if (shouldUpdateUrlHash) updateUrlHash(); // In case the new max zoom is less than the current one
+    updateUrlHash(); // In case the new max zoom is less than the current one
+    // TODO show source icon if available
   }
 
   /**

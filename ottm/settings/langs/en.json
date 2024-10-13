@@ -722,6 +722,12 @@
           "toggle_attribution": {
             "tooltip": "Toggle attribution"
           },
+          "imagery_date": {
+            "single_date": "Image date: {}",
+            "only_start_date": "Image date: {} and after",
+            "only_end_date": "Image date: {} and before",
+            "two_dates": "Image dates: {0} to {1}"
+          },
           "geolocation": {
             "find_my_location": "Find my location",
             "location_unavailable": "Location not available"

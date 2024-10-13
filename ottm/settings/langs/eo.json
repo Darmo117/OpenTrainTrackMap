@@ -769,6 +769,12 @@
           "toggle_attribution": {
             "tooltip": "Baskuli la atribuon"
           },
+          "imagery_date": {
+            "single_date": "Fotodato: {}",
+            "only_start_date": "Fotodato: {} kaj poste",
+            "only_end_date": "Fotodato: {} kaj antaŭe",
+            "two_dates": "Fotodatoj: {0} al {1}"
+          },
           "geolocation": {
             "find_my_location": "Trovi mian pozicion",
             "location_unavailable": "Via pozicio ne disponeblas"

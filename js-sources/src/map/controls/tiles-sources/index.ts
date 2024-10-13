@@ -242,8 +242,6 @@ export default class TilesSourcesControl implements IControl {
       source: source,
     };
     map.fire("controls.styles.tiles_changed", event);
-    // TODO show source dates if available
-    // TODO show source icon if available
 
     // Source may not have been changed by interacting with this control, select the corresponding radio button
     const $input = $("#source-" + source.id);
