@@ -709,6 +709,9 @@
         "controls": {
           "layers": {
             "tooltip": "Map Backgrounds",
+            "best_imagery_source": {
+              "tooltip": "Best known imagery source for this location"
+            },
             "categories": {
               "map": "Maps",
               "photo": "Satellite and aerial photos",

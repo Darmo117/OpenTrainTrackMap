@@ -756,6 +756,9 @@
         "controls": {
           "layers": {
             "tooltip": "Mapfonoj",
+            "best_imagery_source": {
+              "tooltip": "Plej bona fonto de fontaro por ĉi tiu loko"
+            },
             "categories": {
               "map": "Mapoj",
               "photo": "Satelitaj kaj aeraj fotoj",

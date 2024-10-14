@@ -106,6 +106,7 @@ export interface TilesSourceDefinition {
   id: string;
   url: string;
   category: JsonTilesSourceCategory;
+  eliBest?: boolean;
   description?: string;
   defaultForType?: boolean;
   minZoom?: number;
@@ -121,20 +122,9 @@ export interface TilesSourceDefinition {
 }
 
 export default function loadTilesSources(): TilesSource[] {
-  const tileSourcesDefinitions = tileSourcesDefs as TilesSourceDefinition[];
-  tileSourcesDefinitions.sort(
-    // Most source names are in English, use this locale for sorting
-    (s1, s2) =>
-      new Intl.Collator("en", {
-        usage: "sort",
-        numeric: true, // Interpret numbers: 2 before 10
-        sensitivity: "accent", // Keep diacritics
-      }).compare(s1.name, s2.name),
-  );
-
   const tilesSources: TilesSource[] = [];
 
-  for (const sourceDef of tileSourcesDefinitions) {
+  for (const sourceDef of tileSourcesDefs as TilesSourceDefinition[]) {
     const sourceSpec: RasterSourceSpecificationWithId = {
       id: sourceDef.id,
       type: "raster",
@@ -163,6 +153,7 @@ export default function loadTilesSources(): TilesSource[] {
       source: sourceSpec,
     };
 
+    if (sourceDef.eliBest) source.best = true;
     if (sourceDef.description) source.description = sourceDef.description;
     if (sourceDef.defaultForType)
       source.defaultForType = sourceDef.defaultForType;

@@ -107,6 +107,9 @@ export default function initMap(): void {
   map.addControl(
     new TilesSourcesControl({
       title: window.ottm.translate("map.controls.layers.tooltip"),
+      bestIconTitle: window.ottm.translate(
+        "map.controls.layers.best_imagery_source.tooltip",
+      ),
       sources: loadTilesSources(),
       editMode: editMode,
     }),
@@ -196,6 +199,7 @@ export default function initMap(): void {
     "top-right",
   );
 
+  // FIXME icon does not adapt to dark mode
   map.addControl(
     new GeolocateControl({
       positionOptions: {

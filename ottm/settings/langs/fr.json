@@ -737,6 +737,9 @@
         "controls": {
           "layers": {
             "tooltip": "Fonds de carte",
+            "best_imagery_source": {
+              "tooltip": "Meilleur fond de carte connu pour cette endroit"
+            },
             "categories": {
               "map": "Cartes",
               "photo": "Photos satellites et aériennes",
@@ -744,7 +747,7 @@
               "other": "Autres"
             }
           },
-          "toggle_attribution":{
+          "toggle_attribution": {
             "tooltip": "Basculer l’attribution"
           },
           "imagery_date": {

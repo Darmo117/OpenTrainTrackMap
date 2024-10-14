@@ -159,9 +159,8 @@ def parse_entry(entry_tag: ElementTree.Element, ignored_tiles_sources: dict[str,
 
     entry = {}
 
-    # TODO find what this attribute means
     if (attr := 'eli-best') in entry_tag.attrib and entry_tag.attrib[attr] == 'true':
-        entry[attr] = True
+        entry['eliBest'] = True
 
     for child in entry_tag:
         match tag_name(child):
@@ -290,7 +289,7 @@ def main() -> None:
 
     with open('../js-sources/src/map/imagery_sources.json', mode='w', encoding='utf-8') as out:
         # noinspection PyTypeChecker
-        json.dump(entries, out, indent=2)  # TODO remove indent when finished
+        json.dump(entries, out)
 
 
 if __name__ == '__main__':

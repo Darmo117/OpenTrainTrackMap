@@ -64,6 +64,7 @@ export interface TilesSource {
   id: string;
   category: TilesSourceCategory;
   source: RasterSourceSpecificationWithId;
+  best?: boolean;
   description?: string;
   defaultForType?: boolean;
   bounds?: TilesSourceBounds;
@@ -89,6 +90,10 @@ export interface TilesSourcesControlOptions {
    * Optional. Title of the control.
    */
   title?: string;
+  /**
+   * Optional. Title of the “Best imagery for this area“ icon.
+   */
+  bestIconTitle?: string;
 }
 
 /**
@@ -106,14 +111,17 @@ const categoryOrder: TilesSourceCategory[] = [
  */
 export default class TilesSourcesControl implements IControl {
   #map: MglMap | undefined;
-  readonly #title: string | undefined;
+  readonly #title: string;
+  readonly #bestIconTitle: string;
   readonly #sourcesByCategory = new Map<TilesSourceCategory, TilesSource[]>();
+  readonly #visibleSources = new Set<string>();
   readonly #editMode: boolean;
   readonly #container: HTMLDivElement;
   readonly #$inputsContainer: JQuery;
 
   constructor(options: TilesSourcesControlOptions) {
-    this.#title = options.title;
+    this.#title = options.title ?? "Backgrounds";
+    this.#bestIconTitle = options.bestIconTitle ?? "Best imagery for this area";
     for (const source of options.sources) {
       const category = source.category;
       if (!this.#sourcesByCategory.has(category))
@@ -133,7 +141,7 @@ export default class TilesSourcesControl implements IControl {
     if (!map) throw Error("Map is undefined");
 
     const button = createControlButton({
-      title: this.#title ?? "Backgrounds",
+      title: this.#title,
       icon: createMdiIcon("layers-outline"),
       onClick: () => {
         if (!this.#$inputsContainer.is(":visible"))
@@ -152,7 +160,22 @@ export default class TilesSourcesControl implements IControl {
     entries.sort(
       (e1, e2) => categoryOrder.indexOf(e1[0]) - categoryOrder.indexOf(e2[0]),
     );
+
+    // Most source names are in English, use this locale for sorting
+    const collator = new Intl.Collator("en", {
+      usage: "sort",
+      numeric: true, // Interpret numbers: e.g. 2 before 10
+      sensitivity: "accent", // Keep diacritics
+    });
+
     for (const [category, sources] of entries) {
+      sources.sort((s1, s2) => {
+        // Put best sources first then sort by label
+        if (s1.best && !s2.best) return -1;
+        if (!s1.best && s2.best) return 1;
+        return collator.compare(s1.label, s2.label);
+      });
+
       const $listContainer = $(
         `<div class="sources-category-box" id="category-${category}">`,
       );
@@ -174,11 +197,14 @@ export default class TilesSourcesControl implements IControl {
         $input.on("change", (e) => {
           this.#changeTilesSource(this.#findTilesSourceById(e.target.value));
         });
-        const $item: JQuery<HTMLLIElement> = $("<li>");
-        $item.append(
-          $input,
-          ` <label for="${sourceId}">${source.label}</label>`,
-        );
+        const $item = $("<li>");
+        const $label = $(`<label for="${sourceId}">${source.label}</label>`);
+        if (source.best) {
+          const icon = createMdiIcon("star");
+          icon.title = this.#bestIconTitle;
+          $label.append(" ").append(icon);
+        }
+        $item.append($input, " ", $label);
         $inputsList.append($item);
       }
     }
@@ -198,11 +224,15 @@ export default class TilesSourcesControl implements IControl {
     });
 
     map.on("load", () => {
-      // Select the default photo source if in edit mode, otherwise select default map source
+      this.#filterSources();
+      // Select the best for area or default photo source if in edit mode, otherwise select best or default map source
       const key: TilesSourceCategory = this.#editMode ? "photo" : "map";
       const source = this.#sourcesByCategory
         .get(key)
-        ?.find((s) => s.defaultForType);
+        ?.find(
+          (s) =>
+            this.#visibleSources.has(s.id) && (!!s.best || !!s.defaultForType),
+        );
       if (source) this.#changeTilesSource(source);
     });
   }
@@ -268,6 +298,7 @@ export default class TilesSourcesControl implements IControl {
 
     const zoom = map.getZoom();
     const bounds = map.getBounds();
+    this.#visibleSources.clear();
 
     for (const [category, sources] of this.#sourcesByCategory.entries()) {
       let count = 0;
@@ -286,6 +317,7 @@ export default class TilesSourcesControl implements IControl {
         const $listItem = $input.parent();
         if (hide) $listItem.hide();
         else {
+          this.#visibleSources.add(source.id);
           count++;
           $listItem.show();
         }
