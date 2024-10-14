@@ -53,6 +53,11 @@
   vertical-align: top;
 }
 
+.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon {
+  /* Remove default icon as we use a custom one. */
+  background-image: none;
+}
+
 /*
  * Map editor
  */

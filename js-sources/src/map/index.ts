@@ -14,6 +14,7 @@ import ZoomControl from "./controls/zoom";
 import ImageryDateControl from "./controls/imagery-date";
 import loadTilesSources from "./tiles-sources.ts";
 import initMapEditor from "./editor/index";
+import { parseSVG } from "./controls/helpers.ts";
 
 declare global {
   interface Window {
@@ -199,7 +200,6 @@ export default function initMap(): void {
     "top-right",
   );
 
-  // FIXME icon does not adapt to dark mode
   map.addControl(
     new GeolocateControl({
       positionOptions: {
@@ -258,6 +258,15 @@ export default function initMap(): void {
     // Delete config object and script tag
     delete window.OTTM_MAP_CONFIG;
     $("#ottm-map-config-script").remove();
+
+    // Replace the default icon by one that uses the current font color.
+    $(".maplibregl-ctrl-geolocate .maplibregl-ctrl-icon").each((_, element) => {
+      element.append(
+        parseSVG(
+          "<svg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='currentColor' viewBox='0 0 20 20'><path d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1zm0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7z'/><circle cx='10' cy='10' r='2'/></svg>",
+        ),
+      );
+    });
   });
   map.on("controls.styles.tiles_changed", (e: TilesSourceChangedEvent) => {
     onTilesSourceChanged(e.source);
