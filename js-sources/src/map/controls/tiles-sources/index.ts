@@ -19,7 +19,6 @@ import {
 import {
   Shape,
   TilesSourceBounds,
-  TilesSourceCategory,
   TilesSourceDate,
 } from "../../tiles-sources.ts";
 import "./_index.css";
@@ -46,7 +45,10 @@ export type RasterSourceSpecificationWithId = RasterSourceSpecification & {
   id: string;
 };
 
-export type TilesSourceType = "photo" | "map";
+/**
+ * The available tile source categories.
+ */
+export type TilesSourceCategory = "photo" | "map" | "elevation" | "other";
 
 /**
  * This type represents a tiles source.
@@ -60,7 +62,6 @@ export interface TilesSource {
    * The internal ID of the tiles source.
    */
   id: string;
-  type: TilesSourceType;
   category: TilesSourceCategory;
   source: RasterSourceSpecificationWithId;
   description?: string;
@@ -95,10 +96,7 @@ export interface TilesSourcesControlOptions {
  */
 const categoryOrder: TilesSourceCategory[] = [
   "photo",
-  "historicphoto",
-  "osmbasedmap",
   "map",
-  "historicmap",
   "elevation",
   "other",
 ];
@@ -110,10 +108,6 @@ export default class TilesSourcesControl implements IControl {
   #map: MglMap | undefined;
   readonly #title: string | undefined;
   readonly #sourcesByCategory = new Map<TilesSourceCategory, TilesSource[]>();
-  readonly #sourcesByType: Record<TilesSourceType, TilesSource[]> = {
-    photo: [],
-    map: [],
-  };
   readonly #editMode: boolean;
   readonly #container: HTMLDivElement;
   readonly #$inputsContainer: JQuery;
@@ -125,14 +119,15 @@ export default class TilesSourcesControl implements IControl {
       if (!this.#sourcesByCategory.has(category))
         this.#sourcesByCategory.set(category, []);
       this.#sourcesByCategory.get(category)?.push(source);
-
-      this.#sourcesByType[source.type].push(source);
     }
     this.#editMode = options.editMode;
     this.#container = createControlContainer("maplibregl-ctrl-tiles-sources");
     this.#$inputsContainer = $('<div class="sources-categories">').hide();
   }
 
+  /**
+   * Setup this control by creating lists of available tiles sources.
+   */
   #setup(): void {
     const map = this.#map;
     if (!map) throw Error("Map is undefined");
@@ -204,8 +199,10 @@ export default class TilesSourcesControl implements IControl {
 
     map.on("load", () => {
       // Select the default photo source if in edit mode, otherwise select default map source
-      const key = this.#editMode ? "photo" : "map";
-      const source = this.#sourcesByType[key].find((s) => s.defaultForType);
+      const key: TilesSourceCategory = this.#editMode ? "photo" : "map";
+      const source = this.#sourcesByCategory
+        .get(key)
+        ?.find((s) => s.defaultForType);
       if (source) this.#changeTilesSource(source);
     });
   }

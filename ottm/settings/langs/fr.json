@@ -740,11 +740,8 @@
             "categories": {
               "map": "Cartes",
               "photo": "Photos satellites et aériennes",
-              "historicphoto": "Photos satellites et aériennes historiques",
               "elevation": "Cartes d’élévation",
-              "other": "Autres",
-              "osmbasedmap": "Cartes basées sur OpenStreetMap",
-              "historicmap": "Cartes historiques"
+              "other": "Autres"
             }
           },
           "toggle_attribution":{

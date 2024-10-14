@@ -712,11 +712,8 @@
             "categories": {
               "map": "Maps",
               "photo": "Satellite and aerial photos",
-              "historicphoto": "Historic satellite and aerial photos",
               "elevation": "Elevation maps",
-              "other": "Other",
-              "osmbasedmap": "OpenStreetMap-based maps",
-              "historicmap": "Historic maps"
+              "other": "Other"
             }
           },
           "toggle_attribution": {

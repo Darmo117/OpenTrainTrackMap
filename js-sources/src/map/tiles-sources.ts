@@ -1,7 +1,7 @@
 import {
   RasterSourceSpecificationWithId,
   TilesSource,
-  TilesSourceType,
+  TilesSourceCategory,
 } from "./controls/tiles-sources";
 import tileSourcesDefs from "./imagery_sources.json";
 
@@ -38,9 +38,9 @@ export interface Point {
 }
 
 /**
- * The available tile source categories.
+ * The available tile source categories as extracted from the JSON file.
  */
-export type TilesSourceCategory =
+type JsonTilesSourceCategory =
   | "photo"
   | "elevation"
   | "map"
@@ -105,7 +105,7 @@ export interface TilesSourceDefinition {
   name: string;
   id: string;
   url: string;
-  category: TilesSourceCategory;
+  category: JsonTilesSourceCategory;
   description?: string;
   defaultForType?: boolean;
   minZoom?: number;
@@ -127,8 +127,8 @@ export default function loadTilesSources(): TilesSource[] {
     (s1, s2) =>
       new Intl.Collator("en", {
         usage: "sort",
-        numeric: true,
-        sensitivity: "accent",
+        numeric: true, // Interpret numbers: 2 before 10
+        sensitivity: "accent", // Keep diacritics
       }).compare(s1.name, s2.name),
   );
 
@@ -159,8 +159,7 @@ export default function loadTilesSources(): TilesSource[] {
     const source: TilesSource = {
       label: sourceDef.name,
       id: sourceDef.id,
-      type: getType(sourceDef.category),
-      category: sourceDef.category,
+      category: getCategory(sourceDef.category),
       source: sourceSpec,
     };
 
@@ -176,9 +175,18 @@ export default function loadTilesSources(): TilesSource[] {
 
     tilesSources.push(source);
 
-    function getType(category: TilesSourceCategory): TilesSourceType {
-      if (category === "photo" || category === "historicphoto") return "photo";
-      return "map";
+    function getCategory(
+      jsonCategory: JsonTilesSourceCategory,
+    ): TilesSourceCategory {
+      if (jsonCategory === "photo" || jsonCategory === "historicphoto")
+        return "photo";
+      if (
+        jsonCategory === "map" ||
+        jsonCategory === "historicmap" ||
+        jsonCategory === "osmbasedmap"
+      )
+        return "map";
+      return jsonCategory;
     }
   }
 

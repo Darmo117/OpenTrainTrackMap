@@ -759,11 +759,8 @@
             "categories": {
               "map": "Mapoj",
               "photo": "Satelitaj kaj aeraj fotoj",
-              "historicphoto": "Historiaj satelitaj kaj aeraj fotoj",
               "elevation": "Elevation maps",
-              "other": "Alioj",
-              "osmbasedmap": "Mapoj bazitaj sur OpenStreetMap",
-              "historicmap": "Historiaj mapoj"
+              "other": "Alioj"
             }
           },
           "toggle_attribution": {
