@@ -15,7 +15,7 @@ def main():
     raw_files_root = pathlib.Path('mdi_names/raw_files')
     scss_file_name = '_variables.scss'
     scss_file = raw_files_root / 'scss' / scss_file_name
-    output_ts_file = pathlib.Path('../js/modules/map/controls/mdi.ts')
+    output_ts_file = pathlib.Path('../js-sources/src/map/controls/mdi.ts')
     output_static_dir = pathlib.Path('../ottm/static/ottm/libs/mdi')
 
     # Download SCSS file
