@@ -134,7 +134,7 @@ class MapEditor {
   /**
    * The current edit mode.
    */
-  #editMode: EditMode = EditMode.SELECT;
+  #editMode: EditMode = EditMode.VIEW_ONLY;
   /**
    * The point currently being dragged.
    */
