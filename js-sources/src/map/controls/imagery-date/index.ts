@@ -84,6 +84,7 @@ export default class ImageryDateControl implements IControl {
     return this.#$container[0];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  onRemove(): void {}
+  onRemove(): void {
+    // Nothing to do
+  }
 }

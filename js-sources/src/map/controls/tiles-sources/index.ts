@@ -418,6 +418,7 @@ export default class TilesSourcesControl implements IControl {
     return this.#container;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  onRemove(): void {}
+  onRemove(): void {
+    // Nothing to do
+  }
 }
