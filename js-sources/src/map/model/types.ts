@@ -1,4 +1,4 @@
-import { DateInterval } from "./date-interval.ts";
+import { DateInterval } from "./date-interval";
 
 /**
  * This class represents a unit type (e.g. length, speed, etc.).

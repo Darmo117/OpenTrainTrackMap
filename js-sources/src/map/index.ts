@@ -12,9 +12,9 @@ import TilesSourcesControl, {
 import OpenExternalMapControl from "./controls/open-external-map";
 import ZoomControl from "./controls/zoom";
 import ImageryDateControl from "./controls/imagery-date";
-import loadTilesSources from "./tiles-sources.ts";
+import loadTilesSources from "./tiles-sources";
 import initMapEditor from "./editor/index";
-import { parseSVG } from "./controls/helpers.ts";
+import { parseSVG } from "./controls/helpers";
 
 declare global {
   interface Window {

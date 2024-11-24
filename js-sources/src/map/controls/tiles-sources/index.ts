@@ -16,11 +16,7 @@ import {
   createControlContainer,
   createMdiIcon,
 } from "../helpers";
-import {
-  Shape,
-  TilesSourceBounds,
-  TilesSourceDate,
-} from "../../tiles-sources.ts";
+import { Shape, TilesSourceBounds, TilesSourceDate } from "../../tiles-sources";
 import "./_index.css";
 
 /**
