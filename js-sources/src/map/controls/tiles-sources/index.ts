@@ -396,7 +396,8 @@ export default class TilesSourcesControl implements IControl {
     const match = /{switch:(\w*(?:,\w*)*)}/.exec(url);
     if (match) {
       const parts = match[1].split(",");
-      url = url.replace(match[0], encodeURIComponent(parts[0])); // TODO select random value for each user?
+      const index = 0; // TODO select random value for each user?
+      url = url.replace(match[0], encodeURIComponent(parts[index]));
     }
     return { url };
   }
