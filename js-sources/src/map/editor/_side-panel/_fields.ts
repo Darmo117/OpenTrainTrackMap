@@ -230,7 +230,7 @@ export class StringSingleValueField extends SingleValueField<
 
   constructor(property: StringPropertyValue) {
     super(property);
-    if (property.propertyType.multiline)
+    if (property.propertyType.isMultiline)
       this.#$input = $('<textarea class="form-control" rows="4"></textarea>');
     else this.#$input = $('<input type="text" class="form-control">');
     this.#$input.on("change", () => {

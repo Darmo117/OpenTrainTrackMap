@@ -59,15 +59,21 @@ export class Unit {
    * This unit’s symbol.
    */
   readonly symbol: string;
+  /**
+   * Whether this unit is the default one for its type.
+   */
+  readonly isDefault: boolean;
 
   /**
    * Create a new unit.
    * @param type The unit’s type.
    * @param symbol The unit’s symbol.
+   * @param isDefault Whether the unit is the default one for its type.
    */
-  constructor(type: UnitType, symbol: string) {
+  constructor(type: UnitType, symbol: string, isDefault: boolean) {
     this.type = type;
     this.symbol = symbol;
+    this.isDefault = isDefault;
   }
 }
 
@@ -151,6 +157,7 @@ export class ObjectType {
    * Whether this type may be the target of a {@link TemporalProperty}.
    */
   readonly isTemporal: boolean;
+
   readonly #geometryType: GeometryType | null;
   readonly #properties = new Map<string, ObjectProperty<unknown>>();
 
@@ -182,21 +189,17 @@ export class ObjectType {
 
   /**
    * The properties of this object type and its parents’.
-   * @returns A stream of this type’s properties.
+   * @returns An array of this type’s properties.
    */
   get properties(): ObjectProperty<unknown>[] {
-    return this.#getProperties().flatMap((entry) => [...entry.values()]);
-  }
-
-  #getProperties(): Map<string, ObjectProperty<unknown>>[] {
-    const a: Map<string, ObjectProperty<unknown>>[] = [];
+    const properties: ObjectProperty<unknown>[] = [];
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     let type: ObjectType | null = this;
     do {
-      a.splice(0, 0, type.#properties); // Insert first
+      properties.splice(0, 0, ...type.#properties.values()); // Insert first
       type = type.parentType;
     } while (type);
-    return a;
+    return properties;
   }
 
   /**
@@ -404,6 +407,9 @@ export abstract class PropertyValue<T, OP extends ObjectProperty<T>> {
    */
   set values(values: T[]) {
     this.#ensureNotUnique();
+    values.forEach((v) => {
+      this.#ensureValid(v);
+    });
     this.#values.splice(0, this.#values.length, ...values);
   }
 
@@ -594,11 +600,11 @@ export class StringProperty extends ObjectProperty<string> {
   /**
    * Indicates whether this property may accept multiple lines of text.
    */
-  readonly multiline: boolean;
+  readonly isMultiline: boolean;
   /**
    * Indicates whether this property may have translations.
    */
-  readonly translatable: boolean;
+  readonly isTranslatable: boolean;
 
   /**
    * Create an new integer object property.
@@ -620,14 +626,14 @@ export class StringProperty extends ObjectProperty<string> {
     translatable: boolean,
   ) {
     super(objectType, label, localizedName, unique, deprecated);
-    this.multiline = multiline;
-    this.translatable = translatable;
+    this.isMultiline = multiline;
+    this.isTranslatable = translatable;
   }
 
   isValueValid(v: unknown): boolean {
     return (
       typeof v === "string" &&
-      (this.multiline || (!v.includes("\n") && !v.includes("\r")))
+      (this.isMultiline || (!v.includes("\n") && !v.includes("\r")))
     );
   }
 
@@ -663,7 +669,7 @@ export class TypeProperty extends ObjectProperty<ObjectInstance> {
   /**
    * The type of the objects this property can point to.
    */
-  readonly targeType: ObjectType;
+  readonly targetType: ObjectType;
 
   /**
    * Create an new integer object property.
@@ -683,11 +689,11 @@ export class TypeProperty extends ObjectProperty<ObjectInstance> {
     targetType: ObjectType,
   ) {
     super(objectType, label, localizedName, unique, deprecated);
-    this.targeType = targetType;
+    this.targetType = targetType;
   }
 
   isValueValid(v: unknown): boolean {
-    return v instanceof ObjectInstance && v.isInstanceOf(this.targeType);
+    return v instanceof ObjectInstance && v.isInstanceOf(this.targetType);
   }
 
   newValue(value: ObjectInstance): TypePropertyValue {
@@ -906,7 +912,7 @@ export class ObjectInstance {
   setPropertyValue(name: string, value: unknown): void {
     const { property, value: pValue } = this.#getPropertyOrThrow(name);
     if (pValue) pValue.value = value;
-    else this.#createPropertyBinding(property, value, name);
+    else this.#createPropertyBinding(property, value);
   }
 
   /**
@@ -929,7 +935,7 @@ export class ObjectInstance {
   addValueToProperty(name: string, value: unknown): void {
     const { property, value: pValue } = this.#getPropertyOrThrow(name);
     if (pValue) pValue.addValue(value);
-    else this.#createPropertyBinding(property, value, name);
+    else this.#createPropertyBinding(property, value);
   }
 
   /**
@@ -978,8 +984,8 @@ export class ObjectInstance {
   #createPropertyBinding(
     property: ObjectProperty<unknown> | NumberProperty,
     value: unknown,
-    name: string,
   ) {
+    const name = property.label;
     if (property instanceof NumberProperty) {
       if (typeof value !== "number")
         throw new TypeError(`Expected number, got ${typeof value}`);
@@ -987,7 +993,9 @@ export class ObjectInstance {
         name,
         property.newValue(
           value,
-          property.unitType?.units.values().next().value, // Get any unit
+          property.unitType
+            ? [...property.unitType.units].find((unit) => unit.isDefault)
+            : undefined,
         ),
       );
     } else this.#properties.set(name, property.newValue(value));
@@ -1057,7 +1065,7 @@ export class ObjectInstance {
     if (
       !(property instanceof StringProperty) ||
       (value && !(value instanceof StringPropertyValue)) ||
-      !property.translatable
+      !property.isTranslatable
     )
       throw new TypeError(
         `Property "${property.fullName}" is not translatable`,
@@ -1083,7 +1091,7 @@ export class ObjectInstance {
     if (
       !(property instanceof StringProperty) ||
       (value && !(value instanceof StringPropertyValue)) ||
-      !property.translatable
+      !property.isTranslatable
     )
       throw new TypeError(
         `Property "${property.fullName}" is not translatable`,
@@ -1107,7 +1115,7 @@ export class ObjectInstance {
     if (
       !(property instanceof StringProperty) ||
       (value && !(value instanceof StringPropertyValue)) ||
-      !property.translatable
+      !property.isTranslatable
     )
       throw new TypeError(
         `Property "${property.fullName}" is not translatable`,
@@ -1256,7 +1264,7 @@ export class StringPropertyValue extends PropertyValue<string, StringProperty> {
   }
 
   #ensureTranslatable() {
-    if (!this.propertyType.translatable)
+    if (!this.propertyType.isTranslatable)
       throw new Error(
         `Property "${this.propertyType.fullName}" is not translatable`,
       );

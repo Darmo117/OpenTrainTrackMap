@@ -2186,7 +2186,7 @@ function isLinearFeature(f: unknown): f is LinearFeature {
 export default function initMapEditor(map: OttmMap): void {
   // TEMP
   const lengthUnitType = new UnitType("length", "Length");
-  const millimeterUnit = new Unit(lengthUnitType, "mm");
+  const millimeterUnit = new Unit(lengthUnitType, "mm", true);
   lengthUnitType.addUnit(millimeterUnit);
   const track_level_enum = new Enum("track_level", "Track Level", {
     surface: "Surface",

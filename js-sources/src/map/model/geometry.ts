@@ -616,8 +616,8 @@ export abstract class LinearFeature<
 }
 
 export enum PolylineDirection {
-  FORWARD,
-  BACKWARD,
+  FORWARD = 1,
+  BACKWARD = -1,
 }
 
 /**
