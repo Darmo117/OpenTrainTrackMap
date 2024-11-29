@@ -1237,6 +1237,7 @@
               },
               "error": {
                 "user_does_not_exist": "Cet·te utilisateurice n’existe pas\u00a0!",
+                "cannot_send_email": "Vous ne pouvez pas envoyer d’emails à cette utilisateurice.",
                 "email_error": "Une erreur est survenue. Veuillez réessayer plus tard."
               }
             }

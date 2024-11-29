@@ -1240,6 +1240,7 @@
               },
               "error": {
                 "user_does_not_exist": "La uzanto ne ekzistas!",
+                "cannot_send_email": "Vi ne povas sendi retmesaĝojn al tiu uzanto.",
                 "email_error": "Neatendita eraro okazis. Reprovu poste."
               }
             }

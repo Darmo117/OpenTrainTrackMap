@@ -1193,6 +1193,7 @@
               },
               "error": {
                 "user_does_not_exist": "User does not exist!",
+                "cannot_send_email": "You cannot send emails to this user.",
                 "email_error": "An unexpected error occured. Please try again later."
               }
             }

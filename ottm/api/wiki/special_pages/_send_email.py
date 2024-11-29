@@ -33,11 +33,24 @@ class SendEmailSpecialPage(_core.SpecialPage):
             form = _Form(user, post=params.POST)
             if form.is_valid():
                 target_user = _auth.get_user_from_name(form.cleaned_data['username'])
-                sent = _emails.user_send_email(target_user, form.cleaned_data['subject'],
-                                               form.cleaned_data['content'], user, copy=False)
-                if form.cleaned_data['send_copy']:
-                    copy_sent = _emails.user_send_email(target_user, form.cleaned_data['subject'],
-                                                        form.cleaned_data['content'], user, copy=True)
+                sent, error_message = _emails.user_send_email(
+                    target_user,
+                    form.cleaned_data['subject'],
+                    form.cleaned_data['content'],
+                    user,
+                    is_copy=False)
+                if error_message:
+                    global_errors[form.name].append(error_message)
+                if sent and form.cleaned_data['send_copy']:
+                    copy_sent, copy_error_message = _emails.user_send_email(
+                        target_user,
+                        form.cleaned_data['subject'],
+                        form.cleaned_data['content'],
+                        user,
+                        is_copy=True
+                    )
+                    if copy_error_message:
+                        global_errors[form.name].append(copy_error_message)
                 else:
                     copy_sent = None
                 if sent:
@@ -48,7 +61,6 @@ class SendEmailSpecialPage(_core.SpecialPage):
                         f'{_w_ns.NS_SPECIAL.get_full_page_title(self.name)}/{target_user.username}',
                         args=kwargs
                     )
-                global_errors[form.name].append('email_error')
         elif args:
             if not target_user:
                 global_errors[form.name].append('user_does_not_exist')
