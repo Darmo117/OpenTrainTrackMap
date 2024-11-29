@@ -2,126 +2,125 @@
 {% load ottm %}
 {% load wiki %}
 <!DOCTYPE html>
-<html lang="{{ context.language.code }}" dir="{{ context.language.writing_direction }}">
+<html lang="{{ context.language.code }}"
+      dir="{{ context.language.writing_direction }}"
+      data-bs-theme="{% if context.dark_mode %}dark{% else %}light{% endif %}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   {% if context.no_index %}
     <meta name="robots" content="noindex">
   {% endif %}
-
   <title>{% if context.tab_title %}{{ context.tab_title }} &mdash; {% endif %}{{ context.site_name }}</title>
   {# https://commons.wikimedia.org/wiki/File:Map-icon-pure.svg #}
   <link href="{% static 'ottm/images/icons/favicon.png' %}" type="image/png" rel="icon">
-
-  {# https://github.com/Templarian/MaterialDesign #}
-  <link href="{% static 'ottm/libs/mdi/css/materialdesignicons.min.css' %}" rel="stylesheet">
-  {% if context.dark_mode %}
-    {# https://github.com/vinorodrigues/bootstrap-dark #}
-    <link href="{% static 'ottm/libs/bootstrap-dark.min.css' %}" rel="stylesheet">
-  {% else %}
-    <link href="{% static 'ottm/libs/bootstrap-4.5.2-dist/css/bootstrap.min.css' %}" rel="stylesheet">
-  {% endif %}
-  <link href="{% static 'ottm/style.min.css' %}" rel="stylesheet">
-  {% if context.dark_mode %}
-    <link href="{% static 'ottm/dark.min.css' %}" rel="stylesheet">
-  {% else %}
-    <link href="{% static 'ottm/light.min.css' %}" rel="stylesheet">
-  {% endif %}
   <link href="{% static 'ottm/bundle-index.css' %}" rel="stylesheet">
   {% block styles %}{% endblock styles %}
 </head>
 <body>
-  <nav id="navbar" class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a id="nav-main-link" class="navbar-brand" href="{% url 'ottm:map' %}">
-      <img src="{% static 'ottm/images/icons/favicon.png' %}" width="30" height="30"
-           class="d-inline-block align-top" alt="site logo">
-      {{ context.site_name }}
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
-            aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-      <span class="navbar-toggler-icon"></span>
-    </button>
+  <nav id="navbar" class="navbar navbar-expand-lg bg-dark sticky-top" data-bs-theme="dark">
+    <div class="container-fluid">
+      <a id="nav-main-link" class="navbar-brand" href="{% url 'ottm:map' %}">
+        <img src="{% static 'ottm/images/icons/favicon.png' %}" width="30" height="30"
+             class="d-inline-block align-top" alt="site logo">
+        {{ context.site_name }}
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+              aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
 
-    <div class="collapse navbar-collapse" id="navbarSupportedContent">
-      <ul class="navbar-nav mr-auto">
-        {% block navbar-left %}{% endblock %}
-      </ul>
-      {% block navbar-center %}{% endblock %}
-      <ul class="navbar-nav ml-auto">
-        {% block navbar-right %}{% endblock %}
-        <li class="nav-item">
-          <a id="nav-help-link" class="nav-link" href="{% url 'ottm:help' %}">
-            <span class="mdi mdi-help-circle-outline"></span> {% ottm_translate 'navbar.help.label' %}
-          </a>
-        </li>
-        <li class="nav-item">
-          <a id="nav-about-link" class="nav-link" href="{% url 'ottm:about' %}">
-            <span class="mdi mdi-information-outline"></span> {% ottm_translate 'navbar.about.label' %}
-          </a>
-        </li>
-        <li class="nav-item">
-          <a id="nav-copyright-link" class="nav-link" href="{% url 'ottm:copyright' %}">
-            <span class="mdi mdi-copyright"></span> {% ottm_translate 'navbar.copyright.label' %}
-          </a>
-        </li>
-        {% if context.user.is_authenticated %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbar-user-links" role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">
-              <span class="mdi mdi-account"></span> {{ context.user.username }}
-            </a>
-            <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbar-user-links">
-              <a class="dropdown-item" href="{% url 'ottm:user_profile' username=context.user.username %}">
-                <span class="mdi mdi-account"></span> {% ottm_translate 'navbar.profile.label' %}
-              </a>
-              <a class="dropdown-item"
-                 href="{% url 'ottm:wiki_page' raw_page_title='User:'|add:context.user.username %}">
-                <span class="mdi mdi-file-account-outline"></span> {% ottm_translate 'navbar.wiki_user_page.label' %}
-              </a>
-              <a class="dropdown-item" href="{% url 'ottm:user_contributions' username=context.user.username %}">
-                <span class="mdi mdi-puzzle"></span> {% ottm_translate 'navbar.contributions.label' %}
-              </a>
-              <a class="dropdown-item"
-                 href="{% url 'ottm:wiki_page' raw_page_title='Special:Contributions/'|add:context.user.username %}">
-                <span class="mdi mdi-puzzle"></span> {% ottm_translate 'navbar.wiki_contributions.label' %}
-              </a>
-              <a class="dropdown-item" href="{% url 'ottm:user_settings' %}">
-                <span class="mdi mdi-cog"></span> {% ottm_translate 'navbar.settings.label' %}
-              </a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" id="nav-logout-link" href="{% url 'ottm:log_out' %}">
-                <span class="mdi mdi-logout"></span> {% ottm_translate 'navbar.log_out.label' %}
-              </a>
-            </div>
-          </li>
-        {% else %}
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto">
+          {% block navbar-left %}{% endblock %}
+        </ul>
+        {% block navbar-center %}{% endblock %}
+        <ul class="navbar-nav ms-auto">
+          {% block navbar-right %}{% endblock %}
           <li class="nav-item">
-            <a id="nav-login-link" class="nav-link" href="{% url 'ottm:log_in' %}">
-              <span class="mdi mdi-login"></span> {% ottm_translate 'navbar.log_in.label' %}
+            <a id="nav-help-link" class="nav-link" href="{% url 'ottm:help' %}">
+              <span class="mdi mdi-help-circle-outline"></span> {% ottm_translate 'navbar.help.label' %}
             </a>
           </li>
           <li class="nav-item">
-            <a id="nav-signup-link" class="nav-link" href="{% url 'ottm:sign_up' %}">
-              <span class="mdi mdi-account-plus"></span> {% ottm_translate 'navbar.sign_up.label' %}
+            <a id="nav-about-link" class="nav-link" href="{% url 'ottm:about' %}">
+              <span class="mdi mdi-information-outline"></span> {% ottm_translate 'navbar.about.label' %}
             </a>
           </li>
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbar-logged-out-settings" role="button"
-               aria-haspopup="true" aria-expanded="false">
-              <span class="mdi mdi-cog"></span>
+          <li class="nav-item">
+            <a id="nav-copyright-link" class="nav-link" href="{% url 'ottm:copyright' %}">
+              <span class="mdi mdi-copyright"></span> {% ottm_translate 'navbar.copyright.label' %}
             </a>
-            {% if context.ui_languages|length > 1 %}
-              <div class="dropdown-menu dropdown-menu-right" aria-labelledby="navbar-logged-out-settings">
+          </li>
+          {% if context.user.is_authenticated %}
+            <li class="nav-item dropstart">
+              <button class="nav-link dropdown-toggle"
+                      data-bs-toggle="dropdown"
+                      type="button"
+                      id="navbar-user-links"
+                      aria-expanded="false">
+                <span class="mdi mdi-account"></span> {{ context.user.username }}
+              </button>
+              <div class="dropdown-menu"
+                   data-bs-popper="" {# Needed for correct positioning #}
+                   aria-labelledby="navbar-user-links">
+                <a class="dropdown-item" href="{% url 'ottm:user_profile' username=context.user.username %}">
+                  <span class="mdi mdi-account"></span> {% ottm_translate 'navbar.profile.label' %}
+                </a>
+                <a class="dropdown-item"
+                   href="{% url 'ottm:wiki_page' raw_page_title='User:'|add:context.user.username %}">
+                  <span class="mdi mdi-file-account-outline"></span> {% ottm_translate 'navbar.wiki_user_page.label' %}
+                </a>
+                <a class="dropdown-item" href="{% url 'ottm:user_contributions' username=context.user.username %}">
+                  <span class="mdi mdi-puzzle"></span> {% ottm_translate 'navbar.contributions.label' %}
+                </a>
+                <a class="dropdown-item"
+                   href="{% url 'ottm:wiki_page' raw_page_title='Special:Contributions/'|add:context.user.username %}">
+                  <span class="mdi mdi-puzzle"></span> {% ottm_translate 'navbar.wiki_contributions.label' %}
+                </a>
+                <a class="dropdown-item" href="{% url 'ottm:user_settings' %}">
+                  <span class="mdi mdi-cog"></span> {% ottm_translate 'navbar.settings.label' %}
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" id="nav-logout-link" href="{% url 'ottm:log_out' %}">
+                  <span class="mdi mdi-logout"></span> {% ottm_translate 'navbar.log_out.label' %}
+                </a>
+              </div>
+            </li>
+          {% else %}
+            <li class="nav-item">
+              <a id="nav-login-link" class="nav-link" href="{% url 'ottm:log_in' %}">
+                <span class="mdi mdi-login"></span> {% ottm_translate 'navbar.log_in.label' %}
+              </a>
+            </li>
+            <li class="nav-item">
+              <a id="nav-signup-link" class="nav-link" href="{% url 'ottm:sign_up' %}">
+                <span class="mdi mdi-account-plus"></span> {% ottm_translate 'navbar.sign_up.label' %}
+              </a>
+            </li>
+            <li class="nav-item dropstart">
+              <button class="nav-link dropdown-toggle"
+                      data-bs-toggle="dropdown"
+                      type="button"
+                      id="navbar-logged-out-settings"
+                      aria-expanded="false">
+                <span class="mdi mdi-cog"></span>
+              </button>
+              <div class="dropdown-menu"
+                   data-bs-popper="" {# Needed for correct positioning #}
+                   aria-labelledby="navbar-logged-out-settings">
                 <label class="dropdown-item">
-                  <input id="dark-mode-checkbox" type="checkbox" {% if context.dark_mode %}checked{% endif %}>
+                  <input class="form-check-input"
+                         id="dark-mode-checkbox"
+                         type="checkbox"
+                         {% if context.dark_mode %}checked{% endif %}>
                   {% ottm_translate 'navbar.dark_mode.label' %}
                 </label>
                 <div class="dropdown-item" title="{% ottm_translate 'navbar.language_select.tooltip' %}">
-                  <label for="nav-language-select" class="sr-only">
+                  <label for="nav-language-select" class="form-label">
                     {% ottm_translate 'navbar.language_select.label' %}
                   </label>
-                  <select id="nav-language-select" class="custom-select nav-select">
+                  <select id="nav-language-select" class="form-select">
                     {% for lang in context.ui_languages %}
                       <option {% if lang.code == context.language.code %}selected{% endif %} value="{{ lang.code }}">
                         {{ lang.name }}
@@ -130,23 +129,17 @@
                   </select>
                 </div>
               </div>
-            {% endif %}
-          </li>
-        {% endif %}
-      </ul>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
     </div>
   </nav>
   {% block page-content %}{% endblock %}
 
-  {# Needed for Bootstrap #}
-  <script src="{% static 'ottm/libs/jquery-3.6.0.min.js' %}"></script>{# FIXME duplicate jquery import with bundle #}
-  <script src="{% static 'ottm/libs/popper.min.js' %}"></script>
-  <script src="{% static 'ottm/libs/bootstrap-4.5.2-dist/js/bootstrap.min.js' %}"></script>
   <script id="ottm-config-script">window.OTTM_CONFIG = {{ context.js_config|safe }};</script>
   {% block pre-global-script %}{% endblock %}
-  {% block global-script %}
-    <script type="module" src="{% static 'ottm/bundle-index.js' %}"></script>
-  {% endblock %}
+  <script type="module" src="{% static 'ottm/bundle-index.js' %}"></script>
   {% block post-global-script %}{% endblock %}
 </body>
 </html>

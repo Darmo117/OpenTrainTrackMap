@@ -30,6 +30,14 @@
   background-position: 50%;
 }
 
+html[data-bs-theme="light"] .gutter {
+  background-color: #eee;
+}
+
+html[data-bs-theme="dark"] .gutter {
+  background-color: #555;
+}
+
 .gutter.gutter-horizontal {
   background-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==");
   cursor: col-resize;
@@ -51,6 +59,10 @@
 
 .maplibregl-ctrl-attrib-inner {
   vertical-align: top;
+}
+
+html[data-bs-theme="dark"] .maplibregl-ctrl-attrib-inner {
+  color: rgb(33, 37, 41); /* Light-mode color */
 }
 
 .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon {
@@ -100,4 +112,62 @@
 .cursor-draw-connect-line {
   /*noinspection CssUnknownTarget*/
   cursor: url("/static/ottm/images/cursors/cursor-draw-connect-line.png") 10 10, grabbing !important;
+}
+
+/*
+ * Context menu
+ */
+
+html[data-bs-theme="dark"] .map-editor-context-menu > .maplibregl-popup-content {
+  background-color: transparent !important;
+}
+
+html[data-bs-theme="dark"] .map-editor-context-menu.maplibregl-popup-anchor-top > .maplibregl-popup-tip {
+  border-bottom-color: #2b2a33 !important;
+}
+
+html[data-bs-theme="dark"] .map-editor-context-menu.maplibregl-popup-anchor-bottom > .maplibregl-popup-tip {
+  border-top-color: #2b2a33 !important;
+}
+
+html[data-bs-theme="dark"] .map-editor-context-menu.maplibregl-popup-anchor-left > .maplibregl-popup-tip {
+  border-right-color: #2b2a33 !important;
+}
+
+html[data-bs-theme="dark"] .map-editor-context-menu.maplibregl-popup-anchor-right > .maplibregl-popup-tip {
+  border-left-color: #2b2a33 !important;
+}
+
+/*
+ * Map controls
+ */
+
+/** Dark mode **/
+
+html[data-bs-theme="dark"] .maplibregl-ctrl-group {
+  background-color: #2b2a33 !important;
+}
+
+html[data-bs-theme="dark"] .maplibregl-ctrl-draw button.active,
+html[data-bs-theme="dark"] .maplibregl-ctrl button:not(:disabled):hover {
+  background-color: rgb(255 255 255 / 10%) !important;
+}
+
+html[data-bs-theme="dark"] .maplibregl-ctrl button:disabled {
+  background-color: rgb(255 255 255 / 20%) !important;
+}
+
+html[data-bs-theme="dark"] .maplibregl-ctrl-group button + button {
+  border-top-color: #515151 !important;
+}
+
+/** Light mode **/
+
+html[data-bs-theme="light"] .maplibregl-ctrl-draw button.active,
+html[data-bs-theme="light"] .maplibregl-ctrl button:not(:disabled):hover {
+  background-color: rgb(0 0 0 / 10%) !important;
+}
+
+html[data-bs-theme="light"] .maplibregl-ctrl button:disabled {
+  background-color: rgb(0 0 0 / 20%) !important;
 }

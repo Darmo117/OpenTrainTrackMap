@@ -1,3 +1,5 @@
+import "./style.css";
+
 import initEditor from "./_editor";
 
 interface GadgetCode {

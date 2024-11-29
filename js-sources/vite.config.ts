@@ -2,9 +2,9 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   publicDir: "../ottm/static/ottm",
+  base: "../ottm/static/ottm",
   build: {
     outDir: "../ottm/static/ottm",
-    assetsDir: ".",
     rollupOptions: {
       input: "src/index.ts", // Entry point
       output: {

@@ -4,12 +4,9 @@
 {% load wiki %}
 
 {% block styles %}
-  <link href="{% static 'ottm/wiki/style.min.css' %}" rel="stylesheet">
   {% if context.dark_mode %}
-    <link href="{% static 'ottm/wiki/dark.min.css' %}" rel="stylesheet">
     <link href="{% static 'ottm/libs/highlight/styles/monokai.min.css' %}" rel="stylesheet">
   {% else %}
-    <link href="{% static 'ottm/wiki/light.min.css' %}" rel="stylesheet">
     <link href="{% static 'ottm/libs/highlight/styles/vs.min.css' %}" rel="stylesheet">
   {% endif %}
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_css %}
@@ -32,16 +29,18 @@
 {% endblock %}
 
 {% block navbar-center %}
-  <form id="wiki-navbar-search-form" class="form-inline my-2 my-lg-0" method="get"
+  <form id="wiki-navbar-search-form" class="d-flex" method="get"
         action="{% wiki_inner_link page_title='Special:Search' ignore_current_title=True only_url=True %}">
-    {% ottm_translate 'wiki.navbar.search.input.placeholder' as placeholder %}
-    <input type="search" id="wiki-navbar-search-input" class="form-control mr-sm-2" name="query"
-           placeholder="{{ placeholder }}" aria-label="{{ placeholder }}" aria-describedby="wiki-navbar-search-button"
-           accesskey="f">
-    <button class="btn btn-outline-light my-2 my-sm-0" type="submit" id="wiki-navbar-search-button"
-            title="{% ottm_translate 'wiki.navbar.search.button.tooltip' %}">
-      <span class="mdi mdi-magnify"></span> {% ottm_translate 'wiki.navbar.search.button.label' %}
-    </button>
+    <div class="input-group">
+      {% ottm_translate 'wiki.navbar.search.input.placeholder' as placeholder %}
+      <input type="search" id="wiki-navbar-search-input" class="form-control" name="query"
+             placeholder="{{ placeholder }}" aria-label="{{ placeholder }}" aria-describedby="wiki-navbar-search-button"
+             accesskey="f">
+      <button class="btn btn-outline-light" type="submit" id="wiki-navbar-search-button"
+              title="{% ottm_translate 'wiki.navbar.search.button.tooltip' %}">
+        <span class="mdi mdi-magnify"></span> {% ottm_translate 'wiki.navbar.search.button.label' %}
+      </button>
+    </div>
     <input type="hidden" name="search_bar" value="1"/>
   </form>
 {% endblock %}
@@ -65,6 +64,9 @@
         </div>
         {% wiki_side_menu 'main' %}
         {% wiki_side_menu 'wiki_tools' %}
+        {% wiki_side_menu 'page_tools' %}
+        {% wiki_side_menu 'more' %}
+        {% wiki_side_menu 'categories' %}
       </nav>
     </div>
 
@@ -192,14 +194,6 @@
         {% endif %}
       </article>
     </main>
-
-    <div id="wiki-right-col" class="col-2">
-      <nav id="wiki-nav-bar-right">
-        {% wiki_side_menu 'page_tools' %}
-        {% wiki_side_menu 'more' %}
-        {% wiki_side_menu 'categories' %}
-      </nav>
-    </div>
   </div>
 
   {% block post-content %}{% endblock %}
@@ -208,8 +202,9 @@
     <div class="container-fluid">
       <p class="django-link">
         Powered by
-        <a href="https://www.djangoproject.com/">
-          <img class="django-logo" src="https://static.djangoproject.com/img/logo-django.42234b631760.svg"
+        <a href="https://www.djangoproject.com/" target="_blank">
+          <img class="django-logo"
+               src="https://static.djangoproject.com/img/logo-django.42234b631760.svg"
                alt="Django logo">
         </a>
       </p>

@@ -59,6 +59,14 @@ html, body {
   margin-bottom: 2em;
 }
 
+html[data-bs-theme="light"] #page-header {
+  background-color: #dbdbdb;
+}
+
+html[data-bs-theme="dark"] #page-header {
+  background-color: #111617;
+}
+
 #user-page-links {
   padding-bottom: 1em;
 }
@@ -78,4 +86,14 @@ html, body {
 .masked {
   text-decoration: line-through;
   font-style: italic;
+}
+
+a {
+  text-decoration: none;
+}
+
+/** Dark mode **/
+
+html[data-bs-theme="dark"] .alert-warning a:not(:hover, .wiki-red-link) {
+  color: #315c81;
 }

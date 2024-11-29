@@ -3,14 +3,28 @@
  */
 import $ from "jquery";
 import Cookies from "js-cookie";
+import "bootstrap";
+
+import "./scss/bootstrap.scss";
+import "@mdi/font/css/materialdesignicons.min.css";
+import "./global.css";
 
 import { OTTM } from "./types";
-import hookExitConfirm from "./_confirm-form-exit";
+import hookExitConfirm from "./confirm-form-exit.ts";
 import setupUserSettings, {
   USER_SETTINGS_FORM_SELECTOR,
 } from "./user-settings";
 import initMap from "./map";
 import initWiki from "./wiki";
+
+declare global {
+  interface Window {
+    $: typeof $;
+  }
+}
+
+// Expose JQuery outside of compiled bundle
+window.$ = $;
 
 window.ottm = new OTTM();
 

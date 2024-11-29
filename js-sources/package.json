@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && ./patch_css.sh",
     "preview": "vite preview",
     "lint": "eslint ."
   },
@@ -21,13 +21,17 @@
     "vite": "^5.4.8",
     "@types/ace": "^0.0.52",
     "@types/jquery": "^3.5.29",
-    "@types/js-cookie": "^3.0.6"
+    "@types/js-cookie": "^3.0.6",
+    "sass": "^1.81.0"
   },
   "dependencies": {
     "@turf/turf": "^7.1.0",
     "jquery": "^3.7.1",
     "js-cookie": "^3.0.5",
     "maplibre-gl": "^3.6.2",
-    "split.js": "^1.6.5"
+    "split.js": "^1.6.5",
+    "bootstrap": "^5.3.3",
+    "@popperjs/core": "^2.11.8",
+    "@mdi/font": "^7.4.47"
   }
 }

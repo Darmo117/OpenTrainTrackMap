@@ -26,7 +26,7 @@
       {% endfor %}
     </ul>
   {% endif %}
-  <form method="post" id="{{ form.name|replace:'_,-' }}" class="tab-content" style="margin-bottom: 1em">
+  <form method="post" id="{{ form.name|replace:'_,-' }}">
     {% csrf_token %}
     <input type="hidden" name="form-name" value="{{ form.name }}">
     {% if form.warn_unsaved_changes and context.user.warn_when_wiki_edit_not_published %}
@@ -35,7 +35,7 @@
     {# @formatter:off #}
     {% for section_name, fieldsets in form.sections.items %}
       {% if section_name %}
-        <div id="form-panel-{{ section_name|replace:'_,-' }}" class="tab-pane" role="tabpanel"
+        <div id="form-panel-{{ section_name|replace:'_,-' }}"
              aria-labelledby="form-tab-{{ section_name|replace:'_,-' }}">
       {% endif %}
       {% for fieldset_name, fieldset in fieldsets.items %}
@@ -45,20 +45,18 @@
         {% endif %}
         {% for field in fieldset %}
           {% with trans_field_prefix=trans_prefix|add:field.label|add:'.' %}
-            <div class="form-group">
+            <div class="mb-2">
               {% if field.field.widget.input_type == 'checkbox' and field|length == 1 %}{# If only one checkbox #}
-                <div class="custom-control custom-checkbox">
-                  {{ field }}
-                  <label for="{{ field.id_for_label }}" class="custom-control-label">
-                    {% ottm_translate trans_field_prefix|add:'label' gender=form.fields_genders|get_item:field.label %}
-                  </label>
-                </div>
+                {{ field }}
+                <label for="{{ field.id_for_label }}" class="form-check-label">
+                  {% ottm_translate trans_field_prefix|add:'label' gender=form.fields_genders|get_item:field.label %}
+                </label>
               {% elif field.field.widget.input_type == 'checkbox' or field.field.widget.input_type == 'radio' %}
-                <label>{% ottm_translate trans_field_prefix|add:'label' gender=form.fields_genders|get_item:field.label %}</label>
+                <label class="form-check-label">{% ottm_translate trans_field_prefix|add:'label' gender=form.fields_genders|get_item:field.label %}</label>
                 {% for f in field %}
-                  <div class="custom-control custom-{% if field.field.widget.input_type == 'radio' %}radio{% else %}checkbox{% endif %}">
+                  <div class="form-check">
                     {{ f.tag }}
-                    <label for="{{ f.id_for_label }}" class="custom-control-label">
+                    <label class="form-check-label" for="{{ f.id_for_label }}">
                       {% if field.field.widget.attrs.no_translate %}
                         {{ f.choice_label }}
                       {% else %}
@@ -68,11 +66,11 @@
                   </div>
                 {% endfor %}
               {% else %}
-                <label for="{{ field.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' gender=form.fields_genders|get_item:field.label %}</label>
+                <label class="form-label" for="{{ field.id_for_label }}">{% ottm_translate trans_field_prefix|add:'label' gender=form.fields_genders|get_item:field.label %}</label>
                 {{ field }}
               {% endif %}
               {% if field.help_text %}
-                <small class="form-text text-muted">{% ottm_translate trans_field_prefix|add:'help' %}</small>
+                <div class="form-text">{% ottm_translate trans_field_prefix|add:'help' %}</div>
               {% endif %}
               {% if field.errors %}
                 <div class="invalid-feedback" style="display: block">

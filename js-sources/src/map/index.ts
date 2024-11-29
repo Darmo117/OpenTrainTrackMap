@@ -2,6 +2,8 @@ import { GeolocateControl, ScaleControl } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import $ from "jquery";
 
+import "./style.css";
+
 import OttmMap from "./map";
 import CompassControl from "./controls/compass";
 import GeocoderControl from "./controls/geocoder";

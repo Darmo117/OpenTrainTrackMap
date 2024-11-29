@@ -79,8 +79,8 @@
       <input type="hidden" name="warn-unsaved">
     {% endif %}
 
-    <div class="form-group">
-      <label class="sr-only" for="{{ form.content.id_for_label }}">
+    <div class="mb-2">
+      <label class="form-label" for="{{ form.content.id_for_label }}">
         {% ottm_translate trans_prefix|add:'content.label' %}
       </label>
       <div id="wiki-ace-editor" data-ace-target="{{ form.content.id_for_label }}" style="display: none"></div>
@@ -88,37 +88,40 @@
     </div>
 
     {% if context.can_user_edit %}
-      <div class="form-group" title="{% ottm_translate trans_prefix|add:'comment.tooltip' %}">
-        <label for="{{ form.comment.id_for_label }}">
+      <div class="mb-2" title="{% ottm_translate trans_prefix|add:'comment.tooltip' %}">
+        <label class="form-label" for="{{ form.comment.id_for_label }}">
           {% ottm_translate trans_prefix|add:'comment.label' %}
         </label>
         {{ form.comment }}
       </div>
 
-      <div class="form-group text-center">
-        <div class="custom-control custom-checkbox custom-control-inline"
+      <div class="mb-2 text-center">
+        <div class="form-check-inline"
              title="{% ottm_translate trans_prefix|add:'minor_edit.tooltip' %}">
           {{ form.minor_edit }}
-          <label for="{{ form.minor_edit.id_for_label }}" class="custom-control-label">
+          <label class="form-check-label"
+                 for="{{ form.minor_edit.id_for_label }}">
             {% ottm_translate trans_prefix|add:'minor_edit.label' %}
           </label>
         </div>
 
         {% if context.user.is_authenticated %}
-          <div class="custom-control custom-checkbox custom-control-inline"
+          <div class="form-check-inline"
                title="{% ottm_translate trans_prefix|add:'follow_page.tooltip' %}">
             {{ form.follow_page }}
-            <label for="{{ form.follow_page.id_for_label }}" class="custom-control-label">
+            <label class="form-check-label"
+                   for="{{ form.follow_page.id_for_label }}">
               {% ottm_translate trans_prefix|add:'follow_page.label' %}
             </label>
           </div>
         {% endif %}
 
         {% if context.page.namespace == NS_CATEGORY %}
-          <div class="custom-control custom-checkbox custom-control-inline"
+          <div class="form-check-inline"
                title="{% ottm_translate trans_prefix|add:'hidden_category.tooltip' %}">
             {{ form.hidden_category }}
-            <label for="{{ form.hidden_category.id_for_label }}" class="custom-control-label">
+            <label class="form-check-label"
+                   for="{{ form.hidden_category.id_for_label }}">
               {% ottm_translate trans_prefix|add:'hidden_category.label' %}
             </label>
           </div>
@@ -126,16 +129,24 @@
       </div>
 
       <div class="text-center">
-        <input id="wiki-edit-form-submit-btn" type="submit" accesskey="s"
+        <input id="wiki-edit-form-submit-btn"
+               type="submit"
+               accesskey="s"
                value="{% ottm_translate trans_prefix|add:'submit.label' %}"
-               title="{% ottm_translate trans_prefix|add:'submit.tooltip' %}" class="btn btn-primary"/>
-        <button id="wiki-edit-form-preview-btn" type="button" accesskey="p"
+               title="{% ottm_translate trans_prefix|add:'submit.tooltip' %}"
+               class="btn btn-primary"/>
+        <button id="wiki-edit-form-preview-btn"
+                type="button"
+                accesskey="p"
                 title="{% ottm_translate trans_prefix|add:'preview.tooltip' %}"
                 class="btn btn-secondary">{% ottm_translate trans_prefix|add:'preview.label' %}</button>
-        <button id="wiki-edit-form-diff-btn" type="button" accesskey="w"
+        <button id="wiki-edit-form-diff-btn"
+                type="button"
+                accesskey="w"
                 title="{% ottm_translate trans_prefix|add:'diff.tooltip' %}"
                 class="btn btn-secondary">{% ottm_translate trans_prefix|add:'diff.label' %}</button>
-        <button id="wiki-edit-form-cancel-btn" type="button"
+        <button id="wiki-edit-form-cancel-btn"
+                type="button"
                 title="{% ottm_translate trans_prefix|add:'cancel.tooltip' %}"
                 class="btn btn-outline-danger">{% ottm_translate trans_prefix|add:'cancel.label' %}</button>
       </div>

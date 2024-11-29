@@ -63,7 +63,9 @@ class CustomForm(_dj_forms.Form):
         # Add Bootstrap CSS classes to widgets
         for visible in self.visible_fields():
             if isinstance(visible.field.widget, _dj_forms.CheckboxInput | _dj_forms.RadioSelect):
-                visible.field.widget.attrs['class'] = 'custom-control-input'
+                visible.field.widget.attrs['class'] = 'form-check-input'
+            elif isinstance(visible.field.widget, _dj_forms.Select):
+                visible.field.widget.attrs['class'] = 'form-select'
             else:
                 visible.field.widget.attrs['class'] = 'form-control'
 

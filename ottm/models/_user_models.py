@@ -4,11 +4,11 @@ from __future__ import annotations
 import datetime as _dt
 import typing as _typ
 
-from django.conf import settings as _dj_settings
 import django.contrib.auth.models as _dj_auth_models
 import django.core.exceptions as _dj_exc
 import django.db.models as _dj_models
 import pytz as _pytz
+from django.conf import settings as _dj_settings
 
 from . import _i18n_models as _i18n_m
 from .. import model_fields, settings as _settings
@@ -1476,7 +1476,7 @@ class Page(_dj_models.Model, NonDeletableMixin):
         """Return a query set of all categories of this page"""
         if not self.exists or self.namespace != _w_ns.NS_SPECIAL:
             return _dj_auth_models.EmptyManager(PageCategory).all()
-        return PageCategory.objects.filter(page=self).order_by('page__namespace_id', 'page__title')
+        return PageCategory.objects.filter(page_id=self.id).order_by('page__namespace_id', 'page__title')
 
     def get_linked_pages(self) -> _dj_models.QuerySet[Page]:
         """Return a query set of all pages linking to this page."""

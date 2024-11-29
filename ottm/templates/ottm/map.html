@@ -1,16 +1,6 @@
 {% extends 'ottm/ottm-base.html' %}
 {% load static %}
 
-{% block styles %}
-  {{ block.super }}
-  <link href="{% static 'ottm/map/style.min.css' %}" rel="stylesheet">
-  {% if context.dark_mode %}
-    <link href="{% static 'ottm/map/dark.min.css' %}" rel="stylesheet">
-  {% else %}
-    <link href="{% static 'ottm/map/light.min.css' %}" rel="stylesheet">
-  {% endif %}
-{% endblock %}
-
 {% block page-content %}
   {{ block.super }}
   <aside style="display: none" id="editor-panel"></aside>

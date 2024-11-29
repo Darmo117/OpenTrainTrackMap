@@ -3,18 +3,17 @@
 
 <div class="row justify-content-center">
   <div class="col-6">
-    <div id="accordion">
-      <div class="card">
-        <div class="card-header" id="form-spoiler">
-          <h5 class="mb-0">
-            <button class="btn btn-link" data-toggle="collapse" data-target="#form-card" aria-expanded="false"
-                    aria-controls="form-card">
-              {% ottm_translate 'wiki.special_page.Contributions.form_spoiler.label' %}
-            </button>
-          </h5>
-        </div>
-        <div id="form-card" class="collapse" aria-labelledby="form-spoiler" data-parent="#accordion">
-          <div class="card-body">
+    <div class="accordion" id="accordion">
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                  data-bs-target="#collapseOne"
+                  aria-expanded="false" aria-controls="collapseOne">
+            {% ottm_translate 'wiki.special_page.Contributions.form_spoiler.label' %}
+          </button>
+        </h2>
+        <div id="collapseOne" class="accordion-collapse collapse" data-bs-parent="#accordion">
+          <div class="accordion-body">
             {% include 'ottm/include/form.html' with form=context.form prefix='wiki.special_page.Contributions.' %}
           </div>
         </div>
