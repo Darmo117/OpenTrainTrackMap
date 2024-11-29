@@ -25,7 +25,6 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'ld_%p4gpg+%=5zblnx+u9q-@7(&%8xoknpa=y+l%3c
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'ottm.local',
     '127.0.0.1',
     'localhost',
 ]
@@ -112,7 +111,8 @@ TIME_ZONE = 'UTC'
 STATICFILES_DIRS = [
     BASE_DIR / 'ottm/static',
 ]
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # Site settings
 
