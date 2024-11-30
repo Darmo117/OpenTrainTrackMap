@@ -5,7 +5,6 @@ from . import views
 app_name = 'ottm'
 urlpatterns = [
     path('', views.map_page, name='map'),
-    path('tile', views.get_tile, name='map_tile'),
     path('history', views.history_page, name='history'),
     path('edit', views.edit_page, name='edit'),
     path('sign-up', views.signup_page, name='sign_up'),

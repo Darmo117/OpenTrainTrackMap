@@ -3,34 +3,8 @@ import typing as _typ
 
 import django.core.handlers.wsgi as _dj_wsgi
 import django.http.response as _dj_response
-import requests as _requests
 
 from . import page_handlers as _ph
-
-
-def get_tile(request: _dj_wsgi.WSGIRequest) -> _dj_response.HttpResponse:
-    """API view that handles map tile querying.
-
-    Expected GET parameters:
-        - provider (str): Name of the tile provider.
-        - x (int): Tile’s x position.
-        - y (int): Tile’s y position.
-        - z (int): Zoom value.
-    """
-    try:
-        x = int(request.GET.get('x'))
-        y = int(request.GET.get('y'))
-        z = int(request.GET.get('z'))
-    except ValueError:
-        return _dj_response.HttpResponseBadRequest()
-    provider = request.GET.get('provider')
-    if provider == 'maptiler':
-        url = f'https://api.maptiler.com/tiles/satellite/{z}/{x}/{y}.jpg?key=5PelNcEc4zGc3OEutmIG'
-        response = _requests.get(url)
-        # Remove Connection header as it may cause issues with Django
-        del response.headers['Connection']
-        return _dj_response.HttpResponse(response.content, status=response.status_code, headers=response.headers)
-    return _dj_response.HttpResponseNotFound(f'invalid provider {provider}')
 
 
 def map_page(request: _dj_wsgi.WSGIRequest) -> _dj_response.HttpResponse:
