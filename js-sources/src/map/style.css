@@ -1,7 +1,12 @@
+html,
+body {
+  height: 100%;
+}
+
 #map,
 #editor-panel,
 .gutter {
-  height: calc(100% - 61px); /* Navbar’s approximate height */
+  height: calc(100% - 62px); /* Navbar’s approximate height */
 }
 
 /*
