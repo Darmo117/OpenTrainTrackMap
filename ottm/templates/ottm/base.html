@@ -14,7 +14,7 @@
   <title>{% if context.tab_title %}{{ context.tab_title }} &mdash; {% endif %}{{ context.site_name }}</title>
   {# https://commons.wikimedia.org/wiki/File:Map-icon-pure.svg #}
   <link href="{% static 'ottm/images/icons/favicon.png' %}" type="image/png" rel="icon">
-  <link href="{% static 'ottm/bundle-index.css' %}" rel="stylesheet">
+  <link href="{% static 'ottm/generated/css/index.css' %}" rel="stylesheet">
   {% block styles %}{% endblock styles %}
 </head>
 <body>
@@ -138,7 +138,7 @@
 
   <script id="ottm-config-script">window.OTTM_CONFIG = {{ context.js_config|safe }};</script>
   {% block pre-global-script %}{% endblock %}
-  <script type="module" src="{% static 'ottm/bundle-index.js' %}"></script>
+  <script type="module" src="{% static 'ottm/generated/index.js' %}"></script>
   {% block post-global-script %}{% endblock %}
 </body>
 </html>

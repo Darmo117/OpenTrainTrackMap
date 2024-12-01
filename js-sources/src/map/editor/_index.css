@@ -20,3 +20,63 @@
 #edit-zoom-notice-panel:hover {
   background-color: rgba(0, 0, 0, 0.6);
 }
+
+/*
+ * Cursors
+ */
+
+.cursor-point {
+  cursor: url("images/cursors/cursor-select-vertex.png"), default !important;
+}
+
+.cursor-linestring {
+  cursor: url("images/cursors/cursor-select-line.png"), default !important;
+}
+
+.cursor-polygon {
+  cursor: url("images/cursors/cursor-select-area.png"), default !important;
+}
+
+.cursor-draw {
+  cursor: url("images/cursors/cursor-draw.png") 10 10, crosshair !important;
+}
+
+.cursor-grab {
+  cursor: url("images/cursors/cursor-grab.png") 10 10, grab !important;
+}
+
+.cursor-grabbing {
+  cursor: url("images/cursors/cursor-grabbing.png") 10 10, grabbing !important;
+}
+
+.cursor-draw-connect-vertex {
+  cursor: url("images/cursors/cursor-draw-connect-vertex.png") 10 10, grabbing !important;
+}
+
+.cursor-draw-connect-line {
+  cursor: url("images/cursors/cursor-draw-connect-line.png") 10 10, grabbing !important;
+}
+
+/*
+ * Context menu dark theme
+ */
+
+html[data-bs-theme="dark"] .map-editor-context-menu > .maplibregl-popup-content {
+  background-color: transparent !important;
+}
+
+html[data-bs-theme="dark"] .map-editor-context-menu.maplibregl-popup-anchor-top > .maplibregl-popup-tip {
+  border-bottom-color: #2b2a33 !important;
+}
+
+html[data-bs-theme="dark"] .map-editor-context-menu.maplibregl-popup-anchor-bottom > .maplibregl-popup-tip {
+  border-top-color: #2b2a33 !important;
+}
+
+html[data-bs-theme="dark"] .map-editor-context-menu.maplibregl-popup-anchor-left > .maplibregl-popup-tip {
+  border-right-color: #2b2a33 !important;
+}
+
+html[data-bs-theme="dark"] .map-editor-context-menu.maplibregl-popup-anchor-right > .maplibregl-popup-tip {
+  border-left-color: #2b2a33 !important;
+}

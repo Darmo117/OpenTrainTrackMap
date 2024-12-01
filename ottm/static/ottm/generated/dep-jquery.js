@@ -1,4 +1,4 @@
-import{c as Fr,g as Wr}from"./bundle-dep-maplibre-gl.js";var kn={exports:{}};/*!
+import{c as Fr,g as Wr}from"./dep-maplibre-gl.js";var kn={exports:{}};/*!
  * jQuery JavaScript Library v3.7.1
  * https://jquery.com/
  *
