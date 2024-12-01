@@ -14,8 +14,6 @@ import hookExitConfirm from "./confirm-form-exit.ts";
 import setupUserSettings, {
   USER_SETTINGS_FORM_SELECTOR,
 } from "./user-settings";
-import initMap from "./map";
-import initWiki from "./wiki";
 
 declare global {
   interface Window {
@@ -23,22 +21,33 @@ declare global {
   }
 }
 
-// Expose JQuery outside of compiled bundle
-window.$ = $;
+async function init(): Promise<void> {
+  // Expose JQuery and global OTTM objects outside of compiled bundle
+  window.$ = $;
+  window.ottm = new OTTM();
 
-window.ottm = new OTTM();
+  hookSettingsDropdownBehavior();
+  hookDarkModeCallback();
+  hookLanguageSelectorCallback();
 
-hookSettingsDropdownBehavior();
-hookDarkModeCallback();
-hookLanguageSelectorCallback();
+  initForms();
+  if ($(USER_SETTINGS_FORM_SELECTOR).length !== 0) setupUserSettings();
 
-initForms();
-if ($(USER_SETTINGS_FORM_SELECTOR).length !== 0) setupUserSettings();
-if (window.OTTM_MAP_CONFIG) initMap();
-if (window.location.pathname.startsWith("/wiki/")) initWiki();
+  if (window.OTTM_MAP_CONFIG) {
+    const mapModule = await import("./map");
+    await mapModule.default();
+  } else if (window.location.pathname.startsWith("/wiki/")) {
+    const mapModule = await import("./wiki");
+    mapModule.default();
+  }
 
-window.ottm.setReferrer();
-setAccessKeys();
+  window.ottm.setReferrer();
+  setAccessKeys();
+}
+
+init().catch((e: unknown) => {
+  console.error(e);
+});
 
 /*
  * Functions

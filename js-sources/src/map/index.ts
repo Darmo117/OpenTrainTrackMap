@@ -15,7 +15,6 @@ import OpenExternalMapControl from "./controls/open-external-map";
 import ZoomControl from "./controls/zoom";
 import ImageryDateControl from "./controls/imagery-date";
 import loadTilesSources from "./tiles-sources";
-import initMapEditor from "./editor/index";
 import { parseSVG } from "./controls/helpers";
 
 declare global {
@@ -31,7 +30,7 @@ declare global {
 /**
  * Initalize the map view.
  */
-export default function initMap(): void {
+export default async function initMap(): Promise<void> {
   if (!window.OTTM_MAP_CONFIG)
     throw new Error("Missing global OTTM_MAP_CONFIG object");
 
@@ -82,7 +81,8 @@ export default function initMap(): void {
   );
 
   if (editMode) {
-    initMapEditor(map);
+    const editorModule = await import("./editor/index");
+    editorModule.default(map);
   } else {
     map.addControl(
       new GeocoderControl({
