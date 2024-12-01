@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   publicDir: "../ottm/static/ottm",
-  base: "../ottm/static/ottm",
+  base: "/static/ottm/",
   build: {
     outDir: "../ottm/static/ottm",
     rollupOptions: {
