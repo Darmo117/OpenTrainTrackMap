@@ -334,16 +334,22 @@ class WikiPageHandler(_ottm_handler.OTTMHandler):
         cat_pages = []
         archived = False
         if revision_id is None or not page.exists:
-            content = page.cached_parsed_content
-            cache_metadata = CacheMetadata(
-                parse_duration=page.parse_time,
-                parse_date=page.parse_date,
-                size_before=page.size_before_parse,
-                size_after=page.size_after_parse,
-                cached_parsed_revision_id=page.cached_parsed_revision_id,
-                cache_expiry_date=page.cache_expiry_date,
-            )
-            revision = page.revisions.latest() if page.exists else None
+            if page.content_type != _w_cons.CT_WIKIPAGE:
+                # Return non-minified content
+                revision = page.revisions.latest() if page.exists else None
+                content = revision.content if revision else None
+                cache_metadata = None
+            else:
+                content = page.cached_parsed_content
+                cache_metadata = CacheMetadata(
+                    parse_duration=page.parse_time,
+                    parse_date=page.parse_date,
+                    size_before=page.size_before_parse,
+                    size_after=page.size_after_parse,
+                    cached_parsed_revision_id=page.cached_parsed_revision_id,
+                    cache_expiry_date=page.cache_expiry_date,
+                )
+                revision = page.revisions.latest() if page.exists else None
             if page.namespace == _w_ns.NS_CATEGORY:
                 cat_subcategories = list(_models.PageCategory.subcategories_for_category(page.full_title))
                 cat_pages = list(_models.PageCategory.pages_for_category(page.full_title))
@@ -747,7 +753,7 @@ class WikiPageReadActionContext(WikiPageContext):
             no_index: bool,
             js_config: dict[str, _typ.Any],
             content: str,
-            cache_metadata: CacheMetadata,
+            cache_metadata: CacheMetadata | None,
             revision: _models.PageRevision | None,
             archived: bool,
             cat_subcategories: list[_models.Page] = None,
@@ -784,7 +790,7 @@ class WikiPageReadActionContext(WikiPageContext):
             max_page_index=self._cat_pages.num_pages,
         )
         self._content = content
-        self._parse_metadata = cache_metadata
+        self._cache_metadata = cache_metadata
         self._revision = revision
         self._archived = archived
         self._cat_subcategories = cat_subcategories or []
@@ -795,8 +801,8 @@ class WikiPageReadActionContext(WikiPageContext):
         return self._content
 
     @property
-    def page_cache_metadata(self) -> CacheMetadata:
-        return self._parse_metadata
+    def page_cache_metadata(self) -> CacheMetadata | None:
+        return self._cache_metadata
 
     @property
     def page_language(self) -> str:
