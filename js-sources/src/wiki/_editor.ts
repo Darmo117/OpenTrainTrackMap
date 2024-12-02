@@ -1,3 +1,4 @@
+import $ from "jquery";
 import { edit } from "ace-code";
 
 // TEMP
@@ -24,7 +25,7 @@ export default function initEditor(): void {
   const editorID = "wiki-ace-editor";
   const $div = $(`#${editorID}`).show();
   const targetId = $div.data("ace-target") as string;
-  const $textarea = $(`#${targetId}`).hide();
+  const $textarea = $(`#${targetId}`).hide() as JQuery<HTMLTextAreaElement>;
   const editor = edit(editorID);
   editor.setOptions({
     // FIXME not working
@@ -38,13 +39,17 @@ export default function initEditor(): void {
     // FIXME not working
     window.ottm.page.get("darkMode") ? "ace/theme/monokai" : "ace/theme/chrome",
   );
-  editor.getSession().setValue($textarea.val() as string);
+  const session = editor.getSession();
+  session.setValue($textarea.val() ?? "");
   // Update form’s textarea on each change in the editor
-  editor.getSession().on("change", () => {
-    $textarea.val(editor.getSession().getValue()).trigger("change");
+  session.on("change", () => {
+    $textarea.val(session.getValue()).trigger("change");
   });
   $("#wiki-edit-form").on("submit", (e) => {
-    const comment = ($("#wiki-edit-form-comment").val() as string).trim();
+    const $commentInput: JQuery<HTMLInputElement> = $(
+      "#wiki-edit-form-comment",
+    );
+    const comment = ($commentInput.val() ?? "").trim();
     if (!comment && window.ottm.user.get("warnWhenNoWikiEditComment")) {
       const message = window.ottm.translate("wiki.edit.no_summary_warning");
       if (!confirm(message)) e.preventDefault();
