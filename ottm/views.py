@@ -92,7 +92,7 @@ def api(request: _dj_wsgi.WSGIRequest):
     return _dj_response.HttpResponseNotFound()  # TODO
 
 
-def wiki_api(request: _dj_wsgi.WSGIRequest):
+def wiki_api(request: _dj_wsgi.WSGIRequest) -> _dj_response.HttpResponse:
     """Entry point for the wiki API."""
     return _ph.WikiAPIHandler(request).handle_request()
 

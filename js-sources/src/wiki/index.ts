@@ -69,21 +69,18 @@ export class WikiGadgetManager {
    * @param gadgetName The gadget’s name.
    * @throws Error If this manager is locked.
    */
-  registerGadget(gadgetName: string): void {
+  async registerGadget(gadgetName: string): Promise<void> {
     if (this.#locked)
       throw new Error("Cannot register gadgets when manager is locked");
 
-    console.log(`Registering gadget "${gadgetName}…"`);
+    console.log(`Registering gadget "${gadgetName}"…`);
     this.#gadgetsQueueSize++;
-    const apiPath = window.ottm.config.get("wApiPath") as string;
-    $.get(
-      apiPath,
-      {
-        action: "query",
-        query: "gadget",
-        title: gadgetName,
-      },
-      (data: string) => {
+    await $.get(window.ottm.config.get("wApiPath") as string, {
+      action: "query",
+      query: "gadget",
+      title: gadgetName,
+    })
+      .then((data: string) => {
         try {
           const gadget = new WikiGadget(eval(data) as GadgetCode);
           this.#gadgets.set(gadget.name, gadget);
@@ -93,8 +90,10 @@ export class WikiGadgetManager {
         this.#gadgetsQueueSize--;
         if (this.#gadgetsQueueSize === 0 && this.#finishedRegistration)
           this.#lock();
-      },
-    );
+      })
+      .catch(() => {
+        console.error(`Could not load gadget "${gadgetName}"`);
+      });
   }
 
   /**
@@ -251,8 +250,9 @@ export default async function initWiki(): Promise<void> {
     editor: null,
   };
 
-  if (window.ottm.page.get("darkMode"))
-    await import("highlight.js/styles/monokai.css");
+  const darkMode = window.ottm.page.get("darkMode");
+
+  if (darkMode) await import("highlight.js/styles/monokai.css");
   else await import("highlight.js/styles/vs.css");
   // Apply highlight.js to all tagged elements
   $(".hljs").each((_, e) => {
@@ -265,4 +265,62 @@ export default async function initWiki(): Promise<void> {
   } else if (action === "talk") {
     // TODO
   }
+
+  const staticPath = window.ottm.config.get("staticPath");
+  const pageName = encodeURIComponent(
+    window.ottm.page.get("wFullTitleURL") as string,
+  );
+  const specialPageBaseUrl = `${staticPath}ottm/wiki/special_pages/${pageName}/`;
+  const userPage = `User:${window.ottm.user.get("username")}`;
+
+  if ($("#special-page-css").length)
+    await loadStyles(`${specialPageBaseUrl}style.min.css`);
+  if ($("#special-page-js").length)
+    await loadScript(`${specialPageBaseUrl}script.min.js`);
+  await loadPageStatics("Interface:Common");
+  await loadPageStatics(`${userPage}/Common`);
+  if (darkMode) await loadPageStatics(`${userPage}/Common-dark`);
+  else await loadPageStatics(`${userPage}/Common-light`);
+  await loadGadgets();
+}
+
+async function loadPageStatics(pageTitle: string): Promise<void> {
+  const urlBase = `${window.ottm.config.get("wApiPath")}?action=query&query=static&title=`;
+  const title = encodeURIComponent(pageTitle);
+  await loadStyles(`${urlBase}${title}.css`);
+  await loadScript(`${urlBase}${title}.js`);
+}
+
+async function loadStyles(url: string): Promise<void> {
+  await $.get(url)
+    .then((css: string) => {
+      const $style = $("<style>");
+      $style.text(css);
+      $("head").append($style);
+    })
+    .catch(() => {
+      // Ignore
+    });
+}
+
+async function loadScript(url: string): Promise<void> {
+  await $.getScript(url).catch(() => {
+    // Ignore
+  });
+}
+
+async function loadGadgets(): Promise<void> {
+  await $.get(window.ottm.config.get("wApiPath") as string, {
+    action: "query",
+    query: "gadgets",
+    username: window.ottm.user.get("username"),
+  })
+    .then(async ({ gadget_names }: { gadget_names: string[] }) => {
+      for (const gadgetName of gadget_names)
+        await window.wiki.gadgetsManager.registerGadget(gadgetName);
+      window.wiki.gadgetsManager.finishRegistration();
+    })
+    .catch(() => {
+      console.error("Could not load gadgets");
+    });
 }

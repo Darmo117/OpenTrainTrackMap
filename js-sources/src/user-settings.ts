@@ -1,8 +1,5 @@
 import $ from "jquery";
 
-// language=jquery-css
-export const USER_SETTINGS_FORM_SELECTOR = "#user-settings";
-
 /**
  * Sets up events on the user settings form.
  */

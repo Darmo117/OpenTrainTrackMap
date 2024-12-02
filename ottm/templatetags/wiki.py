@@ -1,22 +1,17 @@
 """This module defines template tags for the wiki."""
 import collections as _coll
-import pathlib as _pl
 import urllib.parse as _url_parse
 
 import django.core.paginator as _dj_paginator
-import django.shortcuts as _dj_scut
 import django.template as _dj_template
 import django.utils.safestring as _dj_safe
 
 from . import ottm as _ottm
 from .. import models, page_handlers as _ph
 from ..api import permissions as _perms
-from ..api.wiki import constants as _w_cons, menus as _menus, namespaces as _w_ns, pages as _w_pages, parser as _parser
+from ..api.wiki import constants as _w_cons, menus as _menus, namespaces as _w_ns, parser as _parser
 
 register = _dj_template.Library()
-
-with (_pl.Path(__file__).parent / 'gadgets-loading-template.js').open(encoding='utf-8') as f:
-    JS_GADGETS_INIT_TEMPLATE_CODE = f.read()
 
 
 @register.simple_tag(takes_context=True)
@@ -133,30 +128,6 @@ def wiki_page_menu_item(context: _ottm.TemplateContext, action: str) -> str:
         access_key=access_key,
     )
     return _dj_safe.mark_safe(link)
-
-
-@register.simple_tag
-def wiki_static(page_title: str) -> str:
-    """Return the static resource link for the given wiki page.
-
-    :param page_title: Title of the page to get the static resource from.
-    :return: The resource’s link.
-    """
-    tag = ''
-    if page_title == 'gadgets':
-        gadgetNames = []  # TODO get from user object
-        js_code = JS_GADGETS_INIT_TEMPLATE_CODE.replace('`<PLACEHOLDER>`', ','.join(repr(g) for g in gadgetNames))
-        tag = f'<script type="module">{_w_pages.minify_js(js_code)}</script>'
-    else:
-        page = _w_pages.get_page(*_w_pages.split_title(page_title))
-        if page.exists:
-            link = _dj_scut.reverse('ottm:wiki_api')
-            title = _url_parse.urlencode({'title': _w_pages.url_encode_page_title(page.full_title)})
-            if page.content_type == _w_cons.CT_JS:
-                tag = f'<script type="module" src="{link}?action=query&query=static&{title}"></script>'
-            elif page.content_type == _w_cons.CT_CSS:
-                tag = f'<link href="{link}?action=query&query=static&{title}" rel="stylesheet">'
-    return _dj_safe.mark_safe(tag)
 
 
 @register.simple_tag(takes_context=True)

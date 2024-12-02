@@ -3,26 +3,6 @@
 {% load ottm %}
 {% load wiki %}
 
-{% block styles %}
-  {% if context.page.namespace == NS_SPECIAL and context.has_custom_css %}
-    {# Using "with" to avoid warning #}
-    {% with path='ottm/wiki/special_pages/'|add:context.page.base_name|add:'/style.min.css' %}
-      <link href="{% static path %}" rel="stylesheet">
-    {% endwith %}
-  {% endif %}
-  {% wiki_static 'Interface:Common.css' %}
-  {% if context.user.is_authenticated %}
-    {% wiki_static 'User:'|add:context.user.username|add:'/Common.css' %}
-    {% if context.dark_mode %}
-      {% wiki_static 'User:'|add:context.user.username|add:'/Common-dark.css' %}
-    {% else %}
-      {% wiki_static 'User:'|add:context.user.username|add:'/Common-light.css' %}
-    {% endif %}
-  {% endif %}
-
-  {% block head %}{% endblock %}
-{% endblock %}
-
 {% block navbar-center %}
   <form id="wiki-navbar-search-form" class="d-flex" method="get"
         action="{% wiki_inner_link page_title='Special:Search' ignore_current_title=True only_url=True %}">
@@ -212,26 +192,19 @@
   </footer>
 {% endblock %}
 
-{% block post-global-script %}
-  {{ block.super }}
-  {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}
-    {# Using "with" to avoid warning #}
-    {% with path='ottm/wiki/special_pages/'|add:context.page.base_name|add:'/script.min.js' %}
-      <script src="{% static path %}"></script>
-    {% endwith %}
-  {% endif %}
-
-  {% wiki_static 'Interface:Common.js' %}
-  {% wiki_static 'gadgets' %}
-  {% if context.user.is_authenticated %}
-    {% wiki_static 'User:'|add:context.user.username|add:'/Common.js' %}
-    {% if context.dark_mode %}
-      {% wiki_static 'User:'|add:context.user.username|add:'/Common-dark.js' %}
-    {% else %}
-      {% wiki_static 'User:'|add:context.user.username|add:'/Common-light.js' %}
+{% block pre-global-script %}
+  {% if context.page.namespace == NS_SPECIAL %}
+    {% if context.has_custom_css %}
+      <div id="special-page-css" style="display: none"></div>
+    {% endif %}
+    {% if context.has_custom_js %}
+      <div id="special-page-js" style="display: none"></div>
     {% endif %}
   {% endif %}
+{% endblock %}
 
+{% block post-global-script %}
+  {{ block.super }}
   {% if context.page_cache_metadata %}
     <!--
     Parser report:
