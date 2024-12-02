@@ -15,13 +15,14 @@ export default function initEditor(): void {
   if (typeof pageContentType !== "string")
     throw new Error("Missing page content type");
 
-  const mode = {
+  const modes: Record<string, string> = {
     js: "javascript",
     css: "css",
     json: "json",
     module: "python",
     wikipage: "text", // TODO custom language: https://medium.com/@jackub/writing-custom-ace-editor-mode-5a7aa83dbe50
-  }[pageContentType];
+  };
+  const mode = modes[pageContentType] ?? modes.wikipage;
   const editorID = "wiki-ace-editor";
   const $div = $(`#${editorID}`).show();
   const targetId = $div.data("ace-target") as string;
