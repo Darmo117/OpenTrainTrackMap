@@ -11,9 +11,6 @@ import "./global.css";
 
 import { OTTM } from "./types";
 import hookExitConfirm from "./confirm-form-exit.ts";
-import setupUserSettings, {
-  USER_SETTINGS_FORM_SELECTOR,
-} from "./user-settings";
 
 declare global {
   interface Window {
@@ -31,9 +28,11 @@ async function init(): Promise<void> {
   hookLanguageSelectorCallback();
 
   initForms();
-  if ($(USER_SETTINGS_FORM_SELECTOR).length !== 0) setupUserSettings();
 
-  if (window.OTTM_MAP_CONFIG) {
+  if (location.pathname === "/user/settings") {
+    const userSettingsModule = await import("./user-settings");
+    userSettingsModule.default();
+  } else if (window.OTTM_MAP_CONFIG) {
     const mapModule = await import("./map");
     await mapModule.default();
   } else if (window.location.pathname.startsWith("/wiki/")) {
