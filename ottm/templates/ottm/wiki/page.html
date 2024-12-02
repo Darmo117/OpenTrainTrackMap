@@ -217,7 +217,7 @@
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_js %}
     {# Using "with" to avoid warning #}
     {% with path='ottm/wiki/special_pages/'|add:context.page.base_name|add:'/script.min.js' %}
-      <link href="{% static path %}" rel="stylesheet">
+      <script src="{% static path %}"></script>
     {% endwith %}
   {% endif %}
 
