@@ -4,11 +4,6 @@
 {% load wiki %}
 
 {% block styles %}
-  {% if context.dark_mode %}
-    <link href="{% static 'ottm/libs/highlight/styles/monokai.min.css' %}" rel="stylesheet">
-  {% else %}
-    <link href="{% static 'ottm/libs/highlight/styles/vs.min.css' %}" rel="stylesheet">
-  {% endif %}
   {% if context.page.namespace == NS_SPECIAL and context.has_custom_css %}
     {# Using "with" to avoid warning #}
     {% with path='ottm/wiki/special_pages/'|add:context.page.base_name|add:'/style.min.css' %}
@@ -215,14 +210,6 @@
       <p>{% ottm_translate 'wiki.footer.license' %}</p>
     </div>
   </footer>
-{% endblock %}
-
-{% block pre-global-script %}
-  {{ block.super }}
-  <script src="{% static 'ottm/libs/highlight/highlight.min.js' %}"></script>
-  {% if context.action == ACTION_EDIT or context.action == ACTION_SUBMIT or context.action == ACTION_TALK %}
-    <script src="{% static 'ottm/libs/ace-editor/ace.js' %}"></script>
-  {% endif %}
 {% endblock %}
 
 {% block post-global-script %}

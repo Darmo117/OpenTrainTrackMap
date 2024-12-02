@@ -35,6 +35,8 @@ export default defineConfig({
         manualChunks: {
           "maplibre-gl": ["maplibre-gl"],
           jquery: ["jquery"],
+          hljs: ["highlight.js"],
+          ace: ["ace-code"],
         },
         chunkFileNames: "dep-[name].js",
       },

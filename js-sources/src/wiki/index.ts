@@ -1,3 +1,6 @@
+import $ from "jquery";
+import hljs from "highlight.js";
+
 import "./style.css";
 
 import initEditor from "./_editor";
@@ -238,23 +241,24 @@ declare global {
       api: WikiAPI;
       editor: unknown;
     };
-    // Actual object is defined by ottm/static/ottm/libs/highlight/highlight.js
-    hljs: {
-      highlightElement: (e: HTMLElement) => void;
-    };
   }
 }
 
-export default function initWiki(): void {
+export default async function initWiki(): Promise<void> {
   window.wiki = {
     gadgetsManager: new WikiGadgetManager(),
     api: new WikiAPI(),
     editor: null,
   };
-  // Apply HLJS on all tagged elements
+
+  if (window.ottm.page.get("darkMode"))
+    await import("highlight.js/styles/monokai.css");
+  else await import("highlight.js/styles/vs.css");
+  // Apply highlight.js to all tagged elements
   $(".hljs").each((_, e) => {
-    window.hljs.highlightElement(e);
+    hljs.highlightElement(e);
   });
+
   const action = window.ottm.page.get("wAction");
   if (action === "edit" || action === "submit") {
     initEditor();

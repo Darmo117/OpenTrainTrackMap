@@ -37,8 +37,8 @@ async function init(): Promise<void> {
     const mapModule = await import("./map");
     await mapModule.default();
   } else if (window.location.pathname.startsWith("/wiki/")) {
-    const mapModule = await import("./wiki");
-    mapModule.default();
+    const wikiModule = await import("./wiki");
+    await wikiModule.default();
   }
 
   window.ottm.setReferrer();

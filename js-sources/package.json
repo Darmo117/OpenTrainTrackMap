@@ -32,6 +32,8 @@
     "split.js": "^1.6.5",
     "bootstrap": "^5.3.3",
     "@popperjs/core": "^2.11.8",
-    "@mdi/font": "^7.4.47"
+    "@mdi/font": "^7.4.47",
+    "highlight.js": "^11.10.0",
+    "ace-code": "^1.36.5"
   }
 }

@@ -1,8 +1,8 @@
-declare global {
-  interface Window {
-    ace: AceAjax.Ace;
-  }
-}
+import { edit } from "ace-code";
+
+// TEMP
+import "ace-code/styles/theme/monokai.css";
+import "ace-code/styles/theme/chrome.css";
 
 /**
  * Script for the wiki page editor.
@@ -25,16 +25,17 @@ export default function initEditor(): void {
   const $div = $(`#${editorID}`).show();
   const targetId = $div.data("ace-target") as string;
   const $textarea = $(`#${targetId}`).hide();
-  const editor = window.ace.edit(editorID);
+  const editor = edit(editorID);
   editor.setOptions({
+    // FIXME not working
     mode: `ace/mode/${mode}`,
     useSoftTabs: true,
     fontSize: 16,
     minLines: 20,
     maxLines: 20,
   });
-  // TODO let user choose theme?
   editor.setTheme(
+    // FIXME not working
     window.ottm.page.get("darkMode") ? "ace/theme/monokai" : "ace/theme/chrome",
   );
   editor.getSession().setValue($textarea.val() as string);
