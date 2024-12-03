@@ -1,9 +1,11 @@
 import $ from "jquery";
-import { edit } from "ace-code";
-
-// TEMP
-import "ace-code/styles/theme/monokai.css";
-import "ace-code/styles/theme/chrome.css";
+import { edit } from "ace-builds";
+import "ace-builds/src-noconflict/mode-css";
+import "ace-builds/src-noconflict/mode-javascript";
+import "ace-builds/src-noconflict/mode-json";
+import "ace-builds/src-noconflict/mode-python";
+import "ace-builds/src-noconflict/theme-chrome";
+import "ace-builds/src-noconflict/theme-monokai";
 
 /**
  * Script for the wiki page editor.
@@ -29,7 +31,6 @@ export default function initEditor(): void {
   const $textarea = $(`#${targetId}`).hide() as JQuery<HTMLTextAreaElement>;
   const editor = edit(editorID);
   editor.setOptions({
-    // FIXME not working
     mode: `ace/mode/${mode}`,
     useSoftTabs: true,
     fontSize: 16,
@@ -37,7 +38,6 @@ export default function initEditor(): void {
     maxLines: 20,
   });
   editor.setTheme(
-    // FIXME not working
     window.ottm.page.get("darkMode") ? "ace/theme/monokai" : "ace/theme/chrome",
   );
   const session = editor.getSession();

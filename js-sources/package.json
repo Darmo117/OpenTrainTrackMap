@@ -34,6 +34,6 @@
     "@popperjs/core": "^2.11.8",
     "@mdi/font": "^7.4.47",
     "highlight.js": "^11.10.0",
-    "ace-code": "^1.36.5"
+    "ace-builds": "^1.36.5"
   }
 }
