@@ -3,8 +3,6 @@ import hljs from "highlight.js";
 
 import "./style.css";
 
-import initEditor from "./_editor";
-
 interface GadgetCode {
   name: string;
   version?: string;
@@ -261,9 +259,10 @@ export default async function initWiki(): Promise<void> {
 
   const action = window.ottm.page.get("wAction");
   if (action === "edit" || action === "submit") {
-    initEditor();
+    const editorModule = await import("./_editor");
+    editorModule.default();
   } else if (action === "talk") {
-    // TODO
+    // TODO load discussions module
   }
 
   const staticPath = window.ottm.config.get("staticPath");
