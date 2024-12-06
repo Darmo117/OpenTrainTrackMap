@@ -155,7 +155,7 @@ class EnumType(UniqueLabeledModel):
     """
 
     def get_values(self) -> list[EnumValue]:
-        """Returns a list of values for this enum.
+        """Returns a list of values for this enum, ordered by their label.
 
         :return: A list of all values for this enum.
         """
