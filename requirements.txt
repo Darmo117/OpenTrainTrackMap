@@ -10,7 +10,7 @@ csscompressor==0.9.5
 cssmin==0.2.0
 dicttoxml==1.7.16
 dj-database-url==2.2.0
-Django==5.1b1
+Django==5.1.4
 django-appconf==1.0.6
 django-apscheduler==0.6.2
 geographiclib==2.0
