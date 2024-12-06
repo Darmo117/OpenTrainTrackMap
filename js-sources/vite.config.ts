@@ -4,6 +4,7 @@ export default defineConfig({
   publicDir: "../ottm/static/ottm/generated/",
   base: "/static/ottm/generated/",
   build: {
+    sourcemap: true,
     outDir: "../ottm/static/ottm/generated/",
     assetsInlineLimit: 0,
     rollupOptions: {
@@ -36,9 +37,18 @@ export default defineConfig({
           "maplibre-gl": ["maplibre-gl"],
           jquery: ["jquery"],
           hljs: ["highlight.js"],
-          ace: ["ace-code"],
+          ace: ["ace-builds"],
         },
         chunkFileNames: "dep-[name].js",
+      },
+    },
+  },
+  worker: {
+    format: "es",
+    rollupOptions: {
+      output: {
+        entryFileNames: "workers/[name].js",
+        chunkFileNames: "workers/dep-[name].js",
       },
     },
   },
