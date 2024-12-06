@@ -10,7 +10,7 @@ import rjsmin as _rjsmin
 
 from . import constants as _w_cons, namespaces as _w_ns, parser as _parser
 from .. import errors as _errors, groups as _groups, permissions as _perms, utils as _utils
-from ... import models as _models, requests as _requests, settings as _settings
+from ... import data_model as _models, requests as _requests, settings as _settings
 
 MAIN_PAGE_TITLE = _w_ns.NS_WIKI.get_full_page_title('Main Page')
 

@@ -2,7 +2,7 @@
 import django.core.handlers.wsgi as _dj_wsgi
 import django.utils.datastructures as _dj_ds
 
-from . import models as _models, settings as _settings
+from . import data_model as _models, settings as _settings
 from .api import auth as _auth, utils as _utils
 from .api.wiki import constants as _w_cons
 

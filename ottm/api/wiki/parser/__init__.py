@@ -12,7 +12,7 @@ import django.shortcuts as _dj_scut
 from . import _magic_variables as _mv, _parser_context as _pc, _template_tags as _tt
 from .. import constants as _w_cons, namespaces as _w_ns, pages as _w_pages
 from ... import auth as _auth, utils as _utils
-from .... import models as _models, settings as _settings
+from .... import data_model as _models, settings as _settings
 
 
 @_dataclasses.dataclass(frozen=True)

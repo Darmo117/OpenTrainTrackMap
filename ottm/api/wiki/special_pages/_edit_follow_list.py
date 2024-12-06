@@ -6,7 +6,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import namespaces as _w_ns, pages as _w_pages
 from ... import utils as _utils, errors as _errors
-from .... import models as _models, page_handlers as _ph, requests as _requests, settings as _settings
+from .... import data_model as _models, page_handlers as _ph, requests as _requests, settings as _settings
 
 
 class EditFollowListSpecialPage(_core.SpecialPage):

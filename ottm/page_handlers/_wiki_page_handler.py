@@ -15,7 +15,7 @@ import django.forms as _dj_forms
 from django.http import response as _dj_response
 
 from . import _core, _ottm_handler, _wiki_base_form
-from .. import models as _models, requests as _requests, settings as _settings
+from .. import data_model as _models, requests as _requests, settings as _settings
 from ..api import errors as _errors, permissions as _permissions, utils as _utils
 from ..api.wiki import (constants as _w_cons, namespaces as _w_ns, pages as _w_pages, special_pages as _w_sp)
 

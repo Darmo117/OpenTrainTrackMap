@@ -13,7 +13,7 @@ import django.http.response as _dj_response
 import django.shortcuts as _dj_scut
 import pytz as _pytz
 
-from .. import models as _models, requests as _requests, settings as _settings
+from .. import data_model as _models, requests as _requests, settings as _settings
 from ..api import utils as _utils, permissions as _perms
 
 

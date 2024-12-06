@@ -4,7 +4,7 @@ import dataclasses as _dt
 import enum as _enum
 import typing as _typ
 
-from .... import models as _models, requests as _requests
+from .... import data_model as _models, requests as _requests
 
 
 class Section(_enum.Enum):

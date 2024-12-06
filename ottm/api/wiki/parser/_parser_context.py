@@ -1,7 +1,7 @@
 import dataclasses as _dataclasses
 import datetime as _dt
 
-from .... import models as _models
+from .... import data_model as _models
 
 
 @_dataclasses.dataclass

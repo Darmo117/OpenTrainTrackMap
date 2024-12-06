@@ -7,7 +7,7 @@ import django.forms as _dj_forms
 from django.http import response as _dj_response
 
 from . import _ottm_handler, _user_page_context, _sign_up_page_handler
-from .. import forms as _forms, models as _models, requests as _requests
+from .. import forms as _forms, data_model as _models, requests as _requests
 from ..api import auth as _auth, data_types as _data_types, errors as _errors, permissions as _perms
 
 

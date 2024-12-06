@@ -7,7 +7,7 @@ import django.template as _dj_template
 import django.utils.safestring as _dj_safe
 
 from . import ottm as _ottm
-from .. import models, page_handlers as _ph
+from .. import data_model, page_handlers as _ph
 from ..api import permissions as _perms
 from ..api.wiki import constants as _w_cons, menus as _menus, namespaces as _w_ns, parser as _parser
 
@@ -131,7 +131,7 @@ def wiki_page_menu_item(context: _ottm.TemplateContext, action: str) -> str:
 
 
 @register.simple_tag(takes_context=True)
-def wiki_diff_link(context: _ottm.TemplateContext, revision: models.PageRevision, against: str) -> str:
+def wiki_diff_link(context: _ottm.TemplateContext, revision: data_model.PageRevision, against: str) -> str:
     """Render a revision’s diff link.
 
     :param context: Page context.
@@ -193,7 +193,7 @@ def wiki_diff_link(context: _ottm.TemplateContext, revision: models.PageRevision
 
 
 @register.simple_tag(takes_context=True)
-def wiki_revision_author(context: _ottm.TemplateContext, revision: models.PageRevision) -> str:
+def wiki_revision_author(context: _ottm.TemplateContext, revision: data_model.PageRevision) -> str:
     """Format a revision’s author.
 
     :param context: Page context.
@@ -204,7 +204,7 @@ def wiki_revision_author(context: _ottm.TemplateContext, revision: models.PageRe
 
 
 @register.simple_tag(takes_context=True)
-def wiki_revision_comment(context: _ottm.TemplateContext, revision: models.PageRevision) -> str:
+def wiki_revision_comment(context: _ottm.TemplateContext, revision: data_model.PageRevision) -> str:
     """Format a revision’s comment.
 
     :param context: Page context.
@@ -400,19 +400,19 @@ def wiki_render_topics(context: _ottm.TemplateContext, topics: _dj_paginator.Pag
 
 
 @register.simple_tag(takes_context=True)
-def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log) -> str:
+def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: data_model.Log) -> str:
     """Format a log entry.
 
     :param context: Page context.
     :param log_entry: The log entry to format.
     :return: The formatted log entry.
     """
-    if not isinstance(log_entry, models.Log):
-        raise TypeError(f'expected instance of {models.Log} class, got {type(log_entry)}')
+    if not isinstance(log_entry, data_model.Log):
+        raise TypeError(f'expected instance of {data_model.Log} class, got {type(log_entry)}')
 
     formatted_date = _ottm.ottm_format_date(context, log_entry.date)
     match log_entry:
-        case models.PageCreationLog(performer=performer, page=page):
+        case data_model.PageCreationLog(performer=performer, page=page):
             return _ottm.ottm_translate(
                 context,
                 'wiki.log.page_creation',
@@ -420,7 +420,7 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 user=_format_username(context, performer),
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
             )
-        case models.PageDeletionLog(performer=performer, page=page, reason=reason):
+        case data_model.PageDeletionLog(performer=performer, page=page, reason=reason):
             return _ottm.ottm_translate(
                 context,
                 'wiki.log.page_deletion',
@@ -429,9 +429,9 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 page=wiki_inner_link(context, page.full_title, ignore_current_title=True),
                 reason=_format_comment(context, reason, False),
             )
-        case models.PageProtectionLog(performer=performer, page_namespace_id=ns_id, page_title=title, reason=reason,
-                                      end_date=end_date, protection_level=protection_level,
-                                      protect_talks=protect_talks):
+        case data_model.PageProtectionLog(performer=performer, page_namespace_id=ns_id, page_title=title, reason=reason,
+                                          end_date=end_date, protection_level=protection_level,
+                                          protect_talks=protect_talks):
             page_title = _w_ns.NAMESPACE_IDS[ns_id].get_full_page_title(title)
             if end_date:
                 return _ottm.ottm_translate(
@@ -456,8 +456,8 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 talks=str(protect_talks).lower(),
                 reason=_format_comment(context, reason, False),
             )
-        case models.PageRenameLog(performer=performer, old_title=old_title, new_title=new_title, reason=reason,
-                                  leave_redirect=leave_redirect):
+        case data_model.PageRenameLog(performer=performer, old_title=old_title, new_title=new_title, reason=reason,
+                                      leave_redirect=leave_redirect):
             if not leave_redirect:
                 return _ottm.ottm_translate(
                     context,
@@ -477,7 +477,7 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 new_title=wiki_inner_link(context, new_title),
                 reason=_format_comment(context, reason, False),
             )
-        case models.PageContentLanguageLog(performer=performer, page=page, language=language, reason=reason):
+        case data_model.PageContentLanguageLog(performer=performer, page=page, language=language, reason=reason):
             return _ottm.ottm_translate(
                 context,
                 'wiki.log.page_content_language',
@@ -488,7 +488,7 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 language_code=language.code,
                 reason=_format_comment(context, reason, False),
             )
-        case models.PageContentTypeLog(performer=performer, page=page, content_type=content_type, reason=reason):
+        case data_model.PageContentTypeLog(performer=performer, page=page, content_type=content_type, reason=reason):
             return _ottm.ottm_translate(
                 context,
                 'wiki.log.page_content_type',
@@ -498,7 +498,7 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 content_type=content_type,
                 reason=_format_comment(context, reason, False),
             )
-        case models.PageRevisionMaskLog(performer=performer, revision=revision, action=action, reason=reason):
+        case data_model.PageRevisionMaskLog(performer=performer, revision=revision, action=action, reason=reason):
             return _ottm.ottm_translate(
                 context,
                 'wiki.log.revision_' + action,
@@ -509,14 +509,14 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 page=wiki_inner_link(context, revision.page.full_title),
                 reason=_format_comment(context, reason, False),
             )
-        case models.UserAccountCreationLog(user=user):
+        case data_model.UserAccountCreationLog(user=user):
             return _ottm.ottm_translate(
                 context,
                 'wiki.log.user_account_creation',
                 date=formatted_date,
                 user=_format_username(context, user),
             )
-        case models.UserRenameLog(performer=performer, old_username=old_name, new_username=new_name, reason=reason):
+        case data_model.UserRenameLog(performer=performer, old_username=old_name, new_username=new_name, reason=reason):
             return _ottm.ottm_translate(
                 context,
                 'wiki.log.user_rename',
@@ -528,7 +528,7 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                                          ignore_current_title=True),
                 reason=_format_comment(context, reason, False),
             )
-        case models.UserMaskLog(user=user, performer=performer, reason=reason, masked=masked):
+        case data_model.UserMaskLog(user=user, performer=performer, reason=reason, masked=masked):
             action = 'masked' if masked else 'unmasked'
             return _ottm.ottm_translate(
                 context,
@@ -538,7 +538,7 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 user=_format_username(context, user),
                 reason=_format_comment(context, reason, False),
             )
-        case models.UserGroupLog(user=user, performer=performer, reason=reason, joined=joined, group=group):
+        case data_model.UserGroupLog(user=user, performer=performer, reason=reason, joined=joined, group=group):
             action = 'joined' if joined else 'left'
             if performer:
                 return _ottm.ottm_translate(
@@ -558,9 +558,9 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 group=group.label,
                 reason=_format_comment(context, reason, False),
             )
-        case models.UserBlockLog(performer=performer, reason=reason, end_date=end_date, blocked=blocked,
-                                 allow_messages_on_own_user_page=allow_messages_on_own_user_page,
-                                 user=user, allow_editing_own_settings=allow_editing_own_settings):
+        case data_model.UserBlockLog(performer=performer, reason=reason, end_date=end_date, blocked=blocked,
+                                     allow_messages_on_own_user_page=allow_messages_on_own_user_page,
+                                     user=user, allow_editing_own_settings=allow_editing_own_settings):
             if blocked:
                 if end_date:
                     return _ottm.ottm_translate(
@@ -592,9 +592,9 @@ def wiki_format_log_entry(context: _ottm.TemplateContext, log_entry: models.Log)
                 user=_format_username(context, user),
                 reason=_format_comment(context, reason, False),
             )
-        case models.IPBlockLog(performer=performer, reason=reason, end_date=end_date,
-                               allow_messages_on_own_user_page=allow_messages_on_own_user_page,
-                               ip=ip, allow_account_creation=allow_account_creation):
+        case data_model.IPBlockLog(performer=performer, reason=reason, end_date=end_date,
+                                   allow_messages_on_own_user_page=allow_messages_on_own_user_page,
+                                   ip=ip, allow_account_creation=allow_account_creation):
             return _ottm.ottm_translate(
                 context,
                 'wiki.log.ip_block',
@@ -678,7 +678,7 @@ def wiki_add_url_params(context: _ottm.TemplateContext, **kwargs) -> str:
     return url_path + ('?' + url_params if url_params else '')
 
 
-def _format_username(context: _ottm.TemplateContext, user: models.CustomUser) -> str:
+def _format_username(context: _ottm.TemplateContext, user: data_model.CustomUser) -> str:
     wiki_context: _ph.WikiPageContext = context.get('context')
     can_view = wiki_context.user.has_permission(_perms.PERM_MASK)
     css_classes = ''

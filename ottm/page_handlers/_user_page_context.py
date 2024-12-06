@@ -1,6 +1,6 @@
 """This module defines the bage page context class for user pages."""
 from . import _core
-from .. import models as _models, requests as _requests
+from .. import data_model as _models, requests as _requests
 
 
 class UserPageContext(_core.PageContext):

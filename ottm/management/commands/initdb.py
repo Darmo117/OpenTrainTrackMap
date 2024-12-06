@@ -24,31 +24,31 @@ class Command(dj_mngmt.BaseCommand):
         self.stdout.write('DB initialized successfully.')
 
     def _init_default_languages(self):
-        from ... import models
+        from ... import data_model
         self.stdout.write('Initializing default languages…')
-        dtf1 = models.DateTimeFormat(format='%B, %d %Y %I:%M:%S %p')
+        dtf1 = data_model.DateTimeFormat(format='%B, %d %Y %I:%M:%S %p')
         dtf1.save()
-        dtf2 = models.DateTimeFormat(format='%d %B %Y %H:%M:%S')
+        dtf2 = data_model.DateTimeFormat(format='%d %B %Y %H:%M:%S')
         dtf2.save()
-        dtf3 = models.DateTimeFormat(format='%B, %d%s %Y %I:%M:%S %p')
+        dtf3 = data_model.DateTimeFormat(format='%B, %d%s %Y %I:%M:%S %p')
         dtf3.save()
-        dtf4 = models.DateTimeFormat(format='%d%s %B %Y %H:%M:%S')
+        dtf4 = data_model.DateTimeFormat(format='%d%s %B %Y %H:%M:%S')
         dtf4.save()
-        models.Language(
+        data_model.Language(
             code='en',
             name='English',
             writing_direction='ltr',
             default_datetime_format=dtf1,
             available_for_ui=True,
         ).save()
-        models.Language(
+        data_model.Language(
             code='fr',
             name='Français',
             writing_direction='ltr',
             default_datetime_format=dtf2,
             available_for_ui=True,
         ).save()
-        models.Language(
+        data_model.Language(
             code='eo',
             name='Esperanto',
             writing_direction='ltr',
@@ -58,48 +58,48 @@ class Command(dj_mngmt.BaseCommand):
         self.stdout.write('Done.')
 
     def _init_user_groups(self):
-        from ... import models
+        from ... import data_model
         self.stdout.write('Creating default user groups…')
 
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_SUPERUSERS,
             permissions=(PERM_EDIT_SCHEMA,),
         ).save()
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_GROUPS_MANAGERS,
             permissions=(PERM_EDIT_USER_GROUPS,),
         ).save()
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_ADMINISTRATORS,
             permissions=(PERM_BLOCK_USERS, PERM_RENAME_USERS, PERM_MASK,),
         ).save()
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_WIKI_ADMINISTRATORS,
             permissions=(PERM_WIKI_DELETE, PERM_WIKI_EDIT_FILTERS, PERM_WIKI_EDIT_USER_PAGES, PERM_WIKI_PROTECT,
                          PERM_WIKI_EDIT_INTERFACE,),
         ).save()
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_PATROLLERS,
             permissions=(PERM_REVERT,),
         ).save()
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_WIKI_PATROLLERS,
             permissions=(PERM_WIKI_REVERT,),
         ).save()
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_AUTOPATROLLED,
             permissions=(),  # Empty because it is just a tagging group
         ).save()
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_WIKI_AUTOPATROLLED,
             permissions=(),  # Empty because it is just a tagging group
         ).save()
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_USERS,
             assignable_by_users=False,
             permissions=(PERM_EDIT_OBJECTS, PERM_WIKI_RENAME,),
         ).save()
-        models.UserGroup(
+        data_model.UserGroup(
             label=GROUP_ALL,
             assignable_by_users=False,
             permissions=(PERM_WIKI_EDIT,),
@@ -125,7 +125,7 @@ class Command(dj_mngmt.BaseCommand):
         pass  # TODO
 
     def _init_default_wiki_pages(self):
-        from ... import settings, models
+        from ... import settings, data_model
         self.stdout.write('Initializing wiki default pages…')
 
         # Create dummy user with throwaway password
@@ -141,7 +141,7 @@ class Command(dj_mngmt.BaseCommand):
         content = f'Welcome to {settings.SITE_NAME}’s wiki!'
         pages.edit_page(wiki_user, pages.get_page(ns, title), content, edit_comment)
         pages.protect_page(wiki_user, pages.get_page(ns, title),
-                           models.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS),
+                           data_model.UserGroup.objects.get(label=GROUP_WIKI_ADMINISTRATORS),
                            protect_talks=False,
                            reason='Page with high traffic.')
         # language=JS

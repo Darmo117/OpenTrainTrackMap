@@ -7,7 +7,7 @@ import django.shortcuts as _dj_scut
 
 from . import _parser_context as _pc
 from .. import namespaces as _w_ns, pages as _w_pages
-from .... import models as _models, settings as _settings
+from .... import data_model as _models, settings as _settings
 
 
 class MagicVariable(_abc.ABC):

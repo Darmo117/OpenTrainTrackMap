@@ -8,7 +8,7 @@ from django.http import response as _dj_response
 import pytz as _pytz
 
 from . import _ottm_handler, _user_page_context
-from .. import forms as _forms, models as _models, requests as _requests, settings as _settings
+from .. import forms as _forms, data_model as _models, requests as _requests, settings as _settings
 from ..api import data_types as _dt, timezones as _tz, utils as _utils
 from ..api.wiki import constants as _const, notifications as _notif, search_engine as _se
 

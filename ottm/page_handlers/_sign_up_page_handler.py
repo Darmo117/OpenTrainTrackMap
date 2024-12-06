@@ -8,7 +8,7 @@ import django.forms as _dj_forms
 from django.http import response as _dj_response
 
 from . import _core, _ottm_handler
-from .. import forms as _forms, models as _models, requests as _requests
+from .. import forms as _forms, data_model as _models, requests as _requests
 from ..api import auth as _auth
 
 

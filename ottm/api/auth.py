@@ -7,7 +7,7 @@ import django.core.handlers.wsgi as _dj_wsgi
 import django.core.validators as _dj_valid
 import django.db.transaction as _dj_db_trans
 
-from .. import models as _models
+from .. import data_model as _models
 from ..api import errors as _errors, groups as _groups, permissions as _perms, utils as _utils
 from ..api.wiki import namespaces as _w_ns, pages as _w_pages
 

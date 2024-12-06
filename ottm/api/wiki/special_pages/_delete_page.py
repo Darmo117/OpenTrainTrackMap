@@ -7,7 +7,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import namespaces as _w_ns, pages as _w_pages
 from ... import errors as _errors, permissions as _perms
-from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
+from .... import forms as _forms, data_model as _models, page_handlers as _ph, requests as _requests
 
 
 class DeletePageSpecialPage(_core.SpecialPage):

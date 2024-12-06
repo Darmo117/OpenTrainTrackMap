@@ -4,7 +4,7 @@ import typing as _typ
 
 from . import _core
 from .. import namespaces as _ns, pages as _pages
-from .... import models as _models, requests as _requests
+from .... import data_model as _models, requests as _requests
 
 
 class RandomPageSpecialPage(_core.SpecialPage):

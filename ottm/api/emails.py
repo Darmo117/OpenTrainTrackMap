@@ -1,7 +1,7 @@
 """This module defines functions to send emails."""
 import django.core.mail as _dj_mail
 
-from .. import models as _models, settings as _settings
+from .. import data_model as _models, settings as _settings
 
 DEFAULT_SUBJECT = f'{_settings.SITE_NAME} email'
 

@@ -6,7 +6,7 @@ import django.template as _dj_template
 import django.utils.safestring as _dj_safe
 import pytz as _pytz
 
-from .. import page_handlers as _ph, models as _models
+from .. import page_handlers as _ph, data_model as _models
 from ..api import auth as _auth, data_types as _data_types
 
 register = _dj_template.Library()

@@ -7,7 +7,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import constants as _constants, namespaces as _w_ns, pages as _w_pages
 from ... import errors as _errors
-from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests
+from .... import forms as _forms, data_model as _models, page_handlers as _ph, requests as _requests
 
 
 class ChangePageContentTypeSpecialPage(_core.SpecialPage):

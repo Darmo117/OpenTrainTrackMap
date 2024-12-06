@@ -1,7 +1,7 @@
 """Wiki’s background tasks."""
 from . import pages as _pages
 from .. import auth as _auth, bg_tasks as _bg_tasks, utils as _utils
-from ... import models as _models, settings as _settings
+from ... import data_model as _models, settings as _settings
 
 
 @_bg_tasks.register(frequency=10, interval='minutes')

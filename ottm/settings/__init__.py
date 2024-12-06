@@ -242,10 +242,10 @@ def init(debug: bool):
 
 def init_languages():
     """Initialize UI languages."""
-    from .. import models  # Local import to avoid loops
+    from .. import data_model  # Local import to avoid loops
     LOGGER.info('Loading translations…')
     langs_dir = _pathlib.Path(__file__).parent / 'langs'
-    for language in models.Language.objects.filter(available_for_ui=True):
+    for language in data_model.Language.objects.filter(available_for_ui=True):
         lang_file = langs_dir / f'{language.code}.json'
         if not lang_file.exists():
             LOGGER.error(f'Missing translation file for language code {language.code}')

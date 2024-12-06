@@ -9,7 +9,7 @@ import django.forms as _dj_forms
 from . import _core
 from .. import namespaces as _w_ns
 from ... import auth as _auth, permissions as _perms
-from .... import forms as _forms, models as _models, page_handlers as _ph, requests as _requests, settings as _settings
+from .... import forms as _forms, data_model as _models, page_handlers as _ph, requests as _requests, settings as _settings
 
 
 class ContributionsSpecialPage(_core.SpecialPage):

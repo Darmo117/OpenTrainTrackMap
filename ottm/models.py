@@ -2,4 +2,4 @@
 
 Actual models are implemented in the 'ottm.models' package.
 """
-from .models import *
+from .data_model import *

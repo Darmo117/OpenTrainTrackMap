@@ -7,7 +7,7 @@ import django.core.paginator as _dj_paginator
 from . import _core
 from .. import namespaces as _w_ns, pages as _w_pages
 from ... import errors as _errors, permissions as _perms
-from .... import models as _models, page_handlers as _ph, requests as _requests
+from .... import data_model as _models, page_handlers as _ph, requests as _requests
 
 
 class MaskRevisionsSpecialPage(_core.SpecialPage):

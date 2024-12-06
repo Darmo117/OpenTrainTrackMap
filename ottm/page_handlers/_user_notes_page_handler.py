@@ -5,7 +5,7 @@ import django.core.handlers.wsgi as _dj_wsgi
 from django.http import response as _dj_response
 
 from . import _ottm_handler, _user_page_context
-from .. import models as _models, requests as _requests
+from .. import data_model as _models, requests as _requests
 from ..api import auth as _auth
 
 
