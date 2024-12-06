@@ -1,10 +1,13 @@
 """This module defines all page view handlers."""
+import json
 import typing as _typ
 
 import django.core.handlers.wsgi as _dj_wsgi
 import django.http.response as _dj_response
+from django.views.decorators.csrf import csrf_exempt
 
 from . import page_handlers as _ph
+from .api.map import get_data as map_get_data, update_data as map_update_data
 
 
 def map_page(request: _dj_wsgi.WSGIRequest) -> _dj_response.HttpResponse:
@@ -87,9 +90,36 @@ def wiki_page(request: _dj_wsgi.WSGIRequest, raw_page_title: str = '') -> _dj_re
     return _ph.WikiPageHandler(request, raw_page_title).handle_request()
 
 
-def api(request: _dj_wsgi.WSGIRequest):
+@csrf_exempt
+def api(request: _dj_wsgi.WSGIRequest) -> _dj_response.HttpResponse:
     """Entry point for the map API."""
-    return _dj_response.HttpResponseNotFound()  # TODO
+    match request.method:
+        case 'GET':
+            data, status, error_message = map_get_data.get(**request.GET)
+            if not data:
+                return _dj_response.JsonResponse({'error': error_message}, status=status)
+            return _dj_response.JsonResponse(data, status=status)
+        case 'POST':
+            if request.content_type != 'application/json':
+                status = 400
+                error_message = 'Content-Type must be application/json'
+            else:
+                try:
+                    json_data = json.loads(request.body)
+                except (UnicodeDecodeError, json.JSONDecodeError) as e:
+                    status = 400
+                    error_message = str(e)
+                else:
+                    if not isinstance(json_data, dict):
+                        status = 400
+                        error_message = 'Invalid JSON data'
+                    else:
+                        status, error_message = map_update_data.update(json_data, **request.POST)
+            if status != 200:
+                return _dj_response.JsonResponse({'success': False, 'error': error_message}, status=status)
+            return _dj_response.JsonResponse({'success': True}, status=status)
+        case method:
+            return _dj_response.HttpResponseBadRequest(reason=f'Invalid method {method}')
 
 
 def wiki_api(request: _dj_wsgi.WSGIRequest) -> _dj_response.HttpResponse:
